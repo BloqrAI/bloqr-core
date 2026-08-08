@@ -4,12 +4,12 @@
  */
 module.exports = {
   siteMetadata: {
-    title: `Bloqr List Utils`,
-    description: `A comprehensive multi-language toolkit for ad-blocking, network protection, and AdGuard DNS management`,
+    title: `Bloqr Core`,
+    description: `The core open-source components that form the foundation of Bloqr AI`,
     author: `Bloqr Systems`,
-    siteUrl: `https://bloqrai.github.io/bloqr-lists/`,
+    siteUrl: `https://bloqrai.github.io/bloqr-core/`,
   },
-  pathPrefix: `/bloqr-lists`,
+  pathPrefix: `/bloqr-core`,
   plugins: [
     `gatsby-plugin-image`,
     `gatsby-plugin-sharp`,
@@ -49,7 +49,7 @@ module.exports = {
     {
       resolve: `gatsby-plugin-manifest`,
       options: {
-        name: `Bloqr List Utils`,
+        name: `Bloqr Core`,
         short_name: `Bloqr`,
         start_url: `/`,
         background_color: `#070B14`,
