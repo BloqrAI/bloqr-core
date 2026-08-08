@@ -6,14 +6,14 @@
   "license": "MIT",
   "version": "1.0.0",
   "output": {
-    "path": "data/output/adguard_user_filter.txt",
+    "path": "../bloqr-blocklists/output/adguard_user_filter.txt",
     "conflictStrategy": "rename"
   },
   "hashVerification": {
     "mode": "warning",
     "requireHashesForRemote": false,
     "failOnMismatch": false,
-    "hashDatabasePath": "data/input/.hashes.json"
+    "hashDatabasePath": "../bloqr-blocklists/input/.hashes.json"
   },
   "archiving": {
     "enabled": true,
@@ -23,7 +23,7 @@
   "sources": [
     {
       "name": "Local User Rules",
-      "source": "data/output/adguard_user_filter.txt",
+      "source": "../bloqr-blocklists/output/adguard_user_filter.txt",
       "type": "adblock",
       "transformations": [],
       "inclusions": [],

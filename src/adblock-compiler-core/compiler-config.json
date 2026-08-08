@@ -6,7 +6,7 @@
   "license": "MIT",
   "homepage": "https://github.com/BloqrAI/bloqr-lists",
   "output": {
-    "path": "data/output/adguard_user_filter.txt",
+    "path": "../bloqr-blocklists/output/adguard_user_filter.txt",
     "conflictStrategy": "rename"
   },
   "archiving": {
@@ -17,7 +17,7 @@
   "sources": [
     {
       "name": "User Rules",
-      "source": "data/input/user-rules.txt",
+      "source": "../bloqr-blocklists/input/user-rules.txt",
       "type": "adblock"
     }
   ],

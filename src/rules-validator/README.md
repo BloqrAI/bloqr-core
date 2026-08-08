@@ -94,7 +94,7 @@ let config = ValidationConfig::default()
 let mut validator = Validator::new(config);
 
 // Validate local file
-let result = validator.validate_local_file("data/input/custom-rules.txt")?;
+let result = validator.validate_local_file("../bloqr-blocklists/input/custom-rules.txt")?;
 println!("Valid rules: {}", result.valid_rules);
 
 // Validate remote URL
@@ -109,7 +109,7 @@ println!("Content hash: {:?}", result.content_hash);
 
 ```bash
 # Validate a local file
-rules-validate file data/input/custom-rules.txt --mode strict
+rules-validate file ../bloqr-blocklists/input/custom-rules.txt --mode strict
 
 # Validate a remote URL
 rules-validate url https://example.com/list.txt
@@ -138,7 +138,7 @@ const config = new ValidationConfig();
 config.set_verification_mode('strict');
 
 const validator = new Validator(config);
-const result = await validator.validate_local_file('data/input/custom-rules.txt');
+const result = await validator.validate_local_file('../bloqr-blocklists/input/custom-rules.txt');
 
 console.log(`Valid rules: ${result.valid_rules}`);
 ```
@@ -262,7 +262,7 @@ config = ValidationConfig()
 config.verification_mode = VerificationMode.STRICT
 
 validator = Validator(config)
-result = validator.validate_local_file("data/input/custom-rules.txt")
+result = validator.validate_local_file("../bloqr-blocklists/input/custom-rules.txt")
 
 print(f"Valid rules: {result.valid_rules}")
 ```
@@ -293,16 +293,16 @@ def validate_file(path: str) -> dict:
     "mode": "strict",
     "requireHashesForRemote": true,
     "failOnMismatch": true,
-    "hashDatabasePath": "data/input/.hashes.json"
+    "hashDatabasePath": "../bloqr-blocklists/input/.hashes.json"
   },
   "archiving": {
     "enabled": true,
     "mode": "automatic",
     "retentionDays": 90,
-    "archivePath": "data/archive"
+    "archivePath": "../bloqr-blocklists/archive"
   },
   "output": {
-    "path": "data/output/adguard_user_filter.txt",
+    "path": "../bloqr-blocklists/output/adguard_user_filter.txt",
     "conflictStrategy": "rename"
   }
 }

@@ -2,7 +2,7 @@
 
 ## Project Structure & Module Organization
 
-- `data/` contains the tracked filter list (`data/output/adguard_user_filter.txt`) and compiler configuration files.
+- `data/` contains the tracked filter list (`../bloqr-blocklists/output/adguard_user_filter.txt`) and compiler configuration files.
 - `src/` contains the multi-language toolchain:
   - `src/rules-compiler-*` (TypeScript/Deno, .NET, Python, Rust, shell) compilers that use `@bloqr/compiler-core`.
   - `src/adguard-api-dotnet/`, `src/adguard-api-typescript/`, and `src/adguard-api-rust/` SDKs + interactive clients for the AdGuard DNS API.

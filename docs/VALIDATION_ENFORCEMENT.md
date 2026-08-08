@@ -121,7 +121,7 @@ test('detects file tampering via hash', async () => {
   await compile(config);
   
   // Modify file
-  modifyFile('data/input/rules.txt');
+  modifyFile('../bloqr-blocklists/input/rules.txt');
   
   // Second compile should detect tampering
   await expect(compile(configWithStrictMode)).rejects.toThrow(/hash mismatch/i);
@@ -144,8 +144,8 @@ test('creates archive when enabled', async () => {
   const config = { ...baseConfig, archiving: { enabled: true } };
   await compile(config);
   
-  expect(fs.existsSync('data/archive')).toBe(true);
-  const archives = fs.readdirSync('data/archive');
+  expect(fs.existsSync('../bloqr-blocklists/archive')).toBe(true);
+  const archives = fs.readdirSync('../bloqr-blocklists/archive');
   expect(archives.length).toBeGreaterThan(0);
 });
 ```

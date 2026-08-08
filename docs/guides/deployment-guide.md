@@ -411,14 +411,14 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
           name: compiled-rules
-          path: data/output/adguard_user_filter.txt
+          path: ../bloqr-blocklists/output/adguard_user_filter.txt
       
       - name: Create Release
         if: github.event_name == 'schedule'
         uses: softprops/action-gh-release@v1
         with:
           tag_name: rules-${{ github.run_number }}
-          files: data/output/adguard_user_filter.txt
+          files: ../bloqr-blocklists/output/adguard_user_filter.txt
 ```
 
 ### GitLab CI/CD

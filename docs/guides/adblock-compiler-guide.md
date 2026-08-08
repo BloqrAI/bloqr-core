@@ -254,7 +254,7 @@ on:
   push:
     branches: [main]
     paths:
-      - 'data/input/**'
+      - '../bloqr-blocklists/input/**'
       - 'compiler-config.json'
   schedule:
     # Run daily to fetch updated remote lists
@@ -284,16 +284,16 @@ jobs:
           deno run --allow-read --allow-write --allow-env --allow-net \
             jsr:@bloqr/compiler-core/cli \
             --config compiler-config.json \
-            --output data/output/filters.txt
+            --output ../bloqr-blocklists/output/filters.txt
       
       - name: Verify compilation
         run: |
-          if [ ! -f data/output/filters.txt ]; then
+          if [ ! -f ../bloqr-blocklists/output/filters.txt ]; then
             echo "Compilation failed - output file not created"
             exit 1
           fi
           
-          RULE_COUNT=$(grep -v '^!' data/output/filters.txt | grep -v '^#' | grep -v '^$' | wc -l)
+          RULE_COUNT=$(grep -v '^!' ../bloqr-blocklists/output/filters.txt | grep -v '^#' | grep -v '^$' | wc -l)
           echo "Compiled $RULE_COUNT rules"
           
           if [ $RULE_COUNT -lt 1000 ]; then
@@ -304,7 +304,7 @@ jobs:
         run: |
           git config user.name "GitHub Actions"
           git config user.email "actions@github.com"
-          git add data/output/filters.txt
+          git add ../bloqr-blocklists/output/filters.txt
           git diff --staged --quiet || git commit -m "Update compiled filters [skip ci]"
           git push
 ```
@@ -338,7 +338,7 @@ jobs:
         run: |
           cd src/adblock-compiler-core
           deno task compile
-          cp ../../data/output/adguard_user_filter.txt /tmp/output-ts.txt
+          cp ../../../bloqr-blocklists/output/adguard_user_filter.txt /tmp/output-ts.txt
       
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
@@ -349,7 +349,7 @@ jobs:
         run: |
           cd src/rules-compiler-dotnet
           dotnet run --project src/RulesCompiler.Console
-          cp ../../data/output/adguard_user_filter.txt /tmp/output-dotnet.txt
+          cp ../../../bloqr-blocklists/output/adguard_user_filter.txt /tmp/output-dotnet.txt
       
       - name: Compare outputs
         run: |
@@ -386,11 +386,11 @@ compile-filters:
     - deno run --allow-read --allow-write --allow-env --allow-net
         jsr:@bloqr/compiler-core/cli
         --config compiler-config.json
-        --output data/output/filters.txt
+        --output ../bloqr-blocklists/output/filters.txt
   
   artifacts:
     paths:
-      - data/output/filters.txt
+      - ../bloqr-blocklists/output/filters.txt
     expire_in: 30 days
   
   rules:
@@ -405,7 +405,7 @@ validate-output:
     - compile-filters
   
   script:
-    - RULE_COUNT=$(grep -c '^||' data/output/filters.txt || true)
+    - RULE_COUNT=$(grep -c '^||' ../bloqr-blocklists/output/filters.txt || true)
     - echo "Compiled $RULE_COUNT adblock rules"
     - |
       if [ $RULE_COUNT -lt 100 ]; then
@@ -444,7 +444,7 @@ pipeline {
                     deno run --allow-read --allow-write --allow-env --allow-net \
                         jsr:@bloqr/compiler-core/cli \
                         --config compiler-config.json \
-                        --output data/output/filters.txt
+                        --output ../bloqr-blocklists/output/filters.txt
                 '''
             }
         }
@@ -453,7 +453,7 @@ pipeline {
             steps {
                 script {
                     def ruleCount = sh(
-                        script: "grep -v '^[!#]' data/output/filters.txt | grep -v '^\$' | wc -l",
+                        script: "grep -v '^[!#]' ../bloqr-blocklists/output/filters.txt | grep -v '^\$' | wc -l",
                         returnStdout: true
                     ).trim()
                     
@@ -468,7 +468,7 @@ pipeline {
         
         stage('Archive') {
             steps {
-                archiveArtifacts artifacts: 'data/output/filters.txt'
+                archiveArtifacts artifacts: '../bloqr-blocklists/output/filters.txt'
             }
         }
     }
@@ -499,7 +499,7 @@ pipeline {
 set -euo pipefail
 
 CONFIG_FILE="${1:-compiler-config.json}"
-OUTPUT_FILE="${2:-data/output/filters.txt}"
+OUTPUT_FILE="${2:-../bloqr-blocklists/output/filters.txt}"
 
 echo "Compiling filters using @bloqr/compiler-core..."
 echo "  Config: $CONFIG_FILE"
@@ -532,7 +532,7 @@ echo "  SHA-384: $HASH"
 [CmdletBinding()]
 param(
     [string]$ConfigFile = "compiler-config.json",
-    [string]$OutputFile = "data/output/filters.txt"
+    [string]$OutputFile = "../bloqr-blocklists/output/filters.txt"
 )
 
 Set-StrictMode -Version Latest
@@ -585,7 +585,7 @@ CMD ["deno", "run", \
      "--allow-read", "--allow-write", "--allow-env", "--allow-net", \
      "jsr:@bloqr/compiler-core/cli", \
      "--config", "compiler-config.json", \
-     "--output", "data/output/filters.txt"]
+     "--output", "../bloqr-blocklists/output/filters.txt"]
 ```
 
 **docker-compose.yml:**
@@ -596,8 +596,8 @@ services:
   filter-compiler:
     build: .
     volumes:
-      - ./data/input:/app/data/input:ro
-      - ./data/output:/app/data/output:rw
+      - ./../bloqr-blocklists/input:/app/../bloqr-blocklists/input:ro
+      - ./../bloqr-blocklists/output:/app/../bloqr-blocklists/output:rw
       - ./compiler-config.json:/app/compiler-config.json:ro
     environment:
       - DEBUG=true
