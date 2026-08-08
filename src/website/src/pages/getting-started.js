@@ -76,7 +76,7 @@ const GettingStartedPage = () => {
         </ul>
         <p>
           All compilers dogfood{" "}
-          <Link to="/adblock-compiler">@jk-com/adblock-compiler</Link>, this
+          <Link to="/adblock-compiler">@bloqr/compiler-core</Link>, this
           repository's own open-source, dependency-free compilation engine
           published to JSR.
         </p>
@@ -172,7 +172,7 @@ const GettingStartedPage = () => {
           </div>
           <div className="feature">
             <h3>
-              <Link to="/adblock-compiler">@jk-com/adblock-compiler</Link>
+              <Link to="/adblock-compiler">@bloqr/compiler-core</Link>
             </h3>
             <p>
               Learn about the open-source compilation engine that powers every

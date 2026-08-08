@@ -1,7 +1,7 @@
 //! Core compiler functionality for AdGuard filter rules.
 //!
 //! This module provides the main compilation logic, wrapping the
-//! adblock-compiler-core tool (published as `@jk-com/adblock-compiler` on
+//! adblock-compiler-core tool (published as `@bloqr/compiler-core` on
 //! JSR, run via Deno) and providing statistics, hashing, and file management.
 
 use chrono::{DateTime, Utc};
@@ -20,7 +20,7 @@ use crate::events::{
 };
 
 /// JSR package specifier for the compiler CLI, run via `deno run`.
-const JSR_PACKAGE_SPECIFIER: &str = "jsr:@jk-com/adblock-compiler/cli";
+const JSR_PACKAGE_SPECIFIER: &str = "jsr:@bloqr/compiler-core/cli";
 
 /// Deno permission flags required to run the compiler CLI.
 const DENO_PERMISSIONS: &[&str] = &[

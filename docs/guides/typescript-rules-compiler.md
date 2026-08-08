@@ -4,7 +4,7 @@ A comprehensive guide to using the TypeScript rules compiler with Deno 2.0+.
 
 ## Overview
 
-The TypeScript rules compiler (`src/adblock-compiler-core/`) is a Deno-based implementation that *is* [`@jk-com/adblock-compiler`](https://jsr.io/@jk-com/adblock-compiler) — this repo's own dependency-free filter compilation engine — compiling filter lists from multiple sources with transformations, inclusions, and exclusions. See the [`@jk-com/adblock-compiler` Guide](adblock-compiler-guide.md) for the full architecture.
+The TypeScript rules compiler (`src/adblock-compiler-core/`) is a Deno-based implementation that *is* [`@bloqr/compiler-core`](https://jsr.io/@bloqr/compiler-core) — this repo's own dependency-free filter compilation engine — compiling filter lists from multiple sources with transformations, inclusions, and exclusions. See the [`@bloqr/compiler-core` Guide](adblock-compiler-guide.md) for the full architecture.
 
 ## Features
 
@@ -20,7 +20,7 @@ The TypeScript rules compiler (`src/adblock-compiler-core/`) is a Deno-based imp
 | Requirement | Version | Installation |
 |-------------|---------|--------------|
 | Deno | 2.0+ | [deno.land](https://deno.land/) |
-| @jk-com/adblock-compiler | 1.0.0 | Via JSR (this is `src/adblock-compiler-core/` itself, no separate install needed) |
+| @bloqr/compiler-core | 1.0.0 | Via JSR (this is `src/adblock-compiler-core/` itself, no separate install needed) |
 
 ## Installation
 
@@ -338,7 +338,7 @@ transformations:
 
 ## Troubleshooting
 
-### @jk-com/adblock-compiler not found
+### @bloqr/compiler-core not found
 
 Ensure Deno 2.0+ is installed:
 
@@ -349,7 +349,7 @@ deno --version
 Test the compiler CLI directly:
 
 ```bash
-deno run --allow-read --allow-write --allow-env --allow-net --allow-run jsr:@jk-com/adblock-compiler/cli --version
+deno run --allow-read --allow-write --allow-env --allow-net --allow-run jsr:@bloqr/compiler-core/cli --version
 ```
 
 ### Permission Denied

@@ -50,7 +50,7 @@
  *   FilterCompiler,
  *   TransformationHookManager,
  *   createLoggingHook,
- * } from '@jk-com/adblock-compiler';
+ * } from '@bloqr/compiler-core';
  *
  * const hookManager = new TransformationHookManager(createLoggingHook(console));
  *
@@ -191,7 +191,7 @@ export interface TransformationHookConfig {
  * ## Usage
  *
  * ```ts
- * import { FilterCompiler, TransformationHookManager } from '@jk-com/adblock-compiler';
+ * import { FilterCompiler, TransformationHookManager } from '@bloqr/compiler-core';
  *
  * const hookManager = new TransformationHookManager();
  *

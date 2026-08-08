@@ -35,7 +35,7 @@ This library provides a unified, high-performance validation layer that can be u
                  │
                  ▼
 ┌──────────────────────────────────────────────┐
-│  @jk-com/adblock-compiler                    │
+│  @bloqr/compiler-core                    │
 │  (via wrapper/CLI)                           │
 └──────────────────────────────────────────────┘
 ```

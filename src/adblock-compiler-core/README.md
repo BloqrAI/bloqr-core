@@ -1,8 +1,8 @@
-# @jk-com/adblock-compiler
+# @bloqr/compiler-core
 
 TypeScript/Deno implementation of an AdGuard-hostlist-compiler-compatible filter rules compiler, with chunked parallel compilation, hash verification, and a full interactive console.
 
-This is the canonical source for the `@jk-com/adblock-compiler` JSR package. It's a minimal, dependency-free compilation engine — no `@adguard/agtree` or other third-party AdGuard library, no Cloudflare-specific code, no commercial features. See [Architecture](#architecture) below for how this relates to Bloqr's commercial compiler.
+This is the canonical source for the `@bloqr/compiler-core` JSR package. It's a minimal, dependency-free compilation engine — no `@adguard/agtree` or other third-party AdGuard library, no Cloudflare-specific code, no commercial features. See [Architecture](#architecture) below for how this relates to Bloqr's commercial compiler.
 
 ## Features
 
@@ -21,7 +21,7 @@ This is the canonical source for the `@jk-com/adblock-compiler` JSR package. It'
 ## Installation
 
 ```bash
-deno add jsr:@jk-com/adblock-compiler
+deno add jsr:@bloqr/compiler-core
 ```
 
 ## Usage
@@ -29,7 +29,7 @@ deno add jsr:@jk-com/adblock-compiler
 ### As a library
 
 ```typescript
-import { compile } from '@jk-com/adblock-compiler';
+import { compile } from '@bloqr/compiler-core';
 
 const rules = await compile({
   name: 'My Filter List',
@@ -160,7 +160,7 @@ This creates `.d.ts` files in the `dist/` directory that re-export types from th
 
 ## Package layout
 
-- `src/index.ts` — the core compilation engine (transformations, compiler, downloader, formatters). This is what `@jk-com/adblock-compiler` (package root) resolves to.
+- `src/index.ts` — the core compilation engine (transformations, compiler, downloader, formatters). This is what `@bloqr/compiler-core` (package root) resolves to.
 - `src/orchestration/` — the CLI/config/chunking wrapper layer built on top of the core engine (multi-format config reading, chunking, parallel compilation, hashing, structured logging, graceful shutdown). Exported as the `./orchestration` subpath.
 - `src/console/` — the interactive terminal UI, exported as `./console`.
 - `src/lib/` — a high-level builder-pattern API (`RulesCompiler`, `ConfigurationBuilder`), exported as `./lib`.
@@ -170,17 +170,17 @@ This creates `.d.ts` files in the `dist/` directory that re-export types from th
 
 This package is one of two Bloqr filter-list compilers, and the two are deliberately kept separate:
 
-| | `@jk-com/adblock-compiler` (this package) | `@bloqr/compiler` (commercial, [`bloqr-compiler`](https://github.com/BloqrAI/bloqr-compiler) repo) |
+| | `@bloqr/compiler-core` (this package) | Bloqr's commercial compiler ([`bloqr-compiler`](https://github.com/BloqrAI/bloqr-compiler) repo, private) |
 |---|---|---|
 | Scope | Bare-minimum compilation engine + performance features | Full-featured product: linting, AST tooling, diff reports, plugin system, Cloudflare Workers deployment, observability |
 | AdGuard libraries (`@adguard/agtree`, etc.) | Not used — rule classification is string/regex-based | Used, for AST-level rule parsing and validation |
-| Distribution | JSR, open source | Not currently published (was briefly published to this same JSR namespace at v0.94–0.96 before the commercial product's scope diverged; see below) |
+| Distribution | JSR, open source (`@bloqr/compiler-core`) | Not published to JSR — consumes `@bloqr/compiler-core` as a regular dependency instead of vendoring its own copy |
 
-**Why the JSR namespace changed hands**: `@jk-com/adblock-compiler` on JSR briefly pointed at snapshots of the commercial `bloqr-compiler` product (versions 0.6.0 through 0.96.0), before the commercial compiler grew Cloudflare-specific and AdGuard-library-dependent features that don't belong in an open-source, dependency-free package. This repository's compiler — previously a thin orchestration wrapper *around* whatever the JSR package resolved to — has been promoted to be the actual engine behind `@jk-com/adblock-compiler`, starting at v1.0.0. If you depended on the JSR package for AST-level features (`AGTreeParser`, plugin system, diff reports), those now live only in the commercial `@bloqr/compiler` product.
+**Why this moved off the `@jk-com` scope**: the package was originally published as `@jk-com/adblock-compiler`, a personal-project JSR scope. All Bloqr JSR packages — this one and future ones like `@bloqr/diagnostics` — now live under the `@bloqr` scope. `@jk-com/adblock-compiler`'s early versions (0.6.0 through 0.96.0) were actually snapshots of the commercial `bloqr-compiler` product, before that product grew Cloudflare-specific and AdGuard-library-dependent features that don't belong in an open-source, dependency-free package; this repository's compiler — previously a thin orchestration wrapper *around* whatever the old JSR package resolved to — was promoted to be the actual engine, starting at v1.0.0, now published as `@bloqr/compiler-core`.
 
 **Backporting**: performance improvements and core-engine bug fixes discovered in the commercial compiler may be backported into this package when they don't require an AdGuard library or commercial-only infrastructure. See `docs/backporting-policy.md` (repo root) for the criteria and process.
 
-**AGTree decoupling**: the commercial compiler's tight coupling to `@adguard/agtree` is tracked as its own effort — see [bloqr-compiler#2200](https://github.com/BloqrAI/bloqr-compiler/issues/2200) — separate from and not blocking this package.
+**AGTree decoupling**: `bloqr-compiler` is moving to depend on this package directly (via JSR) rather than vendoring its own core copy, eliminating manual backporting — tracked as [bloqr-compiler#2200](https://github.com/BloqrAI/bloqr-compiler/issues/2200).
 
 ## Development
 

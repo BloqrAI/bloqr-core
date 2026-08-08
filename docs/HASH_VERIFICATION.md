@@ -35,7 +35,7 @@ The hash verification system provides **cryptographic proof** that files are not
                          │
                          ▼
 ┌─────────────────────────────────────────────────────────────┐
-│ 3. Compilation (via @jk-com/adblock-compiler)                │
+│ 3. Compilation (via @bloqr/compiler-core)                │
 │    └─ (No hash events - external tool)                     │
 └─────────────────────────────────────────────────────────────┘
                          │

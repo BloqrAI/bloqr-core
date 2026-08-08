@@ -49,20 +49,19 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 RUN curl -fsSL https://deno.land/install.sh | DENO_INSTALL=/usr/local sh -s v${DENO_VERSION} && \
     deno --version
 
-# Pre-cache @jk-com/adblock-compiler (the compilation engine .NET/Python/Rust
-# shell out to via `deno run jsr:@jk-com/adblock-compiler/cli`) and its npm
+# Pre-cache @bloqr/compiler-core (the compilation engine .NET/Python/Rust
+# shell out to via `deno run jsr:@bloqr/compiler-core/cli`) and its npm
 # dependencies, plus the npm dependencies of the other Deno-based TS tools
 # in this repo (AdGuard API client, Linear import tool).
 #
 # The adblock-compiler-core v1.0.0 rewrite hasn't been published to JSR yet
-# (see .github/workflows/publish-jsr.yml's header comment: it needs a
-# one-time manual "link this repo" step on jsr.io before OIDC publish can
-# run) — `jsr:@jk-com/adblock-compiler` still resolves to the old v0.94.0
-# snapshot, which has no `./cli` export. Tolerate that failure here so the
-# image still builds in the meantime; this line will start actually
-# warming the cache once the package is published.
-RUN (deno cache jsr:@jk-com/adblock-compiler/cli || \
-     echo "warning: jsr:@jk-com/adblock-compiler/cli not published yet (see comment above) - skipping pre-cache") && \
+# under its new @bloqr scope (see .github/workflows/publish-jsr.yml's header
+# comment: it needs a one-time manual "link this repo" step on jsr.io before
+# OIDC publish can run) — `jsr:@bloqr/compiler-core` won't resolve until
+# then. Tolerate that failure here so the image still builds in the
+# meantime; this line will start actually warming the cache once published.
+RUN (deno cache jsr:@bloqr/compiler-core/cli || \
+     echo "warning: jsr:@bloqr/compiler-core/cli not published yet (see comment above) - skipping pre-cache") && \
     deno cache npm:commander@^14.0.2 && \
     deno cache npm:inquirer@^13.1.0 && \
     deno cache npm:axios@^1.13.2 && \

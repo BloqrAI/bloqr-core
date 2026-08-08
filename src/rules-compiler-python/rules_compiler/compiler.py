@@ -306,7 +306,7 @@ def format_elapsed(elapsed_ms: int) -> str:
     return f"{elapsed_ms}ms"
 
 
-_JSR_PACKAGE_SPECIFIER = "jsr:@jk-com/adblock-compiler/cli"
+_JSR_PACKAGE_SPECIFIER = "jsr:@bloqr/compiler-core/cli"
 _DENO_PERMISSIONS = (
     "--allow-read",
     "--allow-write",
@@ -320,7 +320,7 @@ def _get_compiler_command(config_path: str, output_path: str) -> tuple[list[str]
     """
     Get the compiler command and working directory.
 
-    Runs adblock-compiler-core (published as @jk-com/adblock-compiler on
+    Runs adblock-compiler-core (published as @bloqr/compiler-core on
     JSR) via Deno.
 
     Returns:

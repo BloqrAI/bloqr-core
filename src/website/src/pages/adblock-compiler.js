@@ -4,7 +4,7 @@ import Layout from "../components/Layout"
 
 const AdBlockCompilerPage = () => {
   return (
-    <Layout pageTitle="@jk-com/adblock-compiler">
+    <Layout pageTitle="@bloqr/compiler-core">
       <p style={{ fontSize: "1.1rem", marginBottom: "2rem" }}>
         The open-source, dependency-free TypeScript filter compilation engine
         that every compiler in this repository dogfoods, published to JSR at
@@ -14,7 +14,7 @@ const AdBlockCompilerPage = () => {
       <section>
         <h2>Overview</h2>
         <p>
-          <code>@jk-com/adblock-compiler</code> is this repository's own
+          <code>@bloqr/compiler-core</code> is this repository's own
           package — its canonical source lives at{" "}
           <a
             href="https://github.com/BloqrAI/bloqr-lists/tree/main/src/adblock-compiler-core"
@@ -25,7 +25,7 @@ const AdBlockCompilerPage = () => {
           </a>{" "}
           and it's published to{" "}
           <a
-            href="https://jsr.io/@jk-com/adblock-compiler"
+            href="https://jsr.io/@bloqr/compiler-core"
             target="_blank"
             rel="noopener noreferrer"
           >
@@ -34,7 +34,7 @@ const AdBlockCompilerPage = () => {
           . It replaced the AdGuard-maintained{" "}
           <code>@adguard/hostlist-compiler</code> npm package that the .NET,
           Python, and Rust compilers in this repo used to shell out to — they
-          now shell out to <code>@jk-com/adblock-compiler</code> instead, and
+          now shell out to <code>@bloqr/compiler-core</code> instead, and
           the TypeScript compiler <em>is</em> the package, compiling
           in-process.
         </p>
@@ -98,7 +98,7 @@ const AdBlockCompilerPage = () => {
           <div className="feature">
             <h3>JSR Distribution</h3>
             <p>
-              Installable with <code>deno add jsr:@jk-com/adblock-compiler</code>,
+              Installable with <code>deno add jsr:@bloqr/compiler-core</code>,
               or run directly with <code>deno run</code> — no npm required.
             </p>
           </div>
@@ -119,17 +119,17 @@ const AdBlockCompilerPage = () => {
         <pre style={{ marginTop: "0.5rem", marginBottom: "1.5rem" }}>
           # Install from JSR
           <br />
-          deno add jsr:@jk-com/adblock-compiler
+          deno add jsr:@bloqr/compiler-core
           <br />
           <br />
           # Or run directly without installation
           <br />
-          deno run jsr:@jk-com/adblock-compiler/cli
+          deno run jsr:@bloqr/compiler-core/cli
         </pre>
 
         <h3>Basic Usage</h3>
         <pre style={{ marginTop: "0.5rem", marginBottom: "1.5rem" }}>
-          {`import { compile } from '@jk-com/adblock-compiler';
+          {`import { compile } from '@bloqr/compiler-core';
 
 // Compile from configuration
 const rules = await compile({
@@ -149,12 +149,12 @@ console.log(\`Compiled \${rules.length} rules\`);`}
         <pre style={{ marginTop: "0.5rem" }}>
           # Compile from config file
           <br />
-          deno run --allow-read --allow-write --allow-env --allow-net --allow-run jsr:@jk-com/adblock-compiler/cli -c config.yaml
+          deno run --allow-read --allow-write --allow-env --allow-net --allow-run jsr:@bloqr/compiler-core/cli -c config.yaml
           <br />
           <br />
           # Show version
           <br />
-          deno run jsr:@jk-com/adblock-compiler/cli --version
+          deno run jsr:@bloqr/compiler-core/cli --version
         </pre>
       </section>
 
@@ -168,7 +168,7 @@ console.log(\`Compiled \${rules.length} rules\`);`}
         </p>
         <pre style={{ marginTop: "0.5rem" }}>
           {`deno run --allow-read --allow-write --allow-env --allow-net --allow-run \\
-  jsr:@jk-com/adblock-compiler/cli \\
+  jsr:@bloqr/compiler-core/cli \\
   --config config.json --output data/output/filters.txt`}
         </pre>
         <p>
@@ -189,7 +189,7 @@ console.log(\`Compiled \${rules.length} rules\`);`}
       <section style={{ marginTop: "2rem" }}>
         <h2>Configuration</h2>
         <p>
-          <code>@jk-com/adblock-compiler</code> supports the same
+          <code>@bloqr/compiler-core</code> supports the same
           configuration schema as AdGuard's <code>hostlist-compiler</code>,
           so existing configurations carry over without changes.
         </p>
@@ -253,7 +253,7 @@ console.log(\`Compiled \${rules.length} rules\`);`}
           <div className="feature">
             <h3>
               <a
-                href="https://jsr.io/@jk-com/adblock-compiler"
+                href="https://jsr.io/@bloqr/compiler-core"
                 target="_blank"
                 rel="noopener noreferrer"
               >
@@ -283,7 +283,7 @@ console.log(\`Compiled \${rules.length} rules\`);`}
       <section style={{ marginTop: "2rem" }}>
         <h2>Comparison with AdGuard's hostlist-compiler</h2>
         <p>
-          <code>@jk-com/adblock-compiler</code> superseded{" "}
+          <code>@bloqr/compiler-core</code> superseded{" "}
           <code>@adguard/hostlist-compiler</code> across every compiler in
           this repository — not as an npm-compatible fork with a fallback
           path, but as a full replacement.
@@ -294,7 +294,7 @@ console.log(\`Compiled \${rules.length} rules\`);`}
             <tr style={{ borderBottom: "2px solid var(--border-color)" }}>
               <th style={{ padding: "0.75rem", textAlign: "left" }}>Feature</th>
               <th style={{ padding: "0.75rem", textAlign: "center" }}>@adguard/hostlist-compiler</th>
-              <th style={{ padding: "0.75rem", textAlign: "center" }}>@jk-com/adblock-compiler</th>
+              <th style={{ padding: "0.75rem", textAlign: "center" }}>@bloqr/compiler-core</th>
             </tr>
           </thead>
           <tbody>
@@ -378,4 +378,4 @@ console.log(\`Compiled \${rules.length} rules\`);`}
 
 export default AdBlockCompilerPage
 
-export const Head = () => <title>@jk-com/adblock-compiler - Bloqr List Utils</title>
+export const Head = () => <title>@bloqr/compiler-core - Bloqr List Utils</title>

@@ -1,7 +1,7 @@
 /**
  * adblock-compiler-core — Deno Entry Point
  *
- * Re-exports the core compilation engine (the `@jk-com/adblock-compiler`
+ * Re-exports the core compilation engine (the `@bloqr/compiler-core`
  * public API) and provides the CLI entry point. For the CLI/config/console
  * orchestration layer, import from `./orchestration/index.ts` (also
  * available as the package's `./orchestration` export subpath).

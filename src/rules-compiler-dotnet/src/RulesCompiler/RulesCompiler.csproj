@@ -8,7 +8,7 @@
     <Authors>jaypatrick</Authors>
     <Company>jaypatrick</Company>
     <AssemblyTitle>AdGuard Filter Rules Compiler</AssemblyTitle>
-    <Description>C# library for compiling AdGuard filter rules using @jk-com/adblock-compiler (via Deno)</Description>
+    <Description>C# library for compiling AdGuard filter rules using @bloqr/compiler-core (via Deno)</Description>
     <Copyright>Copyright 2024</Copyright>
     <RootNamespace>RulesCompiler</RootNamespace>
     <Version>1.0.0</Version>

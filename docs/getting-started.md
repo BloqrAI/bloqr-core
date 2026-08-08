@@ -9,7 +9,7 @@ This guide will help you get up and running with the ad-blocking toolkit.
 | Requirement | Version | Purpose | Installation |
 |-------------|---------|---------|--------------|
 | Deno | 2.0+ | TypeScript compilers and tools | [deno.land](https://deno.land/) |
-| adblock-compiler | 1.0.0 | Filter compilation | `deno run jsr:@jk-com/adblock-compiler/cli` |
+| adblock-compiler | 1.0.0 | Filter compilation | `deno run jsr:@bloqr/compiler-core/cli` |
 
 ### Language-Specific Requirements
 
@@ -48,7 +48,7 @@ Verify installation:
 deno --version
 ```
 
-The `@jk-com/adblock-compiler` package is accessed via Deno's JSR integration.
+The `@bloqr/compiler-core` package is accessed via Deno's JSR integration.
 
 ### 3. Choose Your Compiler
 
@@ -270,9 +270,9 @@ See [Docker Guide](docker-guide.md) for more details.
 
 ## Common Issues
 
-### @jk-com/adblock-compiler not found
+### @bloqr/compiler-core not found
 
-The .NET, Python, and Rust compilers all shell out to `@jk-com/adblock-compiler` via Deno. Make sure Deno is installed:
+The .NET, Python, and Rust compilers all shell out to `@bloqr/compiler-core` via Deno. Make sure Deno is installed:
 
 ```bash
 deno --version
@@ -281,7 +281,7 @@ deno --version
 You can run the compiler CLI directly with:
 
 ```bash
-deno run --allow-read --allow-write --allow-env --allow-net --allow-run jsr:@jk-com/adblock-compiler/cli --version
+deno run --allow-read --allow-write --allow-env --allow-net --allow-run jsr:@bloqr/compiler-core/cli --version
 ```
 
 ### Permission denied on Linux/macOS

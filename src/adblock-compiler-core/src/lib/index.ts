@@ -11,7 +11,7 @@
  *   ConfigurationBuilder,
  *   createRulesCompiler,
  *   createConfiguration
- * } from '@jk-com/adblock-compiler/lib';
+ * } from '@bloqr/compiler-core/lib';
  *
  * // Simple usage
  * const compiler = RulesCompiler.create();

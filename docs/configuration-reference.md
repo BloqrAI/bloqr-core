@@ -1,6 +1,6 @@
 # Configuration Reference
 
-All rules compilers in this repository use the same configuration schema, validated against [`schemas/compiler-config.schema.json`](../schemas/compiler-config.schema.json). The canonical implementation is [`@jk-com/adblock-compiler`](https://jsr.io/@jk-com/adblock-compiler) (`src/adblock-compiler-core/`); see that package's README for the broader architecture story.
+All rules compilers in this repository use the same configuration schema, validated against [`schemas/compiler-config.schema.json`](../schemas/compiler-config.schema.json). The canonical implementation is [`@bloqr/compiler-core`](https://jsr.io/@bloqr/compiler-core) (`src/adblock-compiler-core/`); see that package's README for the broader architecture story.
 
 ## Supported Formats
 
@@ -366,7 +366,7 @@ data/input/          →  Compiler  →  data/output/
 3. Validate syntax of each source
 4. Compute SHA-384 hashes for tampering detection
 5. Fetch internet sources with hash verification
-6. Merge all sources using `@jk-com/adblock-compiler`
+6. Merge all sources using `@bloqr/compiler-core`
 7. Apply transformations (deduplicate, validate, etc.)
 8. Convert hosts format to adblock if needed
 9. Write to `data/output/adguard_user_filter.txt`

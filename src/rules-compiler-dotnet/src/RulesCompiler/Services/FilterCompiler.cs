@@ -2,7 +2,7 @@ namespace RulesCompiler.Services;
 
 /// <summary>
 /// Compiles filter rules using the adblock-compiler-core CLI
-/// (published as @jk-com/adblock-compiler on JSR), run via Deno.
+/// (published as @bloqr/compiler-core on JSR), run via Deno.
 /// </summary>
 public class FilterCompiler : IFilterCompiler
 {
@@ -12,7 +12,7 @@ public class FilterCompiler : IFilterCompiler
     private readonly IChunkingService? _chunkingService;
 
     private const string DenoCommand = "deno";
-    private const string JsrPackageSpecifier = "jsr:@jk-com/adblock-compiler/cli";
+    private const string JsrPackageSpecifier = "jsr:@bloqr/compiler-core/cli";
 
     /// <summary>
     /// Initializes a new instance of the <see cref="FilterCompiler"/> class.

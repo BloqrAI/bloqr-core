@@ -46,15 +46,15 @@ A comprehensive multi-language toolkit for ad-blocking, network protection, and 
 | **Rust** | Native binary | Cargo/Binary | Zero-runtime deps, LTO optimization, workspace unified |
 | **PowerShell** | PowerShell 7+ | Modules | Modern class-based modules, Pester tests, webhook support |
 
-All compilers dogfood **[`@jk-com/adblock-compiler`](https://jsr.io/@jk-com/adblock-compiler)** — this repo's own open-source, dependency-free compilation engine (`src/adblock-compiler-core/`), published to JSR at v1.0.0. [📘 See comprehensive guide →](docs/guides/adblock-compiler-guide.md)
+All compilers dogfood **[`@bloqr/compiler-core`](https://jsr.io/@bloqr/compiler-core)** — this repo's own open-source, dependency-free compilation engine (`src/adblock-compiler-core/`), published to JSR at v1.0.0. [📘 See comprehensive guide →](docs/guides/adblock-compiler-guide.md)
 
-**Why @jk-com/adblock-compiler?**
+**Why @bloqr/compiler-core?**
 - 📦 **We own it**: canonical source lives in this repo at `src/adblock-compiler-core/`, not a third-party dependency
 - 🪶 **Dependency-free core**: no `@adguard/agtree` or other third-party AdGuard library, no Cloudflare-specific code — see [ADR 0001](docs/adr/0001-canonical-rules-compilation-engine.md)
 - 🔧 **Dependency Injection**: Full DI support for testability and customization
 - 📘 **Superior Type Safety**: Complete TypeScript interfaces with JSDoc coverage
 - ⚡ **Chunked parallel compilation**: for large rule lists (10M+ entries)
-- 📦 **JSR Distribution**: `deno add jsr:@jk-com/adblock-compiler`
+- 📦 **JSR Distribution**: `deno add jsr:@bloqr/compiler-core`
 
 This is deliberately kept separate from Bloqr's commercial `@bloqr/compiler` product ([`bloqr-compiler`](https://github.com/BloqrAI/bloqr-compiler) repo), which adds AST tooling, linting, plugins, and Cloudflare Workers deployment on top of AdGuard libraries. See [`src/adblock-compiler-core/README.md`](src/adblock-compiler-core/README.md#architecture) for the full split and the backporting relationship between the two.
 
@@ -130,7 +130,7 @@ bloqr-lists/
 │   │   └── .gitignore                 # Ignore archive contents
 │   └── Config/                        # Compiler configurations (optional)
 ├── src/                               # Source code
-│   ├── adblock-compiler-core/         # TypeScript/Deno compiler (source of @jk-com/adblock-compiler on JSR)
+│   ├── adblock-compiler-core/         # TypeScript/Deno compiler (source of @bloqr/compiler-core on JSR)
 │   ├── rules-compiler-dotnet/         # C#/.NET 10 compiler
 │   ├── rules-compiler-python/         # Python 3.9+ compiler
 │   ├── rules-compiler-rust/           # Rust compiler (single binary)
@@ -230,7 +230,7 @@ curl -fsSL https://deno.land/install.sh | sh
 irm https://deno.land/install.ps1 | iex
 ```
 
-The `@jk-com/adblock-compiler` package is accessed via Deno's JSR integration.
+The `@bloqr/compiler-core` package is accessed via Deno's JSR integration.
 
 ### Clone and Setup
 
@@ -550,7 +550,7 @@ See [`data/archive/README.md`](data/archive/README.md) for detailed usage and re
                         │
                         ▼
 ┌─────────────────────────────────────────────────────┐
-│ 4. Compile with @jk-com/adblock-compiler         │
+│ 4. Compile with @bloqr/compiler-core         │
 │    - Merge all sources                             │
 │    - Apply transformations (dedupe, validate, etc) │
 │    - Convert hosts format to adblock if needed     │
@@ -576,7 +576,7 @@ See [`data/archive/README.md`](data/archive/README.md) for detailed usage and re
 
 ## Rules Compilers
 
-All compilers dogfood [`@jk-com/adblock-compiler`](https://jsr.io/@jk-com/adblock-compiler) (`src/adblock-compiler-core/`, this repo) and support:
+All compilers dogfood [`@bloqr/compiler-core`](https://jsr.io/@bloqr/compiler-core) (`src/adblock-compiler-core/`, this repo) and support:
 
 - **JSON config** (documented format; YAML/TOML remain supported by the underlying readers, see [Configuration Reference](docs/configuration-reference.md))
 - **All 11 transformations**: Deduplicate, Validate, RemoveComments, Compress, etc.
@@ -584,7 +584,7 @@ All compilers dogfood [`@jk-com/adblock-compiler`](https://jsr.io/@jk-com/adbloc
 - **Pattern matching**: Wildcards, regex, file-based patterns
 - **SOLID Architecture**: Dependency injection, single responsibility, better testing
 
-📘 **[Complete @jk-com/adblock-compiler Guide](docs/guides/adblock-compiler-guide.md)** - Why it's better, CI/CD integration, API reference, migration guide
+📘 **[Complete @bloqr/compiler-core Guide](docs/guides/adblock-compiler-guide.md)** - Why it's better, CI/CD integration, API reference, migration guide
 📘 **[adblock-compiler-core README](src/adblock-compiler-core/README.md)** - Package architecture, how it relates to the commercial `@bloqr/compiler`
 
 ### TypeScript Compiler
@@ -621,7 +621,7 @@ deno task test:coverage             # With coverage
 - Built-in TypeScript support, no build step required
 - Interactive console mode with menu-driven interface
 - Dual-mode operation: CLI and interactive modes
-- Library API export via `@jk-com/adblock-compiler/lib`
+- Library API export via `@bloqr/compiler-core/lib`
 - Deno native testing and linting with coverage
 
 ### .NET Compiler
@@ -665,7 +665,7 @@ dotnet test RulesCompiler.slnx
 - Configuration validation with error/warning reporting
 - Dependency injection support
 - Cross-platform (Windows, Linux, macOS)
-- Shells out to `@jk-com/adblock-compiler` via `deno run jsr:@jk-com/adblock-compiler/cli` (requires Deno)
+- Shells out to `@bloqr/compiler-core` via `deno run jsr:@bloqr/compiler-core/cli` (requires Deno)
 
 **Library architecture**: split into three assemblies — `Bloqr.Compiler.Abstractions` (interfaces, event-args, model/DTO types), `Bloqr.Compiler.Core` (config reading/validation, chunking, file-locking, plugin management, compilation pipeline), and `RulesCompiler` (compiler-specific services referencing both). See [.NET Compiler README](src/rules-compiler-dotnet/README.md) for library usage and the full architecture breakdown.
 
@@ -747,7 +747,7 @@ cargo test -p rules-compiler -- --nocapture       # With output
 **Features**:
 - Single statically-linked binary
 - LTO optimization for small binary size
-- Zero runtime dependencies (except Deno, required to run the `@jk-com/adblock-compiler` engine it shells out to)
+- Zero runtime dependencies (except Deno, required to run the `@bloqr/compiler-core` engine it shells out to)
 - Cross-platform support
 - Part of unified workspace with shared dependencies
 
@@ -765,7 +765,7 @@ println!("Compiled {} rules", result.rule_count);
 
 **Location**: `src/rules-compiler-shell/`
 
-Cross-platform shell scripts that use `@jk-com/adblock-compiler` for simple automation and CI/CD pipelines.
+Cross-platform shell scripts that use `@bloqr/compiler-core` for simple automation and CI/CD pipelines.
 
 | Script | Platform | Shell | Features |
 |--------|----------|-------|----------|
@@ -1343,7 +1343,7 @@ GitHub Actions workflows:
 | `typescript.yml` | TypeScript build, lint, and test |
 | `powershell.yml` | PSScriptAnalyzer linting |
 | `release.yml` | Build and publish binaries on version tags |
-| `publish-jsr.yml` | Publish `adblock-compiler-core` to `@jk-com/adblock-compiler` on JSR when the package changes |
+| `publish-jsr.yml` | Publish `adblock-compiler-core` to `@bloqr/compiler-core` on JSR when the package changes |
 | `codeql.yml` | CodeQL security scanning |
 | `devskim.yml` | DevSkim security analysis |
 | `claude.yml` | Claude AI integration |
@@ -1391,14 +1391,14 @@ The repository includes comprehensive documentation:
 
 ### Rules Compilers
 
-- **[@jk-com/adblock-compiler Guide](docs/guides/adblock-compiler-guide.md)** - Core package documentation with CI/CD examples
-- [adblock-compiler-core README](src/adblock-compiler-core/README.md) - TypeScript/Deno compiler, JSR integration, and the `@jk-com` vs `@bloqr` architecture split
+- **[@bloqr/compiler-core Guide](docs/guides/adblock-compiler-guide.md)** - Core package documentation with CI/CD examples
+- [adblock-compiler-core README](src/adblock-compiler-core/README.md) - TypeScript/Deno compiler, JSR integration, and how `@bloqr/compiler-core` relates to Bloqr's commercial compiler
 - [.NET Compiler README](src/rules-compiler-dotnet/README.md) - C# library and CLI, including the `Bloqr.Compiler.Abstractions`/`Bloqr.Compiler.Core` split
 - [Python Compiler README](src/rules-compiler-python/README.md) - pip-installable package
 - [Rust Compiler README](src/rules-compiler-rust/README.md) - Single binary distribution
 - [Shell Scripts README](src/rules-compiler-shell/README.md) - Bash and Zsh wrappers
 - [PowerShell Module](src/adguard-api-powershell/README.md) - Full-featured PowerShell API
-- [ADR 0001: Canonical Rules Compilation Engine](docs/adr/0001-canonical-rules-compilation-engine.md) - Why `@jk-com/adblock-compiler` is an in-repo extraction, not a third-party or commercial dependency
+- [ADR 0001: Canonical Rules Compilation Engine](docs/adr/0001-canonical-rules-compilation-engine.md) - Why `@bloqr/compiler-core` is an in-repo extraction, not a third-party or commercial dependency
 - [Backporting Policy](docs/backporting-policy.md) - Criteria and process for porting fixes from the commercial `bloqr-compiler` into `adblock-compiler-core`
 
 ### Development

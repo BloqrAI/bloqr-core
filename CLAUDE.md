@@ -34,7 +34,7 @@ This repository is a comprehensive multi-language toolkit for ad-blocking, netwo
 - **Website** (`src/website/`) - Gatsby 5 documentation site covering guides, API reference, and security docs
 
 ### Configuration Support
-All compilers support JSON, YAML, and TOML configuration formats with full @jk-com/adblock-compiler compatibility.
+All compilers support JSON, YAML, and TOML configuration formats with full @bloqr/compiler-core compatibility.
 
 ## Docker Development Environment
 
@@ -309,7 +309,7 @@ cargo test config::                       # Tests in module
 - `data/output/adguard_user_filter.txt` - Main tracked filter list consumed by AdGuard DNS
 
 ### Rules Compiler - TypeScript (`src/adblock-compiler-core/`)
-- TypeScript compiler using @jk-com/adblock-compiler
+- TypeScript compiler using @bloqr/compiler-core
 - Deno 2.0+ runtime with npm compatibility
 - Supports JSON, YAML, and TOML configuration formats
 - **Library API** (`src/lib/`):
@@ -434,7 +434,7 @@ cargo test config::                       # Tests in module
 
 ## Configuration Schema
 
-All compilers support the same @jk-com/adblock-compiler configuration schema:
+All compilers support the same @bloqr/compiler-core configuration schema:
 
 ### Root-Level Properties
 | Property | Type | Required | Description |
@@ -505,7 +505,7 @@ GitHub Actions workflows validate:
 | PowerShell | 7+ | PowerShell scripts |
 | Python | 3.9+ | Python compiler |
 | Rust | 1.85+ | Rust compiler (install via rustup) |
-| adblock-compiler | 0.6.0 | TypeScript compiler (via JSR: `deno add @jk-com/adblock-compiler`) |
+| adblock-compiler | 0.6.0 | TypeScript compiler (via JSR: `deno add @bloqr/compiler-core`) |
 | Docker | 24.0+ | Container development (optional but recommended) |
 
 ## Key File Locations

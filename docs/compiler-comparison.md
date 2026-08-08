@@ -29,7 +29,7 @@ deno task compile
 **Pros**:
 - Native TypeScript execution with Deno
 - Built-in npm compatibility
-- Canonical source of `@jk-com/adblock-compiler` — no subprocess overhead, no other compiler shells out to more than this
+- Canonical source of `@bloqr/compiler-core` — no subprocess overhead, no other compiler shells out to more than this
 - Secure by default (explicit permissions)
 
 **Cons**:
@@ -41,12 +41,12 @@ deno task compile
 - YAML, JSON, TOML configuration
 - Debug output mode
 - Copy to rules directory option
-- Library API via `@jk-com/adblock-compiler/lib` (`RulesCompiler`, `ConfigurationBuilder`)
+- Library API via `@bloqr/compiler-core/lib` (`RulesCompiler`, `ConfigurationBuilder`)
 
 **Library Usage**:
 
 ```typescript
-import { compile } from '@jk-com/adblock-compiler';
+import { compile } from '@bloqr/compiler-core';
 
 const rules = await compile({
   name: 'My Filter List',
@@ -155,7 +155,7 @@ cargo build --release
 
 **Pros**:
 - Single statically-linked binary
-- Zero runtime dependencies (except Deno, required for the `@jk-com/adblock-compiler` engine it shells out to)
+- Zero runtime dependencies (except Deno, required for the `@bloqr/compiler-core` engine it shells out to)
 - Fastest startup time
 - Small binary size with LTO
 - Memory safe
@@ -265,7 +265,7 @@ Get-CompilerVersion | Format-List
 | PowerShell | Fast | Medium | None |
 | Shell | Fast | Low | None |
 
-*Note: Actual compilation time depends on `@jk-com/adblock-compiler` (the shared engine all four compilers dogfood), which is the same for all.*
+*Note: Actual compilation time depends on `@bloqr/compiler-core` (the shared engine all four compilers dogfood), which is the same for all.*
 
 ## Decision Matrix
 

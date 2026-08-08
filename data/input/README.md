@@ -173,7 +173,7 @@ data/input/
 2. **Validation**: Lint and verify syntax of each file
 3. **Hashing**: Compute SHA-384 hash for integrity verification
 4. **Remote fetch** (if applicable): Download internet lists with hash verification
-5. **Compilation**: Merge all sources using `@jk-com/adblock-compiler`
+5. **Compilation**: Merge all sources using `@bloqr/compiler-core`
 6. **Output**: Write final adblock-format list to `data/output/adguard_user_filter.txt`
 
 ## Security

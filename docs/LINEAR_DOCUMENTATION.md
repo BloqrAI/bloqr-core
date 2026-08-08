@@ -19,7 +19,7 @@ A comprehensive multi-language toolkit for ad-blocking, network protection, and 
 ├───────────────────────────────────────────────────────────────────────┤
 │                                                                        │
 │  ┌────────────────────────────────────────────────────────────────┐  │
-│  │       @jk-com/adblock-compiler (src/adblock-compiler-core/)      │  │
+│  │       @bloqr/compiler-core (src/adblock-compiler-core/)      │  │
 │  │       Open-source, dependency-free compilation engine            │  │
 │  └────────────────────────────────────────────────────────────────┘  │
 │         │              │              │              │                │
@@ -102,7 +102,7 @@ export ADGUARD_ARCHIVE_RETENTION_DAYS=90
 
 ### 2. TypeScript Rules Compiler (`/src/adblock-compiler-core/`)
 
-**Purpose:** The canonical `@jk-com/adblock-compiler` engine — an open-source, dependency-free filter compilation engine published to JSR, that the .NET/Python/Rust compilers below all shell out to.
+**Purpose:** The canonical `@bloqr/compiler-core` engine — an open-source, dependency-free filter compilation engine published to JSR, that the .NET/Python/Rust compilers below all shell out to.
 
 **Technology Stack:**
 - TypeScript
@@ -129,7 +129,7 @@ export ADGUARD_ARCHIVE_RETENTION_DAYS=90
 
 ### 3. .NET Rules Compiler (`/src/rules-compiler-dotnet/`)
 
-**Purpose:** C# library and Spectre.Console CLI for filter compilation, shelling out to `@jk-com/adblock-compiler` via Deno.
+**Purpose:** C# library and Spectre.Console CLI for filter compilation, shelling out to `@bloqr/compiler-core` via Deno.
 
 **Technology Stack:**
 - .NET 10
@@ -148,7 +148,7 @@ export ADGUARD_ARCHIVE_RETENTION_DAYS=90
 
 ### 4. Python and Rust Rules Compilers (`/src/rules-compiler-python/`, `/src/rules-compiler-rust/`)
 
-**Purpose:** pip-installable and single-binary compiler implementations, both shelling out to `@jk-com/adblock-compiler` via Deno.
+**Purpose:** pip-installable and single-binary compiler implementations, both shelling out to `@bloqr/compiler-core` via Deno.
 
 **Technology Stack:**
 - Python 3.9+ (pytest, mypy, ruff)
@@ -245,7 +245,7 @@ bloqr-lists/
 │       ├── README.md            # Archive documentation
 │       └── .gitignore           # Ignore archive contents
 ├── src/
-│   ├── adblock-compiler-core/    # @jk-com/adblock-compiler (TypeScript)
+│   ├── adblock-compiler-core/    # @bloqr/compiler-core (TypeScript)
 │   ├── rules-compiler-dotnet/    # .NET compiler
 │   ├── rules-compiler-python/    # Python compiler
 │   ├── rules-compiler-rust/      # Rust compiler
@@ -274,7 +274,7 @@ bloqr-lists/
 | Python | `python.yml` | Build/test the Python compiler |
 | Rust | `rust-clippy.yml` | Build/test/lint the Rust workspace |
 | PowerShell | `powershell.yml` | Pester tests and PSScriptAnalyzer |
-| Publish JSR | `publish-jsr.yml` | Publish `adblock-compiler-core` to `@jk-com/adblock-compiler` on JSR |
+| Publish JSR | `publish-jsr.yml` | Publish `adblock-compiler-core` to `@bloqr/compiler-core` on JSR |
 | Gatsby | `gatsby.yml` | Build website, deploy to GitHub Pages |
 | Docker | `docker-image.yml` | Build the `Dockerfile.warp` dev image |
 | Security | `security.yml` | Consolidated CodeQL, DevSkim, PSScriptAnalyzer scanning |
@@ -290,7 +290,7 @@ bloqr-lists/
 ### Compilers
 | Technology | Version | Purpose |
 |------------|---------|---------|
-| Deno | 2.0+ | TypeScript runtime, `@jk-com/adblock-compiler` |
+| Deno | 2.0+ | TypeScript runtime, `@bloqr/compiler-core` |
 | .NET | 10.0 | .NET compiler, API client, Console UI |
 | Python | 3.9+ | Python compiler |
 | Rust | 1.85+ | Rust compiler, validation library, API client |

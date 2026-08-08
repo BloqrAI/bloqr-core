@@ -94,7 +94,7 @@ function validateSource(source: unknown, index: number): string[] {
 }
 
 /**
- * Valid transformation names from @jk-com/adblock-compiler
+ * Valid transformation names from @bloqr/compiler-core
  */
 const VALID_TRANSFORMATIONS = [
   'RemoveComments',

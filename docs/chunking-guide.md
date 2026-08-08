@@ -263,7 +263,7 @@ var options = new ChunkingOptions
 
 ### Memory Considerations
 
-- Each chunk runs a separate `@jk-com/adblock-compiler` process (via `deno run jsr:@jk-com/adblock-compiler/cli` for .NET/Python/Rust, or the TypeScript compiler's own chunking layer)
+- Each chunk runs a separate `@bloqr/compiler-core` process (via `deno run jsr:@bloqr/compiler-core/cli` for .NET/Python/Rust, or the TypeScript compiler's own chunking layer)
 - Memory usage scales with `maxParallel`
 - For memory-constrained systems, reduce `maxParallel` to 2-4
 

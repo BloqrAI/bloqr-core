@@ -282,7 +282,7 @@ export class ConfigurationBuilder {
 
   /**
    * Build the configuration object
-   * @returns IConfiguration compatible with @jk-com/adblock-compiler
+   * @returns IConfiguration compatible with @bloqr/compiler-core
    */
   build(): IConfiguration {
     if (this.sources.length === 0) {

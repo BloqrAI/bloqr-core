@@ -1,11 +1,11 @@
-# @jk-com/adblock-compiler Guide
+# @bloqr/compiler-core Guide
 
-A comprehensive guide to `@jk-com/adblock-compiler` — the in-repo, dependency-free filter compilation engine that all four compilers in this repository dogfood.
+A comprehensive guide to `@bloqr/compiler-core` — the in-repo, dependency-free filter compilation engine that all four compilers in this repository dogfood.
 
 ## Table of Contents
 
-- [What is @jk-com/adblock-compiler?](#what-is-jk-comadblock-compiler)
-- [Why Use @jk-com/adblock-compiler?](#why-use-jk-comadblock-compiler)
+- [What is @bloqr/compiler-core?](#what-is-bloqrcompiler-core)
+- [Why Use @bloqr/compiler-core?](#why-use-bloqrcompiler-core)
 - [Relationship to AdGuard's hostlist-compiler and the commercial bloqr-compiler](#relationship-to-adguards-hostlist-compiler-and-the-commercial-bloqr-compiler)
 - [Installation and Usage](#installation-and-usage)
 - [CI/CD Integration](#cicd-integration)
@@ -13,9 +13,9 @@ A comprehensive guide to `@jk-com/adblock-compiler` — the in-repo, dependency-
 - [Migrating a Compiler from hostlist-compiler](#migrating-a-compiler-from-hostlist-compiler)
 - [API Reference](#api-reference)
 
-## What is @jk-com/adblock-compiler?
+## What is @bloqr/compiler-core?
 
-`@jk-com/adblock-compiler` is this repository's own TypeScript package for compiling ad-blocking filter lists from multiple sources. Its canonical source lives at [`src/adblock-compiler-core/`](../../src/adblock-compiler-core/) in this repo, and it's published to [JSR (JavaScript Registry)](https://jsr.io/@jk-com/adblock-compiler) at v1.0.0. It serves as the core compilation engine for all four rules compilers in this repository (TypeScript directly, .NET/Python/Rust by shelling out to its CLI via Deno).
+`@bloqr/compiler-core` is this repository's own TypeScript package for compiling ad-blocking filter lists from multiple sources. Its canonical source lives at [`src/adblock-compiler-core/`](../../src/adblock-compiler-core/) in this repo, and it's published to [JSR (JavaScript Registry)](https://jsr.io/@bloqr/compiler-core) at v1.0.0. It serves as the core compilation engine for all four rules compilers in this repository (TypeScript directly, .NET/Python/Rust by shelling out to its CLI via Deno).
 
 **Key Features:**
 - ✅ **Multi-source compilation**: Combine local and remote filter lists
@@ -25,19 +25,19 @@ A comprehensive guide to `@jk-com/adblock-compiler` — the in-repo, dependency-
 - ✅ **TypeScript-first**: Full type safety with comprehensive interfaces
 - ✅ **Dependency-free core**: no `@adguard/agtree` or other third-party AdGuard library, no Cloudflare-specific code
 - ✅ **Chunked parallel compilation**: for large rule lists (10M+ entries)
-- ✅ **JSR distribution**: `deno add jsr:@jk-com/adblock-compiler`
+- ✅ **JSR distribution**: `deno add jsr:@bloqr/compiler-core`
 
 **Package Information:**
-- **Registry**: [jsr.io/@jk-com/adblock-compiler](https://jsr.io/@jk-com/adblock-compiler)
+- **Registry**: [jsr.io/@bloqr/compiler-core](https://jsr.io/@bloqr/compiler-core)
 - **Source**: [`src/adblock-compiler-core/`](../../src/adblock-compiler-core/) in this repo ([BloqrAI/bloqr-lists](https://github.com/BloqrAI/bloqr-lists))
 - **Current Version**: 1.0.0
 - **License**: GPL-3.0
 
-## Why Use @jk-com/adblock-compiler?
+## Why Use @bloqr/compiler-core?
 
 ### We own it
 
-Unlike the AdGuard-maintained `@adguard/hostlist-compiler` npm package this repo used to shell out to, `@jk-com/adblock-compiler` is our own code, in this repo, that we can extend, fix, and version on our own schedule. See [ADR 0001](../adr/0001-canonical-rules-compilation-engine.md) for the full decision record.
+Unlike the AdGuard-maintained `@adguard/hostlist-compiler` npm package this repo used to shell out to, `@bloqr/compiler-core` is our own code, in this repo, that we can extend, fix, and version on our own schedule. See [ADR 0001](../adr/0001-canonical-rules-compilation-engine.md) for the full decision record.
 
 ### Dependency Injection
 
@@ -61,16 +61,16 @@ Core compilation components (`FilterCompiler`, downloader, logger) support depen
 
 ## Relationship to AdGuard's hostlist-compiler and the commercial bloqr-compiler
 
-This package is **not** a drop-in npm-compatible fork of `@adguard/hostlist-compiler` with a fallback path — it fully replaced that dependency. The .NET, Python, and Rust compilers previously shelled out to `@adguard/hostlist-compiler`; they now shell out to `@jk-com/adblock-compiler` instead (`deno run jsr:@jk-com/adblock-compiler/cli`). The TypeScript compiler *is* the package — it compiles in-process and always has.
+This package is **not** a drop-in npm-compatible fork of `@adguard/hostlist-compiler` with a fallback path — it fully replaced that dependency. The .NET, Python, and Rust compilers previously shelled out to `@adguard/hostlist-compiler`; they now shell out to `@bloqr/compiler-core` instead (`deno run jsr:@bloqr/compiler-core/cli`). The TypeScript compiler *is* the package — it compiles in-process and always has.
 
-| | `@jk-com/adblock-compiler` (this package) | `@adguard/hostlist-compiler` (superseded) | `@bloqr/compiler` (commercial, separate) |
+| | `@bloqr/compiler-core` (this package) | `@adguard/hostlist-compiler` (superseded) | `@bloqr/compiler` (commercial, separate) |
 |---|---|---|---|
 | Maintained by | This repo | AdGuard | Bloqr (`bloqr-compiler` repo) |
 | Scope | Bare-minimum compilation engine + performance features | Filter compilation | Full-featured product: linting, AST tooling, diff reports, plugin system, Cloudflare Workers deployment |
 | AdGuard libraries (`@adguard/agtree`, etc.) | Not used — rule classification is string/regex-based | N/A | Used, for AST-level rule parsing and validation |
 | Distribution | JSR, open source | npm | Not currently published |
 
-`@jk-com/adblock-compiler` is deliberately kept separate from Bloqr's commercial `@bloqr/compiler` product too — see [`src/adblock-compiler-core/README.md`](../../src/adblock-compiler-core/README.md#architecture) for that split and the backporting relationship between the two, and [`docs/backporting-policy.md`](../backporting-policy.md) for the process.
+`@bloqr/compiler-core` is deliberately kept separate from Bloqr's commercial `@bloqr/compiler` product too — see [`src/adblock-compiler-core/README.md`](../../src/adblock-compiler-core/README.md#architecture) for that split and the backporting relationship between the two, and [`docs/backporting-policy.md`](../backporting-policy.md) for the process.
 
 ### Specific Improvements
 
@@ -82,7 +82,7 @@ This package is **not** a drop-in npm-compatible fork of `@adguard/hostlist-comp
 Error: Invalid configuration
 ```
 
-**After (@jk-com/adblock-compiler):**
+**After (@bloqr/compiler-core):**
 ```typescript
 // Descriptive error with context
 ValidationError: Configuration validation failed
@@ -102,7 +102,7 @@ const rules = await compile(config);
 **After:**
 ```typescript
 // Full type inference
-import type { IConfiguration } from '@jk-com/adblock-compiler';
+import type { IConfiguration } from '@bloqr/compiler-core';
 
 const config: IConfiguration = {
   name: 'My Filter',
@@ -123,7 +123,7 @@ const compiler = new FilterCompiler();
 **After:**
 ```typescript
 // Inject a custom logger, or full options with event hooks
-import { FilterCompiler } from '@jk-com/adblock-compiler';
+import { FilterCompiler } from '@bloqr/compiler-core';
 
 const compiler = new FilterCompiler({
   logger: customLogger,
@@ -143,14 +143,14 @@ const simpleCompiler = new FilterCompiler(customLogger);
 
 ```bash
 # Add to deno.json imports
-deno add jsr:@jk-com/adblock-compiler
+deno add jsr:@bloqr/compiler-core
 ```
 
 **deno.json:**
 ```json
 {
   "imports": {
-    "@jk-com/adblock-compiler": "jsr:@jk-com/adblock-compiler@^1.0.0"
+    "@bloqr/compiler-core": "jsr:@bloqr/compiler-core@^1.0.0"
   }
 }
 ```
@@ -159,14 +159,14 @@ deno add jsr:@jk-com/adblock-compiler
 
 ```bash
 # Install with npm using JSR proxy
-npx jsr add @jk-com/adblock-compiler
+npx jsr add @bloqr/compiler-core
 ```
 
 ### Basic Usage
 
 ```typescript
-import { compile } from '@jk-com/adblock-compiler';
-import type { IConfiguration } from '@jk-com/adblock-compiler';
+import { compile } from '@bloqr/compiler-core';
+import type { IConfiguration } from '@bloqr/compiler-core';
 
 // Define configuration
 const config: IConfiguration = {
@@ -201,8 +201,8 @@ console.log(`Compiled ${rules.length} rules`);
 ### Advanced Usage with Dependency Injection
 
 ```typescript
-import { FilterCompiler } from '@jk-com/adblock-compiler';
-import type { ILogger, IConfiguration } from '@jk-com/adblock-compiler';
+import { FilterCompiler } from '@bloqr/compiler-core';
+import type { ILogger, IConfiguration } from '@bloqr/compiler-core';
 
 // Custom logger implementation
 class CustomLogger implements ILogger {
@@ -241,7 +241,7 @@ const result = await compiler.compile(config);
 
 ## CI/CD Integration
 
-The `@jk-com/adblock-compiler` package is designed for seamless integration into CI/CD pipelines.
+The `@bloqr/compiler-core` package is designed for seamless integration into CI/CD pipelines.
 
 ### GitHub Actions
 
@@ -282,7 +282,7 @@ jobs:
       - name: Compile filter rules
         run: |
           deno run --allow-read --allow-write --allow-env --allow-net \
-            jsr:@jk-com/adblock-compiler/cli \
+            jsr:@bloqr/compiler-core/cli \
             --config compiler-config.json \
             --output data/output/filters.txt
       
@@ -384,7 +384,7 @@ compile-filters:
   
   script:
     - deno run --allow-read --allow-write --allow-env --allow-net
-        jsr:@jk-com/adblock-compiler/cli
+        jsr:@bloqr/compiler-core/cli
         --config compiler-config.json
         --output data/output/filters.txt
   
@@ -442,7 +442,7 @@ pipeline {
             steps {
                 sh '''
                     deno run --allow-read --allow-write --allow-env --allow-net \
-                        jsr:@jk-com/adblock-compiler/cli \
+                        jsr:@bloqr/compiler-core/cli \
                         --config compiler-config.json \
                         --output data/output/filters.txt
                 '''
@@ -501,13 +501,13 @@ set -euo pipefail
 CONFIG_FILE="${1:-compiler-config.json}"
 OUTPUT_FILE="${2:-data/output/filters.txt}"
 
-echo "Compiling filters using @jk-com/adblock-compiler..."
+echo "Compiling filters using @bloqr/compiler-core..."
 echo "  Config: $CONFIG_FILE"
 echo "  Output: $OUTPUT_FILE"
 
 # Compile filters
 deno run --allow-read --allow-write --allow-env --allow-net \
-  jsr:@jk-com/adblock-compiler/cli \
+  jsr:@bloqr/compiler-core/cli \
   --config "$CONFIG_FILE" \
   --output "$OUTPUT_FILE"
 
@@ -538,13 +538,13 @@ param(
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 
-Write-Host "Compiling filters using @jk-com/adblock-compiler..." -ForegroundColor Cyan
+Write-Host "Compiling filters using @bloqr/compiler-core..." -ForegroundColor Cyan
 Write-Host "  Config: $ConfigFile" -ForegroundColor Gray
 Write-Host "  Output: $OutputFile" -ForegroundColor Gray
 
 # Compile filters
 deno run --allow-read --allow-write --allow-env --allow-net `
-  jsr:@jk-com/adblock-compiler/cli `
+  jsr:@bloqr/compiler-core/cli `
   --config $ConfigFile `
   --output $OutputFile
 
@@ -578,12 +578,12 @@ COPY compiler-config.json .
 COPY data/ data/
 
 # Install dependencies (cached layer)
-RUN deno cache jsr:@jk-com/adblock-compiler/cli
+RUN deno cache jsr:@bloqr/compiler-core/cli
 
 # Compile filters on container start
 CMD ["deno", "run", \
      "--allow-read", "--allow-write", "--allow-env", "--allow-net", \
-     "jsr:@jk-com/adblock-compiler/cli", \
+     "jsr:@bloqr/compiler-core/cli", \
      "--config", "compiler-config.json", \
      "--output", "data/output/filters.txt"]
 ```
@@ -611,7 +611,7 @@ The package is organized into a small number of top-level modules, each independ
 
 ```
 src/adblock-compiler-core/
-├── src/index.ts            # Core compilation engine (@jk-com/adblock-compiler)
+├── src/index.ts            # Core compilation engine (@bloqr/compiler-core)
 │                            #   FilterCompiler, SourceCompiler, compile(), transformations,
 │                            #   downloader, formatters, ConfigurationValidator
 ├── src/orchestration/       # CLI/config/chunking wrapper layer (./orchestration)
@@ -688,7 +688,7 @@ All 11 transformations supported by every compiler in this repository:
 
 ## Migrating a Compiler from hostlist-compiler
 
-This is the migration this repository itself already completed for the .NET, Python, and Rust compilers (the TypeScript compiler *is* `@jk-com/adblock-compiler` — there's nothing to migrate there). If you maintain a similar subprocess-based compiler wrapper elsewhere, the same steps apply.
+This is the migration this repository itself already completed for the .NET, Python, and Rust compilers (the TypeScript compiler *is* `@bloqr/compiler-core` — there's nothing to migrate there). If you maintain a similar subprocess-based compiler wrapper elsewhere, the same steps apply.
 
 ### Step 1: Update the Subprocess Target
 
@@ -702,7 +702,7 @@ deno run --allow-read --allow-write --allow-env --allow-net --allow-run \
 **After** (shelling out to this package's CLI export):
 ```bash
 deno run --allow-read --allow-write --allow-env --allow-net --allow-run \
-  jsr:@jk-com/adblock-compiler/cli \
+  jsr:@bloqr/compiler-core/cli \
   --config config.json --output output.txt
 ```
 
@@ -721,26 +721,26 @@ deno run --allow-read --allow-write --allow-env --allow-net --allow-run \
 ```json
 {
   "imports": {
-    "@jk-com/adblock-compiler": "jsr:@jk-com/adblock-compiler@^1.0.0"
+    "@bloqr/compiler-core": "jsr:@bloqr/compiler-core@^1.0.0"
   }
 }
 ```
 
 ```typescript
-import { compile } from '@jk-com/adblock-compiler';
+import { compile } from '@bloqr/compiler-core';
 ```
 
 ### Step 3: Verify Compilation
 
-The two packages are **not guaranteed to produce byte-identical output** — `@jk-com/adblock-compiler` is an independent implementation, not a fork. Diff a real config's output against your previous compiler before switching a production pipeline over:
+The two packages are **not guaranteed to produce byte-identical output** — `@bloqr/compiler-core` is an independent implementation, not a fork. Diff a real config's output against your previous compiler before switching a production pipeline over:
 
 ```bash
 # Compile with the old subprocess target
 deno run --allow-all old-compiler-invocation.ts > output-old.txt
 
-# Compile with @jk-com/adblock-compiler
+# Compile with @bloqr/compiler-core
 deno run --allow-read --allow-write --allow-env --allow-net --allow-run \
-  jsr:@jk-com/adblock-compiler/cli --config config.json --output output-new.txt
+  jsr:@bloqr/compiler-core/cli --config config.json --output output-new.txt
 
 diff output-old.txt output-new.txt
 ```
@@ -792,7 +792,7 @@ Configuration validation is a separate concern — use `ConfigurationValidator` 
 
 **Example:**
 ```typescript
-import { FilterCompiler } from '@jk-com/adblock-compiler';
+import { FilterCompiler } from '@bloqr/compiler-core';
 
 const compiler = new FilterCompiler(customLogger);
 const rules = await compiler.compile(config);
@@ -803,7 +803,7 @@ const rules = await compiler.compile(config);
 Validates a configuration object against the package's Zod schema, independent of compilation.
 
 ```typescript
-import { ConfigurationValidator } from '@jk-com/adblock-compiler';
+import { ConfigurationValidator } from '@bloqr/compiler-core';
 
 const validator = new ConfigurationValidator();
 const result = validator.validate(config); // IValidationResult
@@ -821,7 +821,7 @@ import type {
   IValidationResult,
   TransformationType,
   SourceType
-} from '@jk-com/adblock-compiler';
+} from '@bloqr/compiler-core';
 ```
 
 ## Best Practices
@@ -830,14 +830,14 @@ import type {
 
 ```typescript
 // Separate type imports from value imports
-import { compile } from '@jk-com/adblock-compiler';
-import type { IConfiguration } from '@jk-com/adblock-compiler';
+import { compile } from '@bloqr/compiler-core';
+import type { IConfiguration } from '@bloqr/compiler-core';
 ```
 
 ### 2. Validate Configuration Early
 
 ```typescript
-import { ConfigurationValidator, FilterCompiler } from '@jk-com/adblock-compiler';
+import { ConfigurationValidator, FilterCompiler } from '@bloqr/compiler-core';
 
 const validator = new ConfigurationValidator();
 const validation = validator.validate(config);
@@ -854,8 +854,8 @@ const rules = await compiler.compile(config);
 ### 3. Use Custom Logger for Production
 
 ```typescript
-import { FilterCompiler } from '@jk-com/adblock-compiler';
-import type { ILogger } from '@jk-com/adblock-compiler';
+import { FilterCompiler } from '@bloqr/compiler-core';
+import type { ILogger } from '@bloqr/compiler-core';
 
 class ProductionLogger implements ILogger {
   info(msg: string) { /* Send to logging service */ }
@@ -889,7 +889,7 @@ await cache.set(cacheKey, rules, { ttl: 3600 });
 
 #### 1. JSR Registry Unreachable
 
-**Symptom:** `Failed to load jsr:@jk-com/adblock-compiler`
+**Symptom:** `Failed to load jsr:@bloqr/compiler-core`
 
 **Solutions:**
 - Check internet connectivity to jsr.io
@@ -906,19 +906,19 @@ await cache.set(cacheKey, rules, { ttl: 3600 });
 deno cache --reload src/mod.ts
 ```
 
-#### 3. deno run jsr:@jk-com/adblock-compiler/cli not found (.NET/Python/Rust compilers)
+#### 3. deno run jsr:@bloqr/compiler-core/cli not found (.NET/Python/Rust compilers)
 
 **Symptom:** The .NET, Python, or Rust compiler reports the compiler CLI is unavailable
 
 **Solution:** These compilers shell out to Deno, not to a local binary. Confirm Deno is installed and on `PATH`:
 ```bash
 deno --version
-deno run --allow-read --allow-write --allow-env --allow-net --allow-run jsr:@jk-com/adblock-compiler/cli --version
+deno run --allow-read --allow-write --allow-env --allow-net --allow-run jsr:@bloqr/compiler-core/cli --version
 ```
 
 ## Resources
 
-- **JSR Package**: https://jsr.io/@jk-com/adblock-compiler
+- **JSR Package**: https://jsr.io/@bloqr/compiler-core
 - **Source Code**: [`src/adblock-compiler-core/`](../../src/adblock-compiler-core/) in this repo
 - **Issue Tracker**: https://github.com/BloqrAI/bloqr-lists/issues
 - **This Repository**: https://github.com/BloqrAI/bloqr-lists
@@ -934,7 +934,7 @@ See [`src/adblock-compiler-core/CHANGELOG.md`](../../src/adblock-compiler-core/C
 
 ## Contributing
 
-Contributions to `@jk-com/adblock-compiler` are welcome! Please:
+Contributions to `@bloqr/compiler-core` are welcome! Please:
 
 1. Work in [`src/adblock-compiler-core/`](../../src/adblock-compiler-core/) in this repository
 2. Review [CONTRIBUTING.md](../../CONTRIBUTING.md)

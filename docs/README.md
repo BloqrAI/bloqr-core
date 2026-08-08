@@ -29,7 +29,7 @@ This directory contains comprehensive documentation for the ad-blocking reposito
 | Guide | Description |
 |-------|-------------|
 | [Getting Started](getting-started.md) | Installation, prerequisites, and quick start |
-| [**@jk-com/adblock-compiler Guide**](guides/adblock-compiler-guide.md) | **Core compilation package with CI/CD examples** |
+| [**@bloqr/compiler-core Guide**](guides/adblock-compiler-guide.md) | **Core compilation package with CI/CD examples** |
 | [Docker Guide](docker-guide.md) | Using Docker for development |
 | [Configuration Reference](configuration-reference.md) | Full configuration schema documentation |
 | [Compiler Comparison](compiler-comparison.md) | Feature comparison of all compilers |
@@ -86,7 +86,7 @@ Auto-generated API documentation for the AdGuard DNS API Client (v1.15).
 | .NET API Client | [src/adguard-api-dotnet/README.md](../src/adguard-api-dotnet/README.md) |
 | TypeScript API Client | [src/adguard-api-typescript/README.md](../src/adguard-api-typescript/README.md) |
 | Rust API Client | [src/adguard-api-rust/README.md](../src/adguard-api-rust/README.md) |
-| TypeScript Compiler (`@jk-com/adblock-compiler`) | [src/adblock-compiler-core/README.md](../src/adblock-compiler-core/README.md) |
+| TypeScript Compiler (`@bloqr/compiler-core`) | [src/adblock-compiler-core/README.md](../src/adblock-compiler-core/README.md) |
 | .NET Compiler | [src/rules-compiler-dotnet/README.md](../src/rules-compiler-dotnet/README.md) |
 | Python Compiler | [src/rules-compiler-python/README.md](../src/rules-compiler-python/README.md) |
 | Rust Compiler | [src/rules-compiler-rust/README.md](../src/rules-compiler-rust/README.md) |
@@ -140,6 +140,6 @@ All URIs are relative to `https://api.adguard-dns.io`
 
 - [AdGuard DNS](https://adguard-dns.io/)
 - [AdGuard DNS API Documentation](https://api.adguard-dns.io/static/swagger/swagger.json)
-- [@jk-com/adblock-compiler on JSR](https://jsr.io/@jk-com/adblock-compiler)
+- [@bloqr/compiler-core on JSR](https://jsr.io/@bloqr/compiler-core)
 - [AdBlock Tester](https://adblock-tester.com/)
 - [AdGuard Tester](https://d3ward.github.io/toolz/adblock.html)
