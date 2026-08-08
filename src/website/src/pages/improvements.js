@@ -104,5 +104,5 @@ export const query = graphql`
 export default ImprovementsPage
 
 export const Head = () => (
-  <title>Recent Improvements - AdGuard Tools and Utilities</title>
+  <title>Recent Improvements - Bloqr List Utils</title>
 )

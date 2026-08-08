@@ -1,8 +1,8 @@
 /**
- * Package identity constants for @jk-com/adblock-compiler.
+ * Package identity constants for @bloqr/compiler-core.
  */
 export const VERSION = '1.0.0';
-export const PACKAGE_NAME = '@jk-com/adblock-compiler';
+export const PACKAGE_NAME = '@bloqr/compiler-core';
 export const USER_AGENT = `${PACKAGE_NAME}/${VERSION}`;
 
 export const PACKAGE_INFO = {

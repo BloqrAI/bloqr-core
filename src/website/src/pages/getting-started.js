@@ -7,14 +7,14 @@ const GettingStartedPage = () => {
     <Layout pageTitle="Getting Started">
       <p style={{ fontSize: "1.1rem", marginBottom: "2rem" }}>
         This guide will help get started with the
-        AdGuard Tools and Utilities in just a few minutes.
+        Bloqr List Utils in just a few minutes.
       </p>
 
       <section>
         <h2>Quick Start Options</h2>
         <div className="features">
           <div className="feature">
-            <h3>🚀 Interactive Launcher (Recommended)</h3>
+            <h3>Interactive Launcher (Recommended)</h3>
             <p>The easiest way to get started. Choose your platform:</p>
             <ul>
               <li>
@@ -30,7 +30,7 @@ const GettingStartedPage = () => {
             </p>
           </div>
           <div className="feature">
-            <h3>📦 Choose Your Language</h3>
+            <h3>Choose Your Language</h3>
             <p>Pick the compiler that fits your environment:</p>
             <ul>
               <li>
@@ -75,9 +75,10 @@ const GettingStartedPage = () => {
           </li>
         </ul>
         <p>
-          All compilers wrap either <code>@adguard/hostlist-compiler</code> or{" "}
-          <Link to="/adblock-compiler">AdBlock Compiler</Link> (a modern TypeScript rewrite
-          with production features).
+          All compilers dogfood{" "}
+          <Link to="/adblock-compiler">@bloqr/compiler-core</Link>, this
+          repository's own open-source, dependency-free compilation engine
+          published to JSR.
         </p>
       </section>
 
@@ -87,9 +88,9 @@ const GettingStartedPage = () => {
           <li>
             <strong>Clone the repository:</strong>
             <pre style={{ marginTop: "0.5rem" }}>
-              git clone https://github.com/Bloqr-Systems/bloqr-lists.git
+              git clone https://github.com/BloqrAI/bloqr-lists.git
               <br />
-              cd ad-blocking
+              cd bloqr-lists
             </pre>
           </li>
           <li>
@@ -117,7 +118,7 @@ const GettingStartedPage = () => {
             <pre style={{ marginTop: "0.5rem" }}>
               # TypeScript
               <br />
-              cd src/rules-compiler-typescript && deno task compile
+              cd src/adblock-compiler-core && deno task compile
               <br />
               <br />
               # .NET
@@ -161,7 +162,7 @@ const GettingStartedPage = () => {
           </div>
           <div className="feature">
             <h3>
-              <a href="https://github.com/Bloqr-Systems/bloqr-lists">
+              <a href="https://github.com/BloqrAI/bloqr-lists">
                 Join the Community
               </a>
             </h3>
@@ -171,10 +172,11 @@ const GettingStartedPage = () => {
           </div>
           <div className="feature">
             <h3>
-              <Link to="/adblock-compiler">Try AdBlock Compiler</Link>
+              <Link to="/adblock-compiler">@bloqr/compiler-core</Link>
             </h3>
             <p>
-              Modern compiler-as-a-service with web UI, batch processing, and visual diff.
+              Learn about the open-source compilation engine that powers every
+              compiler in this repository.
             </p>
           </div>
         </div>
@@ -184,8 +186,9 @@ const GettingStartedPage = () => {
         style={{
           marginTop: "2rem",
           padding: "1.5rem",
-          backgroundColor: "#f0f0f0",
-          borderRadius: "8px",
+          backgroundColor: "var(--surface-color)",
+          border: "1px solid var(--border-color)",
+          borderRadius: "12px",
         }}
       >
         <h2>Need Help?</h2>
@@ -201,4 +204,4 @@ const GettingStartedPage = () => {
 
 export default GettingStartedPage
 
-export const Head = () => <title>Getting Started - AdGuard Tools and Utilities</title>
+export const Head = () => <title>Getting Started - Bloqr List Utils</title>

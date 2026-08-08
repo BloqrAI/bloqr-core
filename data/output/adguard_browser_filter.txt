@@ -2,15 +2,15 @@
 ! Title: Bloqr Browser Rules
 ! Description: This is the Bloqr browser filter list
 ! Version: 2.0.0.26
-! Homepage: https://github.com/bloqr-systems
+! Homepage: https://github.com/BloqrAI/bloqr-lists
 ! License: GPLv3
 !
 ! Last modified: 2026-07-23T03:45:10.864Z
 ! Expires: 90 days (update frequency)
 ! License: https://github.com/AdguardTeam/AdguardSDNSFilter/blob/master/LICENSE
-! Compiled by @bloqr-systems/bloqr-compiler v0.102.00
+! Compiled by @BloqrAI/bloqr-compiler v0.102.00
 ! Source name: Bloqr Browser filter rules
-! Source: https://raw.githubusercontent.com/bloqr-systems/refs/heads/main/data/output/adguard_browser_filter.txt
+! Source: https://raw.githubusercontent.com/BloqrAI/bloqr-lists/refs/heads/main/data/output/adguard_browser_filter.txt
 
 ! --- DO NOT ADD TO DNS SINKHOLE LISTS ---
 

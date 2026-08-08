@@ -263,7 +263,7 @@ var options = new ChunkingOptions
 
 ### Memory Considerations
 
-- Each chunk runs a separate `hostlist-compiler` process
+- Each chunk runs a separate `@bloqr/compiler-core` process (via `deno run jsr:@bloqr/compiler-core/cli` for .NET/Python/Rust, or the TypeScript compiler's own chunking layer)
 - Memory usage scales with `maxParallel`
 - For memory-constrained systems, reduce `maxParallel` to 2-4
 

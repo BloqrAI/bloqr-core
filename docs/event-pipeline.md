@@ -160,7 +160,7 @@ Local source files are locked during compilation to prevent modification:
 ### .NET
 
 ```csharp
-using RulesCompiler.Abstractions;
+using Bloqr.Compiler.Abstractions;
 
 public class MyEventHandler : CompilationEventHandlerBase
 {

@@ -1,6 +1,6 @@
 /**
  * Parallel compilation using Deno workers for chunked rule compilation
- * Enables multi-threaded compilation to work around single-threaded @jk-com/adblock-compiler
+ * Enables multi-threaded compilation to work around single-threaded @bloqr/compiler-core
  */
 
 import compile, { type IConfiguration } from '../index.ts';

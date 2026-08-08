@@ -34,7 +34,7 @@ Install the required tools for the language you're working with:
 ```bash
 # Clone the repository
 git clone https://github.com/BloqrAI/bloqr-lists.git
-cd ad-blocking
+cd bloqr-lists
 
 # Build all projects (or specific language ecosystems)
 ./build.sh              # All projects
@@ -49,7 +49,7 @@ See [README.md](README.md) for detailed setup instructions.
 This is a multi-language monorepo organized as follows:
 
 ```
-ad-blocking/
+bloqr-lists/
 ├── api/                    # Centralized OpenAPI specifications
 ├── docs/                   # All documentation
 ├── tools/                  # Build and utility scripts

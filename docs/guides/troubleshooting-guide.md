@@ -87,13 +87,13 @@ deno run -A src/mod.ts
 
 ### adblock-compiler Not Found
 
-**Symptom:** `jsr:@jk-com/adblock-compiler not found`
+**Symptom:** `jsr:@bloqr/compiler-core not found`
 
 **Solution:**
 
 ```bash
 # Test JSR specifier
-deno run --allow-all jsr:@jk-com/adblock-compiler --version
+deno run --allow-all jsr:@bloqr/compiler-core --version
 
 # If that works, the issue is with your configuration
 # Check deno.json for correct JSR imports

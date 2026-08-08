@@ -1,43 +1,48 @@
-# Ad-Blocking Repository - Linear Documentation
+# Bloqr List Utils - Linear Documentation
 
 ## Project Overview
 
-A comprehensive, multi-component ad-blocking solution designed for network-level ad, tracker, and malware blocking. This repository supports IoT devices, smart TVs, and devices without installation capability using AdGuard DNS integration.
+A comprehensive multi-language toolkit for ad-blocking, network protection, and AdGuard DNS management. Features filter rule compilers in 4 core languages (TypeScript, .NET, Python, Rust) plus PowerShell modules, complete API SDKs in C#, TypeScript, and Rust with interactive console interfaces, a Rust validation library, and shell script wrappers.
 
 | Property | Value |
 |----------|-------|
-| **Current Version** | 4.3.2.42 |
 | **License** | GPLv3 |
-| **Last Updated** | November 26, 2025 |
-| **Total Filter Rules** | 466 compiled rules |
+| **Repository** | [BloqrAI/bloqr-lists](https://github.com/BloqrAI/bloqr-lists) |
 
 ---
 
 ## Architecture Overview
 
 ```
-┌─────────────────────────────────────────────────────────────────┐
-│                     Ad-Blocking System                          │
-├─────────────────────────────────────────────────────────────────┤
-│                                                                 │
-│  ┌──────────────┐    ┌──────────────┐    ┌──────────────┐      │
-│  │   Filter     │    │  API Client  │    │  Console UI  │      │
-│  │  Compiler    │    │   (SDK)      │    │   (CLI)      │      │
-│  │ (TypeScript) │    │    (C#)      │    │ (Spectre)    │      │
-│  └──────────────┘    └──────────────┘    └──────────────┘      │
-│         │                   │                   │               │
-│         ▼                   ▼                   ▼               │
-│  ┌──────────────┐    ┌──────────────┐    ┌──────────────┐      │
-│  │ Filter Rules │    │   AdGuard    │    │  PowerShell  │      │
-│  │    (.txt)    │    │   DNS API    │    │   Scripts    │      │
-│  └──────────────┘    └──────────────┘    └──────────────┘      │
-│                                                                 │
-│  ┌──────────────┐                                               │
-│  │   Website    │                                               │
-│  │   (Gatsby)   │                                               │
-│  └──────────────┘                                               │
-│                                                                 │
-└─────────────────────────────────────────────────────────────────┘
+┌───────────────────────────────────────────────────────────────────────┐
+│                        Bloqr List Utils                               │
+├───────────────────────────────────────────────────────────────────────┤
+│                                                                        │
+│  ┌────────────────────────────────────────────────────────────────┐  │
+│  │       @bloqr/compiler-core (src/adblock-compiler-core/)      │  │
+│  │       Open-source, dependency-free compilation engine            │  │
+│  └────────────────────────────────────────────────────────────────┘  │
+│         │              │              │              │                │
+│         ▼              ▼              ▼              ▼                │
+│  ┌───────────┐  ┌───────────┐  ┌───────────┐  ┌───────────┐          │
+│  │TypeScript │  │   .NET    │  │  Python   │  │   Rust    │          │
+│  │ Compiler  │  │ Compiler  │  │ Compiler  │  │ Compiler  │          │
+│  │(in-process)│  │(shells out)│  │(shells out)│  │(shells out)│         │
+│  └───────────┘  └───────────┘  └───────────┘  └───────────┘          │
+│         │              │              │              │                │
+│         └──────────────┴──────────────┴──────────────┘                │
+│                             ▼                                         │
+│                    ┌──────────────┐                                   │
+│                    │ Filter Rules │                                   │
+│                    │    (.txt)    │                                   │
+│                    └──────────────┘                                   │
+│                                                                        │
+│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐                 │
+│  │  API Clients │  │Rules Validator│  │  Website     │                │
+│  │ (C#/TS/Rust) │  │    (Rust)     │  │  (Gatsby)    │                │
+│  └──────────────┘  └──────────────┘  └──────────────┘                 │
+│                                                                        │
+└───────────────────────────────────────────────────────────────────────┘
 ```
 
 ---
@@ -70,16 +75,7 @@ Source location for filter rules before compilation:
 
 #### Compiled Output (`data/output/`)
 
-**Main File:** `adguard_user_filter.txt` (adblock format, 466+ lines)
-
-**Blocked Categories:**
-- Ad service domains (Google, Facebook, Twitter, TikTok, Amazon)
-- Analytics and tracking (Google Analytics, Sentry, Bugsnag)
-- Platform-specific ad servers (Apple, Samsung, Realme, Oppo)
-- Error reporting services
-
-**Allowlisted:**
-- Development tools (Microsoft, Postman, DataDog)
+Filter lists compiled from `data/input/` sources plus any remote sources configured in the compiler config, in adblock format.
 
 #### Archive Storage (`data/archive/`)
 
@@ -104,50 +100,71 @@ export ADGUARD_ARCHIVE_RETENTION_DAYS=90
 
 ---
 
-### 2. Filter Compiler (`/src/filter-compiler/`)
+### 2. TypeScript Rules Compiler (`/src/adblock-compiler-core/`)
 
-**Purpose:** TypeScript-based rule aggregation and transformation engine.
+**Purpose:** The canonical `@bloqr/compiler-core` engine — an open-source, dependency-free filter compilation engine published to JSR, that the .NET/Python/Rust compilers below all shell out to.
 
 **Technology Stack:**
-- TypeScript 5.4.5
-- @jk-com/adblock-compiler v0.6.0
-- Deno test (testing)
+- TypeScript
 - Deno 2.0+
+- Deno test (testing)
+- No third-party AdGuard library (`@adguard/agtree`, etc.) — rule classification is string/regex-based
 
 **Key Files:**
 | File | Description |
-|------|-------------|
-| `invoke-compiler.ts` | Main compilation logic |
-| `invoke-compiler.test.ts` | Jest unit tests |
-| `compiler-config.json` | Compilation configuration |
-| `invoke-compiler.ps1` | PowerShell wrapper script |
+|------|--------------|
+| `src/index.ts` | Core compilation engine (compiler, transformations, downloader, formatters) |
+| `src/orchestration/` | CLI/config/chunking wrapper layer |
+| `src/console/` | Interactive terminal UI |
+| `src/lib/` | Builder-pattern library API |
+| `deno.json` | Deno configuration, tasks, and JSR export map |
 
 **Transformations Applied:**
-- Deduplication
-- Compression
-- Validation
-- ASCII conversion
-- Whitespace cleanup
+- Deduplication, Compression, Validation, ASCII conversion, whitespace cleanup, and 6 more (11 total)
 
 **Configuration Sources:**
-- Local: `../../data/output/adguard_user_filter.txt`
-- Remote: GitHub-hosted filter lists
+- Local files (`data/input/`) and remote URLs, per `compiler-config.json`
 
 ---
 
-### 3. AdGuard DNS API Client (`/src/adguard-api-dotnet/`)
+### 3. .NET Rules Compiler (`/src/rules-compiler-dotnet/`)
 
-**Purpose:** C# SDK for programmatic access to AdGuard DNS API v1.15.
+**Purpose:** C# library and Spectre.Console CLI for filter compilation, shelling out to `@bloqr/compiler-core` via Deno.
 
-**Generation:** Auto-generated from OpenAPI specification using OpenAPI Generator v7.16.0
+**Technology Stack:**
+- .NET 10
+- C#
+- xUnit (testing)
 
-**Solution Projects:**
+**Key Projects:**
+| Project | Description |
+|---------|--------------|
+| `Bloqr.Compiler.Abstractions` | Interfaces, event-args, and model/DTO types |
+| `Bloqr.Compiler.Core` | Configuration reading/validation, chunking, file-locking, plugin management, compilation pipeline |
+| `RulesCompiler` | Compiler-specific services (e.g. `FilterCompiler`) referencing both of the above |
+| `RulesCompiler.Console` | Spectre.Console interactive and CLI frontend |
 
-| Project | Purpose |
-|---------|---------|
-| `AdGuard.ApiClient` | Core SDK library |
-| `AdGuard.ApiClient.Test` | Unit tests |
-| `AdGuard.ConsoleUI` | Interactive CLI application |
+---
+
+### 4. Python and Rust Rules Compilers (`/src/rules-compiler-python/`, `/src/rules-compiler-rust/`)
+
+**Purpose:** pip-installable and single-binary compiler implementations, both shelling out to `@bloqr/compiler-core` via Deno.
+
+**Technology Stack:**
+- Python 3.9+ (pytest, mypy, ruff)
+- Rust 1.85+ (cargo test, clippy, LTO release builds)
+
+---
+
+### 5. AdGuard DNS API Clients (`/src/adguard-api-dotnet/`, `/src/adguard-api-typescript/`, `/src/adguard-api-rust/`)
+
+**Purpose:** SDKs for programmatic access to AdGuard DNS API v1.15, auto-generated from OpenAPI specification.
+
+**Key Files:**
+| File | Description |
+|------|--------------|
+| `api/openapi.json` | Centralized AdGuard DNS API v1.15 spec (primary) |
+| `src/AdGuard.ConsoleUI/` | Spectre.Console interactive CLI (.NET) |
 
 **API Coverage:**
 - Account management (limits, usage)
@@ -159,95 +176,88 @@ export ADGUARD_ARCHIVE_RETENTION_DAYS=90
 - DNS statistics and reporting
 - Web services configuration
 
-**Authentication:**
-- API Key
-- Bearer Token (OAuth)
-
-**Dependencies:**
-- Newtonsoft.Json v13.0.2+
-- JsonSubTypes v1.8.0+
-- System.ComponentModel.Annotations v5.0.0+
+**Authentication:** API Key and Bearer Token (OAuth)
 
 ---
 
-### 4. Console UI (`/src/adguard-api-dotnet/src/AdGuard.ConsoleUI/`)
+### 6. Rules Validator (`/src/rules-validator/`)
 
-**Purpose:** Interactive command-line interface for managing AdGuard DNS configurations.
+**Purpose:** Rust library and CLI for validating filter and configuration files, with a real `extern "C"` FFI surface for embedding in .NET via P/Invoke.
 
-**Services:**
-| Service | Functionality |
-|---------|---------------|
-| `AccountMenuService` | Account management operations |
-| `DeviceMenuService` | Device CRUD operations |
-| `DnsServerMenuService` | DNS server profile management |
-| `FilterListMenuService` | Filter list operations |
-| `QueryLogMenuService` | Query log viewing and analysis |
-| `StatisticsMenuService` | DNS statistics and reporting |
+**Key Projects:**
+| Project | Description |
+|---------|--------------|
+| `rules-validator-core` | Core validation logic + FFI exports |
+| `rules-validator-cli` | Command-line validation tool |
 
 ---
 
-### 5. Portfolio Website (`/src/website/`)
+### 7. Documentation Website (`/src/website/`)
 
-**Purpose:** Gatsby-based portfolio website to showcase the project.
+**Purpose:** Gatsby-based documentation site rendering the repository's `docs/` markdown files, plus a handful of static pages describing the toolkit.
 
 **Technology Stack:**
-- Gatsby 5.15.0
-- React 18.3.1
-- gatsby-theme-portfolio-minimal
+- Gatsby 5
+- React 18
 
 **Content Structure:**
 | Directory | Content |
 |-----------|---------|
-| `content/sections/` | Hero, Interests, Projects, Contact |
-| `content/settings.json` | Site configuration and metadata |
-| `content/articles/` | Blog/article content |
-| `content/images/` | Media assets |
+| `src/pages/` | Static pages (home, getting started, compiler pages) |
+| `src/templates/doc.js` | Renders each `docs/**/*.md` file as a page |
+| `src/components/` | Shared React components (Layout, nav) |
 
 **Deployment:** GitHub Pages
 
 ---
 
-### 6. PowerShell Scripts (`/src/adguard-api-powershell/`)
+### 8. PowerShell Modules (`/src/rules-compiler-powershell/`, `/src/adguard-api-powershell/`)
 
-**Purpose:** Automation and orchestration scripts for filter compilation.
+**Purpose:** Automation and orchestration scripts/modules for filter compilation and webhook invocation.
 
 **Key Files:**
 | File | Purpose |
 |------|---------|
-| `Invoke-RulesCompiler.psm1` | Rules compiler PowerShell module |
-| `RulesCompiler.psd1` | Module manifest |
-| `RulesCompiler-Harness.ps1` | Interactive test harness |
+| `rules-compiler-powershell/RulesCompiler/RulesCompiler.psd1` | Modern class-based rules compiler module manifest |
+| `adguard-api-powershell/Invoke-RulesCompiler.psm1` | Legacy rules compiler PowerShell module |
+| `adguard-api-powershell/RulesCompiler-Harness.ps1` | Interactive test harness |
 
 ---
 
 ## Directory Structure
 
 ```
-ad-blocking/
+bloqr-lists/
 ├── .github/
-│   ├── workflows/           # CI/CD Pipelines (8 workflows)
+│   ├── workflows/           # CI/CD pipelines
 │   └── ISSUE_TEMPLATE/      # Issue templates
 ├── docs/
 │   ├── README.md            # Documentation index
 │   ├── api/                 # Auto-generated API docs
-│   └── guides/              # Usage guides
+│   └── guides/               # Usage guides
 ├── data/
 │   ├── input/                   # Source filter lists
 │   │   ├── README.md            # Input directory documentation
 │   │   ├── example-custom-rules.txt  # Example local rules
 │   │   └── internet-sources.txt.example  # Example remote sources
-│   ├── output/
-│   │   └── adguard_user_filter.txt  # Main filter list (adblock format)
-│   ├── archive/                 # Archived processed files
-│   │   ├── README.md            # Archive documentation
-│   │   └── .gitignore           # Ignore archive contents
-│   ├── Api/                 # Rules compilation API
-│   └── Config/              # Configuration utilities
+│   ├── output/                  # Compiled filter output
+│   └── archive/                 # Archived processed files
+│       ├── README.md            # Archive documentation
+│       └── .gitignore           # Ignore archive contents
 ├── src/
-│   ├── adguard-api-dotnet/  # AdGuard DNS API C# Client
-│   ├── filter-compiler/     # TypeScript rule compiler
-│   ├── adguard-api-powershell/  # PowerShell modules
-│   └── website/             # Gatsby portfolio site
+│   ├── adblock-compiler-core/    # @bloqr/compiler-core (TypeScript)
+│   ├── rules-compiler-dotnet/    # .NET compiler
+│   ├── rules-compiler-python/    # Python compiler
+│   ├── rules-compiler-rust/      # Rust compiler
+│   ├── rules-compiler-shell/     # Bash/Zsh wrappers
+│   ├── rules-compiler-powershell/# Modern PowerShell modules
+│   ├── rules-validator/          # Rust validation library + CLI
+│   ├── adguard-api-dotnet/       # AdGuard DNS API C# client
+│   ├── adguard-api-typescript/   # AdGuard DNS API TypeScript client
+│   ├── adguard-api-rust/         # AdGuard DNS API Rust client
+│   ├── adguard-api-powershell/   # Legacy PowerShell API client
+│   ├── website/                  # Gatsby documentation site
+│   └── linear/                   # This tool
 ├── LICENSE                  # GPLv3
 ├── README.md                # Main documentation
 └── SECURITY.md              # Security policy
@@ -257,50 +267,47 @@ ad-blocking/
 
 ## CI/CD Pipelines
 
-| Workflow | File | Purpose | Triggers |
-|----------|------|---------|----------|
-| TypeScript | `typescript.yml` | Build adblock-compiler-core, type-check, lint | Push to main, PRs |
-| .NET | `dotnet.yml` | Build API client, run tests | Push to main, PRs |
-| Gatsby | `gatsby.yml` | Build website, deploy to GitHub Pages | Push to main |
-| CodeQL | `codeql.yml` | Security static analysis | Push to main, schedule |
-| DevSkim | `devskim.yml` | Security scanning | Schedule |
-| PowerShell | `powershell.yml` | PowerShell analysis | On demand |
-| Static | `static.yml` | Static code analysis | Push to main, PRs |
-| Claude AI | `claude-code-review.yml` | AI-powered code review | PRs |
+| Workflow | File | Purpose |
+|----------|------|---------|
+| TypeScript | `typescript.yml` | Build/test/lint `adblock-compiler-core` and other Deno projects |
+| .NET | `dotnet.yml` | Build .NET projects, run xUnit tests |
+| Python | `python.yml` | Build/test the Python compiler |
+| Rust | `rust-clippy.yml` | Build/test/lint the Rust workspace |
+| PowerShell | `powershell.yml` | Pester tests and PSScriptAnalyzer |
+| Publish JSR | `publish-jsr.yml` | Publish `adblock-compiler-core` to `@bloqr/compiler-core` on JSR |
+| Gatsby | `gatsby.yml` | Build website, deploy to GitHub Pages |
+| Docker | `docker-image.yml` | Build the `Dockerfile.warp` dev image |
+| Security | `security.yml` | Consolidated CodeQL, DevSkim, PSScriptAnalyzer scanning |
+| Build Scripts Tests | `build-scripts-tests.yml` | Exercise root `build.sh`/`build.ps1` |
+| Validation Compliance | `validation-compliance.yml` | Run the Rust validation CLI against fixtures |
+| Release | `release.yml` | Build and publish release binaries |
+| Claude AI | `claude-code-review.yml` | AI-powered code review on PRs |
 
 ---
 
 ## Technology Stack Summary
 
-### Backend
+### Compilers
 | Technology | Version | Purpose |
 |------------|---------|---------|
-| .NET | 8.0 | Core framework (LTS) |
-| C# | 13 | Primary backend language |
-| Microsoft.Extensions | 9.0.10 | DI, Configuration, Logging |
-| PowerShellStandard.Library | 5.1.1 | PowerShell integration |
-
-### Filter Compilation
-| Technology | Version | Purpose |
-|------------|---------|---------|
-| TypeScript | 5.4.5 | Strongly-typed JavaScript |
-| @jk-com/adblock-compiler | 0.6.0 | Core compilation engine |
-| Deno | 2.0+ | TypeScript/JavaScript runtime |
-| Deno test | built-in | Testing framework |
+| Deno | 2.0+ | TypeScript runtime, `@bloqr/compiler-core` |
+| .NET | 10.0 | .NET compiler, API client, Console UI |
+| Python | 3.9+ | Python compiler |
+| Rust | 1.85+ | Rust compiler, validation library, API client |
+| PowerShell | 7+ | PowerShell modules and scripts |
 
 ### Frontend
 | Technology | Version | Purpose |
 |------------|---------|---------|
-| Gatsby | 5.15.0 | Static site generator |
-| React | 18.3.1 | UI framework |
+| Gatsby | 5 | Documentation site generator |
+| React | 18 | UI framework |
 
 ### Security & Quality
 | Tool | Purpose |
 |------|---------|
 | CodeQL | Static code analysis |
 | DevSkim | Security scanning |
-| ESLint | Code linting |
-| Jest | Unit testing |
+| Deno lint / clippy / ruff / PSScriptAnalyzer | Per-language linting |
 
 ---
 
@@ -338,6 +345,8 @@ Full API documentation available in `/docs/api/`.
 ### Prerequisites
 - Deno 2.0+
 - .NET 10 SDK
+- Python 3.9+
+- Rust 1.85+
 - PowerShell 7+
 
 ### Filter Compiler
@@ -349,15 +358,15 @@ deno task compile
 ### API Client
 ```bash
 cd src/adguard-api-dotnet
-dotnet restore
-dotnet build
-dotnet test
+dotnet restore src/AdGuard.ApiClient.sln
+dotnet build src/AdGuard.ApiClient.sln
+dotnet test src/AdGuard.ApiClient.sln
 ```
 
 ### Website
 ```bash
 cd src/website
-npm install  # Website still uses Node.js/Gatsby
+npm install
 npm run develop
 ```
 
@@ -373,14 +382,24 @@ deno task test
 
 ### .NET Tests
 ```bash
-cd src/adguard-api-dotnet
-dotnet test
+cd src/rules-compiler-dotnet
+dotnet test RulesCompiler.slnx
+```
+
+### Python Tests
+```bash
+cd src/rules-compiler-python
+pytest
+```
+
+### Rust Tests
+```bash
+cargo test --workspace
 ```
 
 ### PowerShell Tests
-```bash
-cd src/adguard-api-powershell
-Invoke-Pester
+```powershell
+Invoke-Pester -Path ./src/rules-compiler-powershell -Recurse
 ```
 
 ---
@@ -390,19 +409,15 @@ Invoke-Pester
 ### Filter Compiler (`compiler-config.json`)
 ```json
 {
-  "sources": {
-    "local": "../../data/output/adguard_user_filter.txt",
-    "remote": "https://github.com/..."
-  },
-  "transformations": [
-    "deduplicate",
-    "compress",
-    "validate",
-    "ascii",
-    "whitespace"
-  ]
+  "name": "My Filter List",
+  "sources": [
+    { "name": "EasyList", "source": "https://easylist.to/easylist/easylist.txt" }
+  ],
+  "transformations": ["Deduplicate", "Validate", "InsertFinalNewLine"]
 }
 ```
+
+See [Configuration Reference](configuration-reference.md) for the complete schema.
 
 ---
 
@@ -411,6 +426,7 @@ Invoke-Pester
 - **CodeQL Analysis:** Automated security scanning on all pushes
 - **DevSkim Scanning:** Regular security vulnerability checks
 - **Authentication:** Supports API Key and OAuth Bearer tokens
+- **Mandatory validation:** all compilers enforce hash and syntax validation on filter sources — see [Why Validation Matters](WHY_VALIDATION_MATTERS.md)
 
 See `SECURITY.md` for vulnerability reporting guidelines.
 
@@ -421,7 +437,7 @@ See `SECURITY.md` for vulnerability reporting guidelines.
 1. Fork the repository
 2. Create a feature branch
 3. Make your changes
-4. Run tests (`npm test`, `dotnet test`)
+4. Run the relevant language's tests
 5. Submit a pull request
 
 All PRs automatically receive:
@@ -455,9 +471,8 @@ See `LICENSE` file for full terms.
 - [ ] Real-time filter update notifications
 - [ ] Dashboard for statistics visualization
 - [ ] Mobile app integration
-- [ ] Docker containerization
 - [ ] Kubernetes deployment manifests
 
 ---
 
-*This documentation is maintained as part of the ad-blocking repository and should be kept in sync with codebase changes.*
+*This documentation is maintained as part of the bloqr-lists repository and should be kept in sync with codebase changes.*

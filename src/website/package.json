@@ -1,14 +1,15 @@
 {
-  "name": "ad-blocking-website",
+  "name": "bloqr-lists-website",
   "version": "1.0.0",
-  "description": "Documentation website for the Ad-Blocking repository",
+  "description": "Documentation website for the Bloqr List Utils repository",
   "keywords": [
+    "bloqr",
     "ad-blocking",
     "adguard",
     "gatsby",
     "documentation"
   ],
-  "author": "Ad-Blocking Contributors",
+  "author": "Bloqr Systems",
   "license": "GPL-3.0",
   "scripts": {
     "develop": "gatsby develop",

@@ -1,15 +1,18 @@
 name: Publish adblock-compiler-core to JSR
 
-# Publishes src/adblock-compiler-core (the @jk-com/adblock-compiler package)
+# Publishes src/adblock-compiler-core (the @bloqr/compiler-core package)
 # to JSR whenever its version changes on main. `deno publish` is idempotent —
 # it no-ops if the current deno.json version is already published — so this
 # is safe to run on every push that touches the package.
 #
 # ONE-TIME SETUP REQUIRED (cannot be automated from this workflow): the JSR
-# package `@jk-com/adblock-compiler` must be linked to this GitHub repository
-# via the JSR web UI (https://jsr.io) before OIDC publishing below will work.
-# Until that's done, this workflow will fail at the `deno publish` step with
-# an authorization error — that's expected, not a bug in the workflow.
+# package `@bloqr/compiler-core` must be linked to this GitHub repository via
+# the JSR web UI (https://jsr.io) before OIDC publishing below will work.
+# This repo must also be public for OIDC trusted publishing to work at all —
+# JSR requires a public linked repo (private repos can't complete OIDC, and
+# reportedly can't create a scoped "Publish packages" PAT either). Until
+# both of those are done, this workflow will fail at the `deno publish` step
+# with an authorization error — that's expected, not a bug in the workflow.
 
 on:
   push:
@@ -69,5 +72,5 @@ jobs:
       - name: Report unlinked-package failure
         if: steps.publish.outcome == 'failure'
         run: |
-          echo "::warning::deno publish failed. This is expected until @jk-com/adblock-compiler is linked to this GitHub repository via https://jsr.io (one-time manual setup, see the comment at the top of this workflow). Failing the job so it stays visible."
+          echo "::warning::deno publish failed. This is expected until @bloqr/compiler-core is linked to this GitHub repository via https://jsr.io (one-time manual setup, see the comment at the top of this workflow). Failing the job so it stays visible."
           exit 1

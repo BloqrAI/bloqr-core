@@ -31,7 +31,7 @@ The TypeScript API SDK provides a complete, type-safe interface to the AdGuard D
 ```bash
 # Clone the repository
 git clone https://github.com/BloqrAI/bloqr-lists.git
-cd ad-blocking/src/adguard-api-typescript
+cd bloqr-lists/src/adguard-api-typescript
 
 # Cache dependencies
 deno cache src/index.ts

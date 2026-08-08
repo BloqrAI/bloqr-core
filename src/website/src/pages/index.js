@@ -6,38 +6,38 @@ const IndexPage = () => {
   return (
     <Layout>
       <div className="hero">
-        <h1>AdGuard Tools and Utilities</h1>
+        <h1>Bloqr List Utils</h1>
         <p>
           A comprehensive multi-language toolkit for ad-blocking, network
-          protection, and AdGuard DNS management
+          protection, and AdGuard DNS management.
         </p>
       </div>
 
       <section>
-        <h2>What is AdGuard Tools and Utilities?</h2>
+        <h2>What is Bloqr List Utils?</h2>
         <p style={{ fontSize: "1.1rem", marginBottom: "2rem" }}>
           This toolkit helps you protect your network from ads, trackers, and
           malware. It works with IoT devices, smart TVs, and any device on your
-          network - no software installation needed on individual devices!
+          network — no software installation needed on individual devices.
         </p>
 
         <div className="features">
           <div className="feature">
-            <h3>🛡️ Network-Wide Protection</h3>
+            <h3>Network-Wide Protection</h3>
             <p>
               Block ads and trackers across all devices on your network,
               including smart TVs, IoT devices, and mobile phones.
             </p>
           </div>
           <div className="feature">
-            <h3>🔧 Multiple Languages</h3>
+            <h3>Multiple Languages</h3>
             <p>
               Choose from TypeScript, .NET, Python, Rust, or PowerShell
               compilers - all produce identical results.
             </p>
           </div>
           <div className="feature">
-            <h3>🔒 Security First</h3>
+            <h3>Security First</h3>
             <p>
               Built-in validation with SHA-384 hashing protects against
               malicious filter lists and tampering.{" "}
@@ -45,21 +45,21 @@ const IndexPage = () => {
             </p>
           </div>
           <div className="feature">
-            <h3>📡 AdGuard DNS Integration</h3>
+            <h3>AdGuard DNS Integration</h3>
             <p>
               Complete API SDKs for managing AdGuard DNS devices, servers, and
               filter lists.
             </p>
           </div>
           <div className="feature">
-            <h3>📝 Custom Rules</h3>
+            <h3>Custom Rules</h3>
             <p>
               Create and manage your own blocking rules with support for both
               adblock and hosts file formats.
             </p>
           </div>
           <div className="feature">
-            <h3>🚀 Easy to Use</h3>
+            <h3>Easy to Use</h3>
             <p>
               Interactive launchers, console UIs, and comprehensive
               documentation make getting started simple.
@@ -112,9 +112,9 @@ const IndexPage = () => {
           </div>
           <div className="feature">
             <h3>
-              <Link to="/adblock-compiler">AdBlock Compiler</Link>
+              <Link to="/adblock-compiler">@bloqr/compiler-core</Link>
             </h3>
-            <p>Modern TypeScript compiler-as-a-service with real-time progress, visual diff, and production features.</p>
+            <p>The open-source, dependency-free TypeScript engine that powers every compiler in this repository.</p>
           </div>
         </div>
       </section>
@@ -136,7 +136,7 @@ const IndexPage = () => {
           </li>
           <li>
             <strong>Enjoy Ad-Free Browsing:</strong> All devices on your
-            network are now protected from ads and trackers!
+            network are now protected from ads and trackers.
           </li>
         </ol>
       </section>
@@ -146,4 +146,4 @@ const IndexPage = () => {
 
 export default IndexPage
 
-export const Head = () => <title>AdGuard Tools and Utilities</title>
+export const Head = () => <title>Bloqr List Utils</title>

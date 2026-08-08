@@ -49,15 +49,19 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 RUN curl -fsSL https://deno.land/install.sh | DENO_INSTALL=/usr/local sh -s v${DENO_VERSION} && \
     deno --version
 
-# Pre-cache NPM dependencies used by the TypeScript compiler
-RUN deno cache npm:@adguard/hostlist-compiler@^1.0.39 && \
-    deno cache npm:yaml@^2.8.2 && \
-    deno cache npm:@iarna/toml@^2.2.5 && \
-    deno cache npm:chalk@^5.6.2 && \
-    deno cache npm:cli-table3@^0.6.5 && \
-    deno cache npm:ora@^9.0.0 && \
-    deno cache npm:figlet@^1.9.4 && \
-    deno cache npm:@inquirer/prompts@^8.1.0 && \
+# Pre-cache @bloqr/compiler-core (the compilation engine .NET/Python/Rust
+# shell out to via `deno run jsr:@bloqr/compiler-core/cli`) and its npm
+# dependencies, plus the npm dependencies of the other Deno-based TS tools
+# in this repo (AdGuard API client, Linear import tool).
+#
+# The adblock-compiler-core v1.0.0 rewrite hasn't been published to JSR yet
+# under its new @bloqr scope (see .github/workflows/publish-jsr.yml's header
+# comment: it needs a one-time manual "link this repo" step on jsr.io before
+# OIDC publish can run) — `jsr:@bloqr/compiler-core` won't resolve until
+# then. Tolerate that failure here so the image still builds in the
+# meantime; this line will start actually warming the cache once published.
+RUN (deno cache jsr:@bloqr/compiler-core/cli || \
+     echo "warning: jsr:@bloqr/compiler-core/cli not published yet (see comment above) - skipping pre-cache") && \
     deno cache npm:commander@^14.0.2 && \
     deno cache npm:inquirer@^13.1.0 && \
     deno cache npm:axios@^1.13.2 && \
@@ -65,10 +69,6 @@ RUN deno cache npm:@adguard/hostlist-compiler@^1.0.39 && \
     deno cache npm:@linear/sdk@^68.1.0 && \
     deno cache npm:dotenv@^17.2.3 && \
     deno cache npm:marked@^17.0.1
-
-# Create a wrapper script for hostlist-compiler
-RUN echo '#!/bin/sh\nexec deno run --allow-read --allow-write --allow-env --allow-net --allow-run npm:@adguard/hostlist-compiler "$@"' > /usr/local/bin/hostlist-compiler && \
-    chmod +x /usr/local/bin/hostlist-compiler
 
 # =============================================================================
 # Python 3.13

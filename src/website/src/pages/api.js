@@ -45,4 +45,4 @@ export const query = graphql`
 
 export default ApiPage
 
-export const Head = () => <title>API Reference - AdGuard Tools and Utilities</title>
+export const Head = () => <title>API Reference - Bloqr List Utils</title>

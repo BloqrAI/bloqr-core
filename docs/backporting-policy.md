@@ -1,10 +1,10 @@
 # Backporting Policy: bloqr-compiler → adblock-compiler-core
 
-This document defines what gets backported from the commercial `bloqr-compiler` product ([`BloqrAI/bloqr-compiler`](https://github.com/BloqrAI/bloqr-compiler)) into this repository's open-source `@jk-com/adblock-compiler` package (`src/adblock-compiler-core/`), and the process for doing it.
+This document defines what gets backported from the commercial `bloqr-compiler` product ([`BloqrAI/bloqr-compiler`](https://github.com/BloqrAI/bloqr-compiler)) into this repository's open-source `@bloqr/compiler-core` package (`src/adblock-compiler-core/`), and the process for doing it.
 
 ## Why two compilers exist
 
-`@jk-com/adblock-compiler` (this repo) is a minimal, dependency-free filter-list compilation engine, extracted from `bloqr-compiler`'s core. `bloqr-compiler` is the full-featured commercial product: AST-level parsing via `@adguard/agtree`, linting, diff reports, a plugin system, Cloudflare Workers deployment, and observability integrations. See `src/adblock-compiler-core/README.md`'s Architecture section for the full history of how the JSR namespace ended up here.
+`@bloqr/compiler-core` (this repo) is a minimal, dependency-free filter-list compilation engine, extracted from `bloqr-compiler`'s core. `bloqr-compiler` is the full-featured commercial product: AST-level parsing via `@adguard/agtree`, linting, diff reports, a plugin system, Cloudflare Workers deployment, and observability integrations. See `src/adblock-compiler-core/README.md`'s Architecture section for the full history of how the JSR namespace ended up here.
 
 They are separate products going forward, not two versions of the same thing. Backporting is about deliberately pulling specific, narrow improvements across — not keeping them in sync feature-for-feature.
 

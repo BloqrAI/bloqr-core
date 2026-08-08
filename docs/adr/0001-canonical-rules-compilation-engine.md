@@ -4,6 +4,8 @@
 **Date**: 2026-08-04
 **Related**: #256 (epic), #262 (this ADR's tracking issue), #279 (implementation), [bloqr-compiler#2200](https://github.com/BloqrAI/bloqr-compiler/issues/2200)
 
+**Update (2026-08-08)**: the package described throughout this ADR as `@jk-com/adblock-compiler` has been renamed to `@bloqr/compiler-core`. `@jk-com` was a personal-project JSR scope; all Bloqr JSR packages now live under `@bloqr`. This is a naming/scope change only — none of the reasoning or decisions below changed. References to `@jk-com/adblock-compiler` in the narrative below are left as-is since they accurately describe the package's name at the time these events occurred; treat them as `@bloqr/compiler-core` going forward. The "not yet published" `@bloqr/compiler` mentioned below as the commercial product's own package will not happen — `bloqr-compiler` is instead adopting `@bloqr/compiler-core` as a JSR dependency rather than publishing its own package (see repo restructuring plan, PR #284).
+
 ## Context
 
 This repository ships four rules-compiler implementations (TypeScript, .NET, Python, Rust). The epic's premise — "every compiler needs identical features" — assumed a shared engine already existed. Research found the opposite: **two divergent compiler cores**.

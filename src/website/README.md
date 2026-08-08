@@ -44,7 +44,7 @@ pnpm run test:e2e
 To point tests at an already-running deployment instead of building locally:
 
 ```bash
-E2E_BASE_URL=https://bloqr-systems.github.io/bloqr-lists pnpm run test:e2e
+E2E_BASE_URL=https://bloqrai.github.io/bloqr-lists pnpm run test:e2e
 ```
 
 ## Structure
@@ -74,7 +74,7 @@ E2E_BASE_URL=https://bloqr-systems.github.io/bloqr-lists pnpm run test:e2e
 
 The site is automatically built and deployed to GitHub Pages when changes are pushed to the main branch.
 
-Site URL: https://bloqr-systems.github.io/bloqr-lists
+Site URL: https://bloqrai.github.io/bloqr-lists
 
 ## New Features
 

@@ -35,7 +35,7 @@ The hash verification system provides **cryptographic proof** that files are not
                          │
                          ▼
 ┌─────────────────────────────────────────────────────────────┐
-│ 3. Compilation (via hostlist-compiler)                      │
+│ 3. Compilation (via @bloqr/compiler-core)                │
 │    └─ (No hash events - external tool)                     │
 └─────────────────────────────────────────────────────────────┘
                          │
@@ -180,7 +180,7 @@ const result = await runCompiler({
 
 **Event Handler:**
 ```csharp
-using RulesCompiler.Abstractions;
+using Bloqr.Compiler.Abstractions;
 
 public class MyHashHandler : CompilationEventHandlerBase
 {

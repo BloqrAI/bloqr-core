@@ -19,7 +19,7 @@ Rust implementation of the AdGuard DNS API client.
 - **adguard-api-cli**: Interactive CLI for AdGuard DNS API
 
 ### 3. **rules-compiler-rust** (`src/rules-compiler-rust/`)
-Rust compiler for AdGuard filter rules using `@jk-com/adblock-compiler`.
+Rust compiler for AdGuard filter rules using `@bloqr/compiler-core`.
 
 - Library and CLI for compiling filter rules
 - Supports JSON, YAML, and TOML configurations
@@ -114,7 +114,7 @@ Workspace-wide lints are configured in `Cargo.toml`:
 ## Workspace Structure
 
 ```
-ad-blocking/
+bloqr-lists/
 ├── Cargo.toml                      # Workspace root configuration
 ├── Cargo.lock                      # Locked dependencies
 ├── rust-toolchain.toml             # Rust version specification

@@ -13,7 +13,7 @@ The repository uses **Central Package Management (CPM)** to manage all NuGet pac
 ## Structure
 
 ```
-/home/runner/work/ad-blocking/ad-blocking/
+/home/runner/work/bloqr-lists/bloqr-lists/
 ├── Directory.Build.props           # Global MSBuild properties
 ├── Directory.Packages.props        # ⭐ CENTRALIZED PACKAGE VERSIONS
 └── src/
@@ -76,15 +76,15 @@ Individual projects reference packages **without specifying versions**:
 - `Newtonsoft.Json` - JSON serialization
 - `Polly` - Resilience and transient fault handling
 
-### Microsoft.Extensions (v10.0.1)
-All Microsoft.Extensions packages are standardized to version **10.0.1** (latest for .NET 10):
+### Microsoft.Extensions (v10.0.2)
+All Microsoft.Extensions packages are standardized to version **10.0.2** (latest for .NET 10):
 - Configuration (base, abstractions, JSON, environment variables, user secrets, command line)
 - Dependency Injection (base, abstractions)
 - Hosting
 - Logging (base, abstractions, console)
 - Options (base, configuration extensions)
 
-### Entity Framework Core (v9.0.0)
+### Entity Framework Core (v10.0.2)
 - `Microsoft.EntityFrameworkCore` (base)
 - `Microsoft.EntityFrameworkCore.Design`
 - `Microsoft.EntityFrameworkCore.InMemory` (testing)
@@ -205,8 +205,8 @@ dotnet list package
 
 ## Version Consistency Rules
 
-1. **Microsoft.Extensions packages**: All should use the same version (currently **10.0.1**)
-2. **Entity Framework Core packages**: All should use the same version (currently **9.0.0**)
+1. **Microsoft.Extensions packages**: All should use the same version (currently **10.0.2**)
+2. **Entity Framework Core packages**: All should use the same version (currently **10.0.2**)
 3. **Test packages**: Keep xunit, Moq, and test SDK versions aligned
 4. **Benchmark packages**: Keep BenchmarkDotNet packages at the same version
 

@@ -3,6 +3,7 @@ import { Link, useStaticQuery, graphql } from "gatsby"
 import "../styles/global.css"
 import ThemeToggle from "./ThemeToggle"
 import Search from "./Search"
+import bloqrMark from "../images/brand/bloqr-mark.svg"
 
 const Layout = ({ children, pageTitle }) => {
   const data = useStaticQuery(graphql`
@@ -31,11 +32,11 @@ const Layout = ({ children, pageTitle }) => {
     <>
       <header>
         <div className="container header-content">
-          <h1>
-            <Link to="/" style={{ color: "white", textDecoration: "none" }}>
-              🔒 AdGuard Tools and Utilities
-            </Link>
-          </h1>
+          <Link to="/" className="brand-mark">
+            <img src={bloqrMark} alt="" width="24" height="24" />
+            <span className="brand-name">Bloqr</span>
+            <span className="brand-sub">List Utils</span>
+          </Link>
           <div className="header-actions">
             <Search searchIndex={searchIndex} />
             <ThemeToggle />
@@ -81,13 +82,13 @@ const Layout = ({ children, pageTitle }) => {
       <footer>
         <div className="container">
           <p>
-            AdGuard Tools and Utilities - Licensed under{" "}
-            <a href="https://github.com/Bloqr-Systems/bloqr-lists/blob/main/LICENSE">
+            Bloqr List Utils - Licensed under{" "}
+            <a href="https://github.com/BloqrAI/bloqr-lists/blob/main/LICENSE">
               GPL-3.0
             </a>
           </p>
           <p>
-            <a href="https://github.com/Bloqr-Systems/bloqr-lists">
+            <a href="https://github.com/BloqrAI/bloqr-lists">
               View on GitHub
             </a>
           </p>

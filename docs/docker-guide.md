@@ -21,7 +21,7 @@ ARG RUST_VERSION=stable
 # - Rust stable toolchain
 # - PowerShell 7
 # - yq (YAML processor)
-# - hostlist-compiler (via Deno npm compatibility)
+# - @bloqr/compiler-core (via Deno JSR integration)
 
 WORKDIR /workspace
 ```
@@ -31,18 +31,18 @@ WORKDIR /workspace
 | Component | Version | Purpose |
 |-----------|---------|---------|
 | .NET SDK | 10.0 | .NET compiler, API client |
-| Deno | 2.x | TypeScript compiler, hostlist-compiler |
+| Deno | 2.x | TypeScript compiler, `@bloqr/compiler-core` |
 | Python | 3.12 | Python compiler |
 | Rust | Stable | Rust compiler |
 | PowerShell | 7.x | PowerShell scripts and modules |
 | Git | Latest | Version control |
 | yq | Latest | YAML processing for shell scripts |
-| hostlist-compiler | Latest | Via Deno npm compatibility |
+| @bloqr/compiler-core | 1.0.0 | Via Deno JSR integration; the .NET/Python/Rust compilers all shell out to it (`deno run jsr:@bloqr/compiler-core/cli`) |
 | Ubuntu | 24.04 (Noble) | Base OS |
 
 ### Pre-installed Tools
 
-- **Deno packages**: `@jk-com/adblock-compiler` (via JSR)
+- **Deno packages**: `@bloqr/compiler-core` (via JSR)
 - **Python packages**: `pytest`, `pytest-cov`, `mypy`, `ruff`, `pyyaml`, `tomlkit`
 - **Rust components**: `clippy`, `rustfmt`
 - **PowerShell modules**: `Pester`, `PSScriptAnalyzer`
@@ -255,8 +255,8 @@ For [Warp](https://www.warp.dev/) terminal users, a pre-built environment is ava
 
 ```bash
 # The environment automatically runs these setup commands:
-cd ad-blocking/src/adblock-compiler-core && deno cache src/mod.ts
-cd ad-blocking/src/adguard-api-dotnet && dotnet restore
+cd bloqr-lists/src/adblock-compiler-core && deno cache src/mod.ts
+cd bloqr-lists/src/adguard-api-dotnet && dotnet restore
 ```
 
 ## CI/CD with Docker

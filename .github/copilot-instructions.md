@@ -39,7 +39,7 @@ Multi-language toolkit for ad-blocking and AdGuard DNS management with **identic
 - `rules-validate` (CLI tool)
 
 ### Compiler Equivalence
-All four compilers (TypeScript, .NET, Python, Rust) use **[@jk-com/adblock-compiler](https://github.com/jaypatrick/hostlistcompiler)** and **must**:
+All four compilers (TypeScript, .NET, Python, Rust) use **[@bloqr/compiler-core](../src/adblock-compiler-core/)** and **must**:
 - Support JSON, YAML, TOML config formats (except PowerShell: JSON only)
 - Count rules identically (exclude empty lines and `!`/`#` comments)
 - Compute SHA-384 hash of output (96 hex chars)
@@ -60,7 +60,7 @@ Program.cs → ConsoleApplication → [DeviceMenu, DnsServerMenu, StatisticsMenu
 ## Project Structure
 
 ```
-ad-blocking/
+bloqr-lists/
 ├── .github/              # GitHub configuration and workflows
 ├── docs/                 # Documentation (API docs, guides)
 ├── data/                  # Filter rules and compilation data
@@ -404,7 +404,7 @@ All compilers return/output:
 ```
 
 ### Configuration Schema
-Supports 3 formats (JSON/YAML/TOML), based on `@jk-com/adblock-compiler` schema:
+Supports 3 formats (JSON/YAML/TOML), based on `@bloqr/compiler-core` schema:
 ```json
 {
   "output": "data/output/adguard_user_filter.txt",
@@ -495,11 +495,11 @@ cd src/rules-compiler-rust && cargo test
 - **Auth**: Bearer token in `Authorization` header
 - **Retry logic**: 3 attempts with exponential backoff (408, 429, 5xx)
 
-### @jk-com/adblock-compiler
+### @bloqr/compiler-core
 - **All compilers depend on this**: JSR package
-- **Installation**: `deno add @jk-com/adblock-compiler` or via JSR
-- **Source**: https://github.com/jaypatrick/hostlistcompiler
-- **Documentation**: https://jsr.io/@jk-com/adblock-compiler
+- **Installation**: `deno add @bloqr/compiler-core` or via JSR
+- **Source**: `src/adblock-compiler-core/` (this repo)
+- **Documentation**: https://jsr.io/@bloqr/compiler-core
 - Provides 11 transformations (RemoveComments, Compress, Validate, etc.)
 - Compilers use this, handling config parsing and result formatting
 

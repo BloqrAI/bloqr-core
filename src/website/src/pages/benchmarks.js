@@ -26,7 +26,7 @@ const BenchmarksPage = () => {
         <h2>Benchmarking Tools</h2>
         <div className="features">
           <div className="feature">
-            <h3>🚀 Quick Synthetic Benchmark</h3>
+            <h3>Quick Synthetic Benchmark</h3>
             <p>
               <strong>File:</strong> <code>benchmarks/quick_benchmark.py</code>
             </p>
@@ -41,7 +41,7 @@ const BenchmarksPage = () => {
             </ul>
           </div>
           <div className="feature">
-            <h3>📊 Full Benchmark Suite</h3>
+            <h3>Full Benchmark Suite</h3>
             <p>
               <strong>Files:</strong> <code>benchmarks/run_benchmarks.py</code>,{" "}
               <code>generate_synthetic_data.py</code>
@@ -125,20 +125,20 @@ const BenchmarksPage = () => {
         <div style={{ overflowX: "auto", marginTop: "1rem" }}>
           <table style={{ width: "100%", borderCollapse: "collapse" }}>
             <thead>
-              <tr style={{ backgroundColor: "#f5f5f5" }}>
-                <th style={{ padding: "0.75rem", textAlign: "left", borderBottom: "2px solid #ddd" }}>
+              <tr style={{ backgroundColor: "var(--table-header-bg)" }}>
+                <th style={{ padding: "0.75rem", textAlign: "left", borderBottom: "2px solid var(--border-color)" }}>
                   Rule Count
                 </th>
-                <th style={{ padding: "0.75rem", textAlign: "left", borderBottom: "2px solid #ddd" }}>
+                <th style={{ padding: "0.75rem", textAlign: "left", borderBottom: "2px solid var(--border-color)" }}>
                   Sequential
                 </th>
-                <th style={{ padding: "0.75rem", textAlign: "left", borderBottom: "2px solid #ddd" }}>
+                <th style={{ padding: "0.75rem", textAlign: "left", borderBottom: "2px solid var(--border-color)" }}>
                   4 Workers
                 </th>
-                <th style={{ padding: "0.75rem", textAlign: "left", borderBottom: "2px solid #ddd" }}>
+                <th style={{ padding: "0.75rem", textAlign: "left", borderBottom: "2px solid var(--border-color)" }}>
                   8 Workers
                 </th>
-                <th style={{ padding: "0.75rem", textAlign: "left", borderBottom: "2px solid #ddd" }}>
+                <th style={{ padding: "0.75rem", textAlign: "left", borderBottom: "2px solid var(--border-color)" }}>
                   Speedup (8w)
                 </th>
               </tr>
@@ -151,7 +151,7 @@ const BenchmarksPage = () => {
                 <td style={{ padding: "0.75rem", borderBottom: "1px solid #eee" }}>~40ms</td>
                 <td style={{ padding: "0.75rem", borderBottom: "1px solid #eee" }}><strong>3.75x</strong></td>
               </tr>
-              <tr style={{ backgroundColor: "#fafafa" }}>
+              <tr style={{ backgroundColor: "var(--table-row-even-bg)" }}>
                 <td style={{ padding: "0.75rem", borderBottom: "1px solid #eee" }}>50,000</td>
                 <td style={{ padding: "0.75rem", borderBottom: "1px solid #eee" }}>~600ms</td>
                 <td style={{ padding: "0.75rem", borderBottom: "1px solid #eee" }}>~200ms</td>
@@ -165,7 +165,7 @@ const BenchmarksPage = () => {
                 <td style={{ padding: "0.75rem", borderBottom: "1px solid #eee" }}>~400ms</td>
                 <td style={{ padding: "0.75rem", borderBottom: "1px solid #eee" }}><strong>6.25x</strong></td>
               </tr>
-              <tr style={{ backgroundColor: "#fafafa" }}>
+              <tr style={{ backgroundColor: "var(--table-row-even-bg)" }}>
                 <td style={{ padding: "0.75rem", borderBottom: "1px solid #eee" }}>500,000</td>
                 <td style={{ padding: "0.75rem", borderBottom: "1px solid #eee" }}>~6s</td>
                 <td style={{ padding: "0.75rem", borderBottom: "1px solid #eee" }}>~1.8s</td>
@@ -187,14 +187,14 @@ const BenchmarksPage = () => {
         <div style={{ overflowX: "auto", marginTop: "1rem" }}>
           <table style={{ width: "100%", borderCollapse: "collapse" }}>
             <thead>
-              <tr style={{ backgroundColor: "#f5f5f5" }}>
-                <th style={{ padding: "0.75rem", textAlign: "left", borderBottom: "2px solid #ddd" }}>
+              <tr style={{ backgroundColor: "var(--table-header-bg)" }}>
+                <th style={{ padding: "0.75rem", textAlign: "left", borderBottom: "2px solid var(--border-color)" }}>
                   Workers
                 </th>
-                <th style={{ padding: "0.75rem", textAlign: "left", borderBottom: "2px solid #ddd" }}>
+                <th style={{ padding: "0.75rem", textAlign: "left", borderBottom: "2px solid var(--border-color)" }}>
                   Theoretical Max
                 </th>
-                <th style={{ padding: "0.75rem", textAlign: "left", borderBottom: "2px solid #ddd" }}>
+                <th style={{ padding: "0.75rem", textAlign: "left", borderBottom: "2px solid var(--border-color)" }}>
                   Typical Efficiency
                 </th>
               </tr>
@@ -205,7 +205,7 @@ const BenchmarksPage = () => {
                 <td style={{ padding: "0.75rem", borderBottom: "1px solid #eee" }}>2.0x</td>
                 <td style={{ padding: "0.75rem", borderBottom: "1px solid #eee" }}>90-100%</td>
               </tr>
-              <tr style={{ backgroundColor: "#fafafa" }}>
+              <tr style={{ backgroundColor: "var(--table-row-even-bg)" }}>
                 <td style={{ padding: "0.75rem", borderBottom: "1px solid #eee" }}>4</td>
                 <td style={{ padding: "0.75rem", borderBottom: "1px solid #eee" }}>4.0x</td>
                 <td style={{ padding: "0.75rem", borderBottom: "1px solid #eee" }}>85-95%</td>
@@ -215,7 +215,7 @@ const BenchmarksPage = () => {
                 <td style={{ padding: "0.75rem", borderBottom: "1px solid #eee" }}>8.0x</td>
                 <td style={{ padding: "0.75rem", borderBottom: "1px solid #eee" }}>75-90%</td>
               </tr>
-              <tr style={{ backgroundColor: "#fafafa" }}>
+              <tr style={{ backgroundColor: "var(--table-row-even-bg)" }}>
                 <td style={{ padding: "0.75rem", borderBottom: "1px solid #eee" }}>16</td>
                 <td style={{ padding: "0.75rem", borderBottom: "1px solid #eee" }}>16.0x</td>
                 <td style={{ padding: "0.75rem", borderBottom: "1px solid #eee" }}>60-80%</td>
@@ -239,7 +239,7 @@ const BenchmarksPage = () => {
 
         <div className="features">
           <div className="feature">
-            <h3>✅ Enable Chunking</h3>
+            <h3>Enable Chunking</h3>
             <ul>
               <li>6+ filter sources</li>
               <li>Large combined filter lists (100K+ rules)</li>
@@ -248,7 +248,7 @@ const BenchmarksPage = () => {
             </ul>
           </div>
           <div className="feature">
-            <h3>❌ Disable Chunking</h3>
+            <h3>Disable Chunking</h3>
             <ul>
               <li>1-5 filter sources</li>
               <li>Small filter lists (&lt;50K rules)</li>
@@ -312,7 +312,7 @@ Maximum speedup: 6.75x`}
           </div>
           <div className="feature">
             <h3>
-              <a href="https://github.com/Bloqr-Systems/bloqr-lists/tree/main/benchmarks">
+              <a href="https://github.com/BloqrAI/bloqr-lists/tree/main/benchmarks">
                 View Benchmark Code
               </a>
             </h3>
@@ -328,11 +328,12 @@ Maximum speedup: 6.75x`}
         style={{
           marginTop: "2rem",
           padding: "1.5rem",
-          backgroundColor: "#f0f0f0",
-          borderRadius: "8px",
+          backgroundColor: "var(--surface-color)",
+          border: "1px solid var(--border-color)",
+          borderRadius: "12px",
         }}
       >
-        <h2>💡 Tip</h2>
+        <h2>Tip</h2>
         <p>
           Run benchmarks on actual hardware to get accurate performance
           data for specific use cases. Results vary based on CPU cores,
@@ -345,4 +346,4 @@ Maximum speedup: 6.75x`}
 
 export default BenchmarksPage
 
-export const Head = () => <title>Performance Benchmarks - AdGuard Tools and Utilities</title>
+export const Head = () => <title>Performance Benchmarks - Bloqr List Utils</title>

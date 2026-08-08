@@ -6,7 +6,7 @@ const SecurityPage = () => {
   return (
     <Layout pageTitle="Security">
       <div className="hero" style={{ marginBottom: "2rem" }}>
-        <h2>🛡️ Security Features</h2>
+        <h2>Security Features</h2>
         <p style={{ fontSize: "1.2rem" }}>
           Learn how the built-in security features protect against malicious
           filter lists, tampering, and network attacks.
@@ -29,9 +29,9 @@ const SecurityPage = () => {
         >
           <div
             className="feature"
-            style={{ backgroundColor: "#f8f9fa", padding: "1.5rem" }}
+            style={{ backgroundColor: "var(--surface-color)", padding: "1.5rem" }}
           >
-            <h3>🔒 Automatic Protection</h3>
+            <h3>Automatic Protection</h3>
             <p>
               Security validation runs automatically every time you compile
               rules. No configuration needed - it just works.
@@ -39,9 +39,9 @@ const SecurityPage = () => {
           </div>
           <div
             className="feature"
-            style={{ backgroundColor: "#f8f9fa", padding: "1.5rem" }}
+            style={{ backgroundColor: "var(--surface-color)", padding: "1.5rem" }}
           >
-            <h3>⚡ Lightning Fast</h3>
+            <h3>Lightning Fast</h3>
             <p>
               Adds less than 100ms to compilation time. Get enterprise-grade
               security without the wait.
@@ -49,9 +49,9 @@ const SecurityPage = () => {
           </div>
           <div
             className="feature"
-            style={{ backgroundColor: "#f8f9fa", padding: "1.5rem" }}
+            style={{ backgroundColor: "var(--surface-color)", padding: "1.5rem" }}
           >
-            <h3>🎯 Zero False Sense of Security</h3>
+            <h3>Zero False Sense of Security</h3>
             <p>
               Unlike optional features that users forget to enable, this
               validation is mandatory by design.
@@ -71,7 +71,7 @@ const SecurityPage = () => {
 
         <div
           style={{
-            backgroundColor: "#f8f9fa",
+            backgroundColor: "var(--surface-color)",
             padding: "1.5rem",
             borderRadius: "8px",
             marginTop: "1.5rem",
@@ -91,7 +91,7 @@ const SecurityPage = () => {
             </p>
             <pre
               style={{
-                backgroundColor: "#fff",
+                backgroundColor: "var(--code-bg)",
                 padding: "1rem",
                 borderRadius: "4px",
               }}
@@ -103,7 +103,7 @@ const SecurityPage = () => {
             </p>
             <pre
               style={{
-                backgroundColor: "#fff",
+                backgroundColor: "var(--code-bg)",
                 padding: "1rem",
                 borderRadius: "4px",
                 overflowX: "auto",
@@ -116,7 +116,7 @@ const SecurityPage = () => {
             </p>
             <pre
               style={{
-                backgroundColor: "#fff",
+                backgroundColor: "var(--code-bg)",
                 padding: "1rem",
                 borderRadius: "4px",
               }}
@@ -128,7 +128,7 @@ const SecurityPage = () => {
             </p>
             <pre
               style={{
-                backgroundColor: "#fff",
+                backgroundColor: "var(--code-bg)",
                 padding: "1rem",
                 borderRadius: "4px",
                 overflowX: "auto",
@@ -136,8 +136,8 @@ const SecurityPage = () => {
             >
               xyz789uvw321abc789uvw321xyz789uvw321abc789uvw321xyz789uvw321abc789uvw321xyz789uvw321xyz789
             </pre>
-            <p style={{ marginTop: "1rem", fontWeight: "bold", color: "#d9534f" }}>
-              ❌ Hash mismatch detected! Compilation stopped.
+            <p style={{ marginTop: "1rem", fontWeight: "bold", color: "var(--error)" }}>
+              ✕ Hash mismatch detected. Compilation stopped.
             </p>
           </div>
         </div>
@@ -148,7 +148,7 @@ const SecurityPage = () => {
 
         <div style={{ marginTop: "2rem" }}>
           <div style={{ marginBottom: "2.5rem" }}>
-            <h3>🚨 1. Man-in-the-Middle Attacks</h3>
+            <h3>1. Man-in-the-Middle Attacks</h3>
             <p style={{ fontSize: "1.05rem", lineHeight: "1.7" }}>
               <strong>The Threat:</strong> An attacker intercepts downloads
               of filter lists and replaces them with malicious versions that
@@ -162,7 +162,7 @@ const SecurityPage = () => {
           </div>
 
           <div style={{ marginBottom: "2.5rem" }}>
-            <h3>🚨 2. Compromised List Providers</h3>
+            <h3>2. Compromised List Providers</h3>
             <p style={{ fontSize: "1.05rem", lineHeight: "1.7" }}>
               <strong>The Threat:</strong> A popular filter list website gets
               hacked, and attackers replace legitimate lists with ones that
@@ -176,7 +176,7 @@ const SecurityPage = () => {
           </div>
 
           <div style={{ marginBottom: "2.5rem" }}>
-            <h3>🚨 3. Local File Tampering</h3>
+            <h3>3. Local File Tampering</h3>
             <p style={{ fontSize: "1.05rem", lineHeight: "1.7" }}>
               <strong>The Threat:</strong> Malware on a computer modifies
               local filter lists to remove its own domains from blocklists
@@ -190,7 +190,7 @@ const SecurityPage = () => {
           </div>
 
           <div style={{ marginBottom: "2.5rem" }}>
-            <h3>🚨 4. Typosquatting & Fake Lists</h3>
+            <h3>4. Typosquatting & Fake Lists</h3>
             <p style={{ fontSize: "1.05rem", lineHeight: "1.7" }}>
               <strong>The Threat:</strong> Attackers create fake lists with
               names similar to trusted lists (e.g., easy<strong>1</strong>ist.to
@@ -204,7 +204,7 @@ const SecurityPage = () => {
           </div>
 
           <div style={{ marginBottom: "2.5rem" }}>
-            <h3>🚨 5. Supply Chain Attacks</h3>
+            <h3>5. Supply Chain Attacks</h3>
             <p style={{ fontSize: "1.05rem", lineHeight: "1.7" }}>
               <strong>The Threat:</strong> Attackers compromise the build
               pipeline of a trusted filter list provider, injecting malicious
@@ -224,7 +224,7 @@ const SecurityPage = () => {
 
         <div className="features" style={{ marginTop: "2rem" }}>
           <div className="feature">
-            <h3>🛡️ Layer 1: HTTPS-Only</h3>
+            <h3>Layer 1: HTTPS-Only</h3>
             <p>
               Only allows secure downloads. HTTP connections can be intercepted
               and modified - we simply don't allow them.
@@ -232,7 +232,7 @@ const SecurityPage = () => {
           </div>
 
           <div className="feature">
-            <h3>🛡️ Layer 2: Domain Validation</h3>
+            <h3>Layer 2: Domain Validation</h3>
             <p>
               Verifies domains are legitimate via DNS lookups, preventing
               typosquatting attacks and catching typos in URLs.
@@ -240,7 +240,7 @@ const SecurityPage = () => {
           </div>
 
           <div className="feature">
-            <h3>🛡️ Layer 3: Content Validation</h3>
+            <h3>Layer 3: Content Validation</h3>
             <p>
               Scans downloads to ensure they're actually filter lists, not
               malware or fake pages.
@@ -248,7 +248,7 @@ const SecurityPage = () => {
           </div>
 
           <div className="feature">
-            <h3>🛡️ Layer 4: Cryptographic Hashing</h3>
+            <h3>Layer 4: Cryptographic Hashing</h3>
             <p>
               SHA-384 fingerprinting provides mathematical certainty. Tampering
               is impossible to hide.
@@ -256,7 +256,7 @@ const SecurityPage = () => {
           </div>
 
           <div className="feature">
-            <h3>🛡️ Layer 5: Audit Trail</h3>
+            <h3>Layer 5: Audit Trail</h3>
             <p>
               Complete transparency with records of what was validated, when,
               and by which version.
@@ -264,7 +264,7 @@ const SecurityPage = () => {
           </div>
 
           <div className="feature">
-            <h3>🛡️ Bonus: Runtime Enforcement</h3>
+            <h3>Bonus: Runtime Enforcement</h3>
             <p>
               Cryptographic proof that validation actually ran, preventing
               bypasses and ensuring compliance.
@@ -288,7 +288,7 @@ const SecurityPage = () => {
           }}
         >
           <thead>
-            <tr style={{ backgroundColor: "#f8f9fa" }}>
+            <tr style={{ backgroundColor: "var(--surface-color)" }}>
               <th
                 style={{
                   padding: "1rem",
@@ -334,7 +334,7 @@ const SecurityPage = () => {
                 ~5ms
               </td>
             </tr>
-            <tr style={{ backgroundColor: "#f8f9fa", fontWeight: "bold" }}>
+            <tr style={{ backgroundColor: "var(--surface-color)", fontWeight: "bold" }}>
               <td style={{ padding: "1rem" }}>Total overhead (typical)</td>
               <td style={{ padding: "1rem" }}>&lt;100ms</td>
             </tr>
@@ -464,7 +464,7 @@ const SecurityPage = () => {
           marginBottom: "3rem",
         }}
       >
-        <h2>✅ The Bottom Line</h2>
+        <h2>The Bottom Line</h2>
         <ul
           style={{ fontSize: "1.1rem", lineHeight: "2", marginLeft: "1.5rem" }}
         >
@@ -549,7 +549,7 @@ const SecurityPage = () => {
           </div>
           <div className="feature">
             <h3>
-              <a href="https://github.com/Bloqr-Systems/bloqr-lists/blob/main/SECURITY.md">
+              <a href="https://github.com/BloqrAI/bloqr-lists/blob/main/SECURITY.md">
                 Security Policy
               </a>
             </h3>
@@ -567,5 +567,5 @@ const SecurityPage = () => {
 export default SecurityPage
 
 export const Head = () => (
-  <title>Security - AdGuard Tools and Utilities</title>
+  <title>Security - Bloqr List Utils</title>
 )

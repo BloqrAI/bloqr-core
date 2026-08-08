@@ -1,6 +1,12 @@
 # Changelog
 
-All notable changes to `@jk-com/adblock-compiler` are documented here.
+All notable changes to `@bloqr/compiler-core` (formerly `@jk-com/adblock-compiler`) are documented here.
+
+## [Unreleased]
+
+### Changed
+
+- **Breaking**: package renamed from `@jk-com/adblock-compiler` to `@bloqr/compiler-core`. `@jk-com` was a personal-project JSR scope; all Bloqr JSR packages (this one, and future ones like `@bloqr/diagnostics`) now live under the `@bloqr` scope. No functional changes — same package contents, same exports, just a new name and scope. See `README.md`'s Architecture section for the full story.
 
 ## [1.0.0] - 2026-08-04
 

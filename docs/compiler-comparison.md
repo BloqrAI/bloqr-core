@@ -9,9 +9,9 @@ This guide helps you choose the right rules compiler for your use case. All comp
 | Language | TypeScript | C# | Python | Rust | PowerShell | Bash/PS1 |
 | Runtime | Deno 2.0+ | .NET 10 | Python 3.9+ | None | PowerShell 7+ | Bash/PowerShell |
 | Config Formats | JSON, YAML, TOML | JSON, YAML, TOML | JSON, YAML, TOML | JSON, YAML, TOML | JSON | JSON, YAML, TOML |
-| Library API | No | Yes | Yes | Yes | Yes | No |
+| Library API | Yes | Yes | Yes | Yes | Yes | No |
 | CLI | Yes | Yes | Yes | Yes | Yes | Yes |
-| Interactive Mode | No | Yes | No | No | Yes | No |
+| Interactive Mode | Yes | Yes | No | No | Yes | No |
 | Tests | Deno test | xUnit | pytest | cargo test | Pester | No |
 | Binary Distribution | No | No | No | Yes | No | No |
 
@@ -29,12 +29,11 @@ deno task compile
 **Pros**:
 - Native TypeScript execution with Deno
 - Built-in npm compatibility
-- Optional Rust CLI frontend for performance
+- Canonical source of `@bloqr/compiler-core` — no subprocess overhead, no other compiler shells out to more than this
 - Secure by default (explicit permissions)
 
 **Cons**:
 - Requires Deno runtime
-- No library API for programmatic use
 - Slower startup than compiled languages
 
 **Features**:
@@ -42,6 +41,20 @@ deno task compile
 - YAML, JSON, TOML configuration
 - Debug output mode
 - Copy to rules directory option
+- Library API via `@bloqr/compiler-core/lib` (`RulesCompiler`, `ConfigurationBuilder`)
+
+**Library Usage**:
+
+```typescript
+import { compile } from '@bloqr/compiler-core';
+
+const rules = await compile({
+  name: 'My Filter List',
+  sources: [{ source: 'https://example.com/list.txt', type: 'adblock' }],
+  transformations: ['RemoveComments', 'Deduplicate'],
+});
+console.log(`Compiled ${rules.length} rules`);
+```
 
 ### .NET Compiler
 
@@ -74,7 +87,7 @@ dotnet run --project src/RulesCompiler.Console
 
 ```csharp
 using RulesCompiler.Extensions;
-using RulesCompiler.Abstractions;
+using Bloqr.Compiler.Abstractions;
 using Microsoft.Extensions.DependencyInjection;
 
 var services = new ServiceCollection();
@@ -142,7 +155,7 @@ cargo build --release
 
 **Pros**:
 - Single statically-linked binary
-- Zero runtime dependencies (except Deno for hostlist-compiler)
+- Zero runtime dependencies (except Deno, required for the `@bloqr/compiler-core` engine it shells out to)
 - Fastest startup time
 - Small binary size with LTO
 - Memory safe
@@ -252,7 +265,7 @@ Get-CompilerVersion | Format-List
 | PowerShell | Fast | Medium | None |
 | Shell | Fast | Low | None |
 
-*Note: Actual compilation time depends on hostlist-compiler, which is the same for all.*
+*Note: Actual compilation time depends on `@bloqr/compiler-core` (the shared engine all four compilers dogfood), which is the same for all.*
 
 ## Decision Matrix
 
@@ -309,8 +322,8 @@ Get-CompilerVersion | Format-List
 | Version | Yes | Yes | Yes | Yes |
 | Help | Yes | Yes | Yes | Yes |
 | **Advanced** |
-| Library API | No | Yes | Yes | Yes |
-| Interactive | No | Yes | No | No |
+| Library API | Yes | Yes | Yes | Yes |
+| Interactive | Yes | Yes | No | No |
 | Tests | Deno test | xUnit | pytest | cargo test |
 | DI Support | No | Yes | No | No |
 | Async | Yes | Yes | No | Planned |

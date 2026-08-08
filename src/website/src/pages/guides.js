@@ -46,4 +46,4 @@ export const query = graphql`
 
 export default GuidesPage
 
-export const Head = () => <title>Guides - AdGuard Tools and Utilities</title>
+export const Head = () => <title>Guides - Bloqr List Utils</title>

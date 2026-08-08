@@ -1,6 +1,6 @@
 /**
  * @module adblock-compiler-core
- * Main entry point for the `@jk-com/adblock-compiler` library.
+ * Main entry point for the `@bloqr/compiler-core` library.
  *
  * This is a minimal, dependency-free filter-list compilation engine —
  * extracted from `bloqr-compiler`'s core, with `@adguard/agtree` and all
@@ -10,7 +10,7 @@
  *
  * @example Install and compile a list
  * ```ts
- * import { compile } from '@jk-com/adblock-compiler';
+ * import { compile } from '@bloqr/compiler-core';
  *
  * const result = await compile({
  *   sources: [{ url: 'https://example.com/list.txt' }],

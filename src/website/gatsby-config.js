@@ -4,10 +4,10 @@
  */
 module.exports = {
   siteMetadata: {
-    title: `AdGuard Tools and Utilities`,
+    title: `Bloqr List Utils`,
     description: `A comprehensive multi-language toolkit for ad-blocking, network protection, and AdGuard DNS management`,
-    author: `Ad-Blocking Contributors`,
-    siteUrl: `https://bloqr-systems.github.io/bloqr-lists/`,
+    author: `Bloqr Systems`,
+    siteUrl: `https://bloqrai.github.io/bloqr-lists/`,
   },
   pathPrefix: `/bloqr-lists`,
   plugins: [
@@ -49,11 +49,11 @@ module.exports = {
     {
       resolve: `gatsby-plugin-manifest`,
       options: {
-        name: `AdGuard Tools and Utilities`,
-        short_name: `AdGuard Tools`,
+        name: `Bloqr List Utils`,
+        short_name: `Bloqr`,
         start_url: `/`,
-        background_color: `#7c3aed`,
-        theme_color: `#7c3aed`,
+        background_color: `#070B14`,
+        theme_color: `#FF5500`,
         display: `minimal-ui`,
         icon: `src/images/icon.svg`,
       },

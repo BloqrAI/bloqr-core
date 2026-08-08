@@ -319,7 +319,7 @@ As of the `Bloqr.Compiler.*` extraction, this project is split across three asse
 
 - **`Bloqr.Compiler.Abstractions`** — interfaces, event-args, and shared model/DTO types. No implementation, no external dependencies beyond the framework. Reusable by any compiler-specific project or the future Dashboard.
 - **`Bloqr.Compiler.Core`** — the common implementation: multi-format config reading/validation, chunking, file locking, the compilation event pipeline, and the plugin system. References `Bloqr.Compiler.Abstractions` only.
-- **`RulesCompiler`** (this project) — the compiler-specific pieces: `FilterCompiler` (shells out to `@jk-com/adblock-compiler` via Deno), `OutputWriter`, `RulesCompilerService` (top-level orchestration). References `Bloqr.Compiler.Core`.
+- **`RulesCompiler`** (this project) — the compiler-specific pieces: `FilterCompiler` (shells out to `@bloqr/compiler-core` via Deno), `OutputWriter`, `RulesCompilerService` (top-level orchestration). References `Bloqr.Compiler.Core`.
 
 ### Abstractions (`Bloqr.Compiler.Abstractions`)
 
@@ -420,7 +420,7 @@ src/rules-compiler-dotnet/
 - Uses `System.Runtime.InteropServices.RuntimeInformation` for platform detection
 - Path handling via `Path.Combine` and `Path.GetFullPath`
 - UTF-8 encoding for all file operations
-- Requires `deno` on PATH (invokes `@jk-com/adblock-compiler` via `deno run jsr:@jk-com/adblock-compiler/cli`)
+- Requires `deno` on PATH (invokes `@bloqr/compiler-core` via `deno run jsr:@bloqr/compiler-core/cli`)
 
 ## Related Projects
 

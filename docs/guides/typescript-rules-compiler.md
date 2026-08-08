@@ -4,23 +4,23 @@ A comprehensive guide to using the TypeScript rules compiler with Deno 2.0+.
 
 ## Overview
 
-The TypeScript rules compiler is a Deno-based implementation that uses [@jk-com/adblock-compiler](https://github.com/jaypatrick/hostlistcompiler) to compile filter lists from multiple sources with transformations, inclusions, and exclusions.
+The TypeScript rules compiler (`src/adblock-compiler-core/`) is a Deno-based implementation that *is* [`@bloqr/compiler-core`](https://jsr.io/@bloqr/compiler-core) — this repo's own dependency-free filter compilation engine — compiling filter lists from multiple sources with transformations, inclusions, and exclusions. See the [`@bloqr/compiler-core` Guide](adblock-compiler-guide.md) for the full architecture.
 
 ## Features
 
 - **Native TypeScript Execution**: No build step required with Deno 2.0+
 - **Multi-Format Configuration**: Support for JSON, YAML, and TOML
 - **Interactive CLI Mode**: Menu-driven interface for easy use
-- **Full hostlist-compiler Support**: All transformations and features
+- **Chunked Parallel Compilation**: For large rule lists (10M+ entries)
 - **Secure by Default**: Explicit permissions required with Deno
-- **Comprehensive Testing**: Full test suite with Deno test
+- **Comprehensive Testing**: 1008 passing tests with Deno test
 
 ## Prerequisites
 
 | Requirement | Version | Installation |
 |-------------|---------|--------------|
 | Deno | 2.0+ | [deno.land](https://deno.land/) |
-| @jk-com/adblock-compiler | 0.6.0 | Via JSR |
+| @bloqr/compiler-core | 1.0.0 | Via JSR (this is `src/adblock-compiler-core/` itself, no separate install needed) |
 
 ## Installation
 
@@ -41,7 +41,7 @@ deno --version
 
 ```bash
 git clone https://github.com/BloqrAI/bloqr-lists.git
-cd ad-blocking/src/adblock-compiler-core
+cd bloqr-lists/src/adblock-compiler-core
 
 # Cache dependencies
 deno cache src/mod.ts
@@ -237,7 +237,7 @@ Deno requires explicit permissions. The compiler needs:
 
 - `--allow-read`: Read configuration and source files
 - `--allow-write`: Write output files
-- `--allow-run`: Execute hostlist-compiler
+- `--allow-run`: Execute subprocesses (used by orchestration, not by the core compiler itself)
 - `--allow-net`: Download remote filter lists
 - `--allow-env`: Access environment variables (optional)
 
@@ -338,18 +338,18 @@ transformations:
 
 ## Troubleshooting
 
-### hostlist-compiler not found
+### @bloqr/compiler-core not found
 
-The hostlist-compiler is accessed via Deno's npm compatibility. Ensure Deno 2.0+ is installed:
+Ensure Deno 2.0+ is installed:
 
 ```bash
 deno --version
 ```
 
-Test hostlist-compiler access:
+Test the compiler CLI directly:
 
 ```bash
-deno run --allow-all jsr:@jk-com/adblock-compiler --version
+deno run --allow-read --allow-write --allow-env --allow-net --allow-run jsr:@bloqr/compiler-core/cli --version
 ```
 
 ### Permission Denied

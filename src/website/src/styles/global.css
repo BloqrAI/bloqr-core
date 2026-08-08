@@ -1,3 +1,26 @@
+/* ──────────────────────────────────────────────────────────────
+   Bloqr List Utils — global stylesheet.
+   Palette, type, and spacing derived from Filter, Bloqr's design
+   system (github.com/BloqrAI/bloqr-design-system). Dark is the
+   primary/default theme per Filter's spec; the light variant below
+   is this site's own adaptation of the same accent colors, kept so
+   the existing light/dark toggle still works.
+   ────────────────────────────────────────────────────────────── */
+
+@font-face {
+  font-family: "Space Grotesk";
+  font-style: normal;
+  font-weight: 300 700;
+  font-display: swap;
+  src: url("../fonts/SpaceGrotesk-VariableFont_wght.ttf") format("truetype-variations"),
+    url("../fonts/SpaceGrotesk-VariableFont_wght.ttf") format("truetype");
+}
+
+/* Inter + JetBrains Mono: loaded from Google Fonts for now. Filter ships
+   Space Grotesk self-hosted only — self-host these two before treating
+   this as a production-hardened, no-external-DNS deploy. */
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;700&display=swap");
+
 * {
   box-sizing: border-box;
   margin: 0;
@@ -5,64 +28,87 @@
 }
 
 :root {
-  --primary-color: #7c3aed;
-  --primary-color-dark: #5b21b6;
-  --accent-color: #06b6d4;
-  --secondary-color: #14141a;
-  --text-color: #24242c;
-  --text-muted: #5b5b68;
+  /* Dark (default) — Filter's exact tokens */
+  --primary-color: #ff5500;
+  --primary-color-dark: #ff7033;
+  --accent-color: #00d4ff;
+  --secondary-color: #f1f5f9;
+  --text-color: #f1f5f9;
+  --text-muted: #94a3b8;
+  --bg-color: #070b14;
+  --surface-color: #0e1829;
+  --border-color: #1e2d40;
+  --border-color-hover: #2a4060;
+  --link-color: #00d4ff;
+  --code-bg: #162035;
+  --code-text: #f1f5f9;
+  --code-keyword: #c792ea;
+  --code-type: #00d4ff;
+  --code-string: #c3e88d;
+  --code-number: #82aaff;
+  --code-comment: #475569;
+  --code-fn: #ffcb6b;
+  --header-bg: rgba(7, 11, 20, 0.85);
+  --nav-bg: rgba(7, 11, 20, 0.85);
+  --feature-bg: #0e1829;
+  --table-header-bg: #162035;
+  --table-row-even-bg: #0e1829;
+  --table-row-odd-bg: #070b14;
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.4);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.5);
+  --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.6);
+  --glow-cta: 0 0 20px rgba(255, 85, 0, 0.3);
+  --glow-cta-hover: 0 0 32px rgba(255, 85, 0, 0.45);
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --duration-fast: 150ms;
+  --duration-base: 250ms;
+  /* Semantic (product UI only, per Filter — used sparingly here for
+     validation/error states, e.g. the hash-mismatch example) */
+  --success: #22c55e;
+  --warning: #f59e0b;
+  --error: #ef4444;
+}
+
+[data-theme="light"] {
+  --success: #16a34a;
+  --warning: #b45309;
+  --error: #dc2626;
+  /* Light — this site's own adaptation, not part of Filter's spec
+     (Filter is dark-first with no documented light mode). Keeps the
+     same orange/cyan accent pair so the two themes read as one brand. */
+  --primary-color: #d94400;
+  --primary-color-dark: #b83900;
+  --accent-color: #0088a8;
+  --secondary-color: #101826;
+  --text-color: #16202e;
+  --text-muted: #5b6b7f;
   --bg-color: #fbfbfd;
   --surface-color: #ffffff;
-  --border-color: #e6e6ec;
-  --link-color: #6d28d9;
+  --border-color: #e2e6ec;
+  --border-color-hover: #c7cfdb;
+  --link-color: #0088a8;
   --code-bg: #f4f3f8;
-  --code-text: #1e1e26;
+  --code-text: #16202e;
   --code-keyword: #7c3aed;
+  --code-type: #0088a8;
   --code-string: #0f8a5f;
-  --code-comment: #8a8a96;
-  --header-bg: #14141a;
-  --nav-bg: rgba(20, 20, 26, 0.92);
+  --code-number: #1d4ed8;
+  --code-comment: #7a8699;
+  --code-fn: #b45309;
+  --header-bg: rgba(16, 24, 38, 0.92);
+  --nav-bg: rgba(16, 24, 38, 0.92);
   --feature-bg: #ffffff;
-  --hero-gradient-1: #6d28d9;
-  --hero-gradient-2: #0891b2;
   --table-header-bg: #f4f3f8;
   --table-row-even-bg: #fbfbfd;
   --table-row-odd-bg: #ffffff;
   --shadow-sm: 0 1px 2px rgba(20, 20, 30, 0.06);
   --shadow-md: 0 4px 16px rgba(20, 20, 30, 0.08);
   --shadow-lg: 0 12px 32px rgba(20, 20, 30, 0.14);
-  --radius-sm: 6px;
-  --radius-md: 12px;
-  --radius-lg: 18px;
-}
-
-[data-theme="dark"] {
-  --primary-color: #a78bfa;
-  --primary-color-dark: #c4b5fd;
-  --accent-color: #22d3ee;
-  --secondary-color: #e7e7ee;
-  --text-color: #e7e7ee;
-  --text-muted: #a0a0ad;
-  --bg-color: #0e0e13;
-  --surface-color: #17171f;
-  --border-color: #2a2a35;
-  --link-color: #a78bfa;
-  --code-bg: #0d1117;
-  --code-text: #f0f6fc;
-  --code-keyword: #c4b5fd;
-  --code-string: #7ee2b8;
-  --code-comment: #8b949e;
-  --header-bg: #0a0a0e;
-  --nav-bg: rgba(10, 10, 14, 0.92);
-  --feature-bg: #17171f;
-  --hero-gradient-1: #4c1d95;
-  --hero-gradient-2: #155e75;
-  --table-header-bg: #1c1c26;
-  --table-row-even-bg: #14141b;
-  --table-row-odd-bg: #17171f;
-  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
-  --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.35);
-  --shadow-lg: 0 12px 32px rgba(0, 0, 0, 0.5);
+  --glow-cta: 0 0 0 rgba(0, 0, 0, 0);
+  --glow-cta-hover: 0 0 0 rgba(0, 0, 0, 0);
 }
 
 html {
@@ -70,15 +116,15 @@ html {
 }
 
 body {
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, Roboto, Oxygen, Ubuntu, Cantarell,
-    "Helvetica Neue", sans-serif;
+  font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu,
+    Cantarell, "Helvetica Neue", sans-serif;
   font-feature-settings: "kern" 1, "liga" 1;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   line-height: 1.65;
   color: var(--text-color);
   background-color: var(--bg-color);
-  transition: background-color 0.25s ease, color 0.25s ease;
+  transition: background-color var(--duration-base) ease, color var(--duration-base) ease;
 }
 
 ::selection {
@@ -91,8 +137,8 @@ a {
 }
 
 :focus-visible {
-  outline: 2px solid var(--accent-color);
-  outline-offset: 2px;
+  outline: 2px solid var(--primary-color);
+  outline-offset: 3px;
   border-radius: 3px;
 }
 
@@ -100,24 +146,28 @@ h1,
 h2,
 h3,
 h4 {
+  font-family: "Space Grotesk", "DM Sans", system-ui, sans-serif;
   font-weight: 700;
-  letter-spacing: -0.01em;
-  line-height: 1.25;
+  letter-spacing: -0.02em;
+  line-height: 1.15;
 }
 
 .container {
   max-width: 1200px;
   margin: 0 auto;
-  padding: 0 20px;
+  padding: 0 24px;
 }
 
 header {
   background-color: var(--header-bg);
-  color: white;
+  -webkit-backdrop-filter: blur(16px);
+  backdrop-filter: blur(16px);
+  color: var(--text-color);
   padding: 1.1rem 0;
   position: sticky;
   top: 0;
   z-index: 100;
+  border-bottom: 1px solid var(--border-color);
 }
 
 .header-content {
@@ -133,28 +183,46 @@ header {
   gap: 1rem;
 }
 
-header h1 {
-  margin: 0;
-  font-size: 1.5rem;
-  font-weight: 800;
+.brand-mark {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  color: var(--text-color);
+  text-decoration: none;
+}
+
+.brand-mark img {
+  height: 22px;
+  width: auto;
+  display: block;
+}
+
+.brand-mark .brand-name {
+  font-family: "Space Grotesk", system-ui, sans-serif;
+  font-size: 1.25rem;
+  font-weight: 700;
   letter-spacing: -0.02em;
 }
 
-header h1 a {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
+.brand-mark .brand-sub {
+  font-family: "Space Grotesk", system-ui, sans-serif;
+  font-size: 0.65rem;
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-left: 0.15rem;
 }
 
 nav {
   background-color: var(--nav-bg);
-  -webkit-backdrop-filter: blur(10px);
-  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(16px);
+  backdrop-filter: blur(16px);
   padding: 0.4rem 0;
   position: sticky;
   top: 62px;
   z-index: 99;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  border-bottom: 1px solid var(--border-color);
 }
 
 nav ul {
@@ -165,19 +233,28 @@ nav ul {
 }
 
 nav a {
-  color: rgba(255, 255, 255, 0.85);
+  font-family: "Space Grotesk", system-ui, sans-serif;
+  color: rgba(241, 245, 249, 0.75);
   text-decoration: none;
   padding: 0.5rem 0.9rem;
   border-radius: var(--radius-sm);
-  font-size: 0.92rem;
+  font-size: 0.9rem;
   font-weight: 500;
-  transition: background-color 0.15s ease, color 0.15s ease;
+  transition: background-color var(--duration-fast) ease, color var(--duration-fast) ease;
   display: inline-block;
 }
 
+[data-theme="light"] nav a {
+  color: rgba(255, 255, 255, 0.8);
+}
+
 nav a:hover {
-  background-color: rgba(255, 255, 255, 0.12);
-  color: #fff;
+  background-color: rgba(0, 212, 255, 0.1);
+  color: var(--accent-color);
+}
+
+[data-theme="light"] nav a:hover {
+  color: #7cf0ff;
 }
 
 main {
@@ -188,38 +265,40 @@ main {
 .hero {
   text-align: center;
   padding: 4.5rem 1rem;
-  background: linear-gradient(135deg, var(--hero-gradient-1), var(--hero-gradient-2));
-  background-size: 200% 200%;
-  animation: hero-gradient-shift 12s ease infinite;
-  color: white;
+  background: radial-gradient(ellipse 80% 50% at 50% -10%, rgba(255, 85, 0, 0.16), transparent),
+    radial-gradient(ellipse 60% 40% at 80% 60%, rgba(0, 212, 255, 0.1), transparent),
+    var(--bg-color);
+  color: var(--text-color);
   margin-bottom: 3rem;
-  border-radius: 0 0 var(--radius-lg) var(--radius-lg);
-  box-shadow: var(--shadow-lg);
+  border-radius: 0 0 var(--radius-xl, 20px) var(--radius-xl, 20px);
+  border-bottom: 1px solid var(--border-color);
+  position: relative;
 }
 
-@keyframes hero-gradient-shift {
-  0% {
-    background-position: 0% 50%;
-  }
-  50% {
-    background-position: 100% 50%;
-  }
-  100% {
-    background-position: 0% 50%;
-  }
+.hero::after {
+  content: "";
+  position: absolute;
+  left: 10%;
+  right: 10%;
+  bottom: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, #ff5500 50%, transparent);
+  opacity: 0.3;
 }
 
 .hero h1 {
-  font-size: 2.75rem;
+  font-size: clamp(2rem, 5vw, 2.75rem);
+  font-weight: 800;
+  letter-spacing: -0.03em;
   margin-bottom: 1rem;
-  text-shadow: 0 2px 12px rgba(0, 0, 0, 0.15);
 }
 
 .hero p {
+  font-family: "Inter", sans-serif;
   font-size: 1.2rem;
   margin: 0 auto;
   max-width: 640px;
-  opacity: 0.95;
+  color: var(--text-muted);
 }
 
 section h2 {
@@ -230,33 +309,41 @@ section h2 {
 .features {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: 1.5rem;
+  gap: 2px;
   margin: 2rem 0;
+  background: var(--border-color);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  overflow: hidden;
 }
 
 .feature {
   padding: 1.75rem;
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-md);
   background-color: var(--feature-bg);
-  box-shadow: var(--shadow-sm);
-  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+  transition: background-color var(--duration-base) ease;
 }
 
 .feature:hover {
-  transform: translateY(-3px);
-  box-shadow: var(--shadow-md);
-  border-color: var(--primary-color);
+  background-color: var(--code-bg);
 }
 
 .feature h3 {
-  color: var(--primary-color);
+  color: var(--text-color);
   margin-bottom: 0.6rem;
   font-size: 1.05rem;
 }
 
+.feature h3 a {
+  color: inherit;
+}
+
+.feature h3 a:hover {
+  color: var(--primary-color);
+}
+
 .feature p {
   color: var(--text-muted);
+  font-size: 0.925rem;
 }
 
 .doc-list {
@@ -267,25 +354,25 @@ section h2 {
   margin-bottom: 1rem;
   padding: 1.1rem 1.25rem;
   border: 1px solid var(--border-color);
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-lg);
   background-color: var(--surface-color);
-  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  transition: border-color var(--duration-base) ease;
 }
 
 .doc-list li:hover {
-  border-color: var(--primary-color);
-  box-shadow: var(--shadow-sm);
+  border-color: var(--border-color-hover);
 }
 
 .doc-list a {
-  color: var(--link-color);
+  color: var(--text-color);
   text-decoration: none;
   font-size: 1.08rem;
   font-weight: 600;
+  font-family: "Space Grotesk", system-ui, sans-serif;
 }
 
 .doc-list a:hover {
-  text-decoration: underline;
+  color: var(--primary-color);
 }
 
 .doc-list p {
@@ -300,7 +387,7 @@ section h2 {
 }
 
 .doc-content h1 {
-  color: var(--primary-color);
+  color: var(--text-color);
   margin-bottom: 1rem;
   font-size: 2.1rem;
 }
@@ -310,7 +397,7 @@ section h2 {
   margin-bottom: 1rem;
   padding-bottom: 0.4rem;
   border-bottom: 1px solid var(--border-color);
-  color: var(--secondary-color);
+  color: var(--text-color);
   font-size: 1.4rem;
 }
 
@@ -318,10 +405,12 @@ section h2 {
   margin-top: 1.75rem;
   margin-bottom: 0.75rem;
   font-size: 1.15rem;
+  color: var(--text-color);
 }
 
 .doc-content p,
 .doc-content li {
+  font-family: "Inter", sans-serif;
   color: var(--text-color);
 }
 
@@ -331,6 +420,7 @@ section h2 {
 }
 
 .doc-content a {
+  color: var(--link-color);
   text-decoration: underline;
   text-decoration-color: var(--border-color);
   text-underline-offset: 2px;
@@ -344,9 +434,9 @@ section h2 {
   background-color: var(--code-bg);
   color: var(--code-text);
   padding: 0.2rem 0.4rem;
-  border-radius: var(--radius-sm);
-  font-family: "SFMono-Regular", "Monaco", "Consolas", "Courier New", monospace;
-  font-size: 0.88em;
+  border-radius: 4px;
+  font-family: "JetBrains Mono", "Fira Code", "Cascadia Code", monospace;
+  font-size: 0.85em;
   font-weight: 500;
 }
 
@@ -354,13 +444,12 @@ section h2 {
   background-color: var(--code-bg);
   color: var(--code-text);
   padding: 1.1rem 1.25rem;
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-lg);
   overflow-x: auto;
   margin: 1.25rem 0;
   border: 1px solid var(--border-color);
-  line-height: 1.55;
+  line-height: 1.7;
   font-weight: 400;
-  box-shadow: var(--shadow-sm);
 }
 
 .doc-content pre code {
@@ -368,6 +457,7 @@ section h2 {
   padding: 0;
   color: inherit;
   font-weight: 400;
+  font-size: 0.85rem;
 }
 
 .doc-content blockquote {
@@ -400,6 +490,7 @@ section h2 {
   background-color: var(--table-header-bg);
   font-weight: 600;
   color: var(--text-color);
+  font-family: "Space Grotesk", system-ui, sans-serif;
 }
 
 .doc-content tbody tr:nth-child(even) {
@@ -412,15 +503,16 @@ section h2 {
 
 .doc-content tbody tr:hover {
   background-color: var(--code-bg);
-  transition: background-color 0.2s ease;
+  transition: background-color var(--duration-fast) ease;
 }
 
 footer {
-  background-color: var(--header-bg);
-  color: rgba(255, 255, 255, 0.85);
+  background-color: var(--bg-color);
+  color: var(--text-muted);
   padding: 2.5rem 0;
   margin-top: 4rem;
   text-align: center;
+  border-top: 1px solid var(--border-color);
 }
 
 footer p {
@@ -429,13 +521,14 @@ footer p {
 }
 
 footer a {
-  color: #fff;
+  color: var(--text-color);
   text-decoration: underline;
-  text-decoration-color: rgba(255, 255, 255, 0.4);
+  text-decoration-color: var(--border-color);
 }
 
 footer a:hover {
-  text-decoration-color: #fff;
+  text-decoration-color: var(--primary-color);
+  color: var(--primary-color);
 }
 
 .back-link {
@@ -456,27 +549,31 @@ footer a:hover {
 /* Theme Toggle */
 .theme-toggle {
   background: transparent;
-  border: 2px solid rgba(255, 255, 255, 0.25);
+  border: 1px solid var(--border-color);
   border-radius: 50%;
   width: 38px;
   height: 38px;
   cursor: pointer;
-  font-size: 1.1rem;
+  color: var(--text-color);
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: all 0.2s ease;
+  transition: transform var(--duration-fast) ease, border-color var(--duration-fast) ease;
   padding: 0;
 }
 
+.theme-toggle svg {
+  width: 18px;
+  height: 18px;
+}
+
 .theme-toggle:hover {
-  background: rgba(255, 255, 255, 0.1);
-  border-color: rgba(255, 255, 255, 0.5);
-  transform: scale(1.08);
+  border-color: var(--border-color-hover);
+  transform: translateY(-1px);
 }
 
 .theme-toggle:active {
-  transform: scale(0.95);
+  transform: translateY(0);
 }
 
 /* Search */
@@ -494,21 +591,22 @@ footer a:hover {
 .search-input {
   width: 100%;
   padding: 0.5rem 2rem 0.5rem 1rem;
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  border: 1px solid var(--border-color);
   border-radius: 20px;
-  background: rgba(255, 255, 255, 0.08);
-  color: white;
+  background: rgba(241, 245, 249, 0.06);
+  color: var(--text-color);
+  font-family: "Inter", sans-serif;
   font-size: 0.88rem;
-  transition: all 0.2s ease;
+  transition: border-color var(--duration-fast) ease, background var(--duration-fast) ease;
 }
 
 .search-input::placeholder {
-  color: rgba(255, 255, 255, 0.5);
+  color: var(--text-muted);
 }
 
 .search-input:focus {
   outline: none;
-  background: rgba(255, 255, 255, 0.14);
+  background: rgba(241, 245, 249, 0.1);
   border-color: var(--accent-color);
 }
 
@@ -517,16 +615,16 @@ footer a:hover {
   right: 0.5rem;
   background: transparent;
   border: none;
-  color: rgba(255, 255, 255, 0.6);
+  color: var(--text-muted);
   cursor: pointer;
   font-size: 1rem;
   padding: 0.25rem;
   line-height: 1;
-  transition: color 0.2s ease;
+  transition: color var(--duration-fast) ease;
 }
 
 .search-clear:hover {
-  color: white;
+  color: var(--text-color);
 }
 
 .search-results {
@@ -537,7 +635,7 @@ footer a:hover {
   margin-top: 0.5rem;
   background: var(--surface-color);
   border: 1px solid var(--border-color);
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-lg);
   box-shadow: var(--shadow-lg);
   max-height: 400px;
   overflow-y: auto;
@@ -548,7 +646,7 @@ footer a:hover {
   padding: 1rem;
   border-bottom: 1px solid var(--border-color);
   cursor: pointer;
-  transition: background-color 0.15s ease;
+  transition: background-color var(--duration-fast) ease;
 }
 
 .search-result:last-child {
@@ -560,8 +658,9 @@ footer a:hover {
 }
 
 .search-result-title {
+  font-family: "Space Grotesk", system-ui, sans-serif;
   font-weight: 600;
-  color: var(--primary-color);
+  color: var(--text-color);
   margin-bottom: 0.25rem;
 }
 
