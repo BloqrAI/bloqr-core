@@ -11,13 +11,11 @@ on:
   push:
     branches: ["main"]
     paths:
-      - 'src/adguard-api-dotnet/**'
       - 'src/rules-compiler-dotnet/**'
       - '.github/workflows/dotnet.yml'
   pull_request:
     branches: ["main"]
     paths:
-      - 'src/adguard-api-dotnet/**'
       - 'src/rules-compiler-dotnet/**'
       - '.github/workflows/dotnet.yml'
 
@@ -34,10 +32,6 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - name: Build API Client
-            path: src/adguard-api-dotnet
-            solution: AdGuard.ApiClient.slnx
-            filter: "FullyQualifiedName!~Integration"
           - name: Build Rules Compiler
             path: src/rules-compiler-dotnet
             solution: RulesCompiler.slnx

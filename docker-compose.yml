@@ -143,7 +143,7 @@ services:
         echo '=== Running Rust Tests ===' &&
         cd /workspace/src/rules-compiler-rust && cargo test &&
         echo '=== Running PowerShell Tests ===' &&
-        pwsh -Command 'Invoke-Pester -Path /workspace/src/adguard-api-powershell/Tests/ -PassThru' &&
+        pwsh -Command 'Invoke-Pester -Path /workspace/src/rules-compiler-powershell -PassThru' &&
         echo '=== All Tests Complete ==='
       "
     depends_on:
@@ -153,30 +153,8 @@ services:
     networks:
       - ad-blocking-net
 
-  # ---------------------------------------------------------------------------
-  # AdGuard Console UI
-  # ---------------------------------------------------------------------------
-  console-ui:
-    build:
-      context: .
-      dockerfile: Dockerfile.warp
-    image: ad-blocking-dev:latest
-    container_name: ad-blocking-console
-    volumes:
-      - .:/workspace
-      - nuget_packages:/root/.nuget/packages
-    environment:
-      - AdGuard__ApiKey=${ADGUARD_API_KEY:-}
-    working_dir: /workspace/src/adguard-api-dotnet
-    command: dotnet run --project src/AdGuard.ConsoleUI
-    stdin_open: true
-    tty: true
-    depends_on:
-      - dev
-    profiles:
-      - console
-    networks:
-      - ad-blocking-net
+  # AdGuard Console UI has moved to BloqrAI/bloqr-apiclients along with the
+  # rest of the API clients; its docker-compose service now lives there.
 
 # =============================================================================
 # Named volumes for dependency caching

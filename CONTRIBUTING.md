@@ -49,31 +49,26 @@ See [README.md](README.md) for detailed setup instructions.
 This is a multi-language monorepo organized as follows:
 
 ```
-bloqr-lists/
-├── api/                    # Centralized OpenAPI specifications
-├── docs/                   # All documentation
-├── tools/                  # Build and utility scripts
-├── data/                   # Filter rules and compilation data
-├── src/                    # Source code organized by language
-│   ├── adguard-api-dotnet/         # C# API SDK
-│   ├── adguard-api-rust/           # Rust API SDK  
-│   ├── adguard-api-typescript/     # TypeScript API SDK
-│   ├── adguard-api-powershell/     # PowerShell API client
-│   ├── rules-compiler-dotnet/      # .NET rules compiler
-│   ├── rules-compiler-rust/        # Rust rules compiler
-│   ├── adblock-compiler-core/  # TypeScript rules compiler
-│   ├── rules-compiler-python/      # Python rules compiler
-│   ├── powershell/                 # PowerShell modules (canonical)
-│   ├── shell/                      # Shell script utilities (bash/zsh)
-│   ├── rules-validator/         # Rust validation library
-│   ├── website/                    # Gatsby documentation site
-│   └── linear/                     # Linear integration
-└── .github/                # GitHub workflows and configuration
+bloqr-core/
+├── docs/                        # All documentation
+├── tools/                       # Build and utility scripts
+├── schemas/                     # First-party JSON schemas
+├── src/                         # Source code organized by language
+│   ├── rules-compiler-dotnet/       # .NET rules compiler
+│   ├── rules-compiler-rust/         # Rust rules compiler
+│   ├── adblock-compiler-core/       # TypeScript rules compiler (@bloqr/compiler-core)
+│   ├── rules-compiler-python/       # Python rules compiler
+│   ├── rules-compiler-powershell/   # PowerShell rules compiler toolkit
+│   ├── rules-compiler-shell/        # Shell script utilities (bash/zsh)
+│   ├── rules-validator/             # Rust validation library
+│   └── website/                     # Gatsby documentation site
+└── .github/                     # GitHub workflows and configuration
 ```
+
+The AdGuard/Linear API clients and the compiled filter lists have moved to their own repos — see [`BloqrAI/bloqr-apiclients`](https://github.com/BloqrAI/bloqr-apiclients) and [`BloqrAI/bloqr-blocklists`](https://github.com/BloqrAI/bloqr-blocklists).
 
 ### Important Locations
 
-- **OpenAPI specs**: `api/` (single source of truth, don't duplicate)
 - **Documentation**: `docs/` (project-wide docs, guides, references)
 - **Build scripts**: Root level (`build.sh`, `build.ps1`) and `tools/`
 - **Tests**: Within each project's directory

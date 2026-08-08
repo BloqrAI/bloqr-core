@@ -53,8 +53,6 @@ jobs:
       - name: Build .NET projects
         if: matrix.language == 'csharp'
         run: |
-          dotnet restore src/adguard-api-dotnet/AdGuard.ApiClient.slnx
-          dotnet build src/adguard-api-dotnet/AdGuard.ApiClient.slnx --no-restore
           dotnet restore src/rules-compiler-dotnet/RulesCompiler.slnx
           dotnet build src/rules-compiler-dotnet/RulesCompiler.slnx --no-restore
 

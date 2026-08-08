@@ -3,8 +3,6 @@ resolver = "2"
 members = [
     "src/rules-validator/rules-validator-core",
     "src/rules-validator/rules-validator-cli",
-    "src/adguard-api-rust/adguard-api-lib",
-    "src/adguard-api-rust/adguard-api-cli",
     "src/rules-compiler-rust",
 ]
 
@@ -13,7 +11,7 @@ version = "1.0.0"
 edition = "2021"
 authors = ["jaypatrick"]
 license = "GPL-3.0"
-repository = "https://github.com/jaypatrick/ad-blocking"
+repository = "https://github.com/BloqrAI/bloqr-core"
 rust-version = "1.83"
 
 [workspace.dependencies]

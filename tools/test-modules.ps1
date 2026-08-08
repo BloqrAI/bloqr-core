@@ -7,24 +7,17 @@ Write-Host '╚═════════════════════�
 Write-Host ''
 
 try {
-    # Test 1: Core PowerShell Modules (Modern Location)
+    # Test 1: Core PowerShell Modules
     Write-Host '1. Testing Core PowerShell Modules (src/rules-compiler-powershell)...' -ForegroundColor Yellow
     $scriptRoot = Split-Path -Parent $PSScriptRoot
-    Import-Module $scriptRoot\src\powershell\Common\Common.psd1 -ErrorAction Stop
-    Import-Module $scriptRoot\src\powershell\RulesCompiler\RulesCompiler.psd1 -ErrorAction Stop
-    Import-Module $scriptRoot\src\powershell\AdGuardWebhook\AdGuardWebhook.psd1 -ErrorAction Stop
-    Write-Host '   ✓ All modern modules loaded successfully' -ForegroundColor Green
+    Import-Module $scriptRoot\src\rules-compiler-powershell\Common\Common.psd1 -ErrorAction Stop
+    Import-Module $scriptRoot\src\rules-compiler-powershell\RulesCompiler\RulesCompiler.psd1 -ErrorAction Stop
+    Import-Module $scriptRoot\src\rules-compiler-powershell\AdGuardWebhook\AdGuardWebhook.psd1 -ErrorAction Stop
+    Write-Host '   ✓ All modules loaded successfully' -ForegroundColor Green
     Write-Host ''
 
-    # Test 2: API Wrapper Modules (Legacy Location for API Client)
-    Write-Host '2. Testing API Wrapper Modules (src/adguard-api-powershell)...' -ForegroundColor Yellow
-    Import-Module $scriptRoot\src\adguard-api-powershell\RulesCompiler.psd1 -ErrorAction Stop -Force
-    Import-Module $scriptRoot\src\adguard-api-powershell\Webhook-Manifest.psd1 -ErrorAction Stop -Force
-    Write-Host '   ✓ All API wrapper modules loaded successfully' -ForegroundColor Green
-    Write-Host ''
-
-    # Test 3: Verify Functions
-    Write-Host '3. Verifying Exported Functions...' -ForegroundColor Yellow
+    # Test 2: Verify Functions
+    Write-Host '2. Verifying Exported Functions...' -ForegroundColor Yellow
     $rulesCommands = Get-Command -Module RulesCompiler | Select-Object -ExpandProperty Name
     $webhookCommands = Get-Command -Module Webhook-Manifest | Select-Object -ExpandProperty Name
     Write-Host '   RulesCompiler: ' -NoNewline -ForegroundColor Gray
@@ -36,8 +29,8 @@ try {
     Write-Host '   ✓ All functions exported correctly' -ForegroundColor Green
     Write-Host ''
 
-    # Test 4: Verify Module Dependencies
-    Write-Host '4. Verifying Module Dependencies...' -ForegroundColor Yellow
+    # Test 3: Verify Module Dependencies
+    Write-Host '3. Verifying Module Dependencies...' -ForegroundColor Yellow
     $allModules = Get-Module
     $commonLoaded = $allModules | Where-Object Name -eq 'Common'
     $rulesLoaded = $allModules | Where-Object Name -like '*RulesCompiler*'
@@ -47,8 +40,8 @@ try {
     Write-Host '   ✓ Module dependency chain verified' -ForegroundColor Green
     Write-Host ''
 
-    # Test 5: Module Versions
-    Write-Host '5. Verifying Module Versions...' -ForegroundColor Yellow
+    # Test 4: Module Versions
+    Write-Host '4. Verifying Module Versions...' -ForegroundColor Yellow
     $commonModule = Get-Module Common
     $rulesModule = Get-Module RulesCompiler -ListAvailable | Where-Object Path -Like "*src/rules-compiler-powershell*" | Select-Object -First 1
     $webhookModule = Get-Module AdGuardWebhook

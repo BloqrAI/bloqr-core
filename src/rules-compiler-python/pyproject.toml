@@ -57,11 +57,11 @@ all = [
 rules-compiler = "rules_compiler.cli:main"
 
 [project.urls]
-Homepage = "https://github.com/jaypatrick/ad-blocking"
-Repository = "https://github.com/jaypatrick/ad-blocking"
-Issues = "https://github.com/jaypatrick/ad-blocking/issues"
-Documentation = "https://github.com/jaypatrick/ad-blocking/tree/main/src/rules-compiler-python"
-Changelog = "https://github.com/jaypatrick/ad-blocking/releases"
+Homepage = "https://github.com/BloqrAI/bloqr-core"
+Repository = "https://github.com/BloqrAI/bloqr-core"
+Issues = "https://github.com/BloqrAI/bloqr-core/issues"
+Documentation = "https://github.com/BloqrAI/bloqr-core/tree/main/src/rules-compiler-python"
+Changelog = "https://github.com/BloqrAI/bloqr-core/releases"
 
 [tool.setuptools.packages.find]
 where = ["."]

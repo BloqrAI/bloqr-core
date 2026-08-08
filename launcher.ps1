@@ -104,21 +104,19 @@ function Show-MainMenu {
         $choice = Show-Menu -Title "Main Menu" -Options @(
             "🔨 Build Tools"
             "⚙️  Compile Filter Rules"
-            "🌐 AdGuard API Clients"
             "🔍 Validation & Testing"
             "📦 Project Management"
             "ℹ️  System Information"
             "🚪 Exit"
         )
-        
+
         switch ($choice) {
             "1" { Show-BuildMenu }
             "2" { Show-RulesMenu }
-            "3" { Show-ApiMenu }
-            "4" { Show-ValidationMenu }
-            "5" { Show-ProjectMenu }
-            "6" { Show-SystemInfo }
-            "7" { exit 0 }
+            "3" { Show-ValidationMenu }
+            "4" { Show-ProjectMenu }
+            "5" { Show-SystemInfo }
+            "6" { exit 0 }
             default { Write-Host "Invalid choice" -ForegroundColor Red; Start-Sleep -Seconds 1 }
         }
     }
@@ -281,85 +279,8 @@ function Show-RulesMenu {
     }
 }
 
-# AdGuard API Clients Menu
-function Show-ApiMenu {
-    while ($true) {
-        Show-Banner
-        Write-Host "AdGuard API Clients" -ForegroundColor Magenta
-        Write-Host ""
-        
-        $choice = Show-Menu -Title "API Clients" -Options @(
-            "Launch .NET Console UI (Interactive)"
-            "Launch Rust CLI (Interactive)"
-            "Launch TypeScript CLI"
-            "Run API Client Tests (.NET)"
-            "Run API Client Tests (Rust)"
-            "← Back to Main Menu"
-        )
-        
-        switch ($choice) {
-            "1" {
-                Invoke-SafeCommand {
-                    Push-Location "$Script:RootDir\src\adguard-api-dotnet"
-                    try {
-                        dotnet run --project src\AdGuard.ConsoleUI
-                    }
-                    finally {
-                        Pop-Location
-                    }
-                } "Launching .NET Console UI"
-                Pause
-            }
-            "2" {
-                Invoke-SafeCommand {
-                    Push-Location "$Script:RootDir\src\adguard-api-rust"
-                    try {
-                        cargo run --release -p adguard-api-cli
-                    }
-                    finally {
-                        Pop-Location
-                    }
-                } "Launching Rust CLI"
-                Pause
-            }
-            "3" {
-                if (Get-Command deno -ErrorAction SilentlyContinue) {
-                    Push-Location "$Script:RootDir\src\adguard-api-typescript"
-                    try {
-                        deno task start
-                    }
-                    finally {
-                        Pop-Location
-                    }
-                }
-                else {
-                    Write-Host "✗ Deno is not installed" -ForegroundColor Red
-                }
-                Pause
-            }
-            "4" {
-                Invoke-SafeCommand {
-                    Push-Location "$Script:RootDir\src\adguard-api-dotnet"
-                    try {
-                        dotnet test AdGuard.ApiClient.slnx --filter "FullyQualifiedName!~Integration"
-                    }
-                    finally {
-                        Pop-Location
-                    }
-                } "Testing .NET API Client"
-                Pause
-            }
-            "5" {
-                Invoke-SafeCommand {
-                    cargo test -p adguard-api-lib -p adguard-api-cli
-                } "Testing Rust API Client"
-                Pause
-            }
-            "6" { return }
-            default { Write-Host "Invalid choice" -ForegroundColor Red; Start-Sleep -Seconds 1 }
-        }
-    }
-}
+# AdGuard API Clients have moved to BloqrAI/bloqr-apiclients; this launcher
+# no longer manages them.
 
 # Validation & Testing Menu
 function Show-ValidationMenu {
@@ -382,14 +303,6 @@ function Show-ValidationMenu {
             "1" { Invoke-SafeCommand { cargo test -p rules-validator-core -p rules-validator-cli } "Running validation tests"; Pause }
             "2" { Invoke-SafeCommand { cargo test --workspace } "Running all Rust tests"; Pause }
             "3" {
-                Write-Host "Testing .NET API Client..." -ForegroundColor Cyan
-                Push-Location "$Script:RootDir\src\adguard-api-dotnet"
-                try {
-                    dotnet test AdGuard.ApiClient.slnx --filter "FullyQualifiedName!~Integration"
-                }
-                finally {
-                    Pop-Location
-                }
                 Write-Host "Testing .NET Rules Compiler..." -ForegroundColor Cyan
                 Push-Location "$Script:RootDir\src\rules-compiler-dotnet"
                 try {

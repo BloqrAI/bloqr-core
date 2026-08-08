@@ -18,23 +18,18 @@ This repository is a comprehensive multi-language toolkit for ad-blocking, netwo
 
 ### PowerShell Modules
 - **RulesCompiler Toolkit** (`src/rules-compiler-powershell/`) - Canonical, actively-developed modular PowerShell toolkit (class-based `Common`, `RulesCompiler`, `AdGuardWebhook` modules with Pester tests)
-- **AdGuard API PowerShell Client** (`src/adguard-api-powershell/`) - Auto-generated AdGuard DNS API client plus the legacy monolithic `Invoke-RulesCompiler` module, kept for compatibility
 
-### Rust API Client & Validation Tools
-- **AdGuard API Client - Rust** (`src/adguard-api-rust/`) - OpenAPI-generated library (`adguard-api-lib`) plus a hand-written interactive CLI (`adguard-api-cli`)
+### Rules Validator
 - **Rules Validator** (`src/rules-validator/`) - Rust validation library (`rules-validator-core`) and CLI (`rules-validator-cli`) for filter/config validation
-
-### API Client & Tools
-- **AdGuard API Client - .NET** (`src/adguard-api-dotnet/`) - C# SDK for AdGuard DNS API v1.15
-- **AdGuard API Client - TypeScript** (`src/adguard-api-typescript/`) - TypeScript SDK with Deno support
-- **Console UI** (`src/adguard-api-dotnet/src/AdGuard.ConsoleUI/`) - Spectre.Console interactive interface
-- **Linear Import Tool** (`src/linear/`) - TypeScript tool with Deno support
 
 ### Documentation Site
 - **Website** (`src/website/`) - Gatsby 5 documentation site covering guides, API reference, and security docs
 
 ### Configuration Support
 All compilers support JSON, YAML, and TOML configuration formats with full @bloqr/compiler-core compatibility.
+
+### API Clients (moved)
+The AdGuard DNS API clients (.NET, TypeScript, Rust, PowerShell) and the Linear import tool moved to **[`BloqrAI/bloqr-apiclients`](https://github.com/BloqrAI/bloqr-apiclients)** (internal repo) — they're no longer part of this repository.
 
 ## Docker Development Environment
 
@@ -168,49 +163,7 @@ cargo run -- --help                      # Show help
 ./target/release/rules-compiler -c config.yaml
 ```
 
-### .NET API Client + Console UI (`src/adguard-api-dotnet/`)
-```bash
-cd src/adguard-api-dotnet
-dotnet restore src/AdGuard.ApiClient.sln
-dotnet build src/AdGuard.ApiClient.sln
-dotnet test src/AdGuard.ApiClient.sln
-dotnet run --project src/AdGuard.ConsoleUI/AdGuard.ConsoleUI.csproj
-
-# Run benchmarks
-dotnet run --project src/AdGuard.ApiClient.Benchmarks -c Release
-```
-
-### TypeScript API Client (`src/adguard-api-typescript/`)
-```bash
-cd src/adguard-api-typescript
-
-# Deno tasks
-deno task start            # Start CLI
-deno task sync             # Sync rules
-deno task cli              # Run CLI directly
-deno task test             # Run tests
-deno task test:coverage    # Run tests with coverage
-deno task lint             # Lint source files
-deno task fmt              # Format source files
-deno task check            # Type check
-```
-
-### Linear Import Tool (`src/linear/`)
-```bash
-cd src/linear
-
-# Deno tasks
-deno task import           # Run import tool
-deno task import:docs      # Import documentation
-deno task import:dry-run   # Preview import
-deno task cli              # Run CLI directly
-deno task test             # Run tests
-deno task lint             # Lint source files
-deno task fmt              # Format source files
-deno task check            # Type check
-```
-
-### PowerShell RulesCompiler Toolkit (`src/rules-compiler-powershell/`) - canonical
+### PowerShell RulesCompiler Toolkit (`src/rules-compiler-powershell/`)
 ```powershell
 # Import the modules
 Import-Module ./src/rules-compiler-powershell/Common/Common.psd1
@@ -227,30 +180,6 @@ Invoke-Pester -Path ./src/rules-compiler-powershell -Recurse
 Invoke-ScriptAnalyzer -Path src/rules-compiler-powershell -Recurse
 ```
 
-### PowerShell RulesCompiler Module (`src/adguard-api-powershell/`) - legacy, kept for compatibility
-```powershell
-# Import the module
-Import-Module ./src/adguard-api-powershell/Invoke-RulesCompiler.psm1
-
-# Check versions and platform info
-Get-CompilerVersion | Format-List
-
-# Compile filter rules
-Invoke-RulesCompiler
-
-# Compile and copy to rules directory
-Invoke-RulesCompiler -CopyToRules
-
-# Run interactive harness
-./src/adguard-api-powershell/RulesCompiler-Harness.ps1
-
-# Run Pester tests
-Invoke-Pester -Path ./src/adguard-api-powershell/Tests/RulesCompiler-Tests.ps1
-
-# Lint with PSScriptAnalyzer
-Invoke-ScriptAnalyzer -Path src/adguard-api-powershell -Recurse
-```
-
 ## Running Individual Tests
 
 ### TypeScript (Deno)
@@ -263,11 +192,7 @@ deno task test:coverage                    # With coverage
 
 ### .NET (xUnit)
 ```bash
-cd src/adguard-api-dotnet
-dotnet test src/AdGuard.ApiClient.sln --filter "FullyQualifiedName~DevicesApiTests"   # By class
-dotnet test src/AdGuard.ApiClient.sln --filter "Name~GetAccountLimits"                # By method
-
-cd ../rules-compiler-dotnet
+cd src/rules-compiler-dotnet
 dotnet test RulesCompiler.slnx --filter "FullyQualifiedName~ConfigurationValidatorTests"
 dotnet test RulesCompiler.slnx --filter "FullyQualifiedName~TransformationTests"
 ```
@@ -275,13 +200,10 @@ dotnet test RulesCompiler.slnx --filter "FullyQualifiedName~TransformationTests"
 ### PowerShell (Pester)
 ```powershell
 # Run all PowerShell tests
-Invoke-Pester -Path ./src/adguard-api-powershell/Tests/
-
-# Run specific test file
-Invoke-Pester -Path ./src/adguard-api-powershell/Tests/RulesCompiler-Tests.ps1
+Invoke-Pester -Path ./src/rules-compiler-powershell/
 
 # Run with detailed output
-Invoke-Pester -Path ./src/adguard-api-powershell/Tests/ -Output Detailed
+Invoke-Pester -Path ./src/rules-compiler-powershell/ -Output Detailed
 ```
 
 ### Python (pytest)
@@ -305,8 +227,8 @@ cargo test config::                       # Tests in module
 
 ## Architecture
 
-### Filter Rules (`../bloqr-blocklists/output/`)
-- `../bloqr-blocklists/output/adguard_user_filter.txt` - Main tracked filter list consumed by AdGuard DNS
+### Filter Rules
+- Compiled filter lists live in [`BloqrAI/bloqr-blocklists`](https://github.com/BloqrAI/bloqr-blocklists), not this repo — see `output/adguard_dns_filter.txt` there.
 
 ### Rules Compiler - TypeScript (`src/adblock-compiler-core/`)
 - TypeScript compiler using @bloqr/compiler-core
@@ -368,61 +290,11 @@ cargo test config::                       # Tests in module
 - Key structs: `RulesCompiler`, `CompilerConfiguration`, `CompilerResult`, `VersionInfo`
 - LTO optimization enabled for small binary size
 
-### API Client - .NET (`src/adguard-api-dotnet/`)
-- Auto-generated from `api/openapi.json` (primary) and `api/openapi.yaml` (optional) - AdGuard DNS API v1.15
-- `Helpers/ConfigurationHelper.cs` - Fluent auth, timeouts, user agent
-- `Helpers/RetryPolicyHelper.cs` - Polly-based retry for 408/429/5xx
-- Uses Newtonsoft.Json and JsonSubTypes
-- Benchmarks project for performance testing
-
-### API Client - TypeScript (`src/adguard-api-typescript/`)
-- TypeScript SDK for AdGuard DNS API v1.15 with feature parity to .NET version
-- Deno 2.0+ runtime with npm compatibility
-- **Library API** (`src/lib/`):
-  - `AdGuardDnsClientBuilder` - Fluent builder for client configuration
-  - `PagedListBuilder` - Pagination support for list operations
-  - Separate library export: `@adguard/api-typescript/lib`
-- `src/client.ts` - Main `AdGuardDnsClient` class with fluent API
-- `src/api/` - API endpoint implementations (account, devices, DNS servers, statistics, etc.)
-- `src/repositories/` - Higher-level repository pattern abstractions
-- `src/cli/` - Interactive CLI with menu-driven interface
-- `src/mod.ts` - Deno entry point
-- Key classes: `AdGuardDnsClient`, `AdGuardDnsClientBuilder`, `DeviceRepository`, `DnsServerRepository`
-- Dependencies (via npm:): axios, commander, inquirer, chalk
-
-### Linear Import Tool (`src/linear/`)
-- TypeScript tool for importing documentation into Linear project management
-- Deno 2.0+ runtime with npm compatibility
-- `src/linear-import.ts` - Main CLI entry point
-- `src/mod.ts` - Deno entry point
-- `src/parser.ts` - Markdown documentation parser
-- `src/linear-client.ts` - Linear API client wrapper
-- `src/types.ts` - TypeScript type definitions
-- Dependencies (via npm:): @linear/sdk, commander, marked, dotenv
-
-### Console UI (`src/adguard-api-dotnet/src/AdGuard.ConsoleUI/`)
-- Spectre.Console menu-driven interface
-- `ApiClientFactory` configures SDK from settings or interactive prompt
-- Features: Device management, DNS servers, statistics, query logs, filter lists
-
-### PowerShell Toolkit (`src/rules-compiler-powershell/`) - canonical
+### PowerShell Toolkit (`src/rules-compiler-powershell/`)
 - **Common** (`Common/`) - Shared `CompilerLogger` and `CompilerResult` classes used by other modules
 - **RulesCompiler** (`RulesCompiler/`) - Class-based rules compiler module (`CompilerConfiguration`, `CompilerResult`, `CompilerLogger`)
 - **AdGuardWebhook** (`AdGuardWebhook/`) - Class-based webhook invocation module (`WebhookConfiguration`, `WebhookInvoker`, `WebhookStatistics`)
 - Each module ships its own `.psd1` manifest and `Tests/` Pester suite
-
-### PowerShell Modules (`src/adguard-api-powershell/`) - legacy, kept for compatibility
-- **RulesCompiler Module** - Cross-platform PowerShell API mirroring TypeScript compiler
-  - `Invoke-RulesCompiler.psm1` - Main module with exported functions
-  - `RulesCompiler.psd1` - Module manifest
-  - `RulesCompiler-Harness.ps1` - Interactive test harness
-  - `Tests/` - Pester test suite
-  - Functions: `Read-CompilerConfiguration`, `Invoke-FilterCompiler`, `Write-CompiledOutput`, `Invoke-RulesCompiler`, `Get-CompilerVersion`
-- **AdGuard DNS API Client** - Auto-generated PowerShell client for the AdGuard DNS API, plus `Invoke-WebHook.psm1`
-
-### AdGuard API Client - Rust (`src/adguard-api-rust/`)
-- `adguard-api-lib` - OpenAPI-generated client library for AdGuard DNS API v1.15 (excluded from clippy/lint CI since it's generated)
-- `adguard-api-cli` - Hand-written interactive Spectre-style CLI built on top of `adguard-api-lib`
 
 ### Rules Validator (`src/rules-validator/`)
 - `rules-validator-core` - Rust library for validating filter/config files
@@ -466,12 +338,6 @@ RemoveComments, Compress, RemoveModifiers, Validate, ValidateAllowIp, Deduplicat
 
 | Variable | Description |
 |----------|-------------|
-| `ADGUARD_API_KEY` | Universal API credential (works with all languages - recommended) |
-| `AdGuard:ApiKey` | .NET appsettings.json format |
-| `ADGUARD_AdGuard__ApiKey` | .NET environment variable hierarchical format (legacy) |
-| `ADGUARD_LINEAR_API_KEY` | Linear API key for Linear import scripts (`src/linear/`) |
-| `ADGUARD_LINEAR_TEAM_ID` | Optional Linear team ID |
-| `ADGUARD_LINEAR_PROJECT_NAME` | Optional Linear project name |
 | `DEBUG` | Set to any value to enable debug logging |
 | `LOG_LEVEL` | Log level (DEBUG, INFO, WARN, ERROR, SILENT) |
 | `LOG_FORMAT` | Set to `json` for structured logging |
@@ -481,9 +347,9 @@ RemoveComments, Compress, RemoveModifiers, Validate, ValidateAllowIp, Deduplicat
 ## CI/CD Alignment
 
 GitHub Actions workflows validate:
-- `.github/workflows/dotnet.yml` - Builds/tests .NET projects (API client and rules compiler) with .NET 10
-- `.github/workflows/typescript.yml` - Deno 2.x for all TypeScript projects (rules compiler, API client, linear import)
-- `.github/workflows/rust-clippy.yml` - Builds, tests, formats, and lints all Rust workspace members (rules compiler, validation, API client CLI)
+- `.github/workflows/dotnet.yml` - Builds/tests the .NET rules compiler with .NET 10
+- `.github/workflows/typescript.yml` - Deno 2.x for the TypeScript rules compiler
+- `.github/workflows/rust-clippy.yml` - Builds, tests, formats, and lints the Rust workspace (rules compiler, validation library)
 - `.github/workflows/python.yml` - Builds and tests the Python rules compiler across supported Python versions
 - `.github/workflows/powershell.yml` - Pester tests and PSScriptAnalyzer for both PowerShell trees
 - `.github/workflows/build-scripts-tests.yml` - Exercises the root `build.sh`/`build.ps1` launcher scripts
@@ -500,20 +366,20 @@ GitHub Actions workflows validate:
 
 | Requirement | Version | Required For |
 |-------------|---------|--------------|
-| .NET SDK | 10.0+ | .NET compiler, API client |
-| Deno | 2.0+ | TypeScript projects (rules compiler, API client, linear) |
+| .NET SDK | 10.0+ | .NET compiler |
+| Deno | 2.0+ | TypeScript compiler |
 | PowerShell | 7+ | PowerShell scripts |
 | Python | 3.9+ | Python compiler |
 | Rust | 1.85+ | Rust compiler (install via rustup) |
-| adblock-compiler | 0.6.0 | TypeScript compiler (via JSR: `deno add @bloqr/compiler-core`) |
+| @bloqr/compiler-core | 1.0.0 | TypeScript compiler (via JSR: `deno add @bloqr/compiler-core`) |
 | Docker | 24.0+ | Container development (optional but recommended) |
 
 ## Key File Locations
 
-- **Main filter list**: `../bloqr-blocklists/output/adguard_user_filter.txt`
+- **Main filter list**: `output/adguard_dns_filter.txt` in [`BloqrAI/bloqr-blocklists`](https://github.com/BloqrAI/bloqr-blocklists)
 - **Compiler configs**: `src/rules-compiler-*/`
 - **Deno configs**: `src/*/deno.json`
-- **OpenAPI spec**: `api/openapi.yaml`
+- **OpenAPI spec**: `api/openapi.yaml` in [`BloqrAI/bloqr-apiclients`](https://github.com/BloqrAI/bloqr-apiclients)
 - **Docker config**: `Dockerfile.warp`, `docker-compose.yml`, `.dockerignore`
 - **Documentation**: `docs/`
 - **Environment template**: `.env.example`

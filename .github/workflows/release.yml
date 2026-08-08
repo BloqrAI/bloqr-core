@@ -52,26 +52,10 @@ jobs:
           key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj', '**/*.slnx') }}
           restore-keys: ${{ runner.os }}-nuget-
 
-      - name: Restore AdGuard API Client dependencies
-        shell: bash
-        run: |
-          dotnet restore src/adguard-api-dotnet/AdGuard.ApiClient.slnx
-
       - name: Restore Rules Compiler dependencies
         shell: bash
         run: |
           dotnet restore src/rules-compiler-dotnet/RulesCompiler.slnx
-
-      - name: Publish AdGuard.ConsoleUI
-        shell: bash
-        run: |
-          dotnet publish src/adguard-api-dotnet/src/AdGuard.ConsoleUI/AdGuard.ConsoleUI.csproj \
-            --configuration Release \
-            --runtime ${{ matrix.runtime }} \
-            --self-contained true \
-            -p:PublishSingleFile=true \
-            -p:IncludeNativeLibrariesForSelfExtract=true \
-            --output ./artifacts/adguard-console-ui
 
       - name: Publish RulesCompiler.Console
         shell: bash
@@ -88,14 +72,12 @@ jobs:
         if: runner.os == 'Windows'
         shell: pwsh
         run: |
-          Compress-Archive -Path ./artifacts/adguard-console-ui/* -DestinationPath AdGuard.ConsoleUI-${{ matrix.artifact }}.zip
           Compress-Archive -Path ./artifacts/rules-compiler-dotnet/* -DestinationPath RulesCompiler.Console-${{ matrix.artifact }}.zip
 
       - name: Package binaries (Unix)
         if: runner.os != 'Windows'
         shell: bash
         run: |
-          cd ./artifacts/adguard-console-ui && tar -czf ../../AdGuard.ConsoleUI-${{ matrix.artifact }}.tar.gz * && cd ../..
           cd ./artifacts/rules-compiler-dotnet && tar -czf ../../RulesCompiler.Console-${{ matrix.artifact }}.tar.gz * && cd ../..
 
       - name: Upload artifacts
@@ -238,17 +220,12 @@ jobs:
             ## Release ${{ steps.version.outputs.version }}
 
             This release includes pre-built binaries for:
-            - **AdGuard.ConsoleUI** - Console UI for AdGuard DNS API (Windows, Linux, macOS)
             - **RulesCompiler.Console** - .NET rules compiler (Windows, Linux, macOS)
             - **rules-compiler** (Rust) - Rust rules compiler (Windows, Linux, macOS)
 
-            ### Installation
+            AdGuard.ConsoleUI has moved to [BloqrAI/bloqr-apiclients](https://github.com/BloqrAI/bloqr-apiclients) along with the other API clients — see that repo's own releases for it.
 
-            #### AdGuard Console UI
-            Download and extract:
-            - Windows: `AdGuard.ConsoleUI-windows.zip`
-            - Linux: `AdGuard.ConsoleUI-linux.tar.gz`
-            - macOS: `AdGuard.ConsoleUI-macos.tar.gz`
+            ### Installation
 
             #### Rules Compiler (.NET)
             Download and extract:
@@ -265,10 +242,10 @@ jobs:
             ### Usage
 
             After extraction, run the executables:
-            - Windows: `.\AdGuard.ConsoleUI.exe`, `.\RulesCompiler.Console.exe`, or `.\rules-compiler.exe`
-            - Linux/macOS: `./AdGuard.ConsoleUI`, `./RulesCompiler.Console`, or `./rules-compiler`
+            - Windows: `.\RulesCompiler.Console.exe` or `.\rules-compiler.exe`
+            - Linux/macOS: `./RulesCompiler.Console` or `./rules-compiler`
 
-            For detailed documentation, see the [README](https://github.com/BloqrAI/bloqr-lists/blob/main/README.md).
+            For detailed documentation, see the [README](https://github.com/BloqrAI/bloqr-core/blob/main/README.md).
           draft: false
           prerelease: false
         env:
