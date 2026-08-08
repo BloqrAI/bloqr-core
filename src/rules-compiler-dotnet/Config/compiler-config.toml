@@ -8,7 +8,7 @@ name = "AdGuard User Filter"
 description = "Custom filter list compiled from multiple sources"
 
 # Optional: Homepage URL
-homepage = "https://github.com/jaypatrick/ad-blocking"
+homepage = "https://github.com/BloqrAI/bloqr-core"
 
 # Optional: License identifier
 license = "MIT"

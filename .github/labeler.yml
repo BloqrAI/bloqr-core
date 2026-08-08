@@ -5,7 +5,6 @@
 dotnet:
   - changed-files:
       - any-glob-to-any-file:
-          - 'src/adguard-api-dotnet/**'
           - 'src/rules-compiler-dotnet/**'
           - '**/*.cs'
           - '**/*.csproj'
@@ -15,8 +14,6 @@ typescript:
   - changed-files:
       - any-glob-to-any-file:
           - 'src/adblock-compiler-core/**'
-          - 'src/adguard-api-typescript/**'
-          - 'src/linear/**'
           - '**/*.ts'
           - '**/deno.json'
 
@@ -39,7 +36,7 @@ rust:
 powershell:
   - changed-files:
       - any-glob-to-any-file:
-          - 'src/adguard-api-powershell/**'
+          - 'src/rules-compiler-powershell/**'
           - 'src/rules-compiler-shell/*.ps1'
           - '**/*.ps1'
           - '**/*.psm1'
@@ -59,11 +56,6 @@ rules-compiler:
   - changed-files:
       - any-glob-to-any-file:
           - 'src/rules-compiler-*/**'
-
-api-client:
-  - changed-files:
-      - any-glob-to-any-file:
-          - 'src/adguard-api-*/**'
 
 filter-rules:
   - changed-files:

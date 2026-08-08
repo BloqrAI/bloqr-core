@@ -1,1 +1,0 @@
-Trigger CI: extend JSON alias file to cover common ambiguous names

@@ -149,15 +149,6 @@ build_dotnet() {
         configuration="Release"
     fi
     
-    # Build AdGuard API Client
-    echo "→ Building AdGuard API Client (.NET)..."
-    if (cd src/adguard-api-dotnet && dotnet restore AdGuard.ApiClient.slnx && dotnet build AdGuard.ApiClient.slnx --no-restore --configuration $configuration); then
-        echo -e "${GREEN}✓ AdGuard API Client built successfully${NC}"
-    else
-        echo -e "${RED}✗ AdGuard API Client build failed${NC}"
-        BUILD_FAILED=true
-    fi
-    
     # Build Rules Compiler .NET
     echo "→ Building Rules Compiler (.NET)..."
     if (cd src/rules-compiler-dotnet && dotnet restore RulesCompiler.slnx && dotnet build RulesCompiler.slnx --no-restore --configuration $configuration); then
@@ -187,24 +178,6 @@ build_typescript() {
         echo -e "${GREEN}✓ Rules Compiler (TypeScript) built successfully${NC}"
     else
         echo -e "${RED}✗ Rules Compiler (TypeScript) build failed${NC}"
-        BUILD_FAILED=true
-    fi
-    
-    # Build AdGuard API TypeScript
-    echo "→ Building AdGuard API Client (TypeScript)..."
-    if (cd src/adguard-api-typescript && deno task generate:types && deno task check); then
-        echo -e "${GREEN}✓ AdGuard API Client (TypeScript) built successfully${NC}"
-    else
-        echo -e "${RED}✗ AdGuard API Client (TypeScript) build failed${NC}"
-        BUILD_FAILED=true
-    fi
-    
-    # Build Linear tool
-    echo "→ Building Linear Import Tool (TypeScript)..."
-    if (cd src/linear && deno task generate:types && deno task check); then
-        echo -e "${GREEN}✓ Linear Import Tool built successfully${NC}"
-    else
-        echo -e "${RED}✗ Linear Import Tool build failed${NC}"
         BUILD_FAILED=true
     fi
     

@@ -120,24 +120,6 @@ function Build-DotNetProjects {
     
     $configuration = if ($BuildProfile -eq "release") { "Release" } else { "Debug" }
     
-    # Build AdGuard API Client
-    Write-Host "→ Building AdGuard API Client (.NET)..."
-    try {
-        Push-Location src/adguard-api-dotnet
-        try {
-            dotnet restore AdGuard.ApiClient.slnx
-            dotnet build AdGuard.ApiClient.slnx --no-restore --configuration $configuration
-            Write-Host "✓ AdGuard API Client built successfully" -ForegroundColor Green
-        }
-        finally {
-            Pop-Location
-        }
-    }
-    catch {
-        Write-Host "✗ AdGuard API Client build failed" -ForegroundColor Red
-        $script:BuildFailed = $true
-    }
-    
     # Build Rules Compiler .NET
     Write-Host "→ Building Rules Compiler (.NET)..."
     try {
@@ -185,42 +167,6 @@ function Build-TypeScriptProjects {
     }
     catch {
         Write-Host "✗ Rules Compiler (TypeScript) build failed" -ForegroundColor Red
-        $script:BuildFailed = $true
-    }
-    
-    # Build AdGuard API TypeScript
-    Write-Host "→ Building AdGuard API Client (TypeScript)..."
-    try {
-        Push-Location src/adguard-api-typescript
-        try {
-            deno task generate:types
-            deno task check
-            Write-Host "✓ AdGuard API Client (TypeScript) built successfully" -ForegroundColor Green
-        }
-        finally {
-            Pop-Location
-        }
-    }
-    catch {
-        Write-Host "✗ AdGuard API Client (TypeScript) build failed" -ForegroundColor Red
-        $script:BuildFailed = $true
-    }
-    
-    # Build Linear tool
-    Write-Host "→ Building Linear Import Tool (TypeScript)..."
-    try {
-        Push-Location src/linear
-        try {
-            deno task generate:types
-            deno task check
-            Write-Host "✓ Linear Import Tool built successfully" -ForegroundColor Green
-        }
-        finally {
-            Pop-Location
-        }
-    }
-    catch {
-        Write-Host "✗ Linear Import Tool build failed" -ForegroundColor Red
         $script:BuildFailed = $true
     }
     

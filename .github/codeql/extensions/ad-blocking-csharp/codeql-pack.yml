@@ -1,4 +1,4 @@
-name: BloqrAI/bloqr-lists-csharp
+name: BloqrAI/bloqr-core-csharp
 version: 0.0.0
 library: true
 extensionTargets:

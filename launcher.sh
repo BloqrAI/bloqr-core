@@ -107,20 +107,18 @@ main_menu() {
         choice=$(show_menu "Main Menu" \
             "🔨 Build Tools" \
             "⚙️  Compile Filter Rules" \
-            "🌐 AdGuard API Clients" \
             "🔍 Validation & Testing" \
             "📦 Project Management" \
             "ℹ️  System Information" \
             "🚪 Exit")
-        
+
         case $choice in
             1) build_menu ;;
             2) rules_menu ;;
-            3) api_menu ;;
-            4) validation_menu ;;
-            5) project_menu ;;
-            6) system_info ;;
-            7|"") exit 0 ;;
+            3) validation_menu ;;
+            4) project_menu ;;
+            5) system_info ;;
+            6|"") exit 0 ;;
             *) echo "Invalid choice" ;;
         esac
     done
@@ -241,59 +239,8 @@ rules_menu() {
     done
 }
 
-# AdGuard API Clients Menu
-api_menu() {
-    while true; do
-        show_banner
-        echo -e "${MAGENTA}AdGuard API Clients${NC}"
-        echo ""
-        
-        local choice
-        choice=$(show_menu "API Clients" \
-            "Launch .NET Console UI (Interactive)" \
-            "Launch Rust CLI (Interactive)" \
-            "Launch TypeScript CLI" \
-            "Run API Client Tests (.NET)" \
-            "Run API Client Tests (Rust)" \
-            "← Back to Main Menu")
-        
-        case $choice in
-            1)
-                cd src/adguard-api-dotnet
-                dotnet run --project src/AdGuard.ConsoleUI
-                cd "$SCRIPT_DIR"
-                pause
-                ;;
-            2)
-                cd src/adguard-api-rust
-                cargo run --release -p adguard-api-cli
-                cd "$SCRIPT_DIR"
-                pause
-                ;;
-            3)
-                if command -v deno &> /dev/null; then
-                    cd src/adguard-api-typescript
-                    deno task start
-                    cd "$SCRIPT_DIR"
-                else
-                    echo -e "${RED}✗ Deno is not installed${NC}"
-                fi
-                pause
-                ;;
-            4)
-                cd src/adguard-api-dotnet
-                dotnet test AdGuard.ApiClient.slnx --filter "FullyQualifiedName!~Integration"
-                cd "$SCRIPT_DIR"
-                pause
-                ;;
-            5)
-                cargo test -p adguard-api-lib -p adguard-api-cli
-                pause
-                ;;
-            6|"") return ;;
-        esac
-    done
-}
+# AdGuard API Clients have moved to BloqrAI/bloqr-apiclients; this launcher
+# no longer manages them.
 
 # Validation & Testing Menu
 validation_menu() {
@@ -322,8 +269,6 @@ validation_menu() {
                 pause
                 ;;
             3)
-                echo "Testing .NET API Client..."
-                cd src/adguard-api-dotnet && dotnet test AdGuard.ApiClient.slnx --filter "FullyQualifiedName!~Integration" && cd "$SCRIPT_DIR"
                 echo "Testing .NET Rules Compiler..."
                 cd src/rules-compiler-dotnet && dotnet test RulesCompiler.slnx && cd "$SCRIPT_DIR"
                 pause

@@ -13,7 +13,6 @@ on:
     paths:
       - 'src/rules-compiler-rust/**'
       - 'src/rules-validator/**'
-      - 'src/adguard-api-rust/**'
       - 'Cargo.toml'
       - 'Cargo.lock'
       - '.github/workflows/rust-clippy.yml'
@@ -22,7 +21,6 @@ on:
     paths:
       - 'src/rules-compiler-rust/**'
       - 'src/rules-validator/**'
-      - 'src/adguard-api-rust/**'
       - 'Cargo.toml'
       - 'Cargo.lock'
       - '.github/workflows/rust-clippy.yml'
@@ -59,10 +57,7 @@ jobs:
 
       - name: Check formatting
         run: |
-          # adguard-api-lib is OpenAPI-generated and excluded from formatting checks,
-          # matching the clippy job below.
-          cargo fmt -p rules-compiler -p rules-validator-core -p rules-validator-cli \
-            -p adguard-api-cli -- --check
+          cargo fmt -p rules-compiler -p rules-validator-core -p rules-validator-cli -- --check
 
       - name: Build workspace
         run: cargo build --workspace --all-features
@@ -72,9 +67,7 @@ jobs:
 
       - name: Run clippy
         run: |
-          # Run clippy on non-generated packages only (adguard-api-lib is OpenAPI-generated, excluded)
           cargo clippy --no-deps -p rules-compiler -p rules-validator-core -p rules-validator-cli \
-            -p adguard-api-cli \
             --all-features -- -W clippy::all -W clippy::correctness -W clippy::suspicious
 
   security-analysis:
@@ -111,7 +104,6 @@ jobs:
       - name: Run clippy for security analysis
         run: |
           cargo clippy --no-deps -p rules-compiler -p rules-validator-core -p rules-validator-cli \
-            -p adguard-api-cli \
             --all-features --message-format=json | clippy-sarif | tee rust-clippy-results.sarif | sarif-fmt
         continue-on-error: true
 

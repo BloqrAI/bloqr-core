@@ -1,6 +1,0 @@
-# This workspace is now part of the root workspace
-# All dependencies are managed at the root level
-
-[workspace.dependencies]
-# API library
-adguard-api-lib = { path = "adguard-api-lib" }

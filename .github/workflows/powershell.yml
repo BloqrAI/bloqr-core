@@ -1,6 +1,5 @@
 # PowerShell Modules Build and Test workflow
-# Covers both the AdGuard API client/RulesCompiler module (src/adguard-api-powershell)
-# and the modular PowerShell toolkit (src/rules-compiler-powershell)
+# Covers the modular PowerShell toolkit (src/rules-compiler-powershell)
 
 name: PowerShell Build
 
@@ -12,13 +11,11 @@ on:
   push:
     branches: ["main"]
     paths:
-      - 'src/adguard-api-powershell/**'
       - 'src/rules-compiler-powershell/**'
       - '.github/workflows/powershell.yml'
   pull_request:
     branches: ["main"]
     paths:
-      - 'src/adguard-api-powershell/**'
       - 'src/rules-compiler-powershell/**'
       - '.github/workflows/powershell.yml'
 
@@ -34,10 +31,6 @@ jobs:
         run: |
           Install-Module -Name PSScriptAnalyzer -Force -Scope CurrentUser -SkipPublisherCheck
           $results = @()
-          # PSAvoidUsingUsernameAndPasswordParams is excluded for the AdGuard API client:
-          # it is OpenAPI-generated and its Username/Password parameters are real DNS API
-          # auth fields, not a credential-handling mistake.
-          $results += Invoke-ScriptAnalyzer -Path 'src/adguard-api-powershell' -Recurse -Severity Warning,Error -ExcludeRule PSAvoidUsingUsernameAndPasswordParams
           $results += Invoke-ScriptAnalyzer -Path 'src/rules-compiler-powershell' -Recurse -Severity Warning,Error
           $results | Format-Table -AutoSize
           $errors = $results | Where-Object { $_.Severity -eq 'Error' }
@@ -45,27 +38,6 @@ jobs:
             Write-Host "::error::PSScriptAnalyzer found $($errors.Count) error(s)"
             exit 1
           }
-
-  test-api-client:
-    name: Pester - AdGuard API Client
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      # Legacy/auto-generated client (see CLAUDE.md) - has pre-existing test
-      # failures in its generated model tests that predate this workflow.
-      # Non-blocking for now; failures still show up in the run for visibility.
-      - name: Run Pester tests
-        shell: pwsh
-        continue-on-error: true
-        run: |
-          Install-Module -Name Pester -Force -Scope CurrentUser -SkipPublisherCheck -MinimumVersion 5.0
-          Import-Module Pester -PassThru
-          $config = New-PesterConfiguration
-          $config.Run.Path = 'src/adguard-api-powershell/Tests'
-          $config.Output.Verbosity = 'Detailed'
-          $config.Run.Exit = $true
-          Invoke-Pester -Configuration $config
 
   test-powershell-toolkit:
     name: Pester - PowerShell Toolkit

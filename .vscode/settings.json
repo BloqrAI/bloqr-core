@@ -1,5 +1,5 @@
 {
-  "dotnet.defaultSolution": "src/adguard-api-dotnet/src/AdGuard.ApiClient.slnx",
+  "dotnet.defaultSolution": "src/rules-compiler-dotnet/RulesCompiler.slnx",
   "powerShellUniversal.syncSamples": true,
   "sarif-viewer.connectToGithubCodeScanning": "on",
   "deno.enable": true

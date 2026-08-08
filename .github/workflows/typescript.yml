@@ -12,15 +12,11 @@ on:
     branches: ["main"]
     paths:
       - 'src/adblock-compiler-core/**'
-      - 'src/adguard-api-typescript/**'
-      - 'src/linear/**'
       - '.github/workflows/typescript.yml'
   pull_request:
     branches: ["main"]
     paths:
       - 'src/adblock-compiler-core/**'
-      - 'src/adguard-api-typescript/**'
-      - 'src/linear/**'
       - '.github/workflows/typescript.yml'
 
 jobs:
@@ -34,12 +30,6 @@ jobs:
           - name: Rules Compiler (Deno)
             path: src/adblock-compiler-core
             has_tests: true
-          - name: AdGuard API Client (Deno)
-            path: src/adguard-api-typescript
-            has_tests: true
-          - name: Linear Import Tool (Deno)
-            path: src/linear
-            has_tests: false
 
     defaults:
       run:
