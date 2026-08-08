@@ -1,5 +1,0 @@
-! Title: Custom User Rules
-! Description: Personal ad-blocking rules
-! Last modified: 2024-01-01
-||example-ads.com^
-||tracking.example.net^

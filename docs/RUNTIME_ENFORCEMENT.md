@@ -54,7 +54,7 @@ const result = await hostlistCompiler.compile(config);
 import { compile_with_validation, CompilationInput } from '@adguard/validation';
 
 const input = {
-  local_files: ['data/input/rules.txt'],
+  local_files: ['../bloqr-blocklists/input/rules.txt'],
   remote_urls: ['https://example.com/list.txt'],
   expected_hashes: new Map([
     ['https://example.com/list.txt', 'sha384hash...']
@@ -63,7 +63,7 @@ const input = {
 
 const options = {
   validation_config: ValidationConfig.default(),
-  output_path: 'data/output/filter.txt',
+  output_path: '../bloqr-blocklists/output/filter.txt',
   create_archive: true
 };
 
@@ -442,7 +442,7 @@ Every compilation creates an audit log:
   "validation_mode": "strict",
   "output_hash": "abc123...",
   "validation_signature": "def456...",
-  "archive_created": "data/archive/2024-12-27_10-30-00"
+  "archive_created": "../bloqr-blocklists/archive/2024-12-27_10-30-00"
 }
 ```
 

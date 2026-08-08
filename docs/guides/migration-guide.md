@@ -695,7 +695,7 @@ echo "Rollback complete"
 ### Pre-Migration
 
 - [ ] Backup all configuration files
-- [ ] Backup existing data/output
+- [ ] Backup existing ../bloqr-blocklists/output
 - [ ] Document current setup
 - [ ] Test current implementation
 - [ ] Review new implementation docs

@@ -53,7 +53,7 @@ A comprehensive multi-language toolkit for ad-blocking, network protection, and 
 
 **Purpose:** Organize and compile blocking lists for ad, tracker, and malware domains.
 
-#### Input Sources (`data/input/`)
+#### Input Sources (`../bloqr-blocklists/input/`)
 
 Source location for filter rules before compilation:
 
@@ -73,11 +73,11 @@ Source location for filter rules before compilation:
 - Tampering detection via hash comparison
 - Error reporting with line numbers
 
-#### Compiled Output (`data/output/`)
+#### Compiled Output (`../bloqr-blocklists/output/`)
 
-Filter lists compiled from `data/input/` sources plus any remote sources configured in the compiler config, in adblock format.
+Filter lists compiled from `../bloqr-blocklists/input/` sources plus any remote sources configured in the compiler config, in adblock format.
 
-#### Archive Storage (`data/archive/`)
+#### Archive Storage (`../bloqr-blocklists/archive/`)
 
 Automated archiving of processed input files for audit and rollback:
 
@@ -123,7 +123,7 @@ export ADGUARD_ARCHIVE_RETENTION_DAYS=90
 - Deduplication, Compression, Validation, ASCII conversion, whitespace cleanup, and 6 more (11 total)
 
 **Configuration Sources:**
-- Local files (`data/input/`) and remote URLs, per `compiler-config.json`
+- Local files (`../bloqr-blocklists/input/`) and remote URLs, per `compiler-config.json`
 
 ---
 

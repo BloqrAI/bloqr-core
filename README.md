@@ -405,105 +405,22 @@ warp integration create linear --environment Egji4sZU4TNIOwNasFU73A
 
 ## Data Directory Structure
 
-The `data/` directory organizes all filter-related files with a clear separation between inputs and outputs:
+The compiled filter lists and their input/archive files no longer live in this repo — they moved to **[`BloqrAI/bloqr-blocklists`](https://github.com/BloqrAI/bloqr-blocklists)** (public), split out from `bloqr-core` so the lists have their own lifecycle separate from the compiler source. That repo uses the same `input/`, `output/`, `archive/` layout this section used to document (see its own README for the full structure).
 
-### Input Directory (`data/input/`)
+The sample configs in this repo (`src/adblock-compiler-core/compiler-config.json`, `src/rules-compiler-dotnet/Config/compiler-config.*`) point at `../bloqr-blocklists/...` — clone `bloqr-blocklists` as a sibling directory to `bloqr-core` to use them as-is, or point `output.path`/`sources[].source`/`hashDatabasePath` at any local path you prefer; none of it is hardcoded by the compilers themselves.
 
-Source location for filter rules to be compiled:
-
-- **Local rule files**: Place custom filter lists in adblock or hosts format
-  - Examples: `custom-rules.txt`, `company-blocklist.txt`
-  - Supports `.txt`, `.hosts` extensions
-  - Automatic format detection (adblock vs hosts)
-
-- **Internet source references**: File containing URLs to remote filter lists
-  - Create `internet-sources.txt` with one URL per line
-  - Example sources: EasyList, StevenBlack hosts, AdGuard filters
-  - Lines starting with `#` are comments
-  - **Security**: Only HTTPS URLs allowed, content validated before use
-
-**Features:**
+**What the compilers still handle regardless of where your data lives:**
 - ✅ **Hash verification**: SHA-384 integrity checking for tampering detection
 - ✅ **Syntax validation**: Automatic linting before compilation
-- ✅ **Multi-format support**: Both adblock and hosts file formats
-- ✅ **Remote list fetching**: Download and verify internet sources
-- ✅ **Error reporting**: Clear messages with line numbers for invalid rules
-- ✅ **URL security**: HTTPS enforcement, domain validation, content verification
-
-**Example structure:**
-```
-data/input/
-├── README.md                    # Documentation
-├── custom-rules.txt             # Your custom adblock rules
-├── internet-sources.txt         # URLs to remote lists
-└── .gitignore                   # Ignore large/sensitive files
-```
-
-See [`data/input/README.md`](data/input/README.md) for detailed usage instructions.
-
-### Output Directory (`data/output/`)
-
-Contains the final compiled filter list:
-
-- **`adguard_user_filter.txt`**: Main filter list in **adblock format**
-  - Merged from all input sources
-  - Deduplicated and validated
-  - Ready for use with AdGuard DNS or other blockers
-  - Tracked in version control
-
-**Compilation guarantees:**
-- ✅ Output is always in adblock syntax (not hosts format)
-- ✅ Comments and metadata preserved from sources
-- ✅ SHA-384 hash computed for verification
-- ✅ Rule count validation
-
-### Archive Directory (`data/archive/`)
-
-Stores processed input files after successful compilation for audit and rollback purposes:
-
-- **Automatic archiving**: Configurable via environment variables or CLI flags
-- **Timestamp-based organization**: Each compilation creates a dated subdirectory
-- **Manifest tracking**: JSON metadata with hashes, file info, and compilation stats
-- **Retention policy**: Automatic cleanup of archives older than 90 days (configurable)
-
-**Archiving modes:**
-- 🤖 **Automatic** (default): Archive after every successful compilation
-- 🤔 **Interactive**: Prompt user whether to archive
-- 🚫 **Disabled**: No archiving
-
-**Example structure:**
-```
-data/archive/
-├── 2024-12-27_14-30-45/
-│   ├── manifest.json              # Compilation metadata
-│   ├── custom-rules.txt           # Input file snapshot
-│   └── internet-sources.txt
-└── 2024-12-26_09-15-22/
-    ├── manifest.json
-    └── custom-rules.txt
-```
-
-**Configuration:**
-```bash
-# Environment variables
-export ADGUARD_ARCHIVE_ENABLED=true
-export ADGUARD_ARCHIVE_MODE=automatic  # or interactive, disabled
-export ADGUARD_ARCHIVE_RETENTION_DAYS=90
-
-# CLI flags (all compilers)
-npm run compile -- --no-archive              # Disable
-npm run compile -- --archive-interactive     # Prompt
-npm run compile -- --archive-retention 365   # Custom retention
-
-# Or configure in JSON/YAML/TOML config files
-```
+- ✅ **Multi-format support**: Both adblock and hosts file formats, remote list fetching (HTTPS-only, content-validated)
+- ✅ **Archiving**: automatic/interactive/disabled modes, timestamp-based snapshots with a JSON manifest, configurable retention (`ADGUARD_ARCHIVE_ENABLED`, `ADGUARD_ARCHIVE_MODE`, `ADGUARD_ARCHIVE_RETENTION_DAYS`, or the equivalent CLI flags / config-file `archiving` block)
 
 **Config file example (JSON):**
 ```json
 {
   "name": "My Filter",
   "output": {
-    "path": "data/output/my-filter.txt",
+    "path": "../bloqr-blocklists/output/my-filter.txt",
     "conflictStrategy": "rename"
   },
   "archiving": {
@@ -515,19 +432,11 @@ npm run compile -- --archive-retention 365   # Custom retention
 }
 ```
 
-**Use cases:**
-- Track historical changes to filter rules
-- Rollback to previous working configuration
-- Audit what was compiled and when
-- Meet compliance requirements for data retention
-
-See [`data/archive/README.md`](data/archive/README.md) for detailed usage and restoration procedures.
-
 ### Compilation Workflow
 
 ```
 ┌─────────────────────────────────────────────────────┐
-│ 1. Discover all files in data/input/               │
+│ 1. Discover all files in your configured input dir │
 │    - Scan for .txt, .hosts files                   │
 │    - Parse internet-sources.txt                    │
 └─────────────────────────────────────────────────────┘
@@ -558,7 +467,7 @@ See [`data/archive/README.md`](data/archive/README.md) for detailed usage and re
                         │
                         ▼
 ┌─────────────────────────────────────────────────────┐
-│ 5. Output to data/output/adguard_user_filter.txt   │
+│ 5. Output to your configured output path           │
 │    - Write final adblock-format list               │
 │    - Compute output hash                           │
 │    - Log statistics (rule count, hash)             │
@@ -1205,7 +1114,7 @@ deno task start
 deno task start -- --api-key your-key
 
 # Sync rules from file
-deno task start -- sync --file data/output/adguard_user_filter.txt
+deno task start -- sync --file ../bloqr-blocklists/output/adguard_user_filter.txt
 ```
 
 **Features**:

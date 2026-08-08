@@ -379,7 +379,7 @@ GitHub Actions workflows validate:
 - **Main filter list**: `output/adguard_dns_filter.txt` in [`BloqrAI/bloqr-blocklists`](https://github.com/BloqrAI/bloqr-blocklists)
 - **Compiler configs**: `src/rules-compiler-*/`
 - **Deno configs**: `src/*/deno.json`
-- **OpenAPI spec**: `api/openapi.yaml`
+- **OpenAPI spec**: `api/openapi.yaml` in [`BloqrAI/bloqr-apiclients`](https://github.com/BloqrAI/bloqr-apiclients)
 - **Docker config**: `Dockerfile.warp`, `docker-compose.yml`, `.dockerignore`
 - **Documentation**: `docs/`
 - **Environment template**: `.env.example`

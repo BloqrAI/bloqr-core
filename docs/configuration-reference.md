@@ -35,7 +35,7 @@ Configure output file path and conflict handling:
 
 | Property | Type | Required | Default | Description |
 |----------|------|----------|---------|-------------|
-| `path` | string | No | `data/output/adguard_user_filter.txt` | Full path to output file |
+| `path` | string | No | `../bloqr-blocklists/output/adguard_user_filter.txt` | Full path to output file |
 | `fileName` | string | No | - | Output filename (alternative to path) |
 | `conflictStrategy` | string | No | `rename` | How to handle existing files: `rename`, `overwrite`, or `error` |
 
@@ -43,7 +43,7 @@ Configure output file path and conflict handling:
 ```json
 {
   "output": {
-    "path": "data/output/my-custom-filter.txt",
+    "path": "../bloqr-blocklists/output/my-custom-filter.txt",
     "conflictStrategy": "rename"
   }
 }
@@ -63,7 +63,7 @@ Configure integrity verification for both local files (at-rest) and remote downl
 | `mode` | string | No | `warning` | Verification mode: `strict`, `warning`, or `disabled` |
 | `requireHashesForRemote` | boolean | No | `false` | Require hashes for all remote sources |
 | `failOnMismatch` | boolean | No | `false` | Fail compilation on hash mismatch |
-| `hashDatabasePath` | string | No | `data/input/.hashes.json` | Path to hash database file |
+| `hashDatabasePath` | string | No | `../bloqr-blocklists/input/.hashes.json` | Path to hash database file |
 
 **Example:**
 ```json
@@ -72,7 +72,7 @@ Configure integrity verification for both local files (at-rest) and remote downl
     "mode": "strict",
     "requireHashesForRemote": true,
     "failOnMismatch": true,
-    "hashDatabasePath": "data/input/.hashes.json"
+    "hashDatabasePath": "../bloqr-blocklists/input/.hashes.json"
   }
 }
 ```
@@ -279,7 +279,7 @@ Pattern file format (one pattern per line, comments with `!`):
 
 The `data/` directory structure supports input/output separation for organized filter management.
 
-### Input Directory (`data/input/`)
+### Input Directory (`../bloqr-blocklists/input/`)
 
 **Purpose**: Store source filter files and remote list references before compilation.
 
@@ -327,7 +327,7 @@ All URLs in `internet-sources.txt` undergo comprehensive security validation:
 
 **Example structure**:
 ```
-data/input/
+../bloqr-blocklists/input/
 ├── README.md                    # Documentation
 ├── custom-rules.txt             # Local adblock rules
 ├── company-blocklist.txt        # Organization-specific rules
@@ -335,7 +335,7 @@ data/input/
 └── .gitignore                   # Ignore cache/temp files
 ```
 
-### Output Directory (`data/output/`)
+### Output Directory (`../bloqr-blocklists/output/`)
 
 **Purpose**: Store final compiled filter list.
 
@@ -354,14 +354,14 @@ data/input/
 ### Compilation Workflow
 
 ```
-data/input/          →  Compiler  →  data/output/
+../bloqr-blocklists/input/          →  Compiler  →  ../bloqr-blocklists/output/
 ├── custom.txt           (Validate,      └── adguard_user_filter.txt
 ├── blocklist.txt         Hash,              (adblock format)
 └── internet-sources.txt  Merge)
 ```
 
 **Processing steps**:
-1. Scan `data/input/` for all `.txt` and `.hosts` files
+1. Scan `../bloqr-blocklists/input/` for all `.txt` and `.hosts` files
 2. Parse `internet-sources.txt` for remote URLs
 3. Validate syntax of each source
 4. Compute SHA-384 hashes for tampering detection
@@ -369,11 +369,11 @@ data/input/          →  Compiler  →  data/output/
 6. Merge all sources using `@bloqr/compiler-core`
 7. Apply transformations (deduplicate, validate, etc.)
 8. Convert hosts format to adblock if needed
-9. Write to `data/output/adguard_user_filter.txt`
+9. Write to `../bloqr-blocklists/output/adguard_user_filter.txt`
 10. Compute final output hash
-11. Archive input files to `data/archive/` (if enabled)
+11. Archive input files to `../bloqr-blocklists/archive/` (if enabled)
 
-### Archive Directory (`data/archive/`)
+### Archive Directory (`../bloqr-blocklists/archive/`)
 
 **Purpose**: Preserve processed input files after successful compilation.
 
@@ -404,7 +404,7 @@ data/input/          →  Compiler  →  data/output/
 
 **Archive structure**:
 ```
-data/archive/
+../bloqr-blocklists/archive/
 ├── 2024-12-27_14-30-45/
 │   ├── manifest.json         # Compilation metadata
 │   ├── custom-rules.txt      # Input file snapshot
@@ -428,7 +428,7 @@ data/archive/
       "format": "adblock"
     }
   ],
-  "outputFile": "data/output/adguard_user_filter.txt",
+  "outputFile": "../bloqr-blocklists/output/adguard_user_filter.txt",
   "outputHash": "xyz789...",
   "ruleCount": 150,
   "success": true,
@@ -439,7 +439,7 @@ data/archive/
 **Retention policy**:
 - Archives older than `retentionDays` are automatically deleted
 - Cleanup occurs before creating new archives
-- Manual cleanup: `find data/archive/ -type d -mtime +90 -exec rm -rf {} \;`
+- Manual cleanup: `find ../bloqr-blocklists/archive/ -type d -mtime +90 -exec rm -rf {} \;`
 
 ## Example Configurations
 
@@ -453,7 +453,7 @@ data/archive/
   "homepage": "https://example.com/filters",
   "license": "GPL-3.0",
   "output": {
-    "path": "data/output/my-filter.txt",
+    "path": "../bloqr-blocklists/output/my-filter.txt",
     "conflictStrategy": "rename"
   },
   "hashVerification": {

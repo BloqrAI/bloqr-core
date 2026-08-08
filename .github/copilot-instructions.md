@@ -7,7 +7,9 @@
 Multi-language toolkit for ad-blocking and AdGuard DNS management with **identical output** across all compilers. Key principle: **Four languages, one schema, same SHA-384 hash**.
 
 **Components**:
-- **Filter Rules**: compiled in [`BloqrAI/bloqr-blocklists`](https://github.com/BloqrAI/bloqr-blocklists) (moved out of this repo) — input/output separation with hash verification
+- **Filter Rules**: compiled in [`BloqrAI/bloqr-blocklists`](https://github.com/BloqrAI/bloqr-blocklists) (moved out of this repo)
+  - **Input**: `../bloqr-blocklists/input/` - Local rules and internet source references with hash verification
+  - **Output**: `../bloqr-blocklists/output/adguard_user_filter.txt` - Final compiled list in adblock format
 - **Rules Compilers**: TypeScript, C#, Python, Rust - all produce identical output
 - **Website**: Gatsby portfolio site deployed to GitHub Pages
 - **Scripts**: PowerShell modules and cross-platform shell scripts
