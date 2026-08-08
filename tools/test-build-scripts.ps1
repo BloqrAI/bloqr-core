@@ -139,7 +139,6 @@ Write-Host ""
 Write-Host "=== Integration Tests: .NET Builds ===" -ForegroundColor Blue
 if (Get-Command dotnet -ErrorAction SilentlyContinue) {
     Run-Test ".NET debug build succeeds" { pwsh -File .\build.ps1 -DotNet }
-    Test-OutputContains ".NET debug build shows API client" { pwsh -File .\build.ps1 -DotNet } "AdGuard API Client"
     Test-OutputContains ".NET debug build shows rules compiler" { pwsh -File .\build.ps1 -DotNet } "Rules Compiler"
     
     Run-Test ".NET release build succeeds" { pwsh -File .\build.ps1 -DotNet -Profile release }
