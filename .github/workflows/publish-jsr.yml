@@ -62,4 +62,12 @@ jobs:
         run: deno publish --dry-run
 
       - name: Publish to JSR
+        id: publish
+        continue-on-error: true
         run: deno publish
+
+      - name: Report unlinked-package failure
+        if: steps.publish.outcome == 'failure'
+        run: |
+          echo "::warning::deno publish failed. This is expected until @jk-com/adblock-compiler is linked to this GitHub repository via https://jsr.io (one-time manual setup, see the comment at the top of this workflow). Failing the job so it stays visible."
+          exit 1

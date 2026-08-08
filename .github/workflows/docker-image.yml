@@ -7,8 +7,18 @@ concurrency:
 on:
   push:
     branches: [ "main" ]
+    paths:
+      - 'Dockerfile.warp'
+      - 'docker-compose.yml'
+      - '.dockerignore'
+      - '.github/workflows/docker-image.yml'
   pull_request:
     branches: [ "main" ]
+    paths:
+      - 'Dockerfile.warp'
+      - 'docker-compose.yml'
+      - '.dockerignore'
+      - '.github/workflows/docker-image.yml'
 
 jobs:
 
