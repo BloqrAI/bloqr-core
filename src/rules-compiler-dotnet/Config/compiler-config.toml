@@ -18,7 +18,7 @@ version = "1.0.0"
 
 # Output configuration
 [output]
-path = "data/output/adguard_user_filter.txt"
+path = "../bloqr-blocklists/output/adguard_user_filter.txt"
 conflictStrategy = "rename"  # rename, overwrite, or error
 
 # Hash verification configuration
@@ -26,7 +26,7 @@ conflictStrategy = "rename"  # rename, overwrite, or error
 mode = "warning"  # strict, warning, or disabled
 requireHashesForRemote = false
 failOnMismatch = false
-hashDatabasePath = "data/input/.hashes.json"
+hashDatabasePath = "../bloqr-blocklists/input/.hashes.json"
 
 # Archiving configuration
 [archiving]
@@ -65,7 +65,7 @@ exclusions_sources = []
 
 [[sources]]
 name = "Local User Rules"
-source = "data/output/adguard_user_filter.txt"
+source = "../bloqr-blocklists/output/adguard_user_filter.txt"
 # Type: "adblock" (default) or "hosts"
 type = "adblock"
 # Source-specific transformations

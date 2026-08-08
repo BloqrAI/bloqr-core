@@ -8,8 +8,8 @@ Multi-language toolkit for ad-blocking and AdGuard DNS management with **identic
 
 **Components**:
 - **Filter Rules**: AdGuard filter lists with input/output separation
-  - **Input**: `data/input/` - Local rules and internet source references with hash verification
-  - **Output**: `data/output/adguard_user_filter.txt` - Final compiled list in adblock format
+  - **Input**: `../bloqr-blocklists/input/` - Local rules and internet source references with hash verification
+  - **Output**: `../bloqr-blocklists/output/adguard_user_filter.txt` - Final compiled list in adblock format
 - **API Client**: C# SDK for AdGuard DNS API v1.15 with Polly resilience
 - **Rules Compilers**: TypeScript, C#, Python, Rust - all produce identical output
 - **ConsoleUI**: Spectre.Console menu-driven interface with DI architecture
@@ -20,7 +20,7 @@ Multi-language toolkit for ad-blocking and AdGuard DNS management with **identic
 
 ### Centralized Validation Layer
 **NEW**: Rust-based validation library (`src/rules-validator/`) provides unified security across all compilers:
-- **At-rest hash verification**: SHA-384 for local files (`data/input/.hashes.json` database)
+- **At-rest hash verification**: SHA-384 for local files (`../bloqr-blocklists/input/.hashes.json` database)
 - **In-flight hash verification**: SHA-384 for downloads (prevents MITM)
 - **URL security**: HTTPS enforcement, domain validation, content verification
 - **Syntax validation**: Adblock and hosts format linting
@@ -60,33 +60,31 @@ Program.cs → ConsoleApplication → [DeviceMenu, DnsServerMenu, StatisticsMenu
 ## Project Structure
 
 ```
-bloqr-lists/
-├── .github/              # GitHub configuration and workflows
-├── docs/                 # Documentation (API docs, guides)
-├── data/                  # Filter rules and compilation data
-│   ├── input/             # Source filter lists (local & remote refs)
-│   ├── output/            # Compiled filter output
-│   └── archive/           # Archived input files (timestamped)
+bloqr-core/
+├── .github/                        # GitHub configuration and workflows
+├── docs/                           # Documentation (API docs, guides)
+├── schemas/                        # First-party JSON schemas
 ├── src/
-│   ├── adguard-api-dotnet/         # C# AdGuard DNS API client
-│   ├── adblock-compiler-core/  # TypeScript rules compiler
+│   ├── adblock-compiler-core/      # TypeScript rules compiler (the JSR-published @bloqr/compiler-core)
 │   ├── rules-compiler-dotnet/      # .NET rules compiler
 │   ├── rules-compiler-python/      # Python rules compiler
 │   ├── rules-compiler-rust/        # Rust rules compiler
-│   ├── website/                    # Gatsby website
-│   ├── powershell/       # PowerShell automation scripts
-│   ├── rules-compiler-shell/      # Shell scripts (bash, ps1, cmd)
-│   └── linear/           # Linear integration
+│   ├── rules-compiler-shell/       # Shell scripts (bash, zsh)
+│   ├── rules-compiler-powershell/  # Canonical PowerShell compiler toolkit
+│   ├── rules-validator/            # Rust validation library + CLI
+│   └── website/                    # Gatsby documentation website
 └── README.md
 ```
+
+The AdGuard/Linear API clients (`adguard-api-*`, `linear`) and the compiled filter lists (formerly `data/`) have moved to their own repos: [`BloqrAI/bloqr-apiclients`](https://github.com/BloqrAI/bloqr-apiclients) (internal) and [`BloqrAI/bloqr-blocklists`](https://github.com/BloqrAI/bloqr-blocklists) (public), respectively.
 
 ## Critical Workflows
 
 ### Compiling Filter Rules (Core Workflow)
-**Goal**: Generate `data/output/adguard_user_filter.txt` with verified output in adblock format
+**Goal**: Generate `../bloqr-blocklists/output/adguard_user_filter.txt` with verified output in adblock format
 
 **Input Processing**:
-1. Scan `data/input/` for local filter files (`.txt`, `.hosts`)
+1. Scan `../bloqr-blocklists/input/` for local filter files (`.txt`, `.hosts`)
 2. Parse `internet-sources.txt` for remote list URLs
 3. **Validate URLs for security**:
    - Enforce HTTPS only (reject HTTP)
@@ -353,7 +351,7 @@ pwsh -Command "Invoke-ScriptAnalyzer -Path . -Recurse"
 - API client uses **Polly** for rate limiting and retry strategies
 
 ### Filter Rules Security
-- **Input validation**: All files in `data/input/` undergo syntax validation and linting
+- **Input validation**: All files in `../bloqr-blocklists/input/` undergo syntax validation and linting
 - **Hash verification**: SHA-384 hashes computed for all input files to detect tampering
 - **Format enforcement**: Output is always adblock syntax, regardless of input formats
 - **Source tracking**: Maintains provenance of rules from local and internet sources
@@ -366,7 +364,7 @@ pwsh -Command "Invoke-ScriptAnalyzer -Path . -Recurse"
   - Content scanning for valid filter syntax
   - Optional SHA-384 hash verification (add `#sha384=hash` to URL)
   - File size limits to prevent abuse
-- Test rule changes locally before committing to `data/output/adguard_user_filter.txt`
+- Test rule changes locally before committing to `../bloqr-blocklists/output/adguard_user_filter.txt`
 - Rules deployed to AdGuard DNS affect real traffic filtering
 - Be cautious when adding rules from untrusted sources
 - Validate and test new filter rules before deployment
@@ -407,7 +405,7 @@ All compilers return/output:
 Supports 3 formats (JSON/YAML/TOML), based on `@bloqr/compiler-core` schema:
 ```json
 {
-  "output": "data/output/adguard_user_filter.txt",
+  "output": "../bloqr-blocklists/output/adguard_user_filter.txt",
   "sources": [
     { "url": "https://example.com/list.txt", "transformations": ["RemoveComments"] }
   ],
@@ -516,7 +514,7 @@ cd src/rules-compiler-rust && cargo test
 
 | File/Folder | Purpose | When to Modify |
 |-------------|---------|----------------|
-| `data/output/adguard_user_filter.txt` | **Production filter list** | After successful compilation and testing |
+| `../bloqr-blocklists/output/adguard_user_filter.txt` | **Production filter list** | After successful compilation and testing |
 | `src/adblock-compiler-core/compiler-config.json` | **Primary config** for rule compilation | To change filter sources or transformations |
 | `api/openapi.yaml` | AdGuard DNS API spec (v1.15) | Never (upstream dependency) |
 | `src/adguard-api-dotnet/src/AdGuard.ApiClient/` | **Auto-generated** API client | Never (regenerate from spec instead) |

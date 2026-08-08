@@ -379,7 +379,7 @@ Example error:
 ```
 ❌ Validation Error: Hash mismatch detected
 
-File: data/input/custom-rules.txt
+File: ../bloqr-blocklists/input/custom-rules.txt
 Expected: abc123def456...
 Actual:   xyz789uvw321...
 
@@ -469,7 +469,7 @@ See [CONTRIBUTING.md](../CONTRIBUTING.md) for how to get involved.
 - [Runtime Enforcement Architecture](RUNTIME_ENFORCEMENT.md) - How validation is enforced at runtime
 - [Validation Enforcement](VALIDATION_ENFORCEMENT.md) - CI/CD enforcement mechanisms
 - [Configuration Reference](configuration-reference.md) - Complete configuration guide
-- [Security Best Practices](../data/input/README.md) - Detailed security documentation
+- [Security Best Practices](../../bloqr-blocklists/input/README.md) - Detailed security documentation
 
 ---
 

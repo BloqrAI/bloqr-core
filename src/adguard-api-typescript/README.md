@@ -65,7 +65,7 @@ deno task start
 deno task start -- --api-key your-key
 
 # Sync rules from file
-deno task start -- sync --file data/output/adguard_user_filter.txt
+deno task start -- sync --file ../bloqr-blocklists/output/adguard_user_filter.txt
 ```
 
 ## Architecture

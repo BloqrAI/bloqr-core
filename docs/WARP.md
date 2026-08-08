@@ -15,7 +15,7 @@ TypeScript/Deno – rules compiler (src/adblock-compiler-core)
 - Coverage: deno task test:coverage
 - Compile rules: deno task compile
   Notes
-  - Reads compiler configuration and writes compiled rules. The canonical list in data/output/adguard_user_filter.txt is tracked under data/output/.
+  - Reads compiler configuration and writes compiled rules. The canonical list in ../bloqr-blocklists/output/adguard_user_filter.txt is tracked under ../bloqr-blocklists/output/.
 
 TypeScript/Deno – API client (src/adguard-api-typescript)
 - Cache deps: cd src/adguard-api-typescript && deno cache src/mod.ts
@@ -45,8 +45,8 @@ Environment and secrets used by code
 - The API client expects an AdGuard API credential. The console UI can prompt for a key or read it from configuration (AdGuard:ApiKey).
 
 High-level architecture and structure
-- Filter rules (data/output/)
-  - data/output/adguard_user_filter.txt is the tracked output list consumed by AdGuard DNS.
+- Filter rules (../bloqr-blocklists/output/)
+  - ../bloqr-blocklists/output/adguard_user_filter.txt is the tracked output list consumed by AdGuard DNS.
 - Filter compiler (src/adblock-compiler-core/)
   - Deno/TypeScript wrapper around @bloqr/compiler-core. Reads configuration, compiles sources, and writes compiled rules. Deno tests cover config parsing and output writing.
 - API clients
