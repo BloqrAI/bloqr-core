@@ -44,14 +44,22 @@
     "@std/yaml": "jsr:@std/yaml@^1.2.0",
     "@std/toml": "jsr:@std/toml@^1.0.11",
     "@std/fmt": "jsr:@std/fmt@^1.0.10",
+    "@cliffy/table": "jsr:@cliffy/table@^1.2.1",
     "zod": "jsr:@zod/zod@^4.4.3",
     "node:fs": "node:fs",
     "node:fs/promises": "node:fs/promises",
     "node:path": "node:path",
     "node:crypto": "node:crypto",
-    "cli-table3": "npm:cli-table3@^0.6.5",
+    // ora: no JSR-native terminal-spinner library with comparable maturity/adoption exists
+    // (audited for #294; only near-equivalents found were unmaintained/zero-dependent forks).
     "ora": "npm:ora@^9.4.1",
+    // figlet: no JSR-native ASCII-art banner library exists (audited for #294).
     "figlet": "npm:figlet@^1.11.4",
+    // @inquirer/prompts: @cliffy/prompt (JSR) was evaluated as a candidate but has a materially
+    // different API (class-based `Select.prompt({ options })` vs. function-based `select({ choices })`)
+    // and this module's interactive flows have no automated test coverage to verify behavioral parity
+    // against a real TTY. Left in place pending a dedicated follow-up with manual/e2e verification
+    // (audited for #294).
     "@inquirer/prompts": "npm:@inquirer/prompts@^8.5.2"
   },
   "allowScripts": ["npm:core-js@3.47.0"],

@@ -16,7 +16,7 @@ import {
   white,
   yellow,
 } from '@std/fmt/colors';
-import Table from 'cli-table3';
+import { Table } from '@cliffy/table';
 import ora from 'ora';
 import figlet from 'figlet';
 
@@ -38,29 +38,17 @@ export function formatValue(value: unknown): string {
 }
 
 /** Create a standard table with headers */
-export function createTable(headers: string[]): Table.Table {
-  return new Table({
-    head: headers.map((h) => bold(white(h))),
-    style: {
-      head: [],
-      border: [],
-    },
-  });
+export function createTable(headers: string[]): Table {
+  return new Table().header(headers.map((h) => bold(white(h)))).border(true);
 }
 
 /** Create a key-value table (2 columns) */
-export function createKeyValueTable(): Table.Table {
-  return new Table({
-    head: [bold(green('Property')), bold(green('Value'))],
-    style: {
-      head: [],
-      border: [],
-    },
-  });
+export function createKeyValueTable(): Table {
+  return new Table().header([bold(green('Property')), bold(green('Value'))]).border(true);
 }
 
 /** Display a table */
-export function displayTable(table: Table.Table): void {
+export function displayTable(table: Table): void {
   console.log(table.toString());
 }
 
