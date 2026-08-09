@@ -360,7 +360,7 @@ GitHub Actions workflows validate:
 - `.github/workflows/release.yml` - Builds and publishes release binaries (.NET, Rust, Python)
 - `.github/workflows/publish-jsr.yml` - Publishes `@bloqr/compiler-core` to JSR on pushes to `main` touching `src/adblock-compiler-core/**`; idempotent (no-ops if the current `deno.json` version is already published). Token-authenticated (`JSR_WORKFLOW_TOKEN`) — see `docs/jsr-token-authentication.md`.
 - `.github/workflows/compiler-core-version-bump.yml` / `.github/workflows/compiler-core-create-version-tag.yml` - Automated Conventional-Commits version bumping and tagging for `@bloqr/compiler-core`, scoped to that package only. Reference implementation for the org-wide per-package versioning standard — see `docs/architecture/versioning-strategy.md` before adding an equivalent pair for any future decomposed package.
-- `.github/workflows/stale-reference-check.yml` - Greps for pre-rename (`bloqr-lists`, `jaypatrick/ad-blocking`) and retired-scope (`@jk-com`) references that shouldn't reappear post-restructuring.
+- `.github/workflows/stale-reference-check.yml` - Greps for the pre-rename GitHub repo path and the retired JSR scope (see the workflow file itself for the exact patterns — this file can't repeat them literally without tripping the check).
 - `.github/workflows/claude.yml` - Claude AI integration for @claude mentions
 - `.github/workflows/claude-code-review.yml` - Automated PR code review
 - `.github/workflows/label.yml` / `.github/workflows/stale.yml` / `.github/workflows/summary.yml` - Repository housekeeping (labeling, stale-issue management, PR summaries)
