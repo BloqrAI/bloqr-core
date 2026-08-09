@@ -10,10 +10,15 @@ import type { Logger } from './types.ts';
  * Log level enumeration
  */
 export enum LogLevel {
+  /** Verbose diagnostic output. */
   DEBUG = 0,
+  /** Normal operational output. */
   INFO = 1,
+  /** Potentially problematic but non-fatal conditions. */
   WARN = 2,
+  /** Failures that affect the current operation. */
   ERROR = 3,
+  /** Suppresses all log output. */
   SILENT = 4,
 }
 

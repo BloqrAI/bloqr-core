@@ -61,6 +61,9 @@ jobs:
       - name: Format check
         run: deno fmt --check src/
 
+      - name: Symbol documentation coverage
+        run: deno task lint:docs
+
       - name: Test
         if: matrix.has_tests
         run: deno task test

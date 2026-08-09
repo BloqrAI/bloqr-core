@@ -239,4 +239,5 @@ export type {
 
 // Default export for backward compatibility
 import { compile as compileFunc } from './compiler/index.ts';
+/** Default export, identical to the named {@linkcode compile} export — kept for backward compatibility. */
 export default compileFunc;

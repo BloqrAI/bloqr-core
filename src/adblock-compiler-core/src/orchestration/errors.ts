@@ -8,32 +8,51 @@
  */
 export enum ErrorCode {
   // Configuration errors (1xxx)
+  /** No configuration file was found at the given or default path. */
   CONFIG_NOT_FOUND = 'E1001',
+  /** Configuration format (JSON/YAML/TOML) could not be determined or is unsupported. */
   CONFIG_INVALID_FORMAT = 'E1002',
+  /** Configuration file content failed to parse as its detected format. */
   CONFIG_PARSE_ERROR = 'E1003',
+  /** Parsed configuration failed schema/semantic validation. */
   CONFIG_VALIDATION_ERROR = 'E1004',
+  /** A required configuration field is missing. */
   CONFIG_MISSING_REQUIRED = 'E1005',
 
   // Compilation errors (2xxx)
+  /** Filter compilation failed. */
   COMPILATION_FAILED = 'E2001',
+  /** Filter compilation exceeded its allotted time. */
   COMPILATION_TIMEOUT = 'E2002',
+  /** A configured source could not be fetched. */
   SOURCE_FETCH_FAILED = 'E2003',
 
   // File system errors (3xxx)
+  /** Failed to read a file from disk. */
   FILE_READ_ERROR = 'E3001',
+  /** Failed to write a file to disk. */
   FILE_WRITE_ERROR = 'E3002',
+  /** Failed to create a required directory. */
   DIRECTORY_CREATE_ERROR = 'E3003',
+  /** A resolved path escaped its expected base directory. */
   PATH_TRAVERSAL_ERROR = 'E3004',
+  /** A file exceeded the configured maximum size. */
   FILE_TOO_LARGE = 'E3005',
 
   // Input validation errors (4xxx)
+  /** A provided filesystem path is invalid. */
   INVALID_PATH = 'E4001',
+  /** A provided URL is invalid. */
   INVALID_URL = 'E4002',
+  /** A provided CLI or API argument is invalid. */
   INVALID_ARGUMENT = 'E4003',
 
   // System errors (5xxx)
+  /** Graceful shutdown was requested. */
   SHUTDOWN_REQUESTED = 'E5001',
+  /** An operation exceeded its configured timeout. */
   TIMEOUT = 'E5002',
+  /** A configured resource limit (e.g. memory, concurrency) was exceeded. */
   RESOURCE_LIMIT_EXCEEDED = 'E5003',
 }
 

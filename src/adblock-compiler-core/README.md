@@ -181,6 +181,7 @@ This creates `.d.ts` files in the `dist/` directory that re-export types from th
 - `deno task test` - Run tests
 - `deno task check` - Type check the code
 - `deno task lint` - Lint the code
+- `deno task lint:docs` - Check JSDoc coverage on exported symbols (enforces the ≥98% threshold this package's JSR score depends on — see [Development](#development))
 - `deno task fmt` - Format the code
 - `deno task generate:types` - Generate `.d.ts` type definition files
 
@@ -215,3 +216,11 @@ This package is one of two Bloqr filter-list compilers, and the two are delibera
 2. Run tests: `deno task test`
 3. Type check: `deno task check`
 4. Generate type definitions: `deno task generate:types`
+
+**Every exported symbol needs JSDoc.** This package's JSR score depends on
+documentation coverage of its full public API — not just top-level exports,
+but enum members and public interface/class properties and methods too.
+`deno task lint:docs` checks exactly the set JSR itself scores against and
+fails (with a list of what's missing) below 98% coverage; run it after
+adding or changing any exported symbol, and expect CI to fail if you skip
+it locally.
