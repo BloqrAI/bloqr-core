@@ -195,6 +195,13 @@ jobs:
           git commit -m "chore: bump compiler-core version to ${{ steps.bump.outputs.new }}"
           git push -u origin "$BRANCH_NAME"
 
+          # GitHub's ref/event ingestion can lag a couple of seconds behind a
+          # push. Opening the PR immediately after push has been observed
+          # (in bloqr-compiler's equivalent workflows) to race that lag and
+          # produce a "startup_failure" CI run with zero jobs. A short pause
+          # here avoids that race.
+          sleep 10
+
           gh pr create \
             --title "chore: bump @bloqr/compiler-core version to ${{ steps.bump.outputs.new }}" \
             --body "$(cat <<EOF
