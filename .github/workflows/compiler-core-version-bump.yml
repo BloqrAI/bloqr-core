@@ -136,7 +136,17 @@ jobs:
           set -euo pipefail
           BUMP_TYPE="${{ steps.determine_bump.outputs.bump_type }}"
 
-          OLD=$(deno eval "console.log(JSON.parse(Deno.readTextFileSync('deno.json')).version)")
+          # Read from src/version.ts (the actual source of truth per this
+          # package's versioning convention), not deno.json: deno.json is
+          # JSONC (see the accepted-npm-exception comments in its `imports`
+          # block), and a plain JSON.parse -- as this line did until now --
+          # throws on those comments. src/version.ts has no such format, so
+          # a simple regex extraction is safe here.
+          OLD=$(grep -oE "VERSION = '[^']*'" src/version.ts | sed -E "s/VERSION = '([^']*)'/\1/")
+          if [ -z "$OLD" ]; then
+            echo "::error::Could not find VERSION constant in src/version.ts" >&2
+            exit 1
+          fi
           echo "old=$OLD" >> "$GITHUB_OUTPUT"
 
           IFS='.' read -r major minor patch <<< "$OLD"
