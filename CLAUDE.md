@@ -378,6 +378,21 @@ GitHub Actions workflows validate:
   bump/tag workflow pair — never a single repo-wide version. See
   `docs/architecture/versioning-strategy.md` for the pattern and the
   checklist for onboarding a new package.
+- **`@bloqr/compiler-core`'s JSR symbol-documentation score must stay as
+  close to 100% as possible.** Any time you add, rename, or touch an
+  exported symbol in `src/adblock-compiler-core/src/` — including enum
+  members and public interface/class properties and methods, not just
+  top-level declarations — add or update its JSDoc in the same change.
+  `deno doc --lint` (run in every CI job) only catches top-level exported
+  symbols with *zero* JSDoc; it does not see undocumented enum members or
+  interface/class members, which is exactly the gap that let the score
+  drop from ~88% to 61% in practice (PR #310's Bun-support work added
+  several undocumented enum members that `deno doc --lint` never flagged).
+  Run `deno task lint:docs` (`scripts/check-symbol-docs.ts`) — wired into
+  both `typescript.yml` and `publish-jsr.yml` as a required CI step — to
+  check the finer-grained coverage JSR itself scores against; it fails the
+  build below a 98% threshold and prints exactly which symbols are
+  missing docs.
 - **`deno.json` may contain `//` comments (JSONC)** — Deno's own config
   loader tolerates them, but don't assume every script touching it does.
   Any code that reads/writes `deno.json` programmatically (like

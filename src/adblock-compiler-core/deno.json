@@ -33,6 +33,7 @@
     "test:coverage": "deno test --allow-read --allow-write --allow-env --allow-net --coverage=coverage src/",
     "check": "deno check src/mod.ts src/mod.bun.ts",
     "lint": "deno lint src/",
+    "lint:docs": "deno run --allow-read --allow-run scripts/check-symbol-docs.ts",
     "fmt": "deno fmt src/",
     "version": "deno run --allow-read --allow-env src/mod.ts --version",
     "version:sync": "deno run --allow-read --allow-write scripts/sync-version.ts",

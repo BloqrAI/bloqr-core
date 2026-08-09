@@ -20,11 +20,17 @@ function getEnvVar(name: string): string | undefined {
  * Log levels for filtering output
  */
 export enum LogLevel {
+  /** Most verbose; fine-grained execution detail. */
   Trace = -1,
+  /** Verbose diagnostic output. */
   Debug = 0,
+  /** Normal operational output. */
   Info = 1,
+  /** Potentially problematic but non-fatal conditions. */
   Warn = 2,
+  /** Failures that affect the current operation. */
   Error = 3,
+  /** Suppresses all log output. */
   Silent = 4,
 }
 

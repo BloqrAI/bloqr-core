@@ -6,18 +6,31 @@
  * Enum of all available transformation types
  */
 export enum TransformationType {
+  /** Strips comment lines from the rule set. */
   RemoveComments = 'RemoveComments',
+  /** Removes redundant whitespace/blank lines to shrink output size. */
   Compress = 'Compress',
+  /** Strips AdGuard-specific rule modifiers, leaving bare rules. */
   RemoveModifiers = 'RemoveModifiers',
+  /** Drops rules that fail syntax validation. */
   Validate = 'Validate',
+  /** Validates rules while allowing IP-address targets. */
   ValidateAllowIp = 'ValidateAllowIp',
+  /** Removes duplicate rules. */
   Deduplicate = 'Deduplicate',
+  /** Inverts `@@` allowlist rules to blocking rules (or vice versa). */
   InvertAllow = 'InvertAllow',
+  /** Strips empty lines from the rule set. */
   RemoveEmptyLines = 'RemoveEmptyLines',
+  /** Trims leading/trailing whitespace from each rule line. */
   TrimLines = 'TrimLines',
+  /** Ensures the output ends with a trailing newline. */
   InsertFinalNewLine = 'InsertFinalNewLine',
+  /** Converts non-ASCII rule text to its ASCII (Punycode) equivalent. */
   ConvertToAscii = 'ConvertToAscii',
+  /** Flags rules that conflict with each other (e.g. block vs. allow the same target). */
   ConflictDetection = 'ConflictDetection',
+  /** Merges/simplifies redundant rules for a smaller, equivalent rule set. */
   RuleOptimizer = 'RuleOptimizer',
 }
 
@@ -25,7 +38,9 @@ export enum TransformationType {
  * Source type for filter lists
  */
 export enum SourceType {
+  /** AdGuard/uBlock-style adblock filter syntax. */
   Adblock = 'adblock',
+  /** Hosts-file syntax (`0.0.0.0 example.com`). */
   Hosts = 'hosts',
 }
 

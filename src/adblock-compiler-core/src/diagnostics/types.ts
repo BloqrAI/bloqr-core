@@ -7,10 +7,15 @@
  * Trace severity levels
  */
 export enum TraceSeverity {
+  /** Most verbose; fine-grained execution detail. */
   Trace = 'trace',
+  /** Diagnostic detail useful for troubleshooting. */
   Debug = 'debug',
+  /** Normal operational events. */
   Info = 'info',
+  /** Potentially problematic but non-fatal conditions. */
   Warn = 'warn',
+  /** Failures that affect the current operation. */
   Error = 'error',
 }
 
@@ -18,13 +23,21 @@ export enum TraceSeverity {
  * Event categories for tracing
  */
 export enum TraceCategory {
+  /** Filter compilation pipeline events. */
   Compilation = 'compilation',
+  /** Source download/fetch events. */
   Download = 'download',
+  /** Rule transformation events. */
   Transformation = 'transformation',
+  /** Cache read/write events. */
   Cache = 'cache',
+  /** Configuration/rule validation events. */
   Validation = 'validation',
+  /** Network-level events. */
   Network = 'network',
+  /** Performance/benchmark events. */
   Performance = 'performance',
+  /** Error events. */
   Error = 'error',
 }
 
