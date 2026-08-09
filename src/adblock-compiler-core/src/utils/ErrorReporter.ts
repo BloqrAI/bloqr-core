@@ -49,10 +49,12 @@ export interface IErrorReporter {
 export class ConsoleErrorReporter implements IErrorReporter {
   constructor(private readonly verbose = false) {}
 
+  /** Delegates to {@linkcode ConsoleErrorReporter.reportSync}. */
   report(error: Error, context?: ErrorContext): void {
     this.reportSync(error, context);
   }
 
+  /** Logs the error (and, if `verbose`, its context) to the console. */
   reportSync(error: Error, context?: ErrorContext): void {
     const formatted = ErrorUtils.format(error);
     console.error('[ErrorReporter]', formatted);
@@ -102,6 +104,7 @@ export class SentryErrorReporter implements IErrorReporter {
 
   private readonly sentryKey: string;
 
+  /** Sends the error to Sentry's envelope/store endpoint. */
   async report(error: Error, context?: ErrorContext): Promise<void> {
     try {
       const payload = this.buildSentryPayload(error, context);
@@ -122,6 +125,7 @@ export class SentryErrorReporter implements IErrorReporter {
     }
   }
 
+  /** Fire-and-forget wrapper around {@linkcode SentryErrorReporter.report}. */
   reportSync(error: Error, context?: ErrorContext): void {
     // Fire and forget - don't wait for response
     this.report(error, context).catch((reportError) => {
@@ -213,6 +217,7 @@ export class CloudflareErrorReporter implements IErrorReporter {
     },
   ) {}
 
+  /** Writes the error as an Analytics Engine data point. */
   async report(error: Error, context?: ErrorContext): Promise<void> {
     try {
       // Write to Analytics Engine
@@ -240,6 +245,7 @@ export class CloudflareErrorReporter implements IErrorReporter {
     }
   }
 
+  /** Synchronous variant — Analytics Engine's `writeDataPoint` is itself synchronous. */
   reportSync(error: Error, context?: ErrorContext): void {
     // Analytics Engine writeDataPoint is synchronous but returns void
     try {
@@ -277,6 +283,7 @@ export class CompositeErrorReporter implements IErrorReporter {
    */
   constructor(private readonly reporters: IErrorReporter[]) {}
 
+  /** Reports to every wrapped reporter in parallel. */
   async report(error: Error, context?: ErrorContext): Promise<void> {
     // Report to all reporters in parallel
     await Promise.allSettled(
@@ -284,6 +291,7 @@ export class CompositeErrorReporter implements IErrorReporter {
     );
   }
 
+  /** Reports to every wrapped reporter synchronously, in order. */
   reportSync(error: Error, context?: ErrorContext): void {
     // Report to all reporters synchronously
     for (const reporter of this.reporters) {
@@ -309,10 +317,12 @@ export class CompositeErrorReporter implements IErrorReporter {
  * Useful for testing or when error reporting is disabled.
  */
 export class NoOpErrorReporter implements IErrorReporter {
+  /** Does nothing. */
   report(_error: Error, _context?: ErrorContext): void {
     // Do nothing
   }
 
+  /** Does nothing. */
   reportSync(_error: Error, _context?: ErrorContext): void {
     // Do nothing
   }
@@ -322,6 +332,7 @@ export class NoOpErrorReporter implements IErrorReporter {
  * Analytics Engine dataset interface (from @cloudflare/workers-types).
  */
 export interface AnalyticsEngineDataset {
+  /** Writes a single data point to the bound Analytics Engine dataset. */
   writeDataPoint(event: {
     blobs?: string[];
     doubles?: number[];

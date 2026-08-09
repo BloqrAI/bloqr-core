@@ -5,10 +5,15 @@ import { ConditionalEvaluator } from './ConditionalEvaluator.ts';
  * Preprocessor directive types for filter lists
  */
 export enum DirectiveType {
+  /** Opens a conditional block: `!#if <expression>`. */
   If = '!#if',
+  /** Marks the else branch of a conditional block. */
   Else = '!#else',
+  /** Closes a conditional block. */
   EndIf = '!#endif',
+  /** Inlines another filter list at this point. */
   Include = '!#include',
+  /** Safari content-blocker-affinity directive. */
   Safari = '!#safari_cb_affinity',
 }
 
@@ -16,9 +21,13 @@ export enum DirectiveType {
  * Represents a conditional block in the filter
  */
 export interface ConditionalBlock {
+  /** The raw boolean expression from the `!#if` directive. */
   condition: string;
+  /** Lines belonging to the `if` branch. */
   ifLines: string[];
+  /** Lines belonging to the `else` branch, if present. */
   elseLines: string[];
+  /** Index of the line containing the matching `!#endif`. */
   endIndex: number;
 }
 
