@@ -59,7 +59,7 @@ dirs = "5.0"
 regex = "1.11"
 
 # Cross-platform utilities
-which = "7.0"
+which = "8.0"
 
 # Runtime version detection
 rustc_version_runtime = "0.3"
