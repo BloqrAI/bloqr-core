@@ -17,8 +17,11 @@ import {
  * Validation result
  */
 export interface ValidationResult {
+  /** `true` if the configuration passed validation (no errors, though there may be warnings). */
   valid: boolean;
+  /** Fatal validation problems that must be fixed before the configuration can be used. */
   errors: string[];
+  /** Non-fatal issues worth surfacing to the user but that do not block compilation. */
   warnings: string[];
 }
 

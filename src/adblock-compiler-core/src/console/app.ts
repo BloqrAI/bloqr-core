@@ -82,6 +82,10 @@ export class ConsoleApplication {
   private readonly options: ConsoleAppOptions;
   private configPath?: string;
 
+  /**
+   * Creates a new `ConsoleApplication`.
+   * @param options Initial configuration path, format override, and debug logging flag.
+   */
   constructor(options: ConsoleAppOptions = {}) {
     this.options = options;
     this.configPath = options.configPath;

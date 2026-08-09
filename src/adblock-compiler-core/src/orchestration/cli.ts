@@ -1,9 +1,21 @@
 #!/usr/bin/env -S deno run --allow-read --allow-write --allow-env --allow-run
 /**
- * Command-line interface for the Rules Compiler TypeScript Frontend
- * Production-ready with graceful shutdown and structured error handling
- * Supports both interactive and command-line modes
- * Deno-only implementation
+ * Command-line interface for the Rules Compiler TypeScript frontend.
+ *
+ * Production-ready with graceful shutdown and structured error handling.
+ * Supports both interactive menu mode and non-interactive command-line
+ * mode (argument parsing, help/version output, and the {@linkcode main}
+ * entry point used by the `cli` export subpath). Deno-only implementation.
+ *
+ * @example Parse arguments and run the CLI
+ * ```ts
+ * import { main } from '@bloqr/compiler-core/cli';
+ *
+ * const exitCode = await main(['--config', 'compiler-config.yaml']);
+ * ```
+ *
+ * @module cli
+ * @packageDocumentation
  */
 
 import { resolve } from 'node:path';

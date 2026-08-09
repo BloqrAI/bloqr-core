@@ -57,6 +57,12 @@ export class ValidateTransformation extends SyncTransformation {
 
   private currentSourceName?: string;
 
+  /**
+   * Creates a new `ValidateTransformation`.
+   * @param allowIp When `true`, rules targeting bare IP addresses are treated as valid
+   * (used by the `ValidateAllowIp` variant); when `false`, they are rejected.
+   * @param logger Optional logger used to report validation warnings/errors.
+   */
   constructor(allowIp = false, logger?: ILogger) {
     super(logger);
     this.allowIp = allowIp;
@@ -347,16 +353,27 @@ export class ValidateTransformation extends SyncTransformation {
  * Convenience transformation that validates rules while allowing raw IP addresses.
  */
 export class ValidateAllowIpTransformation extends SyncTransformation {
+  /** Always `TransformationType.ValidateAllowIp`. */
   public readonly type: TransformationType = TransformationType.ValidateAllowIp;
+  /** Always `'ValidateAllowIp'`. */
   public readonly name = 'ValidateAllowIp';
 
   private readonly validator: ValidateTransformation;
 
+  /**
+   * Creates a new `ValidateAllowIpTransformation`.
+   * @param logger Optional logger used to report validation warnings/errors.
+   */
   constructor(logger?: ILogger) {
     super(logger);
     this.validator = new ValidateTransformation(true, logger);
   }
 
+  /**
+   * Validates the given rules, removing invalid ones while allowing bare-IP hostnames.
+   * @param rules Rules to validate.
+   * @returns The subset of `rules` that passed validation.
+   */
   public executeSync(rules: readonly string[]): readonly string[] {
     return this.validator.executeSync(rules);
   }
