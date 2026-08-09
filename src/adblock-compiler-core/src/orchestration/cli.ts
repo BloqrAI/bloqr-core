@@ -5,7 +5,11 @@
  * Production-ready with graceful shutdown and structured error handling.
  * Supports both interactive menu mode and non-interactive command-line
  * mode (argument parsing, help/version output, and the {@linkcode main}
- * entry point used by the `cli` export subpath). Deno-only implementation.
+ * entry point used by the `cli` export subpath). Deno is this package's
+ * own runtime; Node.js and Bun are also supported (see {@link ./mod.bun.ts}
+ * for the explicit Bun entry point) since neither `main` nor its
+ * dependencies call `Deno.*` without first checking the `Deno` global is
+ * present.
  *
  * @example Parse arguments and run the CLI
  * ```ts
@@ -19,6 +23,7 @@
  */
 
 import { resolve } from 'node:path';
+import process from 'node:process';
 import type { CliOptions, ConfigurationFormat, VersionInfo } from './types.ts';
 import { runCompiler } from './compiler.ts';
 import { findDefaultConfig, readConfiguration, toJson } from './config-reader.ts';
@@ -217,12 +222,28 @@ Examples:
  * @returns Version info object
  */
 export function getVersionInfo(): VersionInfo {
+  if (typeof Deno !== 'undefined') {
+    return {
+      moduleVersion: VERSION,
+      nodeVersion: `Deno ${Deno.version.deno}`,
+      platform: {
+        os: Deno.build.os,
+        arch: Deno.build.arch,
+      },
+    };
+  }
+
+  // Node.js and Bun both land here. Index through `globalThis` (rather than
+  // referencing a bare `Bun` identifier) so this still type-checks under
+  // `deno check`, which has no ambient `Bun` type.
+  const bunVersion = (globalThis as { Bun?: { version?: string } }).Bun?.version;
+
   return {
     moduleVersion: VERSION,
-    nodeVersion: `Deno ${Deno.version.deno}`,
+    nodeVersion: bunVersion ? `Bun ${bunVersion}` : `Node.js ${process.version}`,
     platform: {
-      os: Deno.build.os,
-      arch: Deno.build.arch,
+      os: process.platform,
+      arch: process.arch,
     },
   };
 }
@@ -240,8 +261,13 @@ export function showVersion(): void {
   console.log(`  OS: ${info.platform.os}`);
   console.log(`  Architecture: ${info.platform.arch}`);
   console.log(`  Runtime: ${info.nodeVersion}`);
-  console.log(`  TypeScript: ${Deno.version.typescript}`);
-  console.log(`  V8: ${Deno.version.v8}`);
+
+  // TypeScript/V8 versions are only meaningful (and only available without a
+  // ReferenceError) when actually running under Deno.
+  if (typeof Deno !== 'undefined') {
+    console.log(`  TypeScript: ${Deno.version.typescript}`);
+    console.log(`  V8: ${Deno.version.v8}`);
+  }
 }
 
 /**
@@ -402,7 +428,9 @@ async function runValidationMode(
  * @param args - Command line arguments
  * @returns Exit code
  */
-export async function main(args: string[] = Deno.args): Promise<number> {
+export async function main(
+  args: string[] = typeof Deno !== 'undefined' ? Deno.args : process.argv.slice(2),
+): Promise<number> {
   let shutdownHandler: ShutdownHandler | undefined;
 
   try {
@@ -532,7 +560,13 @@ export async function main(args: string[] = Deno.args): Promise<number> {
 }
 
 // Run if executed directly
+// `import.meta.main` is supported by both Deno and Bun (Node.js does not set
+// it), so this direct-execution path needs the same runtime-detected exit.
 if (import.meta.main) {
   const code = await main();
-  Deno.exit(code);
+  if (typeof Deno !== 'undefined') {
+    Deno.exit(code);
+  } else {
+    process.exit(code);
+  }
 }

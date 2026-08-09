@@ -5,6 +5,7 @@
 
 import { existsSync, readFileSync, statSync } from 'node:fs';
 import { extname, resolve } from 'node:path';
+import process from 'node:process';
 import { parse as parseYaml } from '@std/yaml';
 import { parse as parseToml } from '@std/toml';
 import type { IConfiguration } from '../index.ts';
@@ -113,10 +114,14 @@ const DEFAULT_CONFIG_PATHS = [
 
 /**
  * Finds a default configuration file
- * @param basePath - Base path to search from
+ * @param basePath - Base path to search from; defaults to the current working
+ *   directory (Deno-native when available, otherwise `node:process`, which
+ *   Node.js and Bun both implement).
  * @returns Path to config file or undefined
  */
-export function findDefaultConfig(basePath: string = Deno.cwd()): string | undefined {
+export function findDefaultConfig(
+  basePath: string = typeof Deno !== 'undefined' ? Deno.cwd() : process.cwd(),
+): string | undefined {
   for (const configPath of DEFAULT_CONFIG_PATHS) {
     const fullPath = resolve(basePath, configPath);
     if (existsSync(fullPath)) {

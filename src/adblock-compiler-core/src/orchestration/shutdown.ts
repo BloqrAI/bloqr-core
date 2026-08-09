@@ -1,9 +1,18 @@
 /**
  * Graceful shutdown handler for production deployments
  * Handles SIGTERM, SIGINT signals and cleanup
- * Deno-only implementation
+ *
+ * Deno-native, with a Node.js/Bun fallback: signal registration uses
+ * `Deno.addSignalListener` when the `Deno` global is present, otherwise
+ * `process.on(signal, ...)` (which both Node.js and Bun implement).
+ * Likewise, unhandled-rejection reporting uses Deno's
+ * `globalThis.addEventListener('unhandledrejection', ...)` under Deno and
+ * `process.on('unhandledRejection', ...)` otherwise — Node.js does not
+ * implement `globalThis.addEventListener` for process-level events at all,
+ * so this fallback is required, not just a compatibility nicety.
  */
 
+import process from 'node:process';
 import { ShutdownError } from './errors.ts';
 import type { Logger } from './types.ts';
 
@@ -78,6 +87,7 @@ export class ShutdownHandler {
    */
   listen(): void {
     const signals: DenoSignal[] = ['SIGTERM', 'SIGINT', 'SIGHUP'];
+    const isDeno = typeof Deno !== 'undefined';
 
     for (const signal of signals) {
       const handler = (): void => {
@@ -85,19 +95,32 @@ export class ShutdownHandler {
       };
       this.signalHandlers.set(signal, handler);
       try {
-        Deno.addSignalListener(signal, handler);
+        if (isDeno) {
+          Deno.addSignalListener(signal, handler);
+        } else {
+          process.on(signal, handler);
+        }
       } catch {
         // Signal may not be available on all platforms
         this.logger?.debug(`Signal ${signal} not available on this platform`);
       }
     }
 
-    // Handle unhandled rejections using globalThis event listener
-    globalThis.addEventListener('unhandledrejection', (event: PromiseRejectionEvent) => {
-      const reason = event.reason;
-      const message = reason instanceof Error ? reason.message : String(reason);
-      this.logger?.error(`Unhandled rejection: ${message}`);
-    });
+    if (isDeno) {
+      // Deno-native unhandled-rejection reporting.
+      globalThis.addEventListener('unhandledrejection', (event: PromiseRejectionEvent) => {
+        const reason = event.reason;
+        const message = reason instanceof Error ? reason.message : String(reason);
+        this.logger?.error(`Unhandled rejection: ${message}`);
+      });
+    } else {
+      // Node.js has no `globalThis.addEventListener` for process events;
+      // Bun implements this same `process.on` API.
+      process.on('unhandledRejection', (reason: unknown) => {
+        const message = reason instanceof Error ? reason.message : String(reason);
+        this.logger?.error(`Unhandled rejection: ${message}`);
+      });
+    }
 
     this.logger?.debug('Shutdown handler initialized');
   }
@@ -106,9 +129,14 @@ export class ShutdownHandler {
    * Stops listening for shutdown signals
    */
   unlisten(): void {
+    const isDeno = typeof Deno !== 'undefined';
     for (const [signal, handler] of this.signalHandlers) {
       try {
-        Deno.removeSignalListener(signal, handler);
+        if (isDeno) {
+          Deno.removeSignalListener(signal, handler);
+        } else {
+          process.off(signal, handler);
+        }
       } catch {
         // Signal may not have been registered
       }

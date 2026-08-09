@@ -3,6 +3,7 @@
  * Supports both human-readable and structured (JSON) output formats
  */
 
+import process from 'node:process';
 import type { Logger } from './types.ts';
 
 /**
@@ -98,13 +99,13 @@ export function createLogger(config: Partial<LoggerConfig> | boolean = false): E
     ? { ...DEFAULT_CONFIG, debugEnabled: config }
     : { ...DEFAULT_CONFIG, ...config };
 
-  // Helper to get environment variables
+  // Helper to get environment variables. Prefers Deno's API when available,
+  // falling back to `node:process` (Node.js and Bun) otherwise.
   const getEnv = (key: string): string | undefined => {
-    try {
+    if (typeof Deno !== 'undefined' && Deno.env) {
       return Deno.env.get(key);
-    } catch {
-      return undefined;
     }
+    return process.env[key];
   };
 
   // Check environment variables
@@ -231,14 +232,14 @@ export function createLogger(config: Partial<LoggerConfig> | boolean = false): E
 }
 
 /**
- * Helper to get environment variable
+ * Helper to get environment variable. Prefers Deno's API when available,
+ * falling back to `node:process` (Node.js and Bun) otherwise.
  */
 function getEnvVar(key: string): string | undefined {
-  try {
+  if (typeof Deno !== 'undefined' && Deno.env) {
     return Deno.env.get(key);
-  } catch {
-    return undefined;
   }
+  return process.env[key];
 }
 
 /**

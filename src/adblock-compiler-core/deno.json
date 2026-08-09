@@ -7,7 +7,8 @@
     "./lib": "./src/lib/index.ts",
     "./orchestration": "./src/orchestration/index.ts",
     "./console": "./src/console/index.ts",
-    "./cli": "./src/orchestration/cli.ts"
+    "./cli": "./src/orchestration/cli.ts",
+    "./bun": "./src/mod.bun.ts"
   },
   "publish": {
     "include": [
@@ -30,7 +31,7 @@
     "dev": "deno run --allow-read --allow-write --allow-env --allow-net --allow-run --watch src/mod.ts",
     "test": "deno test --allow-read --allow-write --allow-env --allow-net src/",
     "test:coverage": "deno test --allow-read --allow-write --allow-env --allow-net --coverage=coverage src/",
-    "check": "deno check src/mod.ts",
+    "check": "deno check src/mod.ts src/mod.bun.ts",
     "lint": "deno lint src/",
     "fmt": "deno fmt src/",
     "version": "deno run --allow-read --allow-env src/mod.ts --version",

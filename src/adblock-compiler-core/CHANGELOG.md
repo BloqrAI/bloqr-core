@@ -4,6 +4,11 @@ All notable changes to `@bloqr/compiler-core` (formerly `@jk-com/adblock-compile
 
 ## [Unreleased]
 
+### Added
+
+- **cli**: Add Bun as a formally supported runtime target (`src/mod.bun.ts`, exported as `./bun`) alongside Deno. `getVersionInfo()`/`showVersion()` now correctly identify the Bun runtime (`Runtime: Bun x.y.z`) instead of erroring, `main()`'s default argument list and `findDefaultConfig()`'s default base path use `node:process` when the `Deno` global isn't present, and environment-variable reads (`DEBUG`, `LOG_LEVEL`, `LOG_FORMAT`, `LOG_MODULE_OVERRIDES`, `LOG_STRUCTURED`, plus `EnvConfigurationSource`) fall back to `process.env` instead of silently returning nothing. CI (`bun-support` job in `.github/workflows/typescript.yml`) installs this package's JSR/npm dependencies for Bun and runs CLI + library smoke tests against real Bun on every PR. See `README.md`'s "Bun (Supported)" section.
+- **fix**: `ShutdownHandler` (`orchestration/shutdown.ts`) previously called `globalThis.addEventListener('unhandledrejection', ...)` unconditionally, which Node.js does not implement at all (Bun does, but the module was documented "Deno-only" and untested there) — this would have thrown under Node.js on every CLI invocation reaching `initializeShutdownHandler()`. Signal handling (`SIGTERM`/`SIGINT`/`SIGHUP`) and unhandled-rejection reporting now use `process.on(...)` when the `Deno` global isn't present.
+
 ### Changed
 
 - **Breaking**: package renamed from `@jk-com/adblock-compiler` to `@bloqr/compiler-core`. `@jk-com` was a personal-project JSR scope; all Bloqr JSR packages (this one, and future ones like `@bloqr/diagnostics`) now live under the `@bloqr` scope. No functional changes — same package contents, same exports, just a new name and scope. See `README.md`'s Architecture section for the full story.

@@ -64,3 +64,74 @@ jobs:
       - name: Test
         if: matrix.has_tests
         run: deno task test
+
+  bun-support:
+    name: Bun Runtime Support
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: src/adblock-compiler-core
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      # `bunx jsr add` is JSR's own documented installer bridge for Bun
+      # projects (https://jsr.io/docs/with/bun) — it materializes JSR
+      # packages into node_modules from their npm-compatible mirror, since
+      # Bun (unlike Deno) has no import-map concept and can't resolve this
+      # package's bare `@std/*`/`@cliffy/*` specifiers from deno.json alone.
+      - name: Install JSR dependencies for Bun
+        run: bunx jsr add @std/yaml @std/toml @std/fmt @cliffy/table
+
+      # zod is aliased to the bare `zod` specifier in deno.json's import map
+      # (`"zod": "jsr:@zod/zod@^4.4.3"`), so it needs an explicit alias here
+      # too — `bunx jsr add @zod/zod` would install it under the scoped name
+      # instead, which the bare `from 'zod'` imports wouldn't resolve.
+      - name: Install zod (aliased) for Bun
+        run: bun add zod@npm:@jsr/zod__zod@^4.4.3
+
+      # ora, figlet, and @inquirer/prompts are npm-native (no JSR-native
+      # equivalent exists — see the comments next to these entries in
+      # deno.json), so they install directly.
+      - name: Install npm-native CLI dependencies for Bun
+        run: bun add ora figlet @inquirer/prompts
+
+      - name: Smoke test — Bun entry point reports itself correctly
+        run: |
+          set -euo pipefail
+          OUTPUT="$(bun run src/mod.bun.ts --version)"
+          echo "$OUTPUT"
+          echo "$OUTPUT" | grep -q "Runtime: Bun" || {
+            echo "::error::Bun entry point did not report itself as the Bun runtime"
+            exit 1
+          }
+
+      - name: Smoke test — validate the sample configuration under Bun
+        run: bun run src/mod.bun.ts --validate -c compiler-config.json
+
+      - name: Smoke test — library API (compile()) under Bun
+        run: |
+          set -euo pipefail
+          cat > /tmp/bun-lib-smoke-input.txt <<'EOF'
+          ! comment
+          ||example.com^
+          ||example.com^
+          EOF
+          cat > bun-lib-smoke.ts <<'EOF'
+          import { compile } from './src/index.ts';
+          const result = await compile({
+            name: 'bun-ci-smoke-test',
+            sources: [{ source: '/tmp/bun-lib-smoke-input.txt', type: 'adblock' }],
+            transformations: ['RemoveComments', 'Deduplicate'],
+          });
+          if (!result.includes('||example.com^')) {
+            throw new Error(`Unexpected compile() output: ${JSON.stringify(result)}`);
+          }
+          console.log('library API smoke test passed:', JSON.stringify(result));
+          EOF
+          bun run bun-lib-smoke.ts
+          rm -f bun-lib-smoke.ts /tmp/bun-lib-smoke-input.txt
