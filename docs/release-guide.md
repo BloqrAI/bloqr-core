@@ -6,10 +6,11 @@ This guide explains how to create a new release of the ad-blocking repository wi
 
 The repository uses GitHub Actions to automatically build and attach binaries to releases when a new version tag is pushed. The release workflow builds:
 
-- **AdGuard.ConsoleUI** - .NET Console UI for AdGuard DNS API (Windows, Linux, macOS)
 - **RulesCompiler.Console** - .NET rules compiler console app (Windows, Linux, macOS)
 - **rules-compiler** - Rust rules compiler (Windows, Linux, macOS)
 - **rules-compiler** - Python wheel package (cross-platform)
+
+> AdGuard.ConsoleUI (the API client console UI) moved to [`BloqrAI/bloqr-apiclients`](https://github.com/BloqrAI/bloqr-apiclients) — see that repo's own releases for it.
 
 ## Creating a Release
 
@@ -20,7 +21,6 @@ Before creating a release, ensure:
 - All changes are merged to the `main` branch
 - All tests pass in CI/CD
 - Version numbers are updated in project files if needed:
-  - `src/adguard-api-dotnet/src/AdGuard.ConsoleUI/AdGuard.ConsoleUI.csproj`
   - `src/rules-compiler-dotnet/src/RulesCompiler.Console/RulesCompiler.Console.csproj`
   - `src/rules-compiler-rust/Cargo.toml`
   - `src/rules-compiler-python/pyproject.toml`
@@ -58,9 +58,6 @@ After the workflow completes:
 1. Go to the [Releases page](https://github.com/BloqrAI/bloqr-lists/releases)
 2. Find your new release (e.g., `v1.0.0`)
 3. Verify that all binaries are attached:
-   - `AdGuard.ConsoleUI-windows.zip`
-   - `AdGuard.ConsoleUI-linux.tar.gz`
-   - `AdGuard.ConsoleUI-macos.tar.gz`
    - `RulesCompiler.Console-windows.zip`
    - `RulesCompiler.Console-linux.tar.gz`
    - `RulesCompiler.Console-macos.tar.gz`
@@ -138,14 +135,8 @@ If the automated workflow is not working, you can manually build and release:
 ### Build .NET Executables
 
 ```bash
-# AdGuard Console UI
-cd src/adguard-api-dotnet/src/AdGuard.ConsoleUI
-dotnet publish -c Release -r win-x64 --self-contained -p:PublishSingleFile=true -o ./publish/win-x64
-dotnet publish -c Release -r linux-x64 --self-contained -p:PublishSingleFile=true -o ./publish/linux-x64
-dotnet publish -c Release -r osx-x64 --self-contained -p:PublishSingleFile=true -o ./publish/osx-x64
-
 # Rules Compiler Console
-cd ../../../rules-compiler-dotnet/src/RulesCompiler.Console
+cd src/rules-compiler-dotnet/src/RulesCompiler.Console
 dotnet publish -c Release -r win-x64 --self-contained -p:PublishSingleFile=true -o ./publish/win-x64
 dotnet publish -c Release -r linux-x64 --self-contained -p:PublishSingleFile=true -o ./publish/linux-x64
 dotnet publish -c Release -r osx-x64 --self-contained -p:PublishSingleFile=true -o ./publish/osx-x64
@@ -189,7 +180,6 @@ python -m build
 ## Related Files
 
 - `.github/workflows/release.yml` - Release workflow definition
-- `src/adguard-api-dotnet/src/AdGuard.ConsoleUI/AdGuard.ConsoleUI.csproj` - .NET Console UI project
 - `src/rules-compiler-dotnet/src/RulesCompiler.Console/RulesCompiler.Console.csproj` - .NET Rules Compiler project
 - `src/rules-compiler-rust/Cargo.toml` - Rust project configuration
 - `src/rules-compiler-python/pyproject.toml` - Python project configuration
