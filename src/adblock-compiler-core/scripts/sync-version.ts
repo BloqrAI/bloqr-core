@@ -28,18 +28,30 @@ function readVersionFromSource(): string {
 }
 
 /**
- * Update the "version" field in deno.json.
+ * Update the "version" field in deno.json via a surgical regex replace,
+ * rather than a JSON.parse/stringify round-trip. deno.json supports JSONC
+ * (`//` comments) — e.g. the accepted-npm-exception notes next to `ora`,
+ * `figlet`, and `@inquirer/prompts` in the `imports` block — and Deno's own
+ * config loader tolerates that, but a plain JSON.parse/stringify round-trip
+ * would both reject the comments as invalid JSON and silently drop them on
+ * write. Regex-replacing just the version line preserves everything else
+ * byte-for-byte, matching the same approach bloqr-compiler's sync-version.ts
+ * uses for wrangler.toml's COMMENT_VERSION field.
  */
 async function syncJsonFile(path: string, version: string): Promise<void> {
   const content = await Deno.readTextFile(path);
-  const json = JSON.parse(content) as Record<string, unknown>;
-  const old = json['version'] as string | undefined;
+  const versionLineRegex = /^(\s*"version"\s*:\s*")([^"]*)(")/m;
+  const match = content.match(versionLineRegex);
+  if (!match) {
+    throw new Error(`Could not find a "version" field in ${path}`);
+  }
+  const old = match[2];
   if (old === version) {
     console.log(`  ${path}: already at ${version}, skipping`);
     return;
   }
-  json['version'] = version;
-  await Deno.writeTextFile(path, JSON.stringify(json, null, 2) + '\n');
+  const updated = content.replace(versionLineRegex, `$1${version}$3`);
+  await Deno.writeTextFile(path, updated);
   console.log(`  ${path}: ${old} → ${version}`);
 }
 
