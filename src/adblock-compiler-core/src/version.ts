@@ -2,7 +2,7 @@
  * Package identity constants for @bloqr/compiler-core.
  */
 /** The published version of this package, kept in sync with `deno.json`. */
-export const VERSION = '1.0.0';
+export const VERSION = '1.1.0';
 
 /** The fully-scoped JSR package name, e.g. for use in User-Agent strings or log output. */
 export const PACKAGE_NAME = '@bloqr/compiler-core';

@@ -13,6 +13,17 @@ All notable changes to `@bloqr/compiler-core` (formerly `@jk-com/adblock-compile
 
 - **Breaking**: package renamed from `@jk-com/adblock-compiler` to `@bloqr/compiler-core`. `@jk-com` was a personal-project JSR scope; all Bloqr JSR packages (this one, and future ones like `@bloqr/diagnostics`) now live under the `@bloqr` scope. No functional changes — same package contents, same exports, just a new name and scope. See `README.md`'s Architecture section for the full story.
 
+## [1.1.0] - 2026-08-09
+
+### Added
+
+- **compiler-core**: formally support Bun as a runtime target (#310)
+- org-wide per-package JSR versioning strategy (#295)
+
+### Fixed
+
+- make sync-version.ts JSONC-safe (#299)
+
 ## [1.0.0] - 2026-08-04
 
 Initial release under this package's new architecture. `@jk-com/adblock-compiler` is now the extracted, dependency-free core compilation engine from this repository (`src/adblock-compiler-core/`), superseding the previous `src/rules-compiler-typescript/` proof-of-concept, which is retired.
