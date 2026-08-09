@@ -7,6 +7,12 @@ name: Publish adblock-compiler-core to JSR
 #
 # AUTHENTICATION: Uses JSR_WORKFLOW_TOKEN (org-level Action secret, scoped to
 # @bloqr namespace). See docs/jsr-token-authentication.md for setup and usage.
+#
+# VERSIONING: deno.json's version is bumped automatically by
+# compiler-core-version-bump.yml (Conventional Commits) and tagged by
+# compiler-core-create-version-tag.yml on merge — this workflow doesn't bump
+# anything itself, it just publishes whatever version is currently checked
+# in. See docs/architecture/versioning-strategy.md for the full pattern.
 
 on:
   push:

@@ -34,6 +34,7 @@
     "lint": "deno lint src/",
     "fmt": "deno fmt src/",
     "version": "deno run --allow-read --allow-env src/mod.ts --version",
+    "version:sync": "deno run --allow-read --allow-write scripts/sync-version.ts",
     "generate:types": "deno run --allow-read --allow-write --no-npm generate-types.ts"
   },
   "imports": {

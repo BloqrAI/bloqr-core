@@ -1,0 +1,239 @@
+name: compiler-core Version Bump
+
+# Auto-bumps @bloqr/compiler-core's version from Conventional Commits, scoped
+# to src/adblock-compiler-core/**. This is the reference implementation of
+# BloqrAI's per-package JSR versioning standard — see
+# docs/architecture/versioning-strategy.md. As bloqr-core decomposes into
+# more JSR packages, each new package gets its own copy of this workflow
+# (own path filter, own tag prefix, own bump-commit marker) rather than one
+# repo-wide version.
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'src/adblock-compiler-core/**'
+  workflow_dispatch:
+    inputs:
+      bump_type:
+        description: 'Version bump type (leave empty for auto-detect from commits)'
+        required: false
+        type: choice
+        options:
+          - ''
+          - patch
+          - minor
+          - major
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  version-bump:
+    name: Version Bump
+    runs-on: ubuntu-latest
+    # Skip on the bump commit itself and on any push authored by the bot, to
+    # avoid infinite loops (the bump PR's own merge would otherwise re-trigger
+    # this workflow).
+    if: |
+      github.event_name == 'workflow_dispatch' || (
+          github.event.head_commit &&
+          !contains(github.event.head_commit.message, '[skip ci]') &&
+          !contains(github.event.head_commit.message, '[skip version]') &&
+          github.event.head_commit.author.name != 'github-actions[bot]'
+      )
+    outputs:
+      old_version: ${{ steps.bump.outputs.old }}
+      new_version: ${{ steps.bump.outputs.new }}
+      bump_type: ${{ steps.determine_bump.outputs.bump_type }}
+    defaults:
+      run:
+        working-directory: src/adblock-compiler-core
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # full history required: git log --grep searches all commits to find the last bump
+
+      - name: Setup Deno
+        uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+
+      - name: Determine version bump type
+        id: determine_bump
+        run: |
+          set -euo pipefail
+
+          if [ -n "${{ inputs.bump_type }}" ]; then
+            echo "bump_type=${{ inputs.bump_type }}" >> "$GITHUB_OUTPUT"
+            echo "Using manual bump type: ${{ inputs.bump_type }}"
+            exit 0
+          fi
+
+          # Last compiler-core bump commit (this package's own marker, distinct
+          # from other packages' bump commits so each package's history search
+          # doesn't cross-contaminate).
+          LAST_VERSION_COMMIT=$(git log --grep="chore: bump compiler-core version" --format="%H" -n 1 || echo "")
+          if [ -z "$LAST_VERSION_COMMIT" ]; then
+            LAST_VERSION_COMMIT=$(git rev-list --max-parents=0 HEAD)
+          fi
+          echo "Analyzing commits since $LAST_VERSION_COMMIT"
+
+          # Only consider commits that actually touched this package's directory.
+          CHANGED_SRC=$(git diff --name-only "$LAST_VERSION_COMMIT"..HEAD -- 'src/adblock-compiler-core/src/' | grep -E '\.ts$' | grep -v '\.test\.ts$' || true)
+          if [ -z "$CHANGED_SRC" ]; then
+            echo "No compiler-core source files changed, skipping version bump"
+            echo "bump_type=none" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          echo "compiler-core source files changed:"
+          echo "$CHANGED_SRC"
+
+          COMMITS=$(git log --format="%s" "$LAST_VERSION_COMMIT"..HEAD -- 'src/adblock-compiler-core/' || echo "")
+          if [ -z "$COMMITS" ]; then
+            echo "No commits to analyze, skipping version bump"
+            echo "bump_type=none" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          BUMP_TYPE="none"
+          while IFS= read -r commit; do
+            echo "Analyzing commit: $commit"
+            if echo "$commit" | grep -qiE "^(feat|fix|perf|refactor)!:|BREAKING CHANGE:"; then
+              BUMP_TYPE="major"
+              echo "Found breaking change: $commit"
+              break
+            fi
+            if echo "$commit" | grep -qiE "^feat(\(.+\))?:"; then
+              if [ "$BUMP_TYPE" != "major" ]; then
+                BUMP_TYPE="minor"
+                echo "Found feature: $commit"
+              fi
+            fi
+            if echo "$commit" | grep -qiE "^fix(\(.+\))?:|^perf(\(.+\))?:"; then
+              if [ "$BUMP_TYPE" != "major" ] && [ "$BUMP_TYPE" != "minor" ]; then
+                BUMP_TYPE="patch"
+                echo "Found fix/perf: $commit"
+              fi
+            fi
+          done <<< "$COMMITS"
+
+          echo "Determined bump type: $BUMP_TYPE"
+          echo "bump_type=$BUMP_TYPE" >> "$GITHUB_OUTPUT"
+
+      - name: Bump version
+        id: bump
+        if: steps.determine_bump.outputs.bump_type != 'none'
+        run: |
+          set -euo pipefail
+          BUMP_TYPE="${{ steps.determine_bump.outputs.bump_type }}"
+
+          OLD=$(deno eval "console.log(JSON.parse(Deno.readTextFileSync('deno.json')).version)")
+          echo "old=$OLD" >> "$GITHUB_OUTPUT"
+
+          IFS='.' read -r major minor patch <<< "$OLD"
+          case "$BUMP_TYPE" in
+            major) NEW="$((major + 1)).0.0" ;;
+            minor) NEW="$major.$((minor + 1)).0" ;;
+            patch) NEW="$major.$minor.$((patch + 1))" ;;
+            *) echo "Error: Unknown bump type '$BUMP_TYPE'" >&2; exit 1 ;;
+          esac
+          echo "new=$NEW" >> "$GITHUB_OUTPUT"
+          echo "Bumping version: $OLD → $NEW ($BUMP_TYPE)"
+
+          sed -i "s/VERSION = '[^']*'/VERSION = '$NEW'/" src/version.ts
+          deno run --allow-read --allow-write scripts/sync-version.ts
+
+      - name: Update CHANGELOG.md
+        if: steps.determine_bump.outputs.bump_type != 'none'
+        run: |
+          set -euo pipefail
+          NEW_VERSION="${{ steps.bump.outputs.new }}"
+          LAST_VERSION_COMMIT=$(git log --grep="chore: bump compiler-core version" --format="%H" -n 1 || echo "")
+          if [ -z "$LAST_VERSION_COMMIT" ]; then
+            LAST_VERSION_COMMIT=$(git rev-list --max-parents=0 HEAD)
+          fi
+
+          ENTRY="## [${NEW_VERSION}] - $(date +%Y-%m-%d)"$'\n'
+          FEATURES=$(git log --format="%s" "$LAST_VERSION_COMMIT"..HEAD -- 'src/adblock-compiler-core/' | grep -E "^feat(\(.+\))?:" | sed 's/^feat(\([^)]*\)): \(.*\)/- **\1**: \2/' | sed 's/^feat: /- /' || echo "")
+          FIXES=$(git log --format="%s" "$LAST_VERSION_COMMIT"..HEAD -- 'src/adblock-compiler-core/' | grep -E "^fix(\(.+\))?:" | sed 's/^fix(\([^)]*\)): \(.*\)/- **\1**: \2/' | sed 's/^fix: /- /' || echo "")
+
+          if [ -n "$FEATURES" ]; then ENTRY="$ENTRY"$'\n'"### Added"$'\n\n'"$FEATURES"$'\n'; fi
+          if [ -n "$FIXES" ]; then ENTRY="$ENTRY"$'\n'"### Fixed"$'\n\n'"$FIXES"$'\n'; fi
+
+          if [ -f CHANGELOG.md ] && grep -q "^## \[" CHANGELOG.md; then
+            FIRST_VERSION_LINE=$(set +o pipefail; grep -n "^## \[" CHANGELOG.md | grep -v "## \[Unreleased\]" | head -1 | cut -d: -f1)
+            if [ -n "$FIRST_VERSION_LINE" ] && [ "$FIRST_VERSION_LINE" -gt 0 ]; then
+              { head -n $((FIRST_VERSION_LINE - 1)) CHANGELOG.md; echo "$ENTRY"; tail -n +$FIRST_VERSION_LINE CHANGELOG.md; } > CHANGELOG.md.tmp
+              mv CHANGELOG.md.tmp CHANGELOG.md
+            else
+              echo "$ENTRY" >> CHANGELOG.md
+            fi
+          elif [ -f CHANGELOG.md ]; then
+            echo "$ENTRY" >> CHANGELOG.md
+          fi
+
+      - name: Create PR with version bump
+        if: steps.determine_bump.outputs.bump_type != 'none'
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          if git diff --quiet; then
+            echo "No changes detected"
+            exit 0
+          fi
+
+          BRANCH_NAME="auto-version-bump-compiler-core-${{ steps.bump.outputs.new }}"
+          git push origin --delete "$BRANCH_NAME" 2>/dev/null || true
+          git checkout -b "$BRANCH_NAME"
+          git add deno.json src/version.ts CHANGELOG.md
+          git commit -m "chore: bump compiler-core version to ${{ steps.bump.outputs.new }}"
+          git push -u origin "$BRANCH_NAME"
+
+          gh pr create \
+            --title "chore: bump @bloqr/compiler-core version to ${{ steps.bump.outputs.new }}" \
+            --body "$(cat <<EOF
+          ## compiler-core Version Bump
+
+          This PR was automatically created by the compiler-core Version Bump workflow.
+
+          - **Old Version**: ${{ steps.bump.outputs.old }}
+          - **New Version**: ${{ steps.bump.outputs.new }}
+          - **Bump Type**: ${{ steps.determine_bump.outputs.bump_type }}
+          - **Package**: \`@bloqr/compiler-core\` (\`src/adblock-compiler-core/\`)
+
+          ### Changes
+          - Updated \`VERSION\` in \`src/adblock-compiler-core/src/version.ts\` (single source of truth)
+          - Synced \`version\` field in \`src/adblock-compiler-core/deno.json\` via \`deno task version:sync\`
+          - Updated \`CHANGELOG.md\`
+
+          ### Next steps
+          After this PR merges, a \`compiler-core-v${{ steps.bump.outputs.new }}\` tag is created automatically, and \`publish-jsr.yml\` publishes the new version to JSR.
+          EOF
+          )" \
+            --base main \
+            --head "$BRANCH_NAME"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # working-directory default above doesn't apply to `gh pr create`'s repo
+          # detection reliably across all runners, so be explicit:
+          GH_REPO: ${{ github.repository }}
+
+      - name: Summary
+        if: always()
+        run: |
+          if [ "${{ steps.determine_bump.outputs.bump_type }}" = "none" ] || [ -z "${{ steps.determine_bump.outputs.bump_type }}" ]; then
+            echo "## ℹ️ No compiler-core version bump required" >> "$GITHUB_STEP_SUMMARY"
+          else
+            cat <<EOF >> "$GITHUB_STEP_SUMMARY"
+          ## 🎉 compiler-core Version Bump PR Created
+          - **Old Version**: ${{ steps.bump.outputs.old }}
+          - **New Version**: ${{ steps.bump.outputs.new }}
+          - **Bump Type**: ${{ steps.determine_bump.outputs.bump_type }}
+          EOF
+          fi
