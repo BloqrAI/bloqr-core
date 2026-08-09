@@ -7,14 +7,14 @@
     "jsr:@std/internal@^1.0.14": "1.0.14",
     "jsr:@std/path@^1.1.5": "1.1.6",
     "jsr:@std/testing@^1.0.18": "1.0.20",
+    "jsr:@std/yaml@^1.2.0": "1.2.0",
     "jsr:@zod/zod@^4.4.3": "4.4.3",
     "npm:@iarna/toml@^2.2.5": "2.2.5",
     "npm:@inquirer/prompts@^8.5.2": "8.5.2",
     "npm:chalk@^5.6.2": "5.6.2",
     "npm:cli-table3@~0.6.5": "0.6.5",
     "npm:figlet@^1.11.4": "1.11.4",
-    "npm:ora@^9.4.1": "9.4.1",
-    "npm:yaml@^2.9.0": "2.9.0"
+    "npm:ora@^9.4.1": "9.4.1"
   },
   "jsr": {
     "@std/assert@1.0.19": {
@@ -37,6 +37,9 @@
       "dependencies": [
         "jsr:@std/assert@^1.0.19"
       ]
+    },
+    "@std/yaml@1.2.0": {
+      "integrity": "20beb41e4983ba3437dbefac62b14061ab058e8a187596f19d28ff9035f6e6cf"
     },
     "@zod/zod@4.4.3": {
       "integrity": "4712ac0967efaa718b37c36eaffb4e1d4457e1a266aef6efb3ab36f54a6fefe4"
@@ -323,10 +326,6 @@
         "ansi-regex@6.2.2"
       ]
     },
-    "yaml@2.9.0": {
-      "integrity": "sha512-2AvhNX3mb8zd6Zy7INTtSpl1F15HW6Wnqj0srWlkKLcpYl/gMIMJiyuGq2KeI2YFxUPjdlB+3Lc10seMLtL4cA==",
-      "bin": true
-    },
     "yoctocolors@2.2.0": {
       "integrity": "sha512-xYqdZFUK/VYazNl/oCDYN+3WloWQwMfZxBoiNt6qNyk+xfOdi598muWE42rNZFp1kNOiqW936q5RhUdnpqElSg=="
     }
@@ -336,14 +335,14 @@
       "jsr:@std/assert@^1.0.18",
       "jsr:@std/path@^1.1.5",
       "jsr:@std/testing@^1.0.18",
+      "jsr:@std/yaml@^1.2.0",
       "jsr:@zod/zod@^4.4.3",
       "npm:@iarna/toml@^2.2.5",
       "npm:@inquirer/prompts@^8.5.2",
       "npm:chalk@^5.6.2",
       "npm:cli-table3@~0.6.5",
       "npm:figlet@^1.11.4",
-      "npm:ora@^9.4.1",
-      "npm:yaml@^2.9.0"
+      "npm:ora@^9.4.1"
     ]
   }
 }
