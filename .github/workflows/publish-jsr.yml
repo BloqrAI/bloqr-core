@@ -38,7 +38,7 @@ jobs:
         working-directory: src/adblock-compiler-core
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Setup Deno
         uses: denoland/setup-deno@v2
@@ -46,7 +46,7 @@ jobs:
           deno-version: v2.x
 
       - name: Cache Deno dependencies
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: ~/.cache/deno
           key: ${{ runner.os }}-deno-jsr-publish-${{ hashFiles('src/adblock-compiler-core/deno.json') }}

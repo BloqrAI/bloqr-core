@@ -17,7 +17,7 @@ jobs:
     name: Grep for stale references
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: No pre-rename repo path references
         env:

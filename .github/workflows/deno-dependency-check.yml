@@ -37,7 +37,7 @@ jobs:
       run:
         working-directory: src/adblock-compiler-core
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Setup Deno
         uses: denoland/setup-deno@v2
