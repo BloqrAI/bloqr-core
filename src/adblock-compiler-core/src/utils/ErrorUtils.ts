@@ -8,29 +8,45 @@
  */
 export enum ErrorCode {
   // Compilation errors
+  /** Filter compilation failed. */
   COMPILATION_FAILED = 'COMPILATION_FAILED',
+  /** The supplied configuration is invalid. */
   CONFIGURATION_INVALID = 'CONFIGURATION_INVALID',
+  /** A configured source could not be fetched. */
   SOURCE_FETCH_FAILED = 'SOURCE_FETCH_FAILED',
+  /** A rule transformation failed. */
   TRANSFORMATION_FAILED = 'TRANSFORMATION_FAILED',
 
   // Network errors
+  /** A generic network failure occurred. */
   NETWORK_ERROR = 'NETWORK_ERROR',
+  /** A network request exceeded its timeout. */
   NETWORK_TIMEOUT = 'NETWORK_TIMEOUT',
+  /** The remote host refused the connection. */
   NETWORK_CONNECTION_REFUSED = 'NETWORK_CONNECTION_REFUSED',
+  /** An HTTP request returned an error status. */
   HTTP_ERROR = 'HTTP_ERROR',
+  /** An HTTP request was rate-limited (429). */
   HTTP_RATE_LIMITED = 'HTTP_RATE_LIMITED',
 
   // Validation errors
+  /** A required field was missing. */
   VALIDATION_REQUIRED_FIELD = 'VALIDATION_REQUIRED_FIELD',
+  /** A field had the wrong type. */
   VALIDATION_INVALID_TYPE = 'VALIDATION_INVALID_TYPE',
+  /** A field violated a validation constraint. */
   VALIDATION_CONSTRAINT = 'VALIDATION_CONSTRAINT',
 
   // File system errors
+  /** The requested file does not exist. */
   FILE_NOT_FOUND = 'FILE_NOT_FOUND',
+  /** The process lacks permission to access the file. */
   PERMISSION_DENIED = 'PERMISSION_DENIED',
 
   // Storage errors
+  /** Storage was used before being initialized. */
   STORAGE_NOT_INITIALIZED = 'STORAGE_NOT_INITIALIZED',
+  /** A storage read/write operation failed. */
   STORAGE_OPERATION_FAILED = 'STORAGE_OPERATION_FAILED',
 }
 
@@ -201,7 +217,9 @@ export class SourceError extends BaseError {
  * Custom error class for transformation errors
  */
 export class TransformationError extends BaseError {
+  /** Name of the transformation that failed. */
   public readonly transformationType: string;
+  /** Number of rules being processed when the failure occurred, if known. */
   public readonly ruleCount?: number;
 
   constructor(message: string, transformationType: string, ruleCount?: number, cause?: Error) {
@@ -216,7 +234,9 @@ export class TransformationError extends BaseError {
  * Custom error class for storage errors
  */
 export class StorageError extends BaseError {
+  /** The storage operation that failed (e.g. `'get'`, `'put'`). */
   public readonly operation: string;
+  /** The storage key path involved, if applicable. */
   public readonly key?: string[];
 
   constructor(message: string, operation: string, key?: string[], cause?: Error) {
@@ -231,6 +251,7 @@ export class StorageError extends BaseError {
  * Custom error class for file system errors
  */
 export class FileSystemError extends BaseError {
+  /** The file system path involved in the failure. */
   public readonly path: string;
 
   constructor(

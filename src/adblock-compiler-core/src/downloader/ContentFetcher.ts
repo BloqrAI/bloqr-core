@@ -29,10 +29,12 @@ const DEFAULT_FETCH_OPTIONS: Required<FetchOptions> = {
  * Default Deno file system implementation
  */
 export class DenoFileSystem implements IFileSystem {
+  /** Reads a file's contents via `Deno.readTextFile`. */
   async readTextFile(path: string): Promise<string> {
     return await Deno.readTextFile(path);
   }
 
+  /** Writes (or appends to) a file via `Deno.writeTextFile`. */
   async writeTextFile(
     path: string,
     content: string,
@@ -41,6 +43,7 @@ export class DenoFileSystem implements IFileSystem {
     await Deno.writeTextFile(path, content, options?.append ? { append: true } : undefined);
   }
 
+  /** Checks file existence via `Deno.stat`. */
   async exists(path: string): Promise<boolean> {
     try {
       await Deno.stat(path);
@@ -62,10 +65,12 @@ export class DenoFileSystem implements IFileSystem {
  * not present.
  */
 export class NodeFileSystem implements IFileSystem {
+  /** Reads a file's contents via `node:fs/promises`. */
   async readTextFile(path: string): Promise<string> {
     return await nodeFs.readFile(path, 'utf-8');
   }
 
+  /** Writes (or appends to) a file via `node:fs/promises`. */
   async writeTextFile(
     path: string,
     content: string,
@@ -74,6 +79,7 @@ export class NodeFileSystem implements IFileSystem {
     await nodeFs.writeFile(path, content, { flag: options?.append ? 'a' : 'w' });
   }
 
+  /** Checks file existence via `node:fs/promises`. */
   async exists(path: string): Promise<boolean> {
     try {
       await nodeFs.access(path);
@@ -96,6 +102,7 @@ export function detectFileSystem(): IFileSystem {
  * Default HTTP client using global fetch
  */
 export class DefaultHttpClient implements IHttpClient {
+  /** Delegates to the runtime's global `fetch`. */
   async fetch(url: string, options?: RequestInit): Promise<Response> {
     return await fetch(url, options);
   }

@@ -13,9 +13,15 @@
  * the score fell from ~88% to 61%).
  *
  * This script reproduces JSR's finer-grained view by walking `deno doc
- * --json` output for every published entrypoint (read from deno.json's
- * `exports` map) and checking JSDoc presence on:
- *   - every top-level exported symbol
+ * --json` output for **every published `.ts` file** — not just the six
+ * `exports`-map entrypoints. That distinction matters: `deno.json`'s
+ * `publish.include` (every `.ts` file under `src/`) ships several files
+ * that aren't transitively re-exported from any of the six entrypoints (e.g.
+ * `src/utils/ErrorUtils.ts`'s `ErrorCode` enum, `src/types/websocket.ts`),
+ * so a scan scoped only to entrypoint-reachable symbols — this script's
+ * first version — undercounts real gaps JSR still scores against. Checking
+ * JSDoc presence on:
+ *   - every top-level exported symbol in every published file
  *   - every public (non-private/protected) property and method of an
  *     exported interface or class
  *   - every member of an exported enum
@@ -25,8 +31,7 @@
  * `kind: "reference"` declarations (e.g. `export default someFunction`,
  * which deno_doc resolves to the original declaration rather than the
  * re-export site) are skipped — their documentation lives at the
- * referenced declaration, which is already checked wherever it's exported
- * under its own name.
+ * referenced declaration, which is already checked wherever it's declared.
  *
  * Usage:
  *   deno task lint:docs
@@ -77,22 +82,32 @@ interface Gap {
   name: string;
 }
 
-async function getEntrypoints(): Promise<string[]> {
-  const denoJsonText = await Deno.readTextFile('deno.json');
-  // deno.json is JSONC; the exports block itself is comment-free, so a
-  // targeted regex extraction (matching sync-version.ts's approach
-  // elsewhere in this file) is enough without a full JSONC parser.
-  const match = denoJsonText.match(/"exports"\s*:\s*\{([^}]*)\}/s);
-  if (!match) {
-    throw new Error('Could not find "exports" in deno.json');
+/**
+ * Every published `.ts` source file (mirrors `publish.include`/`exclude` in
+ * deno.json: everything under `src/`, minus `*.test.ts`/`*.bench.ts`), not
+ * just the `exports`-map entrypoints — see the module doc comment for why
+ * that distinction matters here.
+ */
+async function getPublishedFiles(): Promise<string[]> {
+  const files: string[] = [];
+  async function walk(dir: string): Promise<void> {
+    for await (const entry of Deno.readDir(dir)) {
+      const path = `${dir}/${entry.name}`;
+      if (entry.isDirectory) {
+        await walk(path);
+      } else if (
+        entry.isFile && path.endsWith('.ts') && !path.endsWith('.test.ts') &&
+        !path.endsWith('.bench.ts')
+      ) {
+        files.push(path);
+      }
+    }
   }
-  const paths = [...match[1].matchAll(/"\.\/[^"]*"\s*:\s*"([^"]+)"|"\."\s*:\s*"([^"]+)"/g)]
-    .map((m) => m[1] ?? m[2])
-    .filter((p): p is string => Boolean(p));
-  if (paths.length === 0) {
-    throw new Error('Parsed zero entrypoints from deno.json exports');
+  await walk('src');
+  if (files.length === 0) {
+    throw new Error('Found zero published .ts files under src/');
   }
-  return paths;
+  return files;
 }
 
 async function docJson(entrypoint: string): Promise<DocJson> {
@@ -137,13 +152,13 @@ async function main(): Promise<void> {
   const thresholdArg = Deno.args.find((a) => a.startsWith('--threshold='));
   const threshold = thresholdArg ? Number(thresholdArg.split('=')[1]) : 98;
 
-  const entrypoints = await getEntrypoints();
+  const publishedFiles = await getPublishedFiles();
   const seen = new Set<string>();
   const gaps: Gap[] = [];
   const total = { count: 0 };
 
-  for (const entrypoint of entrypoints) {
-    const doc = await docJson(entrypoint);
+  for (const file of publishedFiles) {
+    const doc = await docJson(file);
     for (const mod of Object.values(doc.nodes)) {
       for (const sym of mod.symbols) {
         for (const decl of sym.declarations) {
