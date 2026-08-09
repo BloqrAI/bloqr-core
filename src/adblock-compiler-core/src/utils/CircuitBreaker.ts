@@ -71,8 +71,15 @@ export interface CircuitBreakerStats {
  * Circuit breaker error thrown when the circuit is open
  */
 export class CircuitBreakerOpenError extends Error {
+  /** Always `'CircuitBreakerOpenError'`; useful for `instanceof`-free error discrimination. */
   public override readonly name: string = 'CircuitBreakerOpenError';
 
+  /**
+   * Creates a new `CircuitBreakerOpenError`.
+   * @param message Human-readable description of why the request was rejected.
+   * @param state The circuit breaker's state at the time the error was thrown (typically `OPEN`).
+   * @param breakerName Optional identifier of the circuit breaker, prepended to the message.
+   */
   constructor(
     message: string,
     public readonly state: CircuitBreakerState,

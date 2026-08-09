@@ -35,6 +35,7 @@ const Colors = {
  * Module-specific log level overrides
  */
 export interface ModuleOverrides {
+  /** Maps a module name to the {@linkcode LogLevel} that should apply to loggers created for it. */
   [moduleName: string]: LogLevel;
 }
 
@@ -42,9 +43,13 @@ export interface ModuleOverrides {
  * Logger configuration options
  */
 export interface LoggerOptions {
+  /** Minimum level to emit; messages below this level are suppressed. Defaults to `LogLevel.Info`. */
   level?: LogLevel;
+  /** String prepended to every log line, before the timestamp/level tags. */
   prefix?: string;
+  /** Whether to prefix each log line with an ISO-8601 timestamp. Defaults to `false`. */
   timestamps?: boolean;
+  /** Whether to colorize output with ANSI escape codes. Defaults to `true`. */
   colors?: boolean;
   /** Enable structured JSON output for production observability */
   structured?: boolean;
@@ -69,13 +74,24 @@ function getTimestamp(): string {
  * Console-based logger implementation for Deno
  */
 export class Logger implements ILogger {
+  /** The effective minimum level for this logger instance, after resolving module overrides. */
   protected level: LogLevel;
+  /** String prepended to every log line emitted by this instance. */
   protected prefix: string;
+  /** Whether ISO-8601 timestamps are prefixed to log lines. */
   protected timestamps: boolean;
+  /** Whether ANSI color codes are applied to log output. */
   protected colors: boolean;
+  /** Module name this logger instance was created for, used to resolve {@linkcode moduleOverrides}. */
   protected module: string;
+  /** Per-module {@linkcode LogLevel} overrides applied when resolving this logger's effective level. */
   protected moduleOverrides: ModuleOverrides;
 
+  /**
+   * Creates a new `Logger`.
+   * @param options Logger configuration; unset fields fall back to sensible defaults
+   * (`LogLevel.Info`, no prefix, no timestamps, colors enabled).
+   */
   constructor(options: LoggerOptions = {}) {
     this.module = options.module ?? '';
     this.moduleOverrides = options.moduleOverrides ?? {};
@@ -418,6 +434,11 @@ export class StructuredLogger extends Logger {
   private correlationId?: string;
   private traceId?: string;
 
+  /**
+   * Creates a new `StructuredLogger`.
+   * @param options Logger configuration. `correlationId` and `traceId` are attached to every
+   * emitted JSON record; all other options behave as in {@linkcode Logger}.
+   */
   constructor(options: LoggerOptions = {}) {
     // Pass non-structured options to parent
     super({

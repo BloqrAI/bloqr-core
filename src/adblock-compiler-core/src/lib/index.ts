@@ -32,6 +32,7 @@
  * const rules = await compiler.compileFromConfig(config);
  * ```
  *
+ * @module lib
  * @packageDocumentation
  */
 

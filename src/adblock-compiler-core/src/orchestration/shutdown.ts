@@ -45,6 +45,12 @@ export class ShutdownHandler {
   private readonly logger?: Logger;
   private signalHandlers: Map<DenoSignal, () => void> = new Map();
 
+  /**
+   * Creates a new `ShutdownHandler`. Does not itself register signal listeners; call
+   * {@linkcode listen} to start watching for `SIGTERM`/`SIGINT`.
+   * @param config Partial shutdown configuration, merged over the defaults
+   * (10s cleanup timeout, no logger).
+   */
   constructor(config: Partial<ShutdownConfig> = {}) {
     this.config = { ...DEFAULT_SHUTDOWN_CONFIG, ...config };
     this.logger = config.logger;

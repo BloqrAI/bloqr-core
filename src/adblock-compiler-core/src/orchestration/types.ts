@@ -185,9 +185,13 @@ export interface ExtendedConfiguration extends IConfiguration {
  * Logger interface for consistent logging
  */
 export interface Logger {
+  /** Logs an informational message. */
   info(message: string, ...args: unknown[]): void;
+  /** Logs a warning that does not stop execution. */
   warn(message: string, ...args: unknown[]): void;
+  /** Logs an error, typically alongside a failure or caught exception. */
   error(message: string, ...args: unknown[]): void;
+  /** Logs a diagnostic message intended for troubleshooting, not shown by default. */
   debug(message: string, ...args: unknown[]): void;
 }
 
