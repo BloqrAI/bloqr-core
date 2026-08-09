@@ -55,7 +55,7 @@ chrono = { workspace = true }
 uuid = { workspace = true }
 
 # Random number generation (for benchmarks)
-rand = "0.9"
+rand = "0.10"
 
 # Rust version at runtime
 rustc_version_runtime = { workspace = true }
