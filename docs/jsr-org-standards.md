@@ -72,9 +72,13 @@ Publishing workflows should trigger on:
 ### Version Management
 
 - **Semantic Versioning**: All packages follow semver (MAJOR.MINOR.PATCH)
-- **Version Source**: `deno.json` or language-specific config (`Cargo.toml`, etc.)
+- **Version Source**: a per-package `VERSION` constant (e.g. `src/version.ts`) is the single source of truth, synced into `deno.json`'s `"version"` field by that package's `version:sync` task — never hand-edit `deno.json`'s version directly
+- **Automated bumps**: Conventional Commits (`feat:`/`fix:`/`perf:`/breaking) drive automatic version-bump PRs, one workflow pair per package, path-filtered to that package's directory
+- **Per-package tags**: `<package-slug>-v<semver>` (e.g. `compiler-core-v1.2.3`) — no bare `v*` tags once a repo has more than one JSR package
 - **Idempotent Publishing**: `deno publish` no-ops if version already exists
 - **Pre-release Versions**: Use `-rc`, `-beta`, `-alpha` suffixes for testing
+
+See **`docs/architecture/versioning-strategy.md`** for the full standard, the reference implementation (`@bloqr/compiler-core`), and the checklist for onboarding each future decomposed package onto the same pattern.
 
 ### Dry-Run Validation
 
@@ -114,9 +118,9 @@ For each BloqrAI repository, ensure:
 ## Future Improvements
 
 - **Provenance Attestations**: Investigate token-based provenance support with JSR
-- **Automated Versioning**: Consider semantic-release or changesets workflow
 - **Package Registry Mirror**: Mirror packages to npm for broader compatibility (future)
 - **API Token Rotation**: Automate token rotation via GitHub Actions
+- **Non-JSR wrapper versioning**: extend the `docs/architecture/versioning-strategy.md` pattern to the .NET/Python/Rust/PowerShell wrapper projects and their own registries (NuGet/PyPI/crates.io) — currently manual, see `docs/release-guide.md`
 
 ## Related Issues
 

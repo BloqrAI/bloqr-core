@@ -1,0 +1,113 @@
+name: compiler-core Create Version Tag
+
+# Tags a compiler-core release once its version-bump PR merges. Triggers
+# publish-jsr.yml indirectly: that workflow already runs on any push to
+# src/adblock-compiler-core/** on main, and deno publish is idempotent, so
+# the merged version-bump commit itself is what actually triggers the
+# publish — this workflow's job is purely to record the release point as a
+# git tag for traceability (compiler-core-v1.2.3), matching the tag-per-
+# package convention documented in docs/architecture/versioning-strategy.md.
+
+on:
+  pull_request:
+    types: [closed]
+    branches:
+      - main
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to tag (e.g. 1.2.3). Leave empty to read from deno.json.'
+        required: false
+        type: string
+
+permissions:
+  contents: write
+
+jobs:
+  create-tag:
+    name: Create compiler-core Version Tag
+    runs-on: ubuntu-latest
+    if: |
+      github.event_name == 'workflow_dispatch' || (
+          github.event.pull_request.merged == true &&
+          startsWith(github.event.pull_request.head.ref, 'auto-version-bump-compiler-core-')
+      )
+    defaults:
+      run:
+        working-directory: src/adblock-compiler-core
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: main
+
+      - name: Setup Deno
+        uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+
+      - name: Get version from deno.json
+        id: get_version
+        env:
+          MANUAL_VERSION: ${{ inputs.version }}
+        run: |
+          set -euo pipefail
+          if [ -n "${MANUAL_VERSION}" ]; then
+            if ! echo "${MANUAL_VERSION}" | grep -qE '^[0-9]+\.[0-9]+\.[0-9]+$'; then
+              echo "::error::Invalid version format '${MANUAL_VERSION}'. Expected X.Y.Z."
+              exit 1
+            fi
+            VERSION="${MANUAL_VERSION}"
+          else
+            VERSION=$(deno eval "console.log(JSON.parse(Deno.readTextFileSync('deno.json')).version)")
+          fi
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "tag=compiler-core-v${VERSION}" >> "$GITHUB_OUTPUT"
+
+      - name: Check if tag exists
+        id: check_tag
+        env:
+          TAG: ${{ steps.get_version.outputs.tag }}
+        run: |
+          if git rev-parse "$TAG" >/dev/null 2>&1; then
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "exists=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Create and push tag
+        if: steps.check_tag.outputs.exists == 'false'
+        env:
+          TAG_NAME: ${{ steps.get_version.outputs.tag }}
+          VERSION: ${{ steps.get_version.outputs.version }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git tag -a "$TAG_NAME" -m "compiler-core release $VERSION"
+          git push origin "$TAG_NAME"
+
+      - name: Delete version bump branch
+        if: steps.check_tag.outputs.exists == 'false' && github.event_name == 'pull_request'
+        env:
+          BRANCH_NAME: ${{ github.event.pull_request.head.ref }}
+        run: |
+          git push origin --delete "$BRANCH_NAME" || echo "Branch already deleted"
+
+      - name: Summary
+        env:
+          TAG: ${{ steps.get_version.outputs.tag }}
+          VERSION: ${{ steps.get_version.outputs.version }}
+          ALREADY_EXISTS: ${{ steps.check_tag.outputs.exists }}
+        run: |
+          if [ "$ALREADY_EXISTS" = "true" ]; then
+            echo "## ℹ️ Tag $TAG already exists, skipped" >> "$GITHUB_STEP_SUMMARY"
+          else
+            cat <<EOF >> "$GITHUB_STEP_SUMMARY"
+          ## 🏷️ compiler-core Version Tag Created
+          - **Version**: $VERSION
+          - **Tag**: $TAG
+
+          publish-jsr.yml publishes this version to JSR on the next push to \`src/adblock-compiler-core/**\` on main (already satisfied by the version-bump merge itself).
+          EOF
+          fi
