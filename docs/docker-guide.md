@@ -120,7 +120,6 @@ The repository includes a `docker-compose.yml` for multi-service orchestration.
 | `python-compiler` | Python rules compiler | compile |
 | `rust-compiler` | Rust rules compiler | compile |
 | `test` | Run all tests | test |
-| `console-ui` | AdGuard Console UI | console |
 
 ### Basic Usage
 
@@ -146,10 +145,9 @@ docker compose --profile compile up
 
 # Run all tests
 docker compose --profile test run --rm test
-
-# Run AdGuard Console UI
-docker compose --profile console run --rm console-ui
 ```
+
+> The AdGuard DNS API client console UI moved to [`BloqrAI/bloqr-apiclients`](https://github.com/BloqrAI/bloqr-apiclients) and no longer has a service in this repo's `docker-compose.yml`.
 
 ### Environment Variables
 
@@ -158,7 +156,6 @@ Create a `.env` file in the project root:
 ```bash
 # .env
 DEBUG=1
-ADGUARD_API_KEY=your-api-key-here
 ```
 
 ## Development Workflow
@@ -173,9 +170,6 @@ deno cache src/mod.ts
 # .NET projects
 cd /workspace/src/rules-compiler-dotnet
 dotnet restore RulesCompiler.slnx
-
-cd /workspace/src/adguard-api-dotnet
-dotnet restore src/AdGuard.ApiClient.sln
 
 # Python compiler
 cd /workspace/src/rules-compiler-python
@@ -210,7 +204,7 @@ cargo run --release
 
 # PowerShell
 cd /workspace
-pwsh -Command "Import-Module ./src/adguard-api-powershell/Invoke-RulesCompiler.psm1; Invoke-RulesCompiler"
+pwsh -Command "Import-Module ./src/rules-compiler-powershell/RulesCompiler/RulesCompiler.psd1; Invoke-RulesCompiler"
 ```
 
 ### Running Tests
@@ -234,7 +228,7 @@ cargo test
 
 # PowerShell tests
 cd /workspace
-pwsh -Command "Invoke-Pester -Path ./src/adguard-api-powershell/Tests/"
+pwsh -Command "Invoke-Pester -Path ./src/rules-compiler-powershell -Recurse"
 
 # Or run all tests via docker compose
 docker compose --profile test run --rm test
@@ -255,8 +249,8 @@ For [Warp](https://www.warp.dev/) terminal users, a pre-built environment is ava
 
 ```bash
 # The environment automatically runs these setup commands:
-cd bloqr-lists/src/adblock-compiler-core && deno cache src/mod.ts
-cd bloqr-lists/src/adguard-api-dotnet && dotnet restore
+cd bloqr-core/src/adblock-compiler-core && deno cache src/mod.ts
+cd bloqr-core/src/rules-compiler-dotnet && dotnet restore RulesCompiler.slnx
 ```
 
 ## CI/CD with Docker

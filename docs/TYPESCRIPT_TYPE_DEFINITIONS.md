@@ -27,8 +27,8 @@ Each TypeScript project has a `generate-types.ts` script that:
 
 **Location**: 
 - `src/adblock-compiler-core/generate-types.ts`
-- `src/adguard-api-typescript/generate-types.ts`
-- `src/linear/generate-types.ts`
+
+The AdGuard DNS API TypeScript client and the Linear import tool (formerly `src/adguard-api-typescript/` and `src/linear/`) moved to [`BloqrAI/bloqr-apiclients`](https://github.com/BloqrAI/bloqr-apiclients) and have their own `generate-types.ts` scripts there.
 
 ### Generated Files
 
@@ -63,8 +63,8 @@ deno task generate:types
 
 This command is available in:
 - `src/adblock-compiler-core/`
-- `src/adguard-api-typescript/`
-- `src/linear/`
+
+(The AdGuard DNS API TypeScript client and Linear import tool have their own copies in [`BloqrAI/bloqr-apiclients`](https://github.com/BloqrAI/bloqr-apiclients).)
 
 ### Output
 
@@ -126,15 +126,7 @@ This ensures that type definitions are always validated in CI but are not commit
 - **Entry Point**: `dist/index.d.ts`
 - **Main Exports**: RulesCompiler, ConfigurationBuilder, types
 
-### adguard-api-typescript
-- **Files**: 48 `.d.ts` files  
-- **Entry Point**: `dist/index.d.ts`
-- **Main Exports**: AdGuardDnsClient, API classes, models, repositories
-
-### linear
-- **Files**: 5 `.d.ts` files
-- **Entry Point**: `dist/mod.d.ts`
-- **Main Exports**: LinearClient, parser, types
+> `adguard-api-typescript` and `linear` moved to [`BloqrAI/bloqr-apiclients`](https://github.com/BloqrAI/bloqr-apiclients); see that repo for their type-definition details.
 
 ## Troubleshooting
 

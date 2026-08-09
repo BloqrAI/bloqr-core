@@ -3,8 +3,9 @@
 This file provides guidance to WARP (warp.dev) when working with code in this repository.
 
 Project scope
-- This repo houses multiple sub-projects: TypeScript/Deno filter compiler and API client, AdGuard DNS API clients (C#, TypeScript, Rust), console UIs for the API clients, and automation scripts.
-- CI pipelines (GitHub Actions) validate the .NET API client solution, TypeScript/Deno projects, and various compilers using Deno 2.0+ and .NET 10. Keep local commands aligned with the workflows below.
+- This repo houses the multi-language rules-compiler toolkit: TypeScript/Deno, C#/.NET 10, Python, and Rust compilers, bash/zsh shell scripts, a PowerShell toolkit, the Rust `rules-validator`, and the Gatsby documentation site (`src/website/`).
+- The AdGuard DNS API clients (.NET, TypeScript, Rust, PowerShell) and the Linear import tool moved to [`BloqrAI/bloqr-apiclients`](https://github.com/BloqrAI/bloqr-apiclients) and are no longer part of this repo.
+- CI pipelines (GitHub Actions) validate the .NET, TypeScript/Deno, Python, Rust, and PowerShell compilers, plus the Gatsby site. Keep local commands aligned with the workflows below.
 
 Common commands (build, lint, test)
 TypeScript/Deno – rules compiler (src/adblock-compiler-core)
@@ -15,52 +16,55 @@ TypeScript/Deno – rules compiler (src/adblock-compiler-core)
 - Coverage: deno task test:coverage
 - Compile rules: deno task compile
   Notes
-  - Reads compiler configuration and writes compiled rules. The canonical list in ../bloqr-blocklists/output/adguard_user_filter.txt is tracked under ../bloqr-blocklists/output/.
+  - Reads compiler configuration and writes compiled rules. The canonical filter list lives in [`BloqrAI/bloqr-blocklists`](https://github.com/BloqrAI/bloqr-blocklists) (`output/adguard_dns_filter.txt`), not this repo.
 
-TypeScript/Deno – API client (src/adguard-api-typescript)
-- Cache deps: cd src/adguard-api-typescript && deno cache src/mod.ts
-- Run interactive CLI: deno task start
-- Unit tests: deno task test
-- Coverage: deno task test:coverage
+.NET – rules compiler (src/rules-compiler-dotnet)
+- Restore/build/test: cd src/rules-compiler-dotnet; dotnet restore RulesCompiler.slnx; dotnet build RulesCompiler.slnx; dotnet test RulesCompiler.slnx
+- Run the console UI: dotnet run --project src/RulesCompiler.Console/RulesCompiler.Console.csproj
 
-.NET – API client + console UI (src/adguard-api-dotnet)
-- Restore/build/test: cd src/adguard-api-dotnet; dotnet restore src/AdGuard.ApiClient.sln; dotnet build src/AdGuard.ApiClient.sln; dotnet test src/AdGuard.ApiClient.sln
-- Run the console UI: dotnet run --project src/AdGuard.ConsoleUI/AdGuard.ConsoleUI.csproj
-  Notes
-  - The client targets net10.0 and includes helpers for configuration and Polly-based retry policies (see Helpers/ConfigurationHelper.cs and Helpers/RetryPolicyHelper.cs).
+Python – rules compiler (src/rules-compiler-python)
+- Install: cd src/rules-compiler-python && pip install -e ".[dev]"
+- Test: pytest
+- Lint/type-check: ruff check .; mypy .
 
+Rust – rules compiler (src/rules-compiler-rust)
+- Build/test: cd src/rules-compiler-rust && cargo build && cargo test
+- Run: cargo run -- -c config.yaml
 
-PowerShell scripts
-- Static analysis (same as CI): Invoke-ScriptAnalyzer -Path src/adguard-api-powershell -Recurse
+PowerShell scripts (src/rules-compiler-powershell)
+- Static analysis (same as CI): Invoke-ScriptAnalyzer -Path src/rules-compiler-powershell -Recurse
+- Tests: Invoke-Pester -Path ./src/rules-compiler-powershell -Recurse
 
 Running a single test
 - TypeScript/Deno
   - By file: cd src/adblock-compiler-core && deno test src/cli.test.ts
   - All tests: deno task test
-- .NET (xUnit under src/adguard-api-dotnet)
-  - By class pattern: cd src/adguard-api-dotnet && dotnet test src/AdGuard.ApiClient.sln --filter "FullyQualifiedName~DevicesApiTests"
-  - By method pattern: dotnet test src/AdGuard.ApiClient.sln --filter "Name~GetAccountLimits"
-
-Environment and secrets used by code
-- The API client expects an AdGuard API credential. The console UI can prompt for a key or read it from configuration (AdGuard:ApiKey).
+- .NET (xUnit under src/rules-compiler-dotnet)
+  - By class pattern: cd src/rules-compiler-dotnet && dotnet test RulesCompiler.slnx --filter "FullyQualifiedName~ConfigurationValidatorTests"
+- Python: pytest -k "test_read_yaml"
+- Rust: cargo test test_count_rules
 
 High-level architecture and structure
-- Filter rules (../bloqr-blocklists/output/)
-  - ../bloqr-blocklists/output/adguard_user_filter.txt is the tracked output list consumed by AdGuard DNS.
-- Filter compiler (src/adblock-compiler-core/)
-  - Deno/TypeScript wrapper around @bloqr/compiler-core. Reads configuration, compiles sources, and writes compiled rules. Deno tests cover config parsing and output writing.
-- API clients
-  - src/adguard-api-dotnet/: Auto-generated C# SDK for AdGuard DNS API v1.15. Targets net10.0; uses Newtonsoft.Json and JsonSubTypes. Includes Helpers for configuration and Polly-based retry policies. Console UI uses Spectre.Console.
-  - src/adguard-api-typescript/: TypeScript/Deno SDK with full API coverage, repository pattern, and interactive CLI using inquirer/ora.
-  - src/adguard-api-rust/: Rust SDK with Tokio async runtime and dialoguer-based CLI.
-- Scripts (src/)
-  - src/linear: Deno-based tool to import the repo's documentation into Linear. Reads .env for ADGUARD_LINEAR_API_KEY, etc.
-  - src/adguard-api-powershell: PowerShell module scaffolding and tests; CI runs PSScriptAnalyzer against the folder.
+- Filter rules ([`BloqrAI/bloqr-blocklists`](https://github.com/BloqrAI/bloqr-blocklists))
+  - `output/adguard_dns_filter.txt` is the compiled, tracked filter list consumed by AdGuard DNS. It is no longer part of this repo.
+- Rules compilers (`src/`)
+  - `src/adblock-compiler-core/` — Deno/TypeScript wrapper around `@bloqr/compiler-core`, published on JSR.
+  - `src/rules-compiler-dotnet/` — .NET 10 library + Spectre.Console CLI.
+  - `src/rules-compiler-python/` — pip-installable package with CLI and API.
+  - `src/rules-compiler-rust/` — single-binary CLI with zero runtime deps.
+  - `src/rules-compiler-shell/` — bash and zsh scripts for compiling rules without a language runtime.
+  - `src/rules-compiler-powershell/` — class-based PowerShell modules with Pester tests.
+- Validation
+  - `src/rules-validator/` — Rust library (`rules-validator-core`) and CLI (`rules-validator-cli`) for filter/config validation.
+- Documentation site
+  - `src/website/` — Gatsby 5 site sourcing content from `docs/` and repo root.
 
 Notes pulled from existing docs
-- Root README lists prerequisites: .NET 10, Deno 2.0+, and PowerShell 7+. It also documents the typical steps to compile filters with the Deno/TypeScript tools.
-- The API client READMEs document OpenAPI version (1.11) and usage patterns for C#, TypeScript, and Rust implementations.
+- Root README lists prerequisites: .NET 10, Deno 2.0+, Python 3.9+, Rust 1.85+, and PowerShell 7+. It also documents the typical steps to compile filters with each toolchain.
+- AdGuard DNS API client usage now lives in the [`BloqrAI/bloqr-apiclients`](https://github.com/BloqrAI/bloqr-apiclients) READMEs.
 
 Alignment with CI
-- .github/workflows/dotnet.yml builds and tests the API client solution with .NET 10.
-- .github/workflows/typescript.yml validates TypeScript/Deno projects with deno check, deno lint, and deno test.
+- .github/workflows/dotnet.yml builds and tests `RulesCompiler.slnx` with .NET 10.
+- .github/workflows/typescript.yml validates the TypeScript/Deno compiler with `deno check`, `deno lint`, and `deno test`.
+- .github/workflows/python.yml, .github/workflows/rust-clippy.yml, and .github/workflows/powershell.yml cover the remaining compilers.
+- .github/workflows/gatsby.yml builds the documentation site.

@@ -432,13 +432,13 @@ $PSVersionTable
 # Should be 7.0 or higher for cross-platform features
 
 # Import module with full path
-Import-Module ./src/adguard-api-powershell/Invoke-RulesCompiler.psm1 -Force
+Import-Module ./src/rules-compiler-powershell/RulesCompiler/RulesCompiler.psd1 -Force
 
 # Check module is loaded
 Get-Module
 
 # If module still not found, check file path
-Test-Path ./src/adguard-api-powershell/Invoke-RulesCompiler.psm1
+Test-Path ./src/rules-compiler-powershell/RulesCompiler/RulesCompiler.psd1
 ```
 
 ### Execution Policy Errors

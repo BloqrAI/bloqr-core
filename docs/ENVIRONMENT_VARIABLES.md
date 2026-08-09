@@ -157,6 +157,8 @@ export ADGUARD_WEBHOOK_FORMAT="Json"
 
 ## API Client (C#/.NET)
 
+> The AdGuard DNS API clients (.NET, TypeScript, Rust, PowerShell) moved to [`BloqrAI/bloqr-apiclients`](https://github.com/BloqrAI/bloqr-apiclients). These variables apply to the clients in that repo.
+
 ### ADGUARD_API_KEY
 **Description**: AdGuard DNS API key (recommended cross-platform format)  
 **Type**: String  
@@ -197,6 +199,8 @@ export ADGUARD_AdGuard__BaseUrl="https://api.adguard-dns.io"
 
 ## Linear Integration
 
+> The Linear import tool moved to [`BloqrAI/bloqr-apiclients`](https://github.com/BloqrAI/bloqr-apiclients) (formerly `src/linear/` in this repo). These variables apply to the tool in that repo.
+
 ### ADGUARD_LINEAR_API_KEY
 **Description**: Linear API key for project management integration  
 **Type**: String  
@@ -205,7 +209,7 @@ export ADGUARD_AdGuard__BaseUrl="https://api.adguard-dns.io"
 ```bash
 export ADGUARD_LINEAR_API_KEY="lin_api_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
 ```
-**Note**: The Linear scripts in `src/linear/` support both `ADGUARD_LINEAR_API_KEY` (recommended) and `LINEAR_API_KEY` (legacy) for backward compatibility.
+**Note**: The Linear scripts support both `ADGUARD_LINEAR_API_KEY` (recommended) and `LINEAR_API_KEY` (legacy) for backward compatibility.
 
 ### ADGUARD_LINEAR_TEAM_ID
 **Description**: Specific Linear team ID to use  

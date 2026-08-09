@@ -9,13 +9,13 @@ This project uses different testing frameworks for each language implementation:
 | Component | Framework | Test Location | Test Command |
 |-----------|-----------|---------------|--------------|
 | TypeScript (Rules Compiler) | Deno Test | `src/adblock-compiler-core/tests/` | `deno task test` |
-| TypeScript (API Client) | Deno Test | `src/adguard-api-typescript/tests/` | `deno task test` |
 | .NET (Rules Compiler) | xUnit | `src/rules-compiler-dotnet/src/RulesCompiler.Tests/` | `dotnet test` |
-| .NET (API Client) | xUnit | `src/adguard-api-dotnet/src/AdGuard.ApiClient.Test/` | `dotnet test` |
 | Python | pytest | `src/rules-compiler-python/tests/` | `pytest` |
 | Rust (Rules Compiler) | cargo test | `src/rules-compiler-rust/src/` | `cargo test` |
-| Rust (API Client) | cargo test | `src/adguard-api-rust/tests/` | `cargo test` |
-| PowerShell | Pester | `src/adguard-api-powershell/Tests/` | `Invoke-Pester` |
+| Rust (Validator) | cargo test | `src/rules-validator/` | `cargo test` |
+| PowerShell | Pester | `src/rules-compiler-powershell/` | `Invoke-Pester -Recurse` |
+
+The AdGuard DNS API client test suites (TypeScript, .NET, Rust, PowerShell) moved with the clients to [`BloqrAI/bloqr-apiclients`](https://github.com/BloqrAI/bloqr-apiclients).
 
 ## TypeScript (Deno) Testing
 
@@ -42,22 +42,7 @@ deno task dev
 
 ### API Client Tests
 
-```bash
-cd src/adguard-api-typescript
-
-# Run all tests
-deno task test
-
-# Run specific test file
-deno test tests/client.test.ts
-
-# Run tests with coverage
-deno task test:coverage
-
-# Run integration tests (requires API key)
-export ADGUARD_API_KEY="your-key"
-deno test tests/ --allow-env --allow-net
-```
+The TypeScript AdGuard DNS API client test suite moved to [`BloqrAI/bloqr-apiclients`](https://github.com/BloqrAI/bloqr-apiclients) along with the client.
 
 ### Writing Deno Tests
 
@@ -129,21 +114,7 @@ dotnet test /p:CollectCoverage=true /p:CoverletOutputFormat=opencover
 
 ### API Client Tests
 
-```bash
-cd src/adguard-api-dotnet
-
-# Run all tests
-dotnet test AdGuard.ApiClient.slnx
-
-# Run specific test class
-dotnet test --filter "FullyQualifiedName~DevicesApiTests"
-
-# Run tests matching pattern
-dotnet test --filter "Name~GetAccountLimits"
-
-# Run with code coverage
-dotnet test /p:CollectCoverage=true
-```
+The .NET AdGuard DNS API client test suite moved to [`BloqrAI/bloqr-apiclients`](https://github.com/BloqrAI/bloqr-apiclients) along with the client.
 
 ### Writing xUnit Tests
 
@@ -313,22 +284,7 @@ cargo test --doc
 
 ### API Client Tests
 
-```bash
-cd src/adguard-api-rust
-
-# Run all workspace tests
-cargo test
-
-# Run tests for specific package
-cargo test --package adguard-api-lib
-cargo test --package adguard-api-cli
-
-# Run integration tests
-cargo test --test integration_tests
-
-# Run with coverage (requires tarpaulin)
-cargo tarpaulin --out Html
-```
+The Rust AdGuard DNS API client test suite moved to [`BloqrAI/bloqr-apiclients`](https://github.com/BloqrAI/bloqr-apiclients) along with the client.
 
 ### Writing Rust Tests
 
@@ -387,22 +343,22 @@ mod tests {
 ### Running Tests
 
 ```powershell
-cd src/adguard-api-powershell
+cd src/rules-compiler-powershell
 
-# Run all tests
-Invoke-Pester -Path ./Tests/
+# Run all tests (Common, RulesCompiler, AdGuardWebhook modules)
+Invoke-Pester -Path . -Recurse
 
 # Run with detailed output
-Invoke-Pester -Path ./Tests/ -Output Detailed
+Invoke-Pester -Path . -Recurse -Output Detailed
+
+# Run tests for a single module
+Invoke-Pester -Path ./RulesCompiler/Tests/
 
 # Run specific test file
-Invoke-Pester -Path ./Tests/RulesCompiler.Tests.ps1
-
-# Run tests with code coverage
-Invoke-Pester -Path ./Tests/ -CodeCoverage ./Invoke-RulesCompiler.psm1
+Invoke-Pester -Path ./RulesCompiler/Tests/CompilerResult.Tests.ps1
 
 # Run with results export
-Invoke-Pester -Path ./Tests/ -Output Detailed -OutputFile ./TestResults.xml
+Invoke-Pester -Path . -Recurse -Output Detailed -OutputFile ./TestResults.xml
 ```
 
 ### Writing Pester Tests
@@ -479,8 +435,6 @@ jobs:
         run: |
           cd src/adblock-compiler-core
           deno task test
-          cd ../adguard-api-typescript
-          deno task test
 
   test-dotnet:
     runs-on: ubuntu-latest
@@ -493,8 +447,6 @@ jobs:
         run: |
           cd src/rules-compiler-dotnet
           dotnet test RulesCompiler.slnx
-          cd ../adguard-api-dotnet
-          dotnet test AdGuard.ApiClient.slnx
 
   test-python:
     runs-on: ubuntu-latest
@@ -520,8 +472,6 @@ jobs:
         run: |
           cd src/rules-compiler-rust
           cargo test
-          cd ../adguard-api-rust
-          cargo test
 
   test-powershell:
     runs-on: windows-latest
@@ -531,8 +481,7 @@ jobs:
         shell: pwsh
         run: |
           Install-Module -Name Pester -Force -SkipPublisherCheck
-          cd src/adguard-api-powershell
-          Invoke-Pester -Path ./Tests/ -Output Detailed
+          Invoke-Pester -Path ./src/rules-compiler-powershell -Recurse -Output Detailed
 ```
 
 ## Test Coverage
@@ -692,21 +641,18 @@ set -e
 
 echo "Running TypeScript tests..."
 cd src/adblock-compiler-core && deno task test && cd ../..
-cd src/adguard-api-typescript && deno task test && cd ../..
 
 echo "Running .NET tests..."
 cd src/rules-compiler-dotnet && dotnet test RulesCompiler.slnx && cd ../..
-cd src/adguard-api-dotnet && dotnet test src/AdGuard.ApiClient.sln && cd ../..
 
 echo "Running Python tests..."
 cd src/rules-compiler-python && pytest && cd ../..
 
 echo "Running Rust tests..."
 cd src/rules-compiler-rust && cargo test && cd ../..
-cd src/adguard-api-rust && cargo test && cd ../..
 
 echo "Running PowerShell tests..."
-cd src/adguard-api-powershell && pwsh -Command "Invoke-Pester -Path ./Tests/" && cd ../..
+pwsh -Command "Invoke-Pester -Path ./src/rules-compiler-powershell -Recurse"
 
 echo "All tests passed!"
 ```
