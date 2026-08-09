@@ -4,12 +4,19 @@ This document outlines the recommended approach for sharing documentation and st
 
 ## Current State (Interim)
 
-Documentation is currently distributed across individual repositories:
-- `docs/jsr-token-authentication.md` (bloqr-core)
-- `docs/jsr-org-standards.md` (bloqr-core)
-- Similar patterns exist in bloqr-blocklists, bloqr-apiclients, bloqr-compiler
+**Existing Infrastructure**:
+- `BloqrAI/.github` repo (public) - Used as placeholder for general public README
+- `BloqrAI/.github-private` repo (members-only) - For internal operational docs
 
-**Limitation**: Documentation is siloed; no central discovery or cross-repo linking.
+**Documentation Distribution**:
+- Org-level docs → `BloqrAI/.github-private` (members only, evolving)
+- Individual repo docs → Per-repo `docs/` folders (stable per-repo info)
+- Examples: `docs/jsr-token-authentication.md`, `docs/jsr-org-standards.md`
+
+**Approach**: 
+- Keep org-level docs in `.github-private` during active development (everything is moving target)
+- Once stabilized, consolidate and migrate to public `.github` repo
+- Planned: Major internal documentation consolidation push (future)
 
 ## Recommended: GitHub `.github` Organization Repository
 
