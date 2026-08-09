@@ -30,7 +30,13 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        language: ["csharp", "javascript"]
+        # Matches the languages this repo actually has source in: C# (.NET
+        # compiler), JavaScript/TypeScript (Deno compiler + Gatsby site),
+        # and Python (Python compiler). Keep in sync with what GitHub's own
+        # "Default setup" auto-detects for this repo (python, csharp,
+        # javascript-typescript) so switching between default/advanced setup
+        # is never a silent coverage change.
+        language: ["csharp", "javascript-typescript", "python"]
 
     steps:
       - uses: actions/checkout@v7
@@ -45,20 +51,19 @@ jobs:
         uses: github/codeql-action/init@v4
         with:
           languages: ${{ matrix.language }}
+          # JS/TS and Python are analyzed without a build step (CodeQL's
+          # extractors for both run directly against source). C# still
+          # needs a real build, so it keeps the default build-mode and is
+          # built explicitly below rather than via autobuild: the repo's
+          # root build.sh drives every language's build and would fail here
+          # since Deno/Python/etc. aren't set up in this job.
+          build-mode: ${{ matrix.language == 'csharp' && 'manual' || 'none' }}
 
-      # C# is built explicitly (not via autobuild) so CodeQL only scans the
-      # .NET solutions: the repo's root build.sh drives every language's
-      # build and would fail here since Deno/Python/etc. aren't set up in
-      # this job.
       - name: Build .NET projects
         if: matrix.language == 'csharp'
         run: |
           dotnet restore src/rules-compiler-dotnet/RulesCompiler.slnx
           dotnet build src/rules-compiler-dotnet/RulesCompiler.slnx --no-restore
-
-      - name: Autobuild
-        if: matrix.language != 'csharp'
-        uses: github/codeql-action/autobuild@v4
 
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@v4
