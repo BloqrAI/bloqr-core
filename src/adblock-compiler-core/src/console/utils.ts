@@ -3,7 +3,19 @@
  * Provides styled output, spinners, tables, and prompts
  */
 
-import chalk from 'chalk';
+import {
+  bgBlue,
+  blue,
+  bold,
+  cyan,
+  dim,
+  gray,
+  green,
+  red,
+  underline,
+  white,
+  yellow,
+} from '@std/fmt/colors';
 import Table from 'cli-table3';
 import ora from 'ora';
 import figlet from 'figlet';
@@ -11,16 +23,16 @@ import figlet from 'figlet';
 /** Format a value for display */
 export function formatValue(value: unknown): string {
   if (value === null || value === undefined) {
-    return chalk.dim('N/A');
+    return dim('N/A');
   }
   if (typeof value === 'boolean') {
-    return value ? chalk.green('Yes') : chalk.red('No');
+    return value ? green('Yes') : red('No');
   }
   if (typeof value === 'number') {
-    return chalk.cyan(value.toLocaleString());
+    return cyan(value.toLocaleString());
   }
   if (Array.isArray(value)) {
-    return value.length > 0 ? value.join(', ') : chalk.dim('None');
+    return value.length > 0 ? value.join(', ') : dim('None');
   }
   return String(value);
 }
@@ -28,7 +40,7 @@ export function formatValue(value: unknown): string {
 /** Create a standard table with headers */
 export function createTable(headers: string[]): Table.Table {
   return new Table({
-    head: headers.map((h) => chalk.bold.white(h)),
+    head: headers.map((h) => bold(white(h))),
     style: {
       head: [],
       border: [],
@@ -39,7 +51,7 @@ export function createTable(headers: string[]): Table.Table {
 /** Create a key-value table (2 columns) */
 export function createKeyValueTable(): Table.Table {
   return new Table({
-    head: [chalk.bold.green('Property'), chalk.bold.green('Value')],
+    head: [bold(green('Property')), bold(green('Value'))],
     style: {
       head: [],
       border: [],
@@ -54,38 +66,38 @@ export function displayTable(table: Table.Table): void {
 
 /** Display a success message */
 export function showSuccess(message: string): void {
-  console.log(chalk.green('✓ ' + message));
+  console.log(green('✓ ' + message));
 }
 
 /** Display an error message */
 export function showError(message: string): void {
-  console.log(chalk.red('✗ ' + message));
+  console.log(red('✗ ' + message));
 }
 
 /** Display a warning message */
 export function showWarning(message: string): void {
-  console.log(chalk.yellow('⚠ ' + message));
+  console.log(yellow('⚠ ' + message));
 }
 
 /** Display an info message */
 export function showInfo(message: string): void {
-  console.log(chalk.blue('ℹ ' + message));
+  console.log(blue('ℹ ' + message));
 }
 
 /** Display a header */
 export function showHeader(title: string): void {
   console.log();
-  console.log(chalk.bold.underline(title));
+  console.log(bold(underline(title)));
   console.log();
 }
 
 /** Display a panel with key-value pairs */
 export function showPanel(title: string, data: Record<string, unknown>): void {
   console.log();
-  console.log(chalk.bold.bgBlue.white(` ${title} `));
+  console.log(bold(bgBlue(white(` ${title} `))));
   console.log();
   for (const [key, value] of Object.entries(data)) {
-    console.log(`  ${chalk.bold(key)}: ${formatValue(value)}`);
+    console.log(`  ${bold(key)}: ${formatValue(value)}`);
   }
   console.log();
 }
@@ -96,15 +108,15 @@ export function showRule(title?: string): void {
   if (title) {
     const padding = Math.max(0, Math.floor((width - title.length - 2) / 2));
     const line = '─'.repeat(padding);
-    console.log(chalk.grey(`${line} ${chalk.green(title)} ${line}`));
+    console.log(gray(`${line} ${green(title)} ${line}`));
   } else {
-    console.log(chalk.grey('─'.repeat(width)));
+    console.log(gray('─'.repeat(width)));
   }
 }
 
 /** Display no items message */
 export function showNoItems(type: string): void {
-  console.log(chalk.dim(`  No ${type} found.`));
+  console.log(dim(`  No ${type} found.`));
 }
 
 /** Create a spinner */
@@ -146,7 +158,7 @@ export function generateBanner(text: string): string {
 /** Display welcome banner */
 export function showWelcomeBanner(): void {
   console.clear();
-  console.log(chalk.green(generateBanner('Rules Compiler')));
+  console.log(green(generateBanner('Rules Compiler')));
   showRule('AdGuard Filter Rules Compiler');
   console.log();
 }
@@ -183,27 +195,17 @@ export function colorStatus(
 ): string {
   switch (status) {
     case 'success':
-      return chalk.green(text);
+      return green(text);
     case 'error':
-      return chalk.red(text);
+      return red(text);
     case 'warning':
-      return chalk.yellow(text);
+      return yellow(text);
     case 'info':
-      return chalk.blue(text);
+      return blue(text);
     default:
       return text;
   }
 }
 
-/** Dim text */
-export function dim(text: string): string {
-  return chalk.dim(text);
-}
-
-/** Bold text */
-export function bold(text: string): string {
-  return chalk.bold(text);
-}
-
-/** Export chalk for direct use */
-export { chalk };
+/** Export dim/bold for direct use (also used internally above) */
+export { bold, dim };

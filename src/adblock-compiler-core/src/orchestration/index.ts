@@ -48,7 +48,6 @@ export { getVersionInfo, main, parseArgs, showHelp, showVersion } from './cli.ts
 // Console (Interactive Mode)
 export {
   bold,
-  chalk,
   colorStatus,
   ConsoleApplication,
   createKeyValueTable,
