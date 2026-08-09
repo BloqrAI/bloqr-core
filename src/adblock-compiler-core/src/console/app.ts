@@ -422,11 +422,13 @@ export class ConsoleApplication {
     table.push(['Module', info.moduleVersion]);
     table.push(['Runtime', info.nodeVersion]);
     table.push(['Platform', `${info.platform.os} ${info.platform.arch}`]);
-    table.push([
-      'TypeScript',
-      (Deno as unknown as { version: { typescript: string } }).version.typescript,
-    ]);
-    table.push(['V8', (Deno as unknown as { version: { v8: string } }).version.v8]);
+
+    // TypeScript/V8 versions are only meaningful (and only available without
+    // a ReferenceError) when actually running under Deno.
+    if (typeof Deno !== 'undefined') {
+      table.push(['TypeScript', Deno.version.typescript]);
+      table.push(['V8', Deno.version.v8]);
+    }
 
     displayTable(table);
   }

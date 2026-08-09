@@ -14,6 +14,7 @@
  * @module
  */
 
+import process from 'node:process';
 import type { IConfiguration, IFileSystem } from '../../types/index.ts';
 import { ConfigurationLoader } from '../ConfigurationLoader.ts';
 
@@ -94,7 +95,8 @@ export class ObjectConfigurationSource implements IConfigurationSource {
  * | `ADBLOCK_CONFIG_VERSION`      | `version`                |
  *
  * @param envReader  - Optional injected reader for testability (defaults to
- *                     `Deno.env.get`).
+ *                     `Deno.env.get` under Deno, `process.env` under
+ *                     Node.js/Bun).
  *
  * @example
  * ```ts
@@ -107,9 +109,8 @@ export class EnvConfigurationSource implements IConfigurationSource {
   private readonly envReader: (key: string) => string | undefined;
 
   constructor(envReader?: (key: string) => string | undefined) {
-    // deno-lint-ignore no-explicit-any
     this.envReader = envReader ??
-      ((key) => (typeof Deno !== 'undefined' && (Deno as any).env ? Deno.env.get(key) : undefined));
+      ((key) => (typeof Deno !== 'undefined' && Deno.env ? Deno.env.get(key) : process.env[key]));
   }
 
   async load(): Promise<Partial<IConfiguration>> {

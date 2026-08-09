@@ -8,7 +8,7 @@ export const VERSION = '1.0.0';
 export const PACKAGE_NAME = '@bloqr/compiler-core';
 
 /** A `name/version` User-Agent string identifying this package, suitable for HTTP requests. */
-export const USER_AGENT = `${PACKAGE_NAME}/${VERSION}`;
+export const USER_AGENT: string = `${PACKAGE_NAME}/${VERSION}`;
 
 /** Convenience bundle of {@linkcode PACKAGE_NAME}, {@linkcode VERSION}, and {@linkcode USER_AGENT}. */
 export const PACKAGE_INFO = {

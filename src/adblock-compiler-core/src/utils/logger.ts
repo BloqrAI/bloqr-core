@@ -1,10 +1,20 @@
 // deno-lint-ignore-file no-console
 /**
  * Deno-native logger implementation
- * Replaces consola for Deno compatibility
+ * Replaces consola for Deno compatibility. Environment-variable reads
+ * (`createLoggerFromEnv`) also work under Node.js and Bun via `node:process`.
  */
 
+import process from 'node:process';
 import type { ILogger } from '../types/index.ts';
+
+/**
+ * Reads an environment variable, preferring Deno's API when available and
+ * falling back to `node:process` (Node.js and Bun) otherwise.
+ */
+function getEnvVar(name: string): string | undefined {
+  return typeof Deno !== 'undefined' && Deno.env ? Deno.env.get(name) : process.env[name];
+}
 
 /**
  * Log levels for filtering output
@@ -328,9 +338,7 @@ export function createLogger(options?: LoggerOptions): Logger {
 export function createLoggerFromEnv(options?: LoggerOptions): Logger {
   // Parse default log level from environment
   let defaultLevel = LogLevel.Info;
-  const envLevelRaw = typeof Deno !== 'undefined' && Deno.env
-    ? Deno.env.get('LOG_LEVEL')
-    : undefined;
+  const envLevelRaw = getEnvVar('LOG_LEVEL');
   const envLevel = envLevelRaw?.toLowerCase();
   if (envLevel) {
     switch (envLevel) {
@@ -357,15 +365,11 @@ export function createLoggerFromEnv(options?: LoggerOptions): Logger {
   }
 
   // Parse module overrides from environment
-  const envOverrides = typeof Deno !== 'undefined' && Deno.env
-    ? Deno.env.get('LOG_MODULE_OVERRIDES')
-    : undefined;
+  const envOverrides = getEnvVar('LOG_MODULE_OVERRIDES');
   const moduleOverrides = parseModuleOverrides(envOverrides);
 
   // Parse structured flag from environment
-  const envStructured = typeof Deno !== 'undefined' && Deno.env
-    ? Deno.env.get('LOG_STRUCTURED')
-    : undefined;
+  const envStructured = getEnvVar('LOG_STRUCTURED');
   const structured = envStructured === 'true' || envStructured === '1';
 
   // Merge with provided options (provided options take precedence)

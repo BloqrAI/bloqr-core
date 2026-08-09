@@ -16,7 +16,8 @@ This is the canonical source for the `@bloqr/compiler-core` JSR package. It's a 
 
 ## Requirements
 
-- Deno 2.x or later
+- Deno 2.x or later (this package's own runtime)
+- [Bun](https://bun.sh/) is supported as an alternative runtime target for consumers — see [Bun (Supported)](#bun-supported) below. Node.js works too, since Bun's compatibility layer is the same one Node.js implements, but Deno and Bun are the two runtimes this package is actually verified against.
 
 ## Installation
 
@@ -137,6 +138,31 @@ deno task start -- --enable-chunking --chunk-size 50000 --max-parallel 4
 - Very large individual sources (1M+ rules)
 - Multi-core systems with available CPU resources
 
+### Bun (Supported)
+
+[Bun](https://bun.sh/) is supported as an alternative runtime target. As a library, `import { compile } from '@bloqr/compiler-core'` works under Bun with no setup beyond installing the package. The CLI/interactive layer (`src/orchestration/`, `src/console/`) additionally depends on a few JSR and npm packages that Bun — unlike Deno — can't resolve from `deno.json`'s import map, so populate `node_modules` first, from a local clone of this package:
+
+```bash
+# JSR packages, via JSR's own Bun installer bridge (https://jsr.io/docs/with/bun)
+bunx jsr add @std/yaml @std/toml @std/fmt @cliffy/table
+
+# zod is aliased to the bare `zod` specifier (matching deno.json's import map),
+# so it needs an explicit alias rather than `bunx jsr add @zod/zod`
+bun add zod@npm:@jsr/zod__zod@^4.4.3
+
+# npm-native packages with no JSR-native equivalent
+bun add ora figlet @inquirer/prompts
+```
+
+Then run the CLI via the dedicated Bun entry point (mirrors `src/mod.ts`, the Deno entry point):
+
+```bash
+bun run src/mod.bun.ts -c compiler-config.json -o output.txt
+bun run src/mod.bun.ts --version   # reports "Runtime: Bun x.y.z"
+```
+
+Deno remains this package's own runtime and JSR remains the source of truth for its dependencies (`deno.json`) — the `node_modules` population above is only for Bun consumers running this package's CLI/interactive layer directly, not something this repository's own tooling uses. CI (`.github/workflows/typescript.yml`, `bun-support` job) runs these exact install commands and CLI/library smoke tests against real Bun on every PR.
+
 ### Generate Type Definitions
 
 To generate TypeScript declaration files (`.d.ts`):
@@ -165,6 +191,7 @@ This creates `.d.ts` files in the `dist/` directory that re-export types from th
 - `src/console/` — the interactive terminal UI, exported as `./console`.
 - `src/lib/` — a high-level builder-pattern API (`RulesCompiler`, `ConfigurationBuilder`), exported as `./lib`.
 - `src/mod.ts` — the Deno entry point; re-exports the core engine and runs the CLI when executed directly.
+- `src/mod.bun.ts` — the Bun entry point (exported as `./bun`), for the same purpose from a local clone; see [Bun (Supported)](#bun-supported).
 
 ## Architecture
 

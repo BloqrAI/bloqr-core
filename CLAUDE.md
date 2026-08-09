@@ -397,6 +397,36 @@ GitHub Actions workflows validate:
 - Full narrative, including the OIDC investigation timeline and the
   `bloqr-compiler` dependency-swap decisions, is in
   `docs/RESTRUCTURING_RETROSPECTIVE.md`.
+- **TypeScript/JavaScript runtime and package-manager order of preference,
+  for every project in this repo:**
+  1. **Deno-native first.** Design new TypeScript code, and structure new
+     projects, to run under Deno without a build step. Reach for Deno's own
+     standard library and tasks before anything from the npm ecosystem.
+  2. **JSR packages before npm packages.** When a dependency is needed,
+     check JSR first; only fall back to `npm:` specifiers in `deno.json`
+     when no JSR-native equivalent exists (and say so in a comment next to
+     the import, matching the existing `ora`/`figlet`/`@inquirer/prompts`
+     entries in `src/adblock-compiler-core/deno.json`).
+  3. **Bun is a formally supported runtime target, not a fallback.**
+     Consumer-facing TypeScript packages (e.g. `@bloqr/compiler-core`)
+     should work correctly under Bun as well as Deno — no unguarded
+     `Deno.*` references outside code explicitly documented as Deno-only —
+     and that support should be verified by real CI against real Bun, not
+     just asserted in docs. Node.js compatibility follows for free from
+     the same `node:*` API shims Bun itself relies on; it is not a runtime
+     this repo targets on its own.
+  4. **pnpm only when npm/Node-ecosystem tooling is genuinely required**
+     (e.g. the Gatsby website), and even then prefer it over plain `npm`.
+     Avoid introducing a `package.json` to a Deno-native project just to
+     install one npm-only dependency — use `deno.json`'s `npm:` import
+     specifiers instead, which don't require one.
+  5. **Cloudflare Workers is this org's cloud-native deploy target** for
+     anything that needs to run as a service — see `bloqr-compiler` for
+     the reference implementation (Workers, Hyperdrive, D1, Durable
+     Objects). Gatsby-based `src/website` is a deliberate exception (no
+     meaningful Deno-native static-site-generator option exists) and is
+     expected to eventually move to Starlight in `bloqr-compiler`, not stay
+     on Gatsby indefinitely.
 
 ## Prerequisites
 
@@ -408,6 +438,7 @@ GitHub Actions workflows validate:
 | Python | 3.9+ | Python compiler |
 | Rust | 1.85+ | Rust compiler (install via rustup) |
 | @bloqr/compiler-core | 1.0.0 | TypeScript compiler (via JSR: `deno add @bloqr/compiler-core`) |
+| Bun | latest | Optional — formally supported alternative runtime target for `src/adblock-compiler-core` (not required for this repo's own tooling; see that package's README) |
 | Docker | 24.0+ | Container development (optional but recommended) |
 
 ## Key File Locations
