@@ -6,7 +6,7 @@
 import { existsSync, readFileSync, statSync } from 'node:fs';
 import { extname, resolve } from 'node:path';
 import { parse as parseYaml } from '@std/yaml';
-import { parse as parseToml } from '@iarna/toml';
+import { parse as parseToml } from '@std/toml';
 import type { IConfiguration } from '../index.ts';
 import type { ConfigurationFormat, ExtendedConfiguration, Logger } from './types.ts';
 import { logger as defaultLogger } from './logger.ts';
