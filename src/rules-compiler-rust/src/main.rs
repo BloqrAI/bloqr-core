@@ -94,7 +94,7 @@ enum Commands {
 
 /// Run a synthetic benchmark to demonstrate chunking speedup.
 fn run_benchmark(rule_count: usize, max_parallel: Option<usize>) -> ExitCode {
-    use rand::Rng;
+    use rand::RngExt;
     use std::time::{Duration, Instant};
 
     let max_parallel = max_parallel.unwrap_or_else(|| {
