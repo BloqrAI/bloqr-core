@@ -22,7 +22,6 @@
 // Utilities
 export {
   bold,
-  chalk,
   colorStatus,
   createKeyValueTable,
   createSpinner,
