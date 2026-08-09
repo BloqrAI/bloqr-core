@@ -29,16 +29,14 @@ The `JSR_WORKFLOW_TOKEN` is configured in:
 
 ### Usage in Workflows
 
-Set the token as an environment variable before calling `deno publish`:
+Pass the token via the `--token` flag to `deno publish`:
 
 ```yaml
 - name: Publish to JSR
-  env:
-    JSR_TOKEN: ${{ secrets.JSR_WORKFLOW_TOKEN }}
-  run: deno publish
+  run: deno publish --token ${{ secrets.JSR_WORKFLOW_TOKEN }}
 ```
 
-**Important**: Use `JSR_TOKEN` (not `JSR_WORKFLOW_TOKEN`) as the environment variable name — this is what `deno publish` expects.
+**Important**: Use the `--token` flag (not environment variable) — this is how `deno publish` accepts the token.
 
 ### Example: `.github/workflows/publish-jsr.yml`
 

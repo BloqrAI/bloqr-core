@@ -59,9 +59,7 @@ jobs:
 
       - name: Publish to JSR
         id: publish
-        env:
-          JSR_TOKEN: ${{ secrets.JSR_WORKFLOW_TOKEN }}
-        run: deno publish
+        run: deno publish --token ${{ secrets.JSR_WORKFLOW_TOKEN }}
 
       - name: Report publish failure
         if: failure() && steps.publish.outcome == 'failure'

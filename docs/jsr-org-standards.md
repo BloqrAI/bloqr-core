@@ -44,9 +44,7 @@ Use in `.github/workflows/publish-jsr.yml`:
 
 ```yaml
 - name: Publish to JSR
-  env:
-    JSR_TOKEN: ${{ secrets.JSR_WORKFLOW_TOKEN }}
-  run: deno publish
+  run: deno publish --token ${{ secrets.JSR_WORKFLOW_TOKEN }}
 ```
 
 See `docs/jsr-token-authentication.md` for complete workflow example.
