@@ -47,7 +47,7 @@ jobs:
         with:
           deno-version: v2.x
 
-      - name: Get version from deno.json
+      - name: Get version from src/version.ts
         id: get_version
         env:
           MANUAL_VERSION: ${{ inputs.version }}
@@ -60,7 +60,15 @@ jobs:
             fi
             VERSION="${MANUAL_VERSION}"
           else
-            VERSION=$(deno eval "console.log(JSON.parse(Deno.readTextFileSync('deno.json')).version)")
+            # Read from src/version.ts (the actual source of truth), not
+            # deno.json: deno.json is JSONC (see the accepted-npm-exception
+            # comments in its `imports` block) and a plain JSON.parse -- as
+            # this line did until now -- throws on those comments.
+            VERSION=$(grep -oE "VERSION = '[^']*'" src/version.ts | sed -E "s/VERSION = '([^']*)'/\1/")
+            if [ -z "$VERSION" ]; then
+              echo "::error::Could not find VERSION constant in src/version.ts"
+              exit 1
+            fi
           fi
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
           echo "tag=compiler-core-v${VERSION}" >> "$GITHUB_OUTPUT"
