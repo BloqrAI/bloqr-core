@@ -36,17 +36,17 @@ jobs:
             ext: ''
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0  # Full history needed for tagging
 
       - name: Setup .NET
-        uses: actions/setup-dotnet@v4
+        uses: actions/setup-dotnet@v6
         with:
           dotnet-version: '10.0.x'
 
       - name: Cache NuGet packages
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: ~/.nuget/packages
           key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj', '**/*.slnx') }}
@@ -81,7 +81,7 @@ jobs:
           cd ./artifacts/rules-compiler-dotnet && tar -czf ../../RulesCompiler.Console-${{ matrix.artifact }}.tar.gz * && cd ../..
 
       - name: Upload artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: dotnet-${{ matrix.artifact }}
           path: |
@@ -110,7 +110,7 @@ jobs:
             ext: ''
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0  # Full history needed for tagging
 
@@ -121,7 +121,7 @@ jobs:
           target: ${{ matrix.target }}
 
       - name: Cache Cargo
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: |
             ~/.cargo/registry
@@ -148,7 +148,7 @@ jobs:
           tar -czf rules-compiler-rust-${{ matrix.artifact }}.tar.gz -C ./src/rules-compiler-rust/target/${{ matrix.target }}/release rules-compiler${{ matrix.ext }}
 
       - name: Upload artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: rust-${{ matrix.artifact }}
           path: |
@@ -162,7 +162,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0  # Full history needed for git operations
 
@@ -199,7 +199,7 @@ jobs:
           fi
 
       - name: Download all artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           path: ./release-artifacts
 
@@ -212,7 +212,7 @@ jobs:
           ls -lh ./release-assets
 
       - name: Create Release
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v3
         with:
           tag_name: ${{ steps.version.outputs.version }}
           files: ./release-assets/*

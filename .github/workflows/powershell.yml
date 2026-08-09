@@ -24,7 +24,7 @@ jobs:
     name: PSScriptAnalyzer
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Run PSScriptAnalyzer
         shell: pwsh
@@ -43,7 +43,7 @@ jobs:
     name: Pester - PowerShell Toolkit
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Run Pester tests
         shell: pwsh

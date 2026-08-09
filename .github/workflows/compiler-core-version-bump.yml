@@ -53,7 +53,7 @@ jobs:
         working-directory: src/adblock-compiler-core
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           fetch-depth: 0 # full history required: git log --grep searches all commits to find the last bump
 
