@@ -83,7 +83,12 @@ jobs:
           echo "Analyzing commits since $LAST_VERSION_COMMIT"
 
           # Only consider commits that actually touched this package's directory.
-          CHANGED_SRC=$(git diff --name-only "$LAST_VERSION_COMMIT"..HEAD -- 'src/adblock-compiler-core/src/' | grep -E '\.ts$' | grep -v '\.test\.ts$' || true)
+          # NB: this step runs with working-directory: src/adblock-compiler-core
+          # (the job-level default), so pathspecs here are relative to that
+          # directory already -- 'src/adblock-compiler-core/src/' would resolve
+          # to the nonexistent src/adblock-compiler-core/src/adblock-compiler-core/src/
+          # and silently match nothing on every run.
+          CHANGED_SRC=$(git diff --name-only "$LAST_VERSION_COMMIT"..HEAD -- 'src/' | grep -E '\.ts$' | grep -v '\.test\.ts$' || true)
           if [ -z "$CHANGED_SRC" ]; then
             echo "No compiler-core source files changed, skipping version bump"
             echo "bump_type=none" >> "$GITHUB_OUTPUT"
@@ -92,7 +97,7 @@ jobs:
           echo "compiler-core source files changed:"
           echo "$CHANGED_SRC"
 
-          COMMITS=$(git log --format="%s" "$LAST_VERSION_COMMIT"..HEAD -- 'src/adblock-compiler-core/' || echo "")
+          COMMITS=$(git log --format="%s" "$LAST_VERSION_COMMIT"..HEAD -- '.' || echo "")
           if [ -z "$COMMITS" ]; then
             echo "No commits to analyze, skipping version bump"
             echo "bump_type=none" >> "$GITHUB_OUTPUT"
@@ -158,8 +163,11 @@ jobs:
           fi
 
           ENTRY="## [${NEW_VERSION}] - $(date +%Y-%m-%d)"$'\n'
-          FEATURES=$(git log --format="%s" "$LAST_VERSION_COMMIT"..HEAD -- 'src/adblock-compiler-core/' | grep -E "^feat(\(.+\))?:" | sed 's/^feat(\([^)]*\)): \(.*\)/- **\1**: \2/' | sed 's/^feat: /- /' || echo "")
-          FIXES=$(git log --format="%s" "$LAST_VERSION_COMMIT"..HEAD -- 'src/adblock-compiler-core/' | grep -E "^fix(\(.+\))?:" | sed 's/^fix(\([^)]*\)): \(.*\)/- **\1**: \2/' | sed 's/^fix: /- /' || echo "")
+          # See the "Determine version bump type" step for why these pathspecs
+          # are '.' rather than 'src/adblock-compiler-core/' -- this step also
+          # runs with working-directory: src/adblock-compiler-core.
+          FEATURES=$(git log --format="%s" "$LAST_VERSION_COMMIT"..HEAD -- '.' | grep -E "^feat(\(.+\))?:" | sed 's/^feat(\([^)]*\)): \(.*\)/- **\1**: \2/' | sed 's/^feat: /- /' || echo "")
+          FIXES=$(git log --format="%s" "$LAST_VERSION_COMMIT"..HEAD -- '.' | grep -E "^fix(\(.+\))?:" | sed 's/^fix(\([^)]*\)): \(.*\)/- **\1**: \2/' | sed 's/^fix: /- /' || echo "")
 
           if [ -n "$FEATURES" ]; then ENTRY="$ENTRY"$'\n'"### Added"$'\n\n'"$FEATURES"$'\n'; fi
           if [ -n "$FIXES" ]; then ENTRY="$ENTRY"$'\n'"### Fixed"$'\n\n'"$FIXES"$'\n'; fi
