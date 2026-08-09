@@ -358,9 +358,45 @@ GitHub Actions workflows validate:
 - `.github/workflows/docker-image.yml` - Builds the `Dockerfile.warp` development image
 - `.github/workflows/validation-compliance.yml` - Runs the Rust validation CLI against filter/config fixtures
 - `.github/workflows/release.yml` - Builds and publishes release binaries (.NET, Rust, Python)
+- `.github/workflows/publish-jsr.yml` - Publishes `@bloqr/compiler-core` to JSR on pushes to `main` touching `src/adblock-compiler-core/**`; idempotent (no-ops if the current `deno.json` version is already published). Token-authenticated (`JSR_WORKFLOW_TOKEN`) — see `docs/jsr-token-authentication.md`.
+- `.github/workflows/compiler-core-version-bump.yml` / `.github/workflows/compiler-core-create-version-tag.yml` - Automated Conventional-Commits version bumping and tagging for `@bloqr/compiler-core`, scoped to that package only. Reference implementation for the org-wide per-package versioning standard — see `docs/architecture/versioning-strategy.md` before adding an equivalent pair for any future decomposed package.
+- `.github/workflows/stale-reference-check.yml` - Greps for the pre-rename GitHub repo path and the retired JSR scope (see the workflow file itself for the exact patterns — this file can't repeat them literally without tripping the check).
 - `.github/workflows/claude.yml` - Claude AI integration for @claude mentions
 - `.github/workflows/claude-code-review.yml` - Automated PR code review
 - `.github/workflows/label.yml` / `.github/workflows/stale.yml` / `.github/workflows/summary.yml` - Repository housekeeping (labeling, stale-issue management, PR summaries)
+
+## Operational Notes for AI-Assisted Work
+
+- **JSR publishing uses token auth, not OIDC.** OIDC trusted publishing
+  fails with `InvalidIssuer` on this org-owned repo — a JSR-side issue
+  (tracked in [jsr-io/jsr#1485](https://github.com/jsr-io/jsr/issues/1485)),
+  not a config problem here. Don't re-attempt OIDC without checking that
+  issue for updates first. See `docs/jsr-token-authentication.md`.
+- **Versioning is per-package, not per-repo.** Each independently-JSR-published
+  package gets its own `VERSION` source-of-truth, its own `version:sync`
+  script, its own `<package-slug>-v<semver>` tag prefix, and its own
+  bump/tag workflow pair — never a single repo-wide version. See
+  `docs/architecture/versioning-strategy.md` for the pattern and the
+  checklist for onboarding a new package.
+- **`deno.json` may contain `//` comments (JSONC)** — Deno's own config
+  loader tolerates them, but don't assume every script touching it does.
+  Any code that reads/writes `deno.json` programmatically (like
+  `scripts/sync-version.ts`) must be JSONC-safe (regex-based field edits,
+  not a `JSON.parse`/`stringify` round-trip) or it will silently corrupt
+  or reject the file the moment someone adds an explanatory comment.
+- **Always use `isolation: "worktree"` when running more than one
+  background agent against this repo in parallel.** Concurrent agents
+  sharing one working directory has caused real branch-race contamination
+  here before (commits landing on the wrong branch, stale uncommitted
+  state). See `docs/RESTRUCTURING_RETROSPECTIVE.md` for the full incident.
+- **After merging a batch of interdependent PRs, do one real
+  end-to-end verification pass against the actual merged `main`** — not
+  just trusting each PR's individually-green CI. A real bug
+  (`sync-version.ts` breaking on JSONC comments introduced by a sibling
+  PR) shipped past every individual PR's CI and was only caught this way.
+- Full narrative, including the OIDC investigation timeline and the
+  `bloqr-compiler` dependency-swap decisions, is in
+  `docs/RESTRUCTURING_RETROSPECTIVE.md`.
 
 ## Prerequisites
 
@@ -378,8 +414,9 @@ GitHub Actions workflows validate:
 
 - **Main filter list**: `output/adguard_dns_filter.txt` in [`BloqrAI/bloqr-blocklists`](https://github.com/BloqrAI/bloqr-blocklists)
 - **Compiler configs**: `src/rules-compiler-*/`
+- **JSON Schemas**: `schemas/compiler-config.schema.json`, `schemas/dashboard-config.schema.json` (not yet wired into .NET's `ConfigurationValidator`/`ConfigurationReader` — see #258)
 - **Deno configs**: `src/*/deno.json`
 - **OpenAPI spec**: `api/openapi.yaml` in [`BloqrAI/bloqr-apiclients`](https://github.com/BloqrAI/bloqr-apiclients)
 - **Docker config**: `Dockerfile.warp`, `docker-compose.yml`, `.dockerignore`
-- **Documentation**: `docs/`
+- **Documentation**: `docs/` — see especially `docs/architecture/versioning-strategy.md` and `docs/RESTRUCTURING_RETROSPECTIVE.md`
 - **Environment template**: `.env.example`

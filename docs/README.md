@@ -38,6 +38,14 @@ This directory contains comprehensive documentation for the ad-blocking reposito
 | [API Client Examples](guides/api-client-examples.md) | Code examples with helper classes (client now lives in [`bloqr-apiclients`](https://github.com/BloqrAI/bloqr-apiclients)) |
 | [ConsoleUI Architecture](guides/consoleui-architecture.md) | Console UI design documentation (client now lives in [`bloqr-apiclients`](https://github.com/BloqrAI/bloqr-apiclients)) |
 
+### Architecture & Restructuring
+
+| Document | Description |
+|----------|--------------|
+| [Versioning Strategy](architecture/versioning-strategy.md) | Org-wide per-package JSR versioning standard, with `@bloqr/compiler-core` as the reference implementation |
+| [Restructuring Retrospective](RESTRUCTURING_RETROSPECTIVE.md) | How this repo got split into `bloqr-core`/`bloqr-blocklists`/`bloqr-apiclients`, the JSR publishing story, and lessons learned |
+| [Compiler Comparison](compiler-comparison.md) | Feature comparison of all compilers |
+
 ### AdGuard DNS API Reference
 
 The AdGuard DNS API clients (and their generated API reference docs) moved to [`BloqrAI/bloqr-apiclients`](https://github.com/BloqrAI/bloqr-apiclients) and are no longer part of this repo.
