@@ -24,6 +24,7 @@ export const PrioritySchema: z.ZodEnum<{ standard: 'standard'; high: 'high' }> =
   'standard',
   'high',
 ]).describe('Request processing priority level');
+/** Inferred TypeScript type for {@linkcode PrioritySchema}: `'standard' | 'high'`. */
 export type Priority = z.infer<typeof PrioritySchema>;
 
 // ============================================================================
@@ -403,6 +404,10 @@ type BenchmarkMetricsOutput = {
   outputRuleCount: number;
 };
 
+/**
+ * Compilation result returned by worker/queue-based compilation, extending the base result
+ * with optional {@linkcode BenchmarkMetricsOutput} when benchmark mode was requested.
+ */
 export type WorkerCompilationResultOutput = CompilationResultBaseOutput & {
   metrics?: BenchmarkMetricsOutput;
 };
@@ -485,6 +490,7 @@ const compilationResultBase: z.ZodObject<{
  */
 export const CompilationResultSchema: z.ZodType<CompilationResultBaseOutput> =
   compilationResultBase;
+/** Inferred TypeScript type for {@linkcode CompilationResultSchema}: the compiled rules plus a count. */
 export type CompilationResultOutput = CompilationResultBaseOutput;
 
 /**
@@ -509,6 +515,7 @@ export const BenchmarkMetricsSchema: z.ZodType<BenchmarkMetricsOutput> = z.objec
   ruleCount: z.number().int().nonnegative().describe('Total number of input rules'),
   outputRuleCount: z.number().int().nonnegative().describe('Number of rules in the final output'),
 });
+/** Inferred TypeScript type for {@linkcode BenchmarkMetricsSchema}: per-stage compilation timing data. */
 export type BenchmarkMetrics = BenchmarkMetricsOutput;
 
 /**
@@ -607,6 +614,7 @@ export const CliArgumentsSchema: z.ZodType<CliArgumentsOutput> = z.object({
     path: ['apiKey'],
   },
 );
+/** Inferred TypeScript type for {@linkcode CliArgumentsSchema}: the parsed CLI argument set. */
 export type CliArguments = CliArgumentsOutput;
 
 /**
@@ -626,6 +634,7 @@ export const EnvironmentSchema: z.ZodType<EnvironmentOutput> = z.object({
     'Minimum log level to emit',
   ),
 }).passthrough(); // Allow additional worker bindings
+/** Inferred TypeScript type for {@linkcode EnvironmentSchema}: worker/runtime environment bindings. */
 export type Environment = EnvironmentOutput;
 
 // ============================================================================
@@ -645,6 +654,7 @@ export const AdblockRuleSchema: z.ZodType<AdblockRuleOutput> = z.object({
   })).nullable(),
   hostname: z.string().nullable(),
 });
+/** Inferred TypeScript type for {@linkcode AdblockRuleSchema}: a parsed adblock-syntax rule. */
 export type AdblockRule = AdblockRuleOutput;
 
 /**
@@ -654,4 +664,5 @@ export const EtcHostsRuleSchema: z.ZodType<EtcHostsRuleOutput> = z.object({
   ruleText: z.string().min(1),
   hostnames: z.array(z.string()).nonempty(),
 });
+/** Inferred TypeScript type for {@linkcode EtcHostsRuleSchema}: a parsed `/etc/hosts`-syntax rule. */
 export type EtcHostsRule = EtcHostsRuleOutput;

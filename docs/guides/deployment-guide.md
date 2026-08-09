@@ -33,7 +33,8 @@ FROM mcr.microsoft.com/dotnet/sdk:10.0-alpine AS build
 # Copy and build only what you need
 WORKDIR /app
 COPY src/ ./src/
-COPY data/ ./data/
+# Mount or copy your compiler config at runtime (e.g. from a checkout of
+# BloqrAI/bloqr-blocklists) — it's no longer bundled in this repo's src/ tree.
 
 # Build specific component
 RUN cd src/rules-compiler-dotnet && dotnet publish -c Release -o /app/out
@@ -123,17 +124,8 @@ services:
       - CONFIG_PATH=/app/Config/compiler-config.yaml
     restart: unless-stopped
 
-  # API service
-  api-service:
-    build:
-      context: .
-      dockerfile: src/adguard-api-dotnet/Dockerfile
-    environment:
-      - ADGUARD_AdGuard__ApiKey=${ADGUARD_API_KEY}
-      - ADGUARD_AdGuard__BaseUrl=https://api.adguard-dns.io
-    ports:
-      - "5000:5000"
-    restart: unless-stopped
+  # For a deployable AdGuard DNS API service, see the API client Dockerfiles
+  # in BloqrAI/bloqr-apiclients — they're no longer part of this repo.
 
   # Scheduled compilation
   compiler-cron:
@@ -565,12 +557,7 @@ pipeline {
 
 #### API Clients
 
-| Variable | Description | Required |
-|----------|-------------|----------|
-| `ADGUARD_AdGuard__ApiKey` | AdGuard DNS API key | Yes |
-| `ADGUARD_AdGuard__BaseUrl` | API base URL | No |
-| `ADGUARD_API_TOKEN` | Legacy API token (Rust) | Yes (if not using ApiKey) |
-| `ADGUARD_API_URL` | Legacy API URL (Rust) | No |
+The AdGuard DNS API clients (and their environment variables) moved to [`BloqrAI/bloqr-apiclients`](https://github.com/BloqrAI/bloqr-apiclients) and are no longer part of this repo.
 
 ### Configuration Files
 

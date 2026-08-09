@@ -11,6 +11,7 @@
  * package's `orchestration` export subpath) for the CLI-wrapper API.
  * Import the package root for the bare compilation engine.
  *
+ * @module orchestration
  * @packageDocumentation
  */
 
@@ -47,7 +48,6 @@ export { getVersionInfo, main, parseArgs, showHelp, showVersion } from './cli.ts
 // Console (Interactive Mode)
 export {
   bold,
-  chalk,
   colorStatus,
   ConsoleApplication,
   createKeyValueTable,

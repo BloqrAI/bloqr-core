@@ -4,8 +4,8 @@
  */
 
 import { confirm, input, select } from '@inquirer/prompts';
+import { green, red, yellow } from '@std/fmt/colors';
 import {
-  chalk,
   createKeyValueTable,
   createTable,
   dim,
@@ -82,6 +82,10 @@ export class ConsoleApplication {
   private readonly options: ConsoleAppOptions;
   private configPath?: string;
 
+  /**
+   * Creates a new `ConsoleApplication`.
+   * @param options Initial configuration path, format override, and debug logging flag.
+   */
   constructor(options: ConsoleAppOptions = {}) {
     this.options = options;
     this.configPath = options.configPath;
@@ -100,7 +104,7 @@ export class ConsoleApplication {
     while (running) {
       try {
         const choice = await select({
-          message: chalk.green('What would you like to do?'),
+          message: green('What would you like to do?'),
           choices: MENU_CHOICES,
           pageSize: 12,
         });
@@ -240,7 +244,7 @@ export class ConsoleApplication {
     // Display sources table
     if (config.sources && config.sources.length > 0) {
       console.log();
-      console.log(chalk.green('Sources:'));
+      console.log(green('Sources:'));
 
       const sourcesTable = createTable(['Name', 'Type', 'Source', 'Transformations']);
 
@@ -262,7 +266,7 @@ export class ConsoleApplication {
 
     // Show JSON representation
     console.log();
-    console.log(chalk.green('JSON Representation:'));
+    console.log(green('JSON Representation:'));
     console.log(dim(toJson(config)));
   }
 
@@ -299,16 +303,16 @@ export class ConsoleApplication {
     }
 
     if (result.valid) {
-      console.log(chalk.yellow('Configuration is valid but has warnings:'));
+      console.log(yellow('Configuration is valid but has warnings:'));
     } else {
-      console.log(chalk.red('Configuration has errors:'));
+      console.log(red('Configuration has errors:'));
     }
 
     if (result.errors.length > 0) {
       const errorsTable = createTable(['Field', 'Error']);
       for (const error of result.errors) {
         const [field, ...messageParts] = error.split(':');
-        errorsTable.push([chalk.red(field), messageParts.join(':').trim()]);
+        errorsTable.push([red(field), messageParts.join(':').trim()]);
       }
       displayTable(errorsTable);
     }
@@ -318,7 +322,7 @@ export class ConsoleApplication {
       const warningsTable = createTable(['Field', 'Warning']);
       for (const warning of result.warnings) {
         const [field, ...messageParts] = warning.split(':');
-        warningsTable.push([chalk.yellow(field), messageParts.join(':').trim()]);
+        warningsTable.push([yellow(field), messageParts.join(':').trim()]);
       }
       displayTable(warningsTable);
     }
@@ -358,7 +362,7 @@ export class ConsoleApplication {
     } else {
       showError('Compilation failed!');
       if (result.errorMessage) {
-        console.log(chalk.red(`Error: ${result.errorMessage}`));
+        console.log(red(`Error: ${result.errorMessage}`));
       }
       return;
     }
@@ -394,7 +398,7 @@ export class ConsoleApplication {
     const table = createTable(['Transformation', 'Description']);
 
     for (const t of TRANSFORMATIONS) {
-      table.push([chalk.green(t.name), t.description]);
+      table.push([green(t.name), t.description]);
     }
 
     displayTable(table);

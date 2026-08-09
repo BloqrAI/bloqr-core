@@ -89,7 +89,7 @@ cargo build --release
 #### PowerShell
 
 ```powershell
-Import-Module ./src/adguard-api-powershell/Invoke-RulesCompiler.psm1
+Import-Module ./src/rules-compiler-powershell/RulesCompiler/RulesCompiler.psd1
 Invoke-RulesCompiler
 ```
 
@@ -154,79 +154,7 @@ Your compiled filter list is now in `my-filter.txt`. You can:
 
 ## Using the AdGuard API Client
 
-### 1. Get Your API Key
-
-1. Log in to [AdGuard DNS](https://adguard-dns.io/)
-2. Go to Account Settings
-3. Generate an API key
-
-### 2. Set Environment Variable
-
-```bash
-# Linux/macOS
-export ADGUARD_AdGuard__ApiKey="your-api-key-here"
-
-# Windows PowerShell
-$env:ADGUARD_AdGuard__ApiKey="your-api-key-here"
-
-# Windows CMD
-set ADGUARD_AdGuard__ApiKey=your-api-key-here
-```
-
-### 3. Choose Your API Client
-
-#### TypeScript API Client (Deno)
-
-```bash
-cd src/adguard-api-typescript
-
-# Set API key
-export ADGUARD_API_KEY="your-api-key-here"
-
-# Run interactive CLI
-deno task start
-```
-
-**Quick TypeScript Example:**
-
-```typescript
-import { AdGuardDnsClient } from './src/index.ts';
-
-// Create client
-const client = AdGuardDnsClient.fromEnv('ADGUARD_API_KEY');
-
-// List devices
-const devices = await client.devices.listDevices();
-for (const device of devices) {
-  console.log(`${device.name}: ${device.id}`);
-}
-
-// Get account limits
-const limits = await client.account.getAccountLimits();
-console.log(`Devices: ${limits.devices.used}/${limits.devices.limit}`);
-```
-
-#### .NET Console UI
-
-```bash
-cd src/adguard-api-dotnet
-dotnet run --project src/AdGuard.ConsoleUI
-```
-
-#### Rust CLI
-
-```bash
-cd src/adguard-api-rust
-cargo run --bin adguard-api-cli
-```
-
-All API clients provide:
-- View account limits
-- Manage devices
-- View DNS servers
-- Check query logs
-- View statistics
-- Manage user rules
+The AdGuard DNS API clients (.NET, TypeScript, Rust, PowerShell) moved to [`BloqrAI/bloqr-apiclients`](https://github.com/BloqrAI/bloqr-apiclients) and are no longer part of this repo. See that repo's documentation for getting an API key and choosing a client.
 
 ## Using Docker
 

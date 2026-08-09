@@ -2,27 +2,27 @@
 
 ## Project Structure & Module Organization
 
-- `data/` contains the tracked filter list (`../bloqr-blocklists/output/adguard_user_filter.txt`) and compiler configuration files.
-- `src/` contains the multi-language toolchain:
+- The tracked filter list and compiler configuration files live in [`BloqrAI/bloqr-blocklists`](https://github.com/BloqrAI/bloqr-blocklists) (formerly `data/` in this repo).
+- `src/` contains the multi-language rules-compiler toolchain:
   - `src/rules-compiler-*` (TypeScript/Deno, .NET, Python, Rust, shell) compilers that use `@bloqr/compiler-core`.
-  - `src/adguard-api-dotnet/`, `src/adguard-api-typescript/`, and `src/adguard-api-rust/` SDKs + interactive clients for the AdGuard DNS API.
-  - `src/adguard-api-powershell/` PowerShell modules and Pester tests.
+  - `src/rules-compiler-powershell/` class-based PowerShell modules and Pester tests.
+  - `src/rules-validator/` Rust validation library and CLI.
+  - `src/website/` Gatsby documentation site.
 - `docs/` holds guides and reference documentation.
+- The AdGuard DNS API clients (.NET, TypeScript, Rust, PowerShell) and the Linear import tool moved to [`BloqrAI/bloqr-apiclients`](https://github.com/BloqrAI/bloqr-apiclients) and are no longer part of this repo.
 
 ## Build, Test, and Development Commands
 
-- Compile rules (any platform): `./src/rules-compiler-shell/bash/compile-rules.sh -c data/Config/config.yaml -r` (see `src/rules-compiler-shell/`).
+- Compile rules (any platform): `./src/rules-compiler-shell/bash/compile-rules.sh -c config.yaml -r` (see `src/rules-compiler-shell/`).
 - TypeScript compiler (`src/adblock-compiler-core/`):
   - `deno cache src/mod.ts` — cache dependencies
   - `deno task compile` — compile rules
   - `deno task lint` — Deno lint
   - `deno task test` — Deno tests
-- TypeScript API client (`src/adguard-api-typescript/`):
-  - `deno task start` — interactive CLI
-  - `deno task test` — run tests
-- .NET (`src/rules-compiler-dotnet/`, `src/adguard-api-dotnet/`): `dotnet restore`, `dotnet build`, `dotnet test`
+- .NET (`src/rules-compiler-dotnet/`): `dotnet restore RulesCompiler.slnx`, `dotnet build RulesCompiler.slnx`, `dotnet test RulesCompiler.slnx`
 - Python (`src/rules-compiler-python/`): `pip install -e ".[dev]"`, `pytest`, `ruff check .`, `mypy .`
-- Rust (`src/rules-compiler-rust/`, `src/adguard-api-rust/`): `cargo build`, `cargo test`, `cargo fmt`, `cargo clippy`
+- Rust (`src/rules-compiler-rust/`, `src/rules-validator/`): `cargo build`, `cargo test`, `cargo fmt`, `cargo clippy`
+- PowerShell (`src/rules-compiler-powershell/`): `Invoke-Pester -Path ./src/rules-compiler-powershell -Recurse`
 - Docker dev env: `docker build -f Dockerfile.warp .` (use when you want a pre-baked toolchain).
 
 ## Coding Style & Naming Conventions
@@ -46,5 +46,4 @@
 ## Security & Configuration Notes
 
 - Follow `SECURITY.md` for vulnerability reporting.
-- Secrets (e.g., AdGuard API key) must come from environment variables/config files and never be committed.
-
+- Secrets (e.g., AdGuard API key) must come from environment variables/config files and never be committed. API-client secrets now apply to the tools in [`BloqrAI/bloqr-apiclients`](https://github.com/BloqrAI/bloqr-apiclients).

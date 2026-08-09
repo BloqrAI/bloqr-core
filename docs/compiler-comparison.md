@@ -188,7 +188,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 **Best for**: Windows administrators, automation scripts, cross-platform PowerShell users
 
 ```powershell
-Import-Module ./src/adguard-api-powershell/Invoke-RulesCompiler.psm1
+Import-Module ./src/rules-compiler-powershell/RulesCompiler/RulesCompiler.psd1
 Invoke-RulesCompiler -CopyToRules
 ```
 

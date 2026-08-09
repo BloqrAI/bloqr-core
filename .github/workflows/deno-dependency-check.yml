@@ -1,0 +1,117 @@
+name: Deno/JSR Dependency Check
+
+# Dependabot has no native `jsr:` ecosystem, so pure JSR-native imports in
+# src/adblock-compiler-core/deno.json (jsr:@std/*, jsr:@bloqr/*, etc.) get
+# no automated update coverage from dependabot.yml -- only Deno's npm:
+# shorthand imports do. This workflow closes that gap using Deno's own
+# `deno outdated` command, on the same weekly cadence as Dependabot, and
+# opens a PR the same way compiler-core-version-bump.yml does: a human
+# reviews and merges, nothing auto-merges here.
+#
+# Scoped to src/adblock-compiler-core specifically (the one real JSR
+# package in this repo today) -- extend the `directory` / branch name /
+# PR title below, or copy this file, when a second JSR package exists.
+# See docs/architecture/versioning-strategy.md for the per-package
+# convention this mirrors.
+
+on:
+  schedule:
+    - cron: "0 9 * * 1" # Monday 09:00 UTC, alongside Dependabot's weekly runs
+  workflow_dispatch:
+    inputs:
+      latest:
+        description: "Ignore semver ranges and update to the latest version of every dependency (deno outdated --update --latest) instead of the default semver-compatible update"
+        required: false
+        default: false
+        type: boolean
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  check:
+    name: Check for outdated JSR/npm dependencies
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: src/adblock-compiler-core
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Deno
+        uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+
+      - name: Update dependencies
+        id: update
+        run: |
+          set -euo pipefail
+          if [ "${{ inputs.latest }}" = "true" ]; then
+            deno outdated --update --latest
+          else
+            deno outdated --update
+          fi
+
+      - name: Check for changes
+        id: diff
+        run: |
+          if git diff --quiet -- deno.json deno.lock; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Verify updated dependencies still build and test cleanly
+        if: steps.diff.outputs.changed == 'true'
+        run: |
+          deno task check
+          deno task lint
+          deno task test
+          deno publish --dry-run --allow-dirty
+
+      - name: Create PR with dependency updates
+        if: steps.diff.outputs.changed == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          BRANCH_NAME="auto-deno-outdated-$(date +%Y%m%d)"
+          git push origin --delete "$BRANCH_NAME" 2>/dev/null || true
+          git checkout -b "$BRANCH_NAME"
+          git add deno.json deno.lock
+          git commit -m "chore(deps): update JSR/npm dependencies via deno outdated"
+          git push -u origin "$BRANCH_NAME"
+
+          gh pr create \
+            --title "chore(deps): update compiler-core JSR/npm dependencies" \
+            --body "$(cat <<'EOF'
+          ## Automated dependency update
+
+          Opened by the `deno-dependency-check.yml` workflow, which runs
+          `deno outdated --update` on the same weekly cadence as Dependabot,
+          to cover `jsr:` dependencies in `src/adblock-compiler-core/deno.json`
+          that Dependabot's ecosystems don't reach.
+
+          `deno task check`, `deno task lint`, `deno task test`, and
+          `deno publish --dry-run` all passed in CI before this PR was opened.
+          Review the diff for any semver-compatible-but-behaviorally-different
+          changes before merging -- this is not auto-merged.
+          EOF
+          )" \
+            --base main \
+            --head "$BRANCH_NAME" \
+            --label dependencies
+
+      - name: Summary
+        if: always()
+        run: |
+          if [ "${{ steps.diff.outputs.changed }}" = "true" ]; then
+            echo "## 📦 Dependency update PR opened" >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "## ✅ No outdated JSR/npm dependencies found" >> "$GITHUB_STEP_SUMMARY"
+          fi

@@ -12,13 +12,9 @@ Centralized validation library for AdGuard filter compilation with comprehensive
 - **rules-validator-core**: Core library with validation, hashing, URL security
 - **rules-validator-cli**: CLI tool (`rules-validate`)
 
-### 2. **adguard-api-rust** (`src/adguard-api-rust/`)
-Rust implementation of the AdGuard DNS API client.
+> The Rust AdGuard DNS API client (`adguard-api-rust`) that used to live in this workspace moved to [`BloqrAI/bloqr-apiclients`](https://github.com/BloqrAI/bloqr-apiclients) and is no longer a member of this Cargo workspace.
 
-- **adguard-api-lib**: Auto-generated API client library
-- **adguard-api-cli**: Interactive CLI for AdGuard DNS API
-
-### 3. **rules-compiler-rust** (`src/rules-compiler-rust/`)
+### 2. **rules-compiler-rust** (`src/rules-compiler-rust/`)
 Rust compiler for AdGuard filter rules using `@bloqr/compiler-core`.
 
 - Library and CLI for compiling filter rules
@@ -63,10 +59,6 @@ cargo fmt --all -- --check
 cargo build -p rules-validator-core
 cargo build -p rules-validator-cli
 
-# Build only adguard-api
-cargo build -p adguard-api-lib
-cargo build -p adguard-api-cli
-
 # Build only rules-compiler
 cargo build -p rules-compiler
 ```
@@ -76,9 +68,6 @@ cargo build -p rules-compiler
 ```bash
 # Run rules-validate CLI
 cargo run -p rules-validator-cli -- --help
-
-# Run adguard-api-cli
-cargo run -p adguard-api-cli -- --help
 
 # Run rules-compiler
 cargo run -p rules-compiler -- --help
@@ -114,7 +103,7 @@ Workspace-wide lints are configured in `Cargo.toml`:
 ## Workspace Structure
 
 ```
-bloqr-lists/
+bloqr-core/
 ├── Cargo.toml                      # Workspace root configuration
 ├── Cargo.lock                      # Locked dependencies
 ├── rust-toolchain.toml             # Rust version specification
@@ -128,13 +117,6 @@ bloqr-lists/
     │   │   ├── Cargo.toml
     │   │   └── src/
     │   └── rules-validator-cli/
-    │       ├── Cargo.toml
-    │       └── src/
-    ├── adguard-api-rust/
-    │   ├── adguard-api-lib/
-    │   │   ├── Cargo.toml
-    │   │   └── src/
-    │   └── adguard-api-cli/
     │       ├── Cargo.toml
     │       └── src/
     └── rules-compiler-rust/

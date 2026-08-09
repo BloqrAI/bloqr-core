@@ -206,8 +206,10 @@ export abstract class HostnameListFormatter extends BaseFormatter {
  * Formats rules to /etc/hosts format
  */
 export class HostsFormatter extends HostnameListFormatter {
+  /** Always `OutputFormat.Hosts`. */
   protected override readonly outputFormat: OutputFormat = OutputFormat.Hosts;
 
+  /** Prepends `localhost` entries when `options.includeLocalhost` is set. */
   protected override preambleLines(): string[] {
     // Add localhost entries if requested
     if (this.options.includeLocalhost) {
@@ -216,6 +218,11 @@ export class HostsFormatter extends HostnameListFormatter {
     return [];
   }
 
+  /**
+   * Formats a hostname as an `/etc/hosts` line.
+   * @param hostname The hostname to format.
+   * @returns `"<hostsIp> <hostname>"`, using `options.hostsIp` (default `0.0.0.0`).
+   */
   protected override formatHostnameLine(hostname: string): string {
     return `${this.options.hostsIp} ${hostname}`;
   }
@@ -225,8 +232,14 @@ export class HostsFormatter extends HostnameListFormatter {
  * Formats rules to dnsmasq format
  */
 export class DnsmasqFormatter extends HostnameListFormatter {
+  /** Always `OutputFormat.Dnsmasq`. */
   protected override readonly outputFormat: OutputFormat = OutputFormat.Dnsmasq;
 
+  /**
+   * Formats a hostname as a dnsmasq `address=` directive.
+   * @param hostname The hostname to format.
+   * @returns `"address=/<hostname>/"`.
+   */
   protected override formatHostnameLine(hostname: string): string {
     return `address=/${hostname}/`;
   }
@@ -236,8 +249,14 @@ export class DnsmasqFormatter extends HostnameListFormatter {
  * Formats rules to Pi-hole format (domain list)
  */
 export class PiHoleFormatter extends HostnameListFormatter {
+  /** Always `OutputFormat.PiHole`. */
   protected override readonly outputFormat: OutputFormat = OutputFormat.PiHole;
 
+  /**
+   * Formats a hostname as a bare domain-list line.
+   * @param hostname The hostname to format.
+   * @returns `hostname`, unchanged.
+   */
   protected override formatHostnameLine(hostname: string): string {
     return hostname;
   }
@@ -247,12 +266,19 @@ export class PiHoleFormatter extends HostnameListFormatter {
  * Formats rules to Unbound DNS resolver format
  */
 export class UnboundFormatter extends HostnameListFormatter {
+  /** Always `OutputFormat.Unbound`. */
   protected override readonly outputFormat: OutputFormat = OutputFormat.Unbound;
 
+  /** Emits the `server:` block header Unbound requires before `local-zone` directives. */
   protected override preambleLines(): string[] {
     return ['server:'];
   }
 
+  /**
+   * Formats a hostname as an Unbound `local-zone` directive.
+   * @param hostname The hostname to format.
+   * @returns `'    local-zone: "<hostname>" always_nxdomain'`.
+   */
   protected override formatHostnameLine(hostname: string): string {
     return `    local-zone: "${hostname}" always_nxdomain`;
   }
@@ -316,13 +342,20 @@ export class JsonFormatter extends BaseFormatter {
  * Formats rules to DNS-over-HTTPS blocklist format
  */
 export class DoHFormatter extends HostnameListFormatter {
+  /** Always `OutputFormat.DoH`. */
   protected override readonly outputFormat: OutputFormat = OutputFormat.DoH;
 
+  /** Always `false` — DoH blocklists are plain domain lists with no comment header. */
   protected override shouldIncludeHeader(): boolean {
     // DoH blocklists are plain domain lists with no comment lines
     return false;
   }
 
+  /**
+   * Formats a hostname as a bare domain-list line.
+   * @param hostname The hostname to format.
+   * @returns `hostname`, unchanged.
+   */
   protected override formatHostnameLine(hostname: string): string {
     return hostname;
   }

@@ -394,10 +394,12 @@ export class TransformationHookManager {
  * - `new FilterCompiler(logger)` (legacy constructor path)
  */
 export class NoOpHookManager extends TransformationHookManager {
+  /** Does nothing; overridden to keep the "before" hook path allocation-free. */
   override async executeBeforeHooks(_context: TransformationHookContext): Promise<void> {
     // No-op
   }
 
+  /** Does nothing; overridden to keep the "after" hook path allocation-free. */
   override async executeAfterHooks(
     _context: TransformationHookContext & {
       inputCount: number;
@@ -408,12 +410,14 @@ export class NoOpHookManager extends TransformationHookManager {
     // No-op
   }
 
+  /** Does nothing; overridden to keep the "error" hook path allocation-free. */
   override async executeErrorHooks(
     _context: TransformationHookContext & { error: Error },
   ): Promise<void> {
     // No-op
   }
 
+  /** Always returns `false`, so callers can skip hook dispatch entirely. */
   override hasHooks(): boolean {
     return false;
   }

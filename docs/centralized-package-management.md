@@ -13,19 +13,16 @@ The repository uses **Central Package Management (CPM)** to manage all NuGet pac
 ## Structure
 
 ```
-/home/runner/work/bloqr-lists/bloqr-lists/
+/home/runner/work/bloqr-core/bloqr-core/
 ├── Directory.Build.props           # Global MSBuild properties
 ├── Directory.Packages.props        # ⭐ CENTRALIZED PACKAGE VERSIONS
 └── src/
-    ├── adguard-api-dotnet/
-    │   └── src/
-    │       ├── AdGuard.ApiClient/AdGuard.ApiClient.csproj
-    │       ├── AdGuard.ConsoleUI/AdGuard.ConsoleUI.csproj
-    │       └── ... (all reference packages without versions)
     └── rules-compiler-dotnet/
         └── src/
             └── ... (all reference packages without versions)
 ```
+
+> The AdGuard DNS API .NET client (formerly `src/adguard-api-dotnet/`) moved to [`BloqrAI/bloqr-apiclients`](https://github.com/BloqrAI/bloqr-apiclients) and manages its own package versions there.
 
 ## How It Works
 
