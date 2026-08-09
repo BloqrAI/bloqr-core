@@ -21,6 +21,7 @@ export interface WebSocketMessage {
  * Client-to-Server: Request to compile filter lists
  */
 export interface CompileRequestMessage extends WebSocketMessage {
+  /** Discriminant: always `'compile'`. */
   type: 'compile';
   /** Unique session ID for this compilation */
   sessionId: string;
@@ -36,6 +37,7 @@ export interface CompileRequestMessage extends WebSocketMessage {
  * Client-to-Server: Cancel a running compilation
  */
 export interface CancelRequestMessage extends WebSocketMessage {
+  /** Discriminant: always `'cancel'`. */
   type: 'cancel';
   /** Session ID to cancel */
   sessionId: string;
@@ -45,6 +47,7 @@ export interface CancelRequestMessage extends WebSocketMessage {
  * Client-to-Server: Pause a running compilation (future)
  */
 export interface PauseRequestMessage extends WebSocketMessage {
+  /** Discriminant: always `'pause'`. */
   type: 'pause';
   /** Session ID to pause */
   sessionId: string;
@@ -54,6 +57,7 @@ export interface PauseRequestMessage extends WebSocketMessage {
  * Client-to-Server: Resume a paused compilation (future)
  */
 export interface ResumeRequestMessage extends WebSocketMessage {
+  /** Discriminant: always `'resume'`. */
   type: 'resume';
   /** Session ID to resume */
   sessionId: string;
@@ -63,6 +67,7 @@ export interface ResumeRequestMessage extends WebSocketMessage {
  * Client-to-Server: Heartbeat ping
  */
 export interface PingMessage extends WebSocketMessage {
+  /** Discriminant: always `'ping'`. */
   type: 'ping';
 }
 
@@ -70,6 +75,7 @@ export interface PingMessage extends WebSocketMessage {
  * Server-to-Client: Heartbeat pong
  */
 export interface PongMessage extends WebSocketMessage {
+  /** Discriminant: always `'pong'`. */
   type: 'pong';
 }
 
@@ -77,6 +83,7 @@ export interface PongMessage extends WebSocketMessage {
  * Server-to-Client: Compilation started acknowledgment
  */
 export interface CompileStartedMessage extends WebSocketMessage {
+  /** Discriminant: always `'compile:started'`. */
   type: 'compile:started';
   /** Session ID */
   sessionId: string;
@@ -88,6 +95,7 @@ export interface CompileStartedMessage extends WebSocketMessage {
  * Server-to-Client: Compilation event (SSE-style events)
  */
 export interface EventMessage extends WebSocketMessage {
+  /** Discriminant: always `'event'`. */
   type: 'event';
   /** Session ID this event belongs to */
   sessionId: string;
@@ -115,6 +123,7 @@ export interface EventMessage extends WebSocketMessage {
  * Server-to-Client: Compilation completed successfully
  */
 export interface CompileCompleteMessage extends WebSocketMessage {
+  /** Discriminant: always `'compile:complete'`. */
   type: 'compile:complete';
   /** Session ID */
   sessionId: string;
@@ -132,6 +141,7 @@ export interface CompileCompleteMessage extends WebSocketMessage {
  * Server-to-Client: Compilation failed
  */
 export interface CompileErrorMessage extends WebSocketMessage {
+  /** Discriminant: always `'compile:error'`. */
   type: 'compile:error';
   /** Session ID */
   sessionId: string;
@@ -145,6 +155,7 @@ export interface CompileErrorMessage extends WebSocketMessage {
  * Server-to-Client: Compilation cancelled
  */
 export interface CompileCancelledMessage extends WebSocketMessage {
+  /** Discriminant: always `'compile:cancelled'`. */
   type: 'compile:cancelled';
   /** Session ID */
   sessionId: string;
@@ -156,6 +167,7 @@ export interface CompileCancelledMessage extends WebSocketMessage {
  * Server-to-Client: Connection acknowledged
  */
 export interface WelcomeMessage extends WebSocketMessage {
+  /** Discriminant: always `'welcome'`. */
   type: 'welcome';
   /** Server version */
   version: string;
@@ -173,6 +185,7 @@ export interface WelcomeMessage extends WebSocketMessage {
  * Server-to-Client: Error message
  */
 export interface ErrorMessage extends WebSocketMessage {
+  /** Discriminant: always `'error'`. */
   type: 'error';
   /** Error message */
   error: string;

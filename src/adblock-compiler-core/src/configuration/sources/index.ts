@@ -45,6 +45,7 @@ export interface IConfigurationSource {
  * ```
  */
 export class FileConfigurationSource implements IConfigurationSource {
+  /** Always `'file'` for this source. */
   readonly sourceType = 'file';
   private readonly loader: ConfigurationLoader;
 
@@ -52,6 +53,7 @@ export class FileConfigurationSource implements IConfigurationSource {
     this.loader = new ConfigurationLoader(fileSystem);
   }
 
+  /** Reads and parses the configured file path. */
   async load(): Promise<Partial<IConfiguration>> {
     return await this.loader.loadFromFile(this.path);
   }
@@ -69,10 +71,12 @@ export class FileConfigurationSource implements IConfigurationSource {
  * ```
  */
 export class ObjectConfigurationSource implements IConfigurationSource {
+  /** Always `'object'` for this source. */
   readonly sourceType = 'object';
 
   constructor(private readonly config: Partial<IConfiguration>) {}
 
+  /** Returns the wrapped object as-is. */
   async load(): Promise<Partial<IConfiguration>> {
     return this.config;
   }
@@ -105,6 +109,7 @@ export class ObjectConfigurationSource implements IConfigurationSource {
  * ```
  */
 export class EnvConfigurationSource implements IConfigurationSource {
+  /** Always `'env'` for this source. */
   readonly sourceType = 'env';
   private readonly envReader: (key: string) => string | undefined;
 
@@ -113,6 +118,7 @@ export class EnvConfigurationSource implements IConfigurationSource {
       ((key) => (typeof Deno !== 'undefined' && Deno.env ? Deno.env.get(key) : process.env[key]));
   }
 
+  /** Reads the `ADBLOCK_CONFIG_*` environment variables into a partial configuration. */
   async load(): Promise<Partial<IConfiguration>> {
     const config: Partial<IConfiguration> = {};
 
@@ -147,6 +153,7 @@ export class EnvConfigurationSource implements IConfigurationSource {
  * ```
  */
 export class CliConfigurationSource implements IConfigurationSource {
+  /** Always `'cli'` for this source. */
   readonly sourceType = 'cli';
 
   constructor(
@@ -154,6 +161,7 @@ export class CliConfigurationSource implements IConfigurationSource {
     private readonly inputType: string = 'hosts',
   ) {}
 
+  /** Builds a minimal configuration from the constructed `--input`/`--input-type` values. */
   async load(): Promise<Partial<IConfiguration>> {
     const loader = new ConfigurationLoader();
     return loader.createFromInputs(this.inputs, this.inputType) as Partial<IConfiguration>;
@@ -172,6 +180,7 @@ export class CliConfigurationSource implements IConfigurationSource {
  * ```
  */
 export class OverrideConfigurationSource implements IConfigurationSource {
+  /** Always `'override'` for this source. */
   readonly sourceType = 'override';
   private readonly parsed: Partial<IConfiguration>;
 
@@ -192,6 +201,7 @@ export class OverrideConfigurationSource implements IConfigurationSource {
     this.parsed = parsed as Partial<IConfiguration>;
   }
 
+  /** Returns the JSON parsed at construction time. */
   async load(): Promise<Partial<IConfiguration>> {
     return this.parsed;
   }
