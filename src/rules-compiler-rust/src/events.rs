@@ -1036,7 +1036,7 @@ impl FileLockService {
             hasher.update(&buffer[..bytes_read]);
         }
 
-        Ok(format!("{:x}", hasher.finalize()))
+        Ok(hex::encode(hasher.finalize()))
     }
 
     /// Get the number of active locks.
