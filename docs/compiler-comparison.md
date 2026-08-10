@@ -8,7 +8,7 @@ This guide helps you choose the right rules compiler for your use case. All comp
 |---------|------------|------|--------|------|------------|-------|
 | Language | TypeScript | C# | Python | Rust | PowerShell | Bash/PS1 |
 | Runtime | Deno 2.0+ | .NET 10 | Python 3.9+ | None | PowerShell 7+ | Bash/PowerShell |
-| Config Formats | JSON, YAML, TOML | JSON, YAML, TOML | JSON, YAML, TOML | JSON, YAML, TOML | JSON | JSON, YAML, TOML |
+| Config Formats | JSON/JSONC | JSON/JSONC | JSON | JSON | JSON | JSON |
 | Library API | Yes | Yes | Yes | Yes | Yes | No |
 | CLI | Yes | Yes | Yes | Yes | Yes | Yes |
 | Interactive Mode | Yes | Yes | No | No | Yes | No |
@@ -38,7 +38,7 @@ deno task compile
 
 **Features**:
 - CLI with argument parsing
-- YAML, JSON, TOML configuration
+- JSON configuration
 - Debug output mode
 - Copy to rules directory option
 - Library API via `@bloqr/compiler-core/lib` (`RulesCompiler`, `ConfigurationBuilder`)
@@ -98,7 +98,7 @@ var provider = services.BuildServiceProvider();
 var compiler = provider.GetRequiredService<IRulesCompilerService>();
 var result = await compiler.RunAsync(new CompilerOptions
 {
-    ConfigPath = "config.yaml",
+    ConfigPath = "config.json",
     OutputPath = "output.txt"
 });
 ```
@@ -110,7 +110,7 @@ var result = await compiler.RunAsync(new CompilerOptions
 ```bash
 cd src/rules-compiler-python
 pip install -e .
-rules-compiler -c config.yaml
+rules-compiler -c config.json
 ```
 
 **Pros**:
@@ -135,12 +135,12 @@ rules-compiler -c config.yaml
 from rules_compiler import RulesCompiler, compile_rules
 
 # Simple function
-result = compile_rules("config.yaml")
+result = compile_rules("config.json")
 print(f"Compiled {result.rule_count} rules")
 
 # Class-based
 compiler = RulesCompiler()
-result = compiler.compile("config.yaml", output_path="output.txt")
+result = compiler.compile("config.json", output_path="output.txt")
 ```
 
 ### Rust Compiler
@@ -150,7 +150,7 @@ result = compiler.compile("config.yaml", output_path="output.txt")
 ```bash
 cd src/rules-compiler-rust
 cargo build --release
-./target/release/rules-compiler -c config.yaml
+./target/release/rules-compiler -c config.json
 ```
 
 **Pros**:
@@ -167,7 +167,7 @@ cargo build --release
 **Features**:
 - clap-based CLI
 - Library crate for embedding
-- All configuration formats
+- JSON configuration
 - Release builds with LTO optimization
 
 **Library Usage**:
@@ -177,7 +177,7 @@ use rules_compiler::{RulesCompiler, CompilerConfiguration};
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let compiler = RulesCompiler::new();
-    let result = compiler.compile("config.yaml", None)?;
+    let result = compiler.compile("config.json", None)?;
     println!("Compiled {} rules", result.rule_count);
     Ok(())
 }
@@ -201,7 +201,6 @@ Invoke-RulesCompiler -CopyToRules
 
 **Cons**:
 - Requires PowerShell 7+
-- JSON configuration only (no YAML/TOML)
 
 **Features**:
 - Exported module functions
@@ -233,7 +232,7 @@ Get-CompilerVersion | Format-List
 **Best for**: Simple automation, CI/CD, Unix environments
 
 ```bash
-./src/rules-compiler-shell/bash/compile-rules.sh -c config.yaml -r
+./src/rules-compiler-shell/bash/compile-rules.sh -c config.json -r
 ```
 
 **Pros**:
@@ -244,7 +243,6 @@ Get-CompilerVersion | Format-List
 **Cons**:
 - Limited error handling
 - No library API
-- Depends on external tools for YAML/TOML
 
 **Scripts**:
 
@@ -311,8 +309,7 @@ Get-CompilerVersion | Format-List
 |---------|:----------:|:----:|:------:|:----:|
 | **Configuration** |
 | JSON | Yes | Yes | Yes | Yes |
-| YAML | Yes | Yes | Yes | Yes |
-| TOML | Yes | Yes | Yes | Yes |
+| JSONC | Yes | Yes | No | No |
 | Validation | No | Yes | No | No |
 | **CLI** |
 | Config file | Yes | Yes | Yes | Yes |
@@ -339,11 +336,11 @@ All compilers use the same configuration format, so you can:
 Example workflow:
 ```bash
 # Development with TypeScript (Deno)
-deno task compile -- -c config.yaml -o output.txt
+deno task compile -- -c config.json -o output.txt
 
 # CI/CD with Rust for speed
-./target/release/rules-compiler -c config.yaml -o output.txt
+./target/release/rules-compiler -c config.json -o output.txt
 
 # Automation with PowerShell
-Invoke-RulesCompiler -ConfigPath config.yaml
+Invoke-RulesCompiler -ConfigPath config.json
 ```

@@ -1,11 +1,11 @@
 # Rules Compiler (.NET)
 
-A .NET 10 library and console application for compiling AdGuard filter rules using [@adguard/hostlist-compiler](https://github.com/AdguardTeam/HostlistCompiler).
+A .NET 10 library and console application for compiling AdGuard-syntax filter rules, built on [`@bloqr/compiler-core`](https://jsr.io/@bloqr/compiler-core) — this project shells out to it via Deno rather than reimplementing compilation logic. `@bloqr/compiler-core` is itself loosely based on AdGuard's [hostlist-compiler](https://github.com/AdguardTeam/HostlistCompiler).
 
 ## Features
 
 - **Full compilation support**: All configuration options for filter compilation
-- **Multi-format configuration**: JSON, YAML, and TOML configuration file support
+- **JSON/JSONC configuration**: reads JSON, and detects/tolerates comments and trailing commas in `.jsonc` files (see [Configuration](#configuration))
 - **Configuration validation**: Validates configuration before compilation with detailed error/warning reporting
 - **Interactive and CLI modes**: Use interactively with menus or from command line with arguments
 - **Verbose mode**: Detailed output from the compiler for debugging
@@ -16,8 +16,7 @@ A .NET 10 library and console application for compiling AdGuard filter rules usi
 | Requirement | Version | Notes |
 |-------------|---------|-------|
 | .NET SDK | 10.0+ | Cross-platform runtime |
-| Deno | 2.0+ | Required for hostlist-compiler |
-| hostlist-compiler | Latest | Accessed via Deno's npm compatibility |
+| Deno | 2.0+ | Required to invoke `@bloqr/compiler-core` |
 
 ## Installation
 
@@ -50,25 +49,25 @@ Interactive menu options:
 
 ```bash
 # Basic compilation
-dotnet run --project src/RulesCompiler.Console -- --config path/to/config.yaml
+dotnet run --project src/RulesCompiler.Console -- --config path/to/config.json
 
 # Compile with specific output path
 dotnet run --project src/RulesCompiler.Console -- -c config.json -o output.txt
 
 # Compile and copy to rules directory
-dotnet run --project src/RulesCompiler.Console -- -c config.yaml --copy
+dotnet run --project src/RulesCompiler.Console -- -c config.json --copy
 
 # Verbose output
-dotnet run --project src/RulesCompiler.Console -- -c config.yaml --verbose
+dotnet run --project src/RulesCompiler.Console -- -c config.json --verbose
 
 # Validate configuration only
-dotnet run --project src/RulesCompiler.Console -- -c config.yaml --validate
+dotnet run --project src/RulesCompiler.Console -- -c config.json --validate
 
 # Disable validation before compilation
-dotnet run --project src/RulesCompiler.Console -- -c config.yaml --no-validate-config
+dotnet run --project src/RulesCompiler.Console -- -c config.json --no-validate-config
 
 # Fail compilation on validation warnings
-dotnet run --project src/RulesCompiler.Console -- -c config.yaml --fail-on-warnings
+dotnet run --project src/RulesCompiler.Console -- -c config.json --fail-on-warnings
 
 # Show version information
 dotnet run --project src/RulesCompiler.Console -- --version
@@ -78,10 +77,10 @@ dotnet run --project src/RulesCompiler.Console -- --version
 
 | Option | Short | Description |
 |--------|-------|-------------|
-| `--config` | `-c` | Path to configuration file (JSON, YAML, or TOML) |
+| `--config` | `-c` | Path to configuration file (JSON or JSONC) |
 | `--output` | `-o` | Path to output file |
 | `--copy` | | Copy output to rules directory |
-| `--verbose` | | Enable verbose output from hostlist-compiler |
+| `--verbose` | | Enable verbose output from the compiler |
 | `--validate` | | Validate configuration only (no compilation) |
 | `--validate-config` | | Enable configuration validation before compilation (default: true) |
 | `--no-validate-config` | | Disable configuration validation before compilation |
@@ -90,142 +89,9 @@ dotnet run --project src/RulesCompiler.Console -- --version
 
 ## Configuration
 
-The compiler supports three configuration formats that map directly to the hostlist-compiler configuration schema.
+Configuration schema, all properties, transformations, and pattern-matching syntax are documented once, canonically, in [`docs/configuration-reference.md`](../../docs/configuration-reference.md) — this compiler reads the same JSON/JSONC schema every other compiler in this repo reads. `Config/compiler-config.json` in this project is a ready-to-edit starting point.
 
-### Configuration Properties
-
-#### Root-Level Properties
-
-| Property | Type | Required | Description |
-|----------|------|----------|-------------|
-| `name` | string | Yes | Name of the filter list |
-| `description` | string | No | Description of the filter list |
-| `homepage` | string | No | Homepage URL |
-| `license` | string | No | License identifier |
-| `version` | string | No | Version number |
-| `sources` | array | Yes | List of filter sources to compile |
-| `transformations` | array | No | Global transformations to apply |
-| `inclusions` | array | No | Global inclusion patterns |
-| `inclusions_sources` | array | No | Files containing inclusion patterns |
-| `exclusions` | array | No | Global exclusion patterns |
-| `exclusions_sources` | array | No | Files containing exclusion patterns |
-
-#### Source Properties
-
-| Property | Type | Required | Description |
-|----------|------|----------|-------------|
-| `source` | string | Yes | URL or local file path |
-| `name` | string | No | Source identifier |
-| `type` | string | No | Format: `adblock` (default) or `hosts` |
-| `transformations` | array | No | Source-specific transformations |
-| `inclusions` | array | No | Source-specific inclusion patterns |
-| `inclusions_sources` | array | No | Files with source inclusions |
-| `exclusions` | array | No | Source-specific exclusion patterns |
-| `exclusions_sources` | array | No | Files with source exclusions |
-
-### Available Transformations
-
-Transformations are always applied in this fixed order regardless of configuration order:
-
-| Transformation | Description |
-|---------------|-------------|
-| `RemoveComments` | Removes all comment lines (! or #) |
-| `Compress` | Converts hosts format to adblock syntax |
-| `RemoveModifiers` | Removes unsupported modifiers from rules |
-| `Validate` | Removes dangerous/incompatible rules |
-| `ValidateAllowIp` | Like Validate but allows IP address rules |
-| `Deduplicate` | Removes duplicate rules |
-| `InvertAllow` | Converts @@exceptions to blocking rules |
-| `RemoveEmptyLines` | Removes blank lines |
-| `TrimLines` | Trims whitespace from lines |
-| `InsertFinalNewLine` | Ensures file ends with newline |
-| `ConvertToAscii` | Converts IDN to punycode |
-
-### Pattern Matching
-
-Inclusion and exclusion patterns support:
-- **Plain strings**: Exact match
-- **Wildcards**: `*.example.com`, `*tracking*`
-- **Regular expressions**: `/pattern/` (case-insensitive by default)
-- **Comments**: Lines starting with `!` are ignored
-
-### Example Configurations
-
-#### JSON (compiler-config.json)
-
-```json
-{
-  "name": "My Filter List",
-  "description": "Custom ad-blocking filter",
-  "version": "1.0.0",
-  "sources": [
-    {
-      "name": "Local Rules",
-      "source": "data/local.txt",
-      "type": "adblock"
-    },
-    {
-      "name": "EasyList",
-      "source": "https://easylist.to/easylist/easylist.txt",
-      "type": "adblock",
-      "transformations": ["RemoveModifiers", "Validate"]
-    }
-  ],
-  "transformations": ["Deduplicate", "RemoveEmptyLines", "InsertFinalNewLine"],
-  "exclusions": ["*.google.com", "/analytics/"]
-}
-```
-
-#### YAML (compiler-config.yaml)
-
-```yaml
-name: My Filter List
-description: Custom ad-blocking filter
-version: "1.0.0"
-
-sources:
-  - name: Local Rules
-    source: data/local.txt
-    type: adblock
-
-  - name: EasyList
-    source: https://easylist.to/easylist/easylist.txt
-    type: adblock
-    transformations:
-      - RemoveModifiers
-      - Validate
-
-transformations:
-  - Deduplicate
-  - RemoveEmptyLines
-  - InsertFinalNewLine
-
-exclusions:
-  - "*.google.com"
-  - "/analytics/"
-```
-
-#### TOML (compiler-config.toml)
-
-```toml
-name = "My Filter List"
-description = "Custom ad-blocking filter"
-version = "1.0.0"
-
-transformations = ["Deduplicate", "RemoveEmptyLines", "InsertFinalNewLine"]
-exclusions = ["*.google.com", "/analytics/"]
-
-[[sources]]
-name = "Local Rules"
-source = "data/local.txt"
-type = "adblock"
-
-[[sources]]
-name = "EasyList"
-source = "https://easylist.to/easylist/easylist.txt"
-type = "adblock"
-transformations = ["RemoveModifiers", "Validate"]
-```
+YAML and TOML remain readable by `ConfigurationReader` for backward compatibility, but JSON/JSONC is the only documented format — see [Supported Formats](../../docs/configuration-reference.md#supported-formats) for which compilers tolerate `.jsonc` comments today.
 
 ## Library Usage
 
@@ -248,7 +114,7 @@ var compiler = provider.GetRequiredService<IRulesCompilerService>();
 // Compile with options
 var options = new CompilerOptions
 {
-    ConfigPath = "config.yaml",
+    ConfigPath = "config.json",
     OutputPath = "output.txt",
     Verbose = true,
     ValidateConfig = true
@@ -267,7 +133,7 @@ if (result.Success)
 
 ```csharp
 // Validate configuration before compilation
-var validation = await compiler.ValidateConfigurationAsync("config.yaml");
+var validation = await compiler.ValidateConfigurationAsync("config.json");
 
 if (!validation.IsValid)
 {
@@ -286,7 +152,7 @@ foreach (var warning in validation.Warnings)
 ### Reading Configuration
 
 ```csharp
-var config = await compiler.ReadConfigurationAsync("config.yaml");
+var config = await compiler.ReadConfigurationAsync("config.json");
 Console.WriteLine($"Filter: {config.Name}");
 Console.WriteLine($"Sources: {config.Sources.Count}");
 Console.WriteLine($"Transformations: {string.Join(", ", config.Transformations)}");
@@ -341,14 +207,14 @@ As of the `Bloqr.Compiler.*` extraction, this project is split across three asse
 | `Transformation` | Enum of all available transformations |
 | `SourceType` | Enum for source types (adblock, hosts) |
 | `VersionInfo` | Component version information |
-| `ConfigurationFormat` | Enum for JSON/YAML/TOML formats |
+| `ConfigurationFormat` | Enum for JSON/YAML/TOML formats (JSON/JSONC documented; YAML/TOML supported for backward compatibility only) |
 | `ValidationResult` / `ValidationError` | Shared validation-result shape, used by `IRulesCompilerService` without depending on `ConfigurationValidator`'s concrete implementation |
 
 ### Services
 
 | Service | Assembly | Description |
 |---------|----------|-------------|
-| `ConfigurationReader` | `Bloqr.Compiler.Core` | Parses JSON, YAML, and TOML configs with snake_case support |
+| `ConfigurationReader` | `Bloqr.Compiler.Core` | Parses JSON/JSONC (documented), YAML, and TOML (backward compatible) configs with snake_case support |
 | `ConfigurationValidator` | `Bloqr.Compiler.Core` | Validates configuration with error/warning reporting |
 | `ChunkingService`, `FileLockService`, `PluginManager`, `CompilationPipeline(Builder)`, `CompilationEventDispatcher` | `Bloqr.Compiler.Core` | Chunked compilation, file locking, plugin system, event pipeline |
 | `CommandHelper`, `PlatformHelper` | `Bloqr.Compiler.Core` | Generic process-execution and platform-detection utilities |
@@ -397,10 +263,10 @@ dotnet test --filter "FullyQualifiedName~TransformationTests"
 ```
 src/rules-compiler-dotnet/
 ├── Config/                          # Default configuration files
-│   ├── compiler-config.json         # JSON format
-│   ├── compiler-config.yaml         # YAML format
-│   ├── compiler-config.toml         # TOML format
-│   └── compiler-config-advanced.yaml # Advanced example
+│   ├── compiler-config.json         # JSON format (documented)
+│   ├── compiler-config.yaml         # YAML format (undocumented, backward compat)
+│   ├── compiler-config.toml         # TOML format (undocumented, backward compat)
+│   └── compiler-config-advanced.yaml # Advanced example (YAML, undocumented)
 ├── src/
 │   ├── Bloqr.Compiler.Abstractions/ # Shared interfaces, event-args, and models
 │   ├── Bloqr.Compiler.Core/         # Common implementation (config, chunking, plugins, events)
@@ -424,10 +290,10 @@ src/rules-compiler-dotnet/
 
 ## Related Projects
 
-- [Rules Compiler (TypeScript)](../adblock-compiler-core/) - TypeScript implementation
+- [Rules Compiler (TypeScript)](../adblock-compiler-core/) - `@bloqr/compiler-core`, the canonical compilation engine this project shells out to
 - [Rules Compiler (Python)](../rules-compiler-python/) - Python implementation
 - [Rules Compiler (Rust)](../rules-compiler-rust/) - Rust implementation
-- [@adguard/hostlist-compiler](https://github.com/AdguardTeam/HostlistCompiler) - Underlying compiler
+- [@adguard/hostlist-compiler](https://github.com/AdguardTeam/HostlistCompiler) - the compiler `@bloqr/compiler-core` is loosely based on
 
 ## License
 
