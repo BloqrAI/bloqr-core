@@ -1,3 +1,4 @@
+using System.Globalization;
 using Bloqr.Compiler.Core.Helpers;
 
 namespace Bloqr.Dashboard.Console.Services;
@@ -24,6 +25,7 @@ public sealed class DiagnosticsMenuService : MenuServiceBase
     private readonly CommandHelper _commandHelper;
     private readonly IDashboardPaths _paths;
     private readonly IDashboardConfigurationStore _configStore;
+    private readonly IRulesValidatorService _rulesValidatorService;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="DiagnosticsMenuService"/> class.
@@ -34,12 +36,14 @@ public sealed class DiagnosticsMenuService : MenuServiceBase
         CommandHelper commandHelper,
         IDashboardPaths paths,
         IDashboardConfigurationStore configStore,
+        IRulesValidatorService rulesValidatorService,
         ILogger<DiagnosticsMenuService> logger)
         : base(renderer, prompter, logger)
     {
         _commandHelper = commandHelper;
         _paths = paths;
         _configStore = configStore;
+        _rulesValidatorService = rulesValidatorService;
     }
 
     /// <inheritdoc />
@@ -51,6 +55,7 @@ public sealed class DiagnosticsMenuService : MenuServiceBase
         ["Check external tools"] = CheckExternalToolsAsync,
         ["Show resolved paths"] = ShowResolvedPathsAsync,
         ["Check configuration health"] = CheckConfigurationHealthAsync,
+        ["Validate a filter file"] = ValidateFilterFileAsync,
     };
 
     private Task CheckExternalToolsAsync()
@@ -71,7 +76,22 @@ public sealed class DiagnosticsMenuService : MenuServiceBase
             }
         }
 
+        table.AddRow(
+            "rules-validator",
+            _rulesValidatorService.IsAvailable ? "found" : "not found",
+            "native library (rules_validator)");
+
         Renderer.RenderTable(table);
+
+        if (!_rulesValidatorService.IsAvailable)
+        {
+            Renderer.WriteLine();
+            Renderer.WriteStyled(
+                "rules-validator native library not found - syntax/URL validation checks will be skipped "
+                + "during compilation and here. Build it with 'cargo build --release -p rules-validator-core' "
+                + "and deploy librules_validator.so (or the platform equivalent) alongside this app (#276).",
+                TextStyle.Warning);
+        }
 
         if (missingTools.Count > 0)
         {
@@ -121,5 +141,52 @@ public sealed class DiagnosticsMenuService : MenuServiceBase
 
         var backups = _configStore.ListBackups();
         Renderer.WriteLine($"Backups available: {backups.Count}");
+    }
+
+    private async Task ValidateFilterFileAsync()
+    {
+        if (!_rulesValidatorService.IsAvailable)
+        {
+            Renderer.WriteStyled(
+                "rules-validator native library is unavailable; see 'Check external tools' for remediation.",
+                TextStyle.Warning);
+            return;
+        }
+
+        var path = Prompter.Prompt("Path to the filter file to validate");
+        if (!File.Exists(path))
+        {
+            Renderer.WriteStyled($"File not found: {path}", TextStyle.Error);
+            return;
+        }
+
+        var result = await Renderer
+            .StatusAsync("Validating filter syntax...", () => _rulesValidatorService.ValidateLocalFileAsync(path))
+            .ConfigureAwait(false);
+
+        if (result is null)
+        {
+            Renderer.WriteStyled("Validation could not be completed; see logs for details.", TextStyle.Error);
+            return;
+        }
+
+        var table = new ConsoleTable { Title = $"Validation Result: {Path.GetFileName(path)}" };
+        table.AddColumn("Field");
+        table.AddColumn("Value");
+        table.AddRow("Format", result.Format);
+        table.AddRow("Valid", result.IsValid ? "yes" : "no");
+        table.AddRow("Valid rules", result.ValidRules.ToString(CultureInfo.InvariantCulture));
+        table.AddRow("Invalid rules", result.InvalidRules.ToString(CultureInfo.InvariantCulture));
+        Renderer.RenderTable(table);
+
+        if (result.Messages.Count > 0)
+        {
+            Renderer.WriteLine();
+            Renderer.WriteStyled("Messages:", result.IsValid ? TextStyle.Warning : TextStyle.Error);
+            foreach (var message in result.Messages)
+            {
+                Renderer.WriteLine($"  {message}");
+            }
+        }
     }
 }

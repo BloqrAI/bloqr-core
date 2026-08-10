@@ -1,5 +1,17 @@
 # Runtime Enforcement of Validation Library
 
+> **Implementation status note:** this document describes the aspirational design
+> (a mandatory `compile_with_validation()` wrapper with signed metadata). The .NET
+> compiler's actual current integration (#264) is lighter-weight: `RulesCompilerService`
+> calls `IRulesValidatorService.ValidateLocalFileAsync` on the compiled output and raises
+> the existing `ValidationEventArgs` (code `RV001`) through `ICompilationEventDispatcher`,
+> the same zero-trust event pipeline documented in `docs/event-pipeline.md` — there is no
+> separate `compile_with_validation()` entry point, signature, or audit-log format. A
+> registered `ICompilationEventHandler` decides whether an `RV001` finding aborts the
+> compilation (`ValidationEventArgs.Abort`); nothing currently enforces that a handler is
+> registered. Closing that gap, and deciding whether to build the wrapper/signature design
+> below or formally supersede it, is follow-up work beyond #264's scope.
+
 ## Overview
 
 **Runtime enforcement** ensures that validation is **always** performed, even if a developer tries to bypass it. This is achieved through:

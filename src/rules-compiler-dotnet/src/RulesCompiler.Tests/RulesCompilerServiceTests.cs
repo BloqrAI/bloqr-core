@@ -16,6 +16,7 @@ public sealed class RulesCompilerServiceTests : IDisposable
     private readonly Mock<IOutputWriter> _outputWriter = new();
     private readonly Mock<IOutputPublisher> _outputPublisher = new();
     private readonly Mock<IHashDatabaseService> _hashDatabaseService = new();
+    private readonly Mock<IRulesValidatorService> _rulesValidatorService = new();
     private readonly Mock<ICompilationEventDispatcher> _eventDispatcher = new();
     private readonly RulesCompilerService _service;
 
@@ -34,6 +35,11 @@ public sealed class RulesCompilerServiceTests : IDisposable
             .Setup(w => w.CountRulesAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(3);
 
+        // Unavailable by default (as it would be wherever the native library isn't deployed
+        // alongside the test binaries) so existing tests exercise the pipeline's graceful
+        // degradation path rather than needing real rules-validator behavior.
+        _rulesValidatorService.Setup(v => v.IsAvailable).Returns(false);
+
         _service = new RulesCompilerService(
             new Mock<ILogger<RulesCompilerService>>().Object,
             _configurationReader.Object,
@@ -41,6 +47,7 @@ public sealed class RulesCompilerServiceTests : IDisposable
             _outputWriter.Object,
             _outputPublisher.Object,
             _hashDatabaseService.Object,
+            _rulesValidatorService.Object,
             _eventDispatcher.Object);
     }
 
@@ -244,5 +251,86 @@ public sealed class RulesCompilerServiceTests : IDisposable
         _filterCompiler
             .Setup(c => c.CompileAsync(It.IsAny<CompilerOptions>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new CompilerResult { Success = true, OutputPath = _compiledPath });
+    }
+
+    [Fact]
+    public async Task RunAsync_WhenRulesValidatorUnavailable_SkipsValidationAndStillSucceeds()
+    {
+        SetUpConfiguration(new CompilerConfiguration { Name = "Test", Sources = [new FilterSource { Source = "x" }] });
+        SetUpSuccessfulCompilation();
+        _rulesValidatorService.Setup(v => v.IsAvailable).Returns(false);
+
+        var result = await _service.RunAsync(new CompilerOptions { ConfigPath = _configPath, ValidateConfig = false });
+
+        Assert.True(result.Success);
+        _rulesValidatorService.Verify(
+            v => v.ValidateLocalFileAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
+        _eventDispatcher.Verify(
+            d => d.RaiseValidationAsync(It.IsAny<ValidationEventArgs>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task RunAsync_WhenRulesValidatorFindsValidSyntax_RaisesValidationEventAndSucceeds()
+    {
+        SetUpConfiguration(new CompilerConfiguration { Name = "Test", Sources = [new FilterSource { Source = "x" }] });
+        SetUpSuccessfulCompilation();
+        _rulesValidatorService.Setup(v => v.IsAvailable).Returns(true);
+        _rulesValidatorService
+            .Setup(v => v.ValidateLocalFileAsync(_compiledPath, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new SyntaxValidationResult { IsValid = true, Format = "Adblock", ValidRules = 3, InvalidRules = 0 });
+
+        var result = await _service.RunAsync(new CompilerOptions { ConfigPath = _configPath, ValidateConfig = false });
+
+        Assert.True(result.Success);
+        _eventDispatcher.Verify(
+            d => d.RaiseValidationAsync(
+                It.Is<ValidationEventArgs>(a => a.StageName == "rules-validator"), It.IsAny<CancellationToken>()),
+            Times.Once);
+    }
+
+    [Fact]
+    public async Task RunAsync_WhenRulesValidatorFindsInvalidSyntaxAndHandlerAborts_FailsCompilation()
+    {
+        SetUpConfiguration(new CompilerConfiguration { Name = "Test", Sources = [new FilterSource { Source = "x" }] });
+        SetUpSuccessfulCompilation();
+        _rulesValidatorService.Setup(v => v.IsAvailable).Returns(true);
+        _rulesValidatorService
+            .Setup(v => v.ValidateLocalFileAsync(_compiledPath, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new SyntaxValidationResult
+            {
+                IsValid = false,
+                Format = "Adblock",
+                ValidRules = 2,
+                InvalidRules = 1,
+                Messages = ["bad rule at line 3"],
+            });
+        _eventDispatcher
+            .Setup(d => d.RaiseValidationAsync(It.IsAny<ValidationEventArgs>(), It.IsAny<CancellationToken>()))
+            .Callback<ValidationEventArgs, CancellationToken>((args, _) =>
+            {
+                args.Abort = true;
+                args.AbortReason = "syntax invalid";
+            })
+            .Returns(Task.CompletedTask);
+
+        var result = await _service.RunAsync(new CompilerOptions { ConfigPath = _configPath, ValidateConfig = false });
+
+        Assert.False(result.Success);
+        Assert.Equal("syntax invalid", result.ErrorMessage);
+    }
+
+    [Fact]
+    public async Task RunAsync_WhenRulesValidatorFindsInvalidSyntaxButHandlerDoesNotAbort_StillSucceeds()
+    {
+        SetUpConfiguration(new CompilerConfiguration { Name = "Test", Sources = [new FilterSource { Source = "x" }] });
+        SetUpSuccessfulCompilation();
+        _rulesValidatorService.Setup(v => v.IsAvailable).Returns(true);
+        _rulesValidatorService
+            .Setup(v => v.ValidateLocalFileAsync(_compiledPath, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new SyntaxValidationResult { IsValid = false, Format = "Adblock", ValidRules = 2, InvalidRules = 1 });
+
+        var result = await _service.RunAsync(new CompilerOptions { ConfigPath = _configPath, ValidateConfig = false });
+
+        Assert.True(result.Success);
     }
 }

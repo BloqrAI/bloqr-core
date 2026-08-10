@@ -11,6 +11,7 @@ public class RulesCompilerService : IRulesCompilerService
     private readonly IOutputWriter _outputWriter;
     private readonly IOutputPublisher _outputPublisher;
     private readonly IHashDatabaseService _hashDatabaseService;
+    private readonly IRulesValidatorService _rulesValidatorService;
     private readonly ICompilationEventDispatcher _eventDispatcher;
 
     private const string DefaultConfigFileName = "compiler-config.json";
@@ -25,6 +26,7 @@ public class RulesCompilerService : IRulesCompilerService
     /// <param name="outputWriter">The output writer.</param>
     /// <param name="outputPublisher">Publishes compiled output to its configured durable destination.</param>
     /// <param name="hashDatabaseService">Reads and writes the <c>.hashes.json</c> sidecar database.</param>
+    /// <param name="rulesValidatorService">Runs the native rules-validator syntax check on the compiled output (#264).</param>
     /// <param name="eventDispatcher">Raises hash-verification and lifecycle events.</param>
     public RulesCompilerService(
         ILogger<RulesCompilerService> logger,
@@ -33,6 +35,7 @@ public class RulesCompilerService : IRulesCompilerService
         IOutputWriter outputWriter,
         IOutputPublisher outputPublisher,
         IHashDatabaseService hashDatabaseService,
+        IRulesValidatorService rulesValidatorService,
         ICompilationEventDispatcher eventDispatcher)
     {
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
@@ -41,6 +44,7 @@ public class RulesCompilerService : IRulesCompilerService
         _outputWriter = outputWriter ?? throw new ArgumentNullException(nameof(outputWriter));
         _outputPublisher = outputPublisher ?? throw new ArgumentNullException(nameof(outputPublisher));
         _hashDatabaseService = hashDatabaseService ?? throw new ArgumentNullException(nameof(hashDatabaseService));
+        _rulesValidatorService = rulesValidatorService ?? throw new ArgumentNullException(nameof(rulesValidatorService));
         _eventDispatcher = eventDispatcher ?? throw new ArgumentNullException(nameof(eventDispatcher));
     }
 
@@ -180,6 +184,15 @@ public class RulesCompilerService : IRulesCompilerService
                 compilerOptions, result.OutputPath, "output_file", result.OutputHash, new FileInfo(result.OutputPath).Length),
             cancellationToken);
 
+        var (canContinueAfterValidation, validationErrorMessage) =
+            await ValidateOutputSyntaxAsync(result.OutputPath, compilerOptions, cancellationToken);
+        if (!canContinueAfterValidation)
+        {
+            result.Success = false;
+            result.ErrorMessage = validationErrorMessage;
+            return result;
+        }
+
         if (config.HashVerification is { } outputHashVerification &&
             !string.Equals(outputHashVerification.Mode, "disabled", StringComparison.OrdinalIgnoreCase) &&
             !string.IsNullOrWhiteSpace(outputHashVerification.HashDatabasePath))
@@ -234,6 +247,58 @@ public class RulesCompilerService : IRulesCompilerService
         }
 
         return result;
+    }
+
+    /// <summary>
+    /// Runs the native rules-validator syntax check (#264) against the compiled output file
+    /// and raises a <c>Validation</c> event with its findings. Silently skipped (returns
+    /// <c>CanContinue: true</c> with no event) when the native library is unavailable -
+    /// see <see cref="IRulesValidatorService"/>'s remarks. Findings are informational by
+    /// default (a registered handler must explicitly set <see cref="ValidationEventArgs.Abort"/>
+    /// to fail compilation over them), matching this pipeline's other zero-trust checkpoints.
+    /// </summary>
+    /// <returns>
+    /// Whether compilation can continue, and an error message to surface if it cannot.
+    /// </returns>
+    private async Task<(bool CanContinue, string? ErrorMessage)> ValidateOutputSyntaxAsync(
+        string outputPath,
+        CompilerOptions options,
+        CancellationToken cancellationToken)
+    {
+        if (!_rulesValidatorService.IsAvailable)
+        {
+            return (true, null);
+        }
+
+        var syntaxResult = await _rulesValidatorService.ValidateLocalFileAsync(outputPath, cancellationToken);
+        if (syntaxResult is null)
+        {
+            return (true, null);
+        }
+
+        var validationArgs = new ValidationEventArgs(options, "rules-validator", new List<ValidationFinding>());
+        var severity = syntaxResult.IsValid ? ValidationSeverity.Warning : ValidationSeverity.Error;
+        foreach (var message in syntaxResult.Messages)
+        {
+            validationArgs.AddFinding(severity, "RV001", message, outputPath);
+        }
+
+        if (!syntaxResult.IsValid && syntaxResult.Messages.Count == 0)
+        {
+            validationArgs.AddError(
+                "RV001",
+                $"Output file failed rules-validator syntax validation ({syntaxResult.InvalidRules} invalid rule(s) of {syntaxResult.ValidRules + syntaxResult.InvalidRules}).",
+                outputPath);
+        }
+
+        await _eventDispatcher.RaiseValidationAsync(validationArgs, cancellationToken);
+
+        if (validationArgs.Abort)
+        {
+            return (false, validationArgs.AbortReason ?? $"rules-validator validation failed for {outputPath}");
+        }
+
+        return (true, null);
     }
 
     /// <summary>

@@ -287,12 +287,21 @@ Maintainers can verify compliance with:
 
 ## Migration Timeline
 
-- **Phase 1** (Current): Validation library created, documented
-- **Phase 2** (Next): Integrate into TypeScript compiler (reference implementation)
-- **Phase 3**: Integrate into .NET, Python, Rust compilers
-- **Phase 4**: Enable CI enforcement (warnings only)
-- **Phase 5**: Enable CI enforcement (blocking)
-- **Phase 6**: Remove legacy validation code
+- **Phase 1**: Validation library created, documented.
+- **Phase 2**: Integrate into .NET compiler. **Done** (#264) — `Bloqr.Compiler.Core.Services.RulesValidatorService`
+  P/Invokes `rules_validator_{new,validate_local_file,validate_remote_url,free,free_string}`
+  (see `src/rules-validator/README.md`'s ".NET / C#" section for the P/Invoke reference this
+  implementation follows). `RulesCompilerService` runs syntax validation on the compiled output
+  and raises `ValidationEventArgs` (code `RV001`) through the existing zero-trust event pipeline
+  (see `docs/event-pipeline.md`); handlers may set `Abort = true` to fail the compilation. The
+  Dashboard's Diagnostics menu reports native-library availability and offers a standalone
+  "Validate a filter file" action. The native library is not yet packaged/deployed alongside the
+  .NET output automatically — that's #276 — so `IRulesValidatorService.IsAvailable` degrades to
+  `false` gracefully wherever the library isn't found rather than failing compilation.
+- **Phase 3**: Integrate into TypeScript, Python, Rust compilers.
+- **Phase 4**: Enable CI enforcement (warnings only).
+- **Phase 5**: Enable CI enforcement (blocking).
+- **Phase 6**: Remove legacy validation code.
 
 ## Support
 
