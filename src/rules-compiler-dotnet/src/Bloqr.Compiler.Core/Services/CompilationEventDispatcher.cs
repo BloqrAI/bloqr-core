@@ -413,4 +413,90 @@ public class CompilationEventDispatcher : ICompilationEventDispatcher
             }
         }
     }
+
+    /// <inheritdoc/>
+    public async Task RaiseHashComputedAsync(
+        HashComputedEventArgs args,
+        CancellationToken cancellationToken = default)
+    {
+        _logger.LogDebug(
+            "Raising HashComputed event ({ItemType}: {ItemIdentifier}) to {Count} handlers",
+            args.ItemType, args.ItemIdentifier, _handlers.Count());
+
+        foreach (var handler in _handlers)
+        {
+            try
+            {
+                await handler.OnHashComputedAsync(args, cancellationToken);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(
+                    ex,
+                    "Error in event handler {Handler} during HashComputed",
+                    handler.GetType().Name);
+                // Don't rethrow - the hash has already been computed
+            }
+        }
+    }
+
+    /// <inheritdoc/>
+    public async Task RaiseHashVerifiedAsync(
+        HashVerifiedEventArgs args,
+        CancellationToken cancellationToken = default)
+    {
+        _logger.LogDebug(
+            "Raising HashVerified event ({ItemType}: {ItemIdentifier}) to {Count} handlers",
+            args.ItemType, args.ItemIdentifier, _handlers.Count());
+
+        foreach (var handler in _handlers)
+        {
+            try
+            {
+                await handler.OnHashVerifiedAsync(args, cancellationToken);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(
+                    ex,
+                    "Error in event handler {Handler} during HashVerified",
+                    handler.GetType().Name);
+                // Don't rethrow - verification already succeeded
+            }
+        }
+    }
+
+    /// <inheritdoc/>
+    public async Task RaiseHashMismatchAsync(
+        HashMismatchEventArgs args,
+        CancellationToken cancellationToken = default)
+    {
+        _logger.LogDebug(
+            "Raising HashMismatch event ({ItemType}: {ItemIdentifier}) to {Count} handlers",
+            args.ItemType, args.ItemIdentifier, _handlers.Count());
+
+        foreach (var handler in _handlers)
+        {
+            try
+            {
+                await handler.OnHashMismatchAsync(args, cancellationToken);
+                if (args.Abort)
+                {
+                    _logger.LogWarning(
+                        "Hash mismatch for {ItemIdentifier} ({ItemType}): {Reason}",
+                        args.ItemIdentifier,
+                        args.ItemType,
+                        args.AbortReason);
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(
+                    ex,
+                    "Error in event handler {Handler} during HashMismatch",
+                    handler.GetType().Name);
+                throw;
+            }
+        }
+    }
 }

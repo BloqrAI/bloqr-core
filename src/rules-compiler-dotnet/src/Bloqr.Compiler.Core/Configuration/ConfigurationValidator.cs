@@ -11,6 +11,10 @@ namespace Bloqr.Compiler.Core.Configuration;
 /// </remarks>
 public static class ConfigurationValidator
 {
+    private static readonly string[] ValidConflictStrategies = ["rename", "overwrite", "error"];
+    private static readonly string[] ValidHashVerificationModes = ["strict", "warning", "disabled"];
+    private static readonly string[] ValidArchivingModes = ["automatic", "interactive", "disabled"];
+
     /// <summary>
     /// Validates a compiler configuration.
     /// </summary>
@@ -31,6 +35,10 @@ public static class ConfigurationValidator
             result.AddError("sources", "At least one source is required");
         }
 
+        ValidateOutput(config.Output, result);
+        ValidateHashVerification(config.HashVerification, result);
+        ValidateArchiving(config.Archiving, result);
+
         // Validate global transformations
         ValidateTransformations(config.Transformations, "transformations", result);
 
@@ -47,6 +55,60 @@ public static class ConfigurationValidator
         ValidateSourceFiles(config.ExclusionsSources, "exclusions_sources", result);
 
         return result;
+    }
+
+    private static void ValidateOutput(OutputSettings? output, ValidationResult result)
+    {
+        if (output is null)
+        {
+            return;
+        }
+
+        if (!ValidConflictStrategies.Contains(output.ConflictStrategy, StringComparer.OrdinalIgnoreCase))
+        {
+            result.AddError("output.conflictStrategy",
+                $"Invalid conflict strategy '{output.ConflictStrategy}'. Valid strategies are: {string.Join(", ", ValidConflictStrategies)}");
+        }
+    }
+
+    private static void ValidateHashVerification(HashVerificationSettings? hashVerification, ValidationResult result)
+    {
+        if (hashVerification is null)
+        {
+            return;
+        }
+
+        if (!ValidHashVerificationModes.Contains(hashVerification.Mode, StringComparer.OrdinalIgnoreCase))
+        {
+            result.AddError("hashVerification.mode",
+                $"Invalid hash verification mode '{hashVerification.Mode}'. Valid modes are: {string.Join(", ", ValidHashVerificationModes)}");
+        }
+
+        if (!string.Equals(hashVerification.Mode, "disabled", StringComparison.OrdinalIgnoreCase) &&
+            string.IsNullOrWhiteSpace(hashVerification.HashDatabasePath))
+        {
+            result.AddWarning("hashVerification.hashDatabasePath",
+                "Hash verification is enabled but no hashDatabasePath was specified; hashes cannot be recorded or checked.");
+        }
+    }
+
+    private static void ValidateArchiving(ArchivingSettings? archiving, ValidationResult result)
+    {
+        if (archiving is null)
+        {
+            return;
+        }
+
+        if (!ValidArchivingModes.Contains(archiving.Mode, StringComparer.OrdinalIgnoreCase))
+        {
+            result.AddError("archiving.mode",
+                $"Invalid archiving mode '{archiving.Mode}'. Valid modes are: {string.Join(", ", ValidArchivingModes)}");
+        }
+
+        if (archiving.RetentionDays < 1)
+        {
+            result.AddError("archiving.retentionDays", "Retention days must be at least 1");
+        }
     }
 
     private static void ValidateSource(FilterSource source, string path, ValidationResult result)

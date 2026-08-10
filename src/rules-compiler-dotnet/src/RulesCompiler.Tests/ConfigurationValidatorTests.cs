@@ -94,6 +94,104 @@ public class ConfigurationValidatorTests
     }
 
     [Fact]
+    public void Validate_ReturnsError_WhenConflictStrategyInvalid()
+    {
+        var config = new CompilerConfiguration
+        {
+            Name = "Test",
+            Sources = [new FilterSource { Source = "test.txt" }],
+            Output = new OutputSettings { Path = "out.txt", ConflictStrategy = "delete" }
+        };
+
+        var result = ConfigurationValidator.Validate(config);
+
+        Assert.False(result.IsValid);
+        Assert.Contains(result.Errors, e => e.Field == "output.conflictStrategy");
+    }
+
+    [Theory]
+    [InlineData("rename")]
+    [InlineData("overwrite")]
+    [InlineData("error")]
+    public void Validate_Passes_ForEachValidConflictStrategy(string strategy)
+    {
+        var config = new CompilerConfiguration
+        {
+            Name = "Test",
+            Sources = [new FilterSource { Source = "test.txt" }],
+            Output = new OutputSettings { Path = "out.txt", ConflictStrategy = strategy }
+        };
+
+        var result = ConfigurationValidator.Validate(config);
+
+        Assert.DoesNotContain(result.Errors, e => e.Field == "output.conflictStrategy");
+    }
+
+    [Fact]
+    public void Validate_ReturnsError_WhenHashVerificationModeInvalid()
+    {
+        var config = new CompilerConfiguration
+        {
+            Name = "Test",
+            Sources = [new FilterSource { Source = "test.txt" }],
+            HashVerification = new HashVerificationSettings { Mode = "paranoid", HashDatabasePath = ".hashes.json" }
+        };
+
+        var result = ConfigurationValidator.Validate(config);
+
+        Assert.False(result.IsValid);
+        Assert.Contains(result.Errors, e => e.Field == "hashVerification.mode");
+    }
+
+    [Fact]
+    public void Validate_ReturnsWarning_WhenHashVerificationEnabledWithoutDatabasePath()
+    {
+        var config = new CompilerConfiguration
+        {
+            Name = "Test",
+            Sources = [new FilterSource { Source = "test.txt" }],
+            HashVerification = new HashVerificationSettings { Mode = "warning", HashDatabasePath = null }
+        };
+
+        var result = ConfigurationValidator.Validate(config);
+
+        Assert.True(result.IsValid);
+        Assert.Contains(result.Warnings, w => w.Field == "hashVerification.hashDatabasePath");
+    }
+
+    [Fact]
+    public void Validate_ReturnsError_WhenArchivingModeInvalid()
+    {
+        var config = new CompilerConfiguration
+        {
+            Name = "Test",
+            Sources = [new FilterSource { Source = "test.txt" }],
+            Archiving = new ArchivingSettings { Mode = "manual", RetentionDays = 30 }
+        };
+
+        var result = ConfigurationValidator.Validate(config);
+
+        Assert.False(result.IsValid);
+        Assert.Contains(result.Errors, e => e.Field == "archiving.mode");
+    }
+
+    [Fact]
+    public void Validate_ReturnsError_WhenArchivingRetentionDaysIsZero()
+    {
+        var config = new CompilerConfiguration
+        {
+            Name = "Test",
+            Sources = [new FilterSource { Source = "test.txt" }],
+            Archiving = new ArchivingSettings { Mode = "automatic", RetentionDays = 0 }
+        };
+
+        var result = ConfigurationValidator.Validate(config);
+
+        Assert.False(result.IsValid);
+        Assert.Contains(result.Errors, e => e.Field == "archiving.retentionDays");
+    }
+
+    [Fact]
     public void Validate_ReturnsValid_ForCorrectConfiguration()
     {
         // Arrange

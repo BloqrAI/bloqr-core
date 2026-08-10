@@ -131,4 +131,31 @@ public interface ICompilationEventDispatcher
     Task RaiseCompilationErrorAsync(
         CompilationErrorEventArgs args,
         CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Raises the hash computed event.
+    /// </summary>
+    /// <param name="args">The event arguments.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    Task RaiseHashComputedAsync(
+        HashComputedEventArgs args,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Raises the hash verified event.
+    /// </summary>
+    /// <param name="args">The event arguments.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    Task RaiseHashVerifiedAsync(
+        HashVerifiedEventArgs args,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Raises the hash mismatch event.
+    /// </summary>
+    /// <param name="args">The event arguments.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    Task RaiseHashMismatchAsync(
+        HashMismatchEventArgs args,
+        CancellationToken cancellationToken = default);
 }
