@@ -6,7 +6,7 @@
     <RootNamespace>RulesCompiler.Console</RootNamespace>
     <AssemblyName>RulesCompiler.Console</AssemblyName>
     <Version>1.0.0</Version>
-    <Authors>jaypatrick</Authors>
+    <Authors>Bloqr</Authors>
     <Description>Console application for compiling AdGuard filter rules</Description>
   </PropertyGroup>
 

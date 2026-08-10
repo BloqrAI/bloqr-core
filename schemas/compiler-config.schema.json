@@ -1,6 +1,6 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "$id": "https://github.com/BloqrAI/bloqr-lists/schemas/compiler-config.schema.json",
+  "$id": "https://github.com/BloqrAI/bloqr-core/schemas/compiler-config.schema.json",
   "title": "Compiler Configuration Schema",
   "description": "JSON Schema for @bloqr/compiler-core filter list compilation configuration",
   "type": "object",

@@ -5,15 +5,15 @@
     <AssemblyName>RulesCompiler</AssemblyName>
     <PackageId>RulesCompiler</PackageId>
     <OutputType>Library</OutputType>
-    <Authors>jaypatrick</Authors>
-    <Company>jaypatrick</Company>
+    <Authors>Bloqr</Authors>
+    <Company>Bloqr</Company>
     <AssemblyTitle>AdGuard Filter Rules Compiler</AssemblyTitle>
     <Description>C# library for compiling AdGuard filter rules using @bloqr/compiler-core (via Deno)</Description>
     <Copyright>Copyright 2024</Copyright>
     <RootNamespace>RulesCompiler</RootNamespace>
     <Version>1.0.0</Version>
     <DocumentationFile>bin\$(Configuration)\$(TargetFramework)\RulesCompiler.xml</DocumentationFile>
-    <RepositoryUrl>https://github.com/BloqrAI/bloqr-lists.git</RepositoryUrl>
+    <RepositoryUrl>https://github.com/BloqrAI/bloqr-core.git</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
     <PackageReleaseNotes>Initial release - AdGuard hostlist-compiler .NET wrapper</PackageReleaseNotes>
   </PropertyGroup>

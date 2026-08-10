@@ -137,7 +137,25 @@ function Build-DotNetProjects {
         Write-Host "✗ Rules Compiler (.NET) build failed" -ForegroundColor Red
         $script:BuildFailed = $true
     }
-    
+
+    # Build Dashboard (.NET)
+    Write-Host "→ Building Dashboard (.NET)..."
+    try {
+        Push-Location src/bloqr-dashboard
+        try {
+            dotnet restore BloqrDashboard.slnx
+            dotnet build BloqrDashboard.slnx --no-restore --configuration $configuration
+            Write-Host "✓ Dashboard (.NET) built successfully" -ForegroundColor Green
+        }
+        finally {
+            Pop-Location
+        }
+    }
+    catch {
+        Write-Host "✗ Dashboard (.NET) build failed" -ForegroundColor Red
+        $script:BuildFailed = $true
+    }
+
     Write-Host ""
 }
 

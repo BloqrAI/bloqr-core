@@ -1,0 +1,6 @@
+<Solution>
+  <Project Path="src/Bloqr.Dashboard.Abstractions/Bloqr.Dashboard.Abstractions.csproj" />
+  <Project Path="src/Bloqr.Dashboard.Core/Bloqr.Dashboard.Core.csproj" />
+  <Project Path="src/Bloqr.Dashboard.Console/Bloqr.Dashboard.Console.csproj" />
+  <Project Path="src/Bloqr.Dashboard.Tests/Bloqr.Dashboard.Tests.csproj" />
+</Solution>

@@ -13,7 +13,7 @@
     <RootNamespace>Bloqr.Compiler.Core</RootNamespace>
     <Version>1.0.0</Version>
     <DocumentationFile>bin\$(Configuration)\$(TargetFramework)\Bloqr.Compiler.Core.xml</DocumentationFile>
-    <RepositoryUrl>https://github.com/BloqrAI/bloqr-lists.git</RepositoryUrl>
+    <RepositoryUrl>https://github.com/BloqrAI/bloqr-core.git</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
   </PropertyGroup>
 
