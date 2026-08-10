@@ -292,7 +292,16 @@ public sealed class CompilerConfigWizardMenuService : MenuServiceBase
             return Prompter.Select("Pattern file", existing);
         }
 
-        var fileName = PromptRequired("New pattern file name (e.g. \"ads.txt\")");
+        // Strip any directory component (and thus any rooted path or ../ traversal) from the
+        // user-typed name so the file can never land outside the dedicated pattern-files
+        // directory - a plain filename is what the epic's "non-user-configurable directory"
+        // requirement actually depends on.
+        var fileName = Path.GetFileName(PromptRequired("New pattern file name (e.g. \"ads.txt\")"));
+        if (string.IsNullOrWhiteSpace(fileName))
+        {
+            fileName = $"pattern-{Guid.NewGuid():N}";
+        }
+
         if (!fileName.EndsWith(".txt", StringComparison.OrdinalIgnoreCase))
         {
             fileName += ".txt";
