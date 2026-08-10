@@ -1,9 +1,9 @@
 namespace Bloqr.Dashboard.Console.Services;
 
 /// <summary>
-/// Menu for viewing, validating, and recovering the Dashboard's own configuration file. The
-/// full compiler-config generation wizard (#268) and round-trip editing/versioning (#269) build
-/// on top of this menu's foundation rather than living here.
+/// Menu for viewing, validating, and recovering the Dashboard's own configuration file. The full
+/// compiler-config generation wizard lives in <see cref="CompilerConfigWizardMenuService"/> (#268);
+/// round-trip editing/versioning of an already-generated config is #269's separate scope.
 /// </summary>
 public sealed class ConfigMenuService : MenuServiceBase
 {
