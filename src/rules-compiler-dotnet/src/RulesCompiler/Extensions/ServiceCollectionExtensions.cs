@@ -37,6 +37,8 @@ public static class ServiceCollectionExtensions
         services.TryAddSingleton<IOutputWriter, OutputWriter>();
         services.TryAddSingleton<IChunkingService, ChunkingService>();
         services.TryAddSingleton<IFileLockService, FileLockService>();
+        services.TryAddSingleton<IHashDatabaseService, HashDatabaseService>();
+        services.TryAddSingleton<IOutputPublisher, OutputPublisher>();
         services.TryAddSingleton<IRulesCompilerService, RulesCompilerService>();
 
         // Register extensibility services

@@ -9,6 +9,9 @@ public class RulesCompilerService : IRulesCompilerService
     private readonly IConfigurationReader _configurationReader;
     private readonly IFilterCompiler _filterCompiler;
     private readonly IOutputWriter _outputWriter;
+    private readonly IOutputPublisher _outputPublisher;
+    private readonly IHashDatabaseService _hashDatabaseService;
+    private readonly ICompilationEventDispatcher _eventDispatcher;
 
     private const string DefaultConfigFileName = "compiler-config.json";
     private const string DefaultRulesFileName = "adguard_user_filter.txt";
@@ -20,16 +23,25 @@ public class RulesCompilerService : IRulesCompilerService
     /// <param name="configurationReader">The configuration reader.</param>
     /// <param name="filterCompiler">The filter compiler.</param>
     /// <param name="outputWriter">The output writer.</param>
+    /// <param name="outputPublisher">Publishes compiled output to its configured durable destination.</param>
+    /// <param name="hashDatabaseService">Reads and writes the <c>.hashes.json</c> sidecar database.</param>
+    /// <param name="eventDispatcher">Raises hash-verification and lifecycle events.</param>
     public RulesCompilerService(
         ILogger<RulesCompilerService> logger,
         IConfigurationReader configurationReader,
         IFilterCompiler filterCompiler,
-        IOutputWriter outputWriter)
+        IOutputWriter outputWriter,
+        IOutputPublisher outputPublisher,
+        IHashDatabaseService hashDatabaseService,
+        ICompilationEventDispatcher eventDispatcher)
     {
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         _configurationReader = configurationReader ?? throw new ArgumentNullException(nameof(configurationReader));
         _filterCompiler = filterCompiler ?? throw new ArgumentNullException(nameof(filterCompiler));
         _outputWriter = outputWriter ?? throw new ArgumentNullException(nameof(outputWriter));
+        _outputPublisher = outputPublisher ?? throw new ArgumentNullException(nameof(outputPublisher));
+        _hashDatabaseService = hashDatabaseService ?? throw new ArgumentNullException(nameof(hashDatabaseService));
+        _eventDispatcher = eventDispatcher ?? throw new ArgumentNullException(nameof(eventDispatcher));
     }
 
     /// <inheritdoc/>
@@ -108,6 +120,18 @@ public class RulesCompilerService : IRulesCompilerService
             Verbose = options.Verbose
         };
 
+        // Read configuration once for the settings this method acts on directly
+        // (output publishing, hash verification) rather than the compiler itself.
+        var config = await ReadConfigurationAsync(actualConfigPath, options.Format, cancellationToken);
+
+        // Stage 1 of the hash-verification pipeline: hash the config file itself for
+        // the audit trail. Not checked against the sidecar database - the database's
+        // own location and policy live inside this file, so there's nothing to compare against.
+        var configHash = await _outputWriter.ComputeHashAsync(actualConfigPath, cancellationToken);
+        await _eventDispatcher.RaiseHashComputedAsync(
+            new HashComputedEventArgs(compilerOptions, actualConfigPath, "config_file", configHash, new FileInfo(actualConfigPath).Length),
+            cancellationToken);
+
         // Run compilation
         var result = await _filterCompiler.CompileAsync(compilerOptions, cancellationToken);
 
@@ -117,11 +141,61 @@ public class RulesCompilerService : IRulesCompilerService
             return result;
         }
 
+        // Publish to the configured durable destination, if any, applying the
+        // conflict strategy and archiving policy before anything downstream sees the file.
+        if (config.Output is { } output && !string.IsNullOrWhiteSpace(output.Path))
+        {
+            var resolvedOutput = new OutputSettings
+            {
+                Path = ResolvePathRelativeToConfig(output.Path, actualConfigPath),
+                ConflictStrategy = output.ConflictStrategy,
+            };
+
+            var publishResult = await _outputPublisher.PublishAsync(
+                result.OutputPath, resolvedOutput, config.Archiving, cancellationToken);
+
+            if (!publishResult.Success)
+            {
+                result.Success = false;
+                result.ErrorMessage = publishResult.ErrorMessage;
+                _logger.LogError("Failed to publish output: {Error}", publishResult.ErrorMessage);
+                return result;
+            }
+
+            result.OutputPath = publishResult.FinalPath!;
+            if (publishResult.ArchivedPath is not null)
+            {
+                _logger.LogInformation("Archived previous output to {ArchivedPath}", publishResult.ArchivedPath);
+            }
+        }
+
         // Count rules and compute hash
         result.RuleCount = await _outputWriter.CountRulesAsync(result.OutputPath, cancellationToken);
         result.OutputHash = await _outputWriter.ComputeHashAsync(result.OutputPath, cancellationToken);
 
         _logger.LogInformation("Compiled {RuleCount} rules, hash: {Hash}", result.RuleCount, result.OutputHash[..16] + "...");
+
+        await _eventDispatcher.RaiseHashComputedAsync(
+            new HashComputedEventArgs(
+                compilerOptions, result.OutputPath, "output_file", result.OutputHash, new FileInfo(result.OutputPath).Length),
+            cancellationToken);
+
+        if (config.HashVerification is { } outputHashVerification &&
+            !string.Equals(outputHashVerification.Mode, "disabled", StringComparison.OrdinalIgnoreCase) &&
+            !string.IsNullOrWhiteSpace(outputHashVerification.HashDatabasePath))
+        {
+            var hashDatabasePath = ResolvePathRelativeToConfig(outputHashVerification.HashDatabasePath, actualConfigPath);
+            var (canContinue, errorMessage) = await VerifyAndRecordHashAsync(
+                hashDatabasePath, result.OutputPath, "output_file", result.OutputHash,
+                outputHashVerification, compilerOptions, cancellationToken);
+
+            if (!canContinue)
+            {
+                result.Success = false;
+                result.ErrorMessage = errorMessage;
+                return result;
+            }
+        }
 
         // Copy to rules directory if requested
         if (options.CopyToRules)
@@ -133,10 +207,120 @@ public class RulesCompilerService : IRulesCompilerService
             if (result.CopiedToRules)
             {
                 _logger.LogInformation("Copied output to rules directory: {Path}", rulesPath);
+
+                var copiedHash = await _outputWriter.ComputeHashAsync(rulesPath, cancellationToken);
+                await _eventDispatcher.RaiseHashComputedAsync(
+                    new HashComputedEventArgs(
+                        compilerOptions, rulesPath, "copied_rules_file", copiedHash, new FileInfo(rulesPath).Length),
+                    cancellationToken);
+
+                if (config.HashVerification is { } copyHashVerification &&
+                    !string.Equals(copyHashVerification.Mode, "disabled", StringComparison.OrdinalIgnoreCase) &&
+                    !string.IsNullOrWhiteSpace(copyHashVerification.HashDatabasePath))
+                {
+                    var hashDatabasePath = ResolvePathRelativeToConfig(copyHashVerification.HashDatabasePath, actualConfigPath);
+                    var (canContinue, errorMessage) = await VerifyAndRecordHashAsync(
+                        hashDatabasePath, rulesPath, "copied_rules_file", copiedHash,
+                        copyHashVerification, compilerOptions, cancellationToken);
+
+                    if (!canContinue)
+                    {
+                        result.Success = false;
+                        result.ErrorMessage = errorMessage;
+                        return result;
+                    }
+                }
             }
         }
 
         return result;
+    }
+
+    /// <summary>
+    /// Compares a freshly computed hash against the sidecar database, raising
+    /// <c>HashVerified</c>/<c>HashMismatch</c> events and recording the hash when it is
+    /// new or a mismatch was allowed to continue.
+    /// </summary>
+    /// <returns>
+    /// Whether compilation can continue, and an error message to surface if it cannot.
+    /// </returns>
+    private async Task<(bool CanContinue, string? ErrorMessage)> VerifyAndRecordHashAsync(
+        string hashDatabasePath,
+        string itemIdentifier,
+        string itemType,
+        string computedHash,
+        HashVerificationSettings settings,
+        CompilerOptions options,
+        CancellationToken cancellationToken)
+    {
+        var sizeBytes = new FileInfo(itemIdentifier).Length;
+        var entries = await _hashDatabaseService.LoadAsync(hashDatabasePath, cancellationToken);
+
+        if (!entries.TryGetValue(itemIdentifier, out var existing))
+        {
+            // First time this item has been seen: bootstrap trust for future runs.
+            await _hashDatabaseService.RecordAsync(
+                hashDatabasePath,
+                itemIdentifier,
+                new HashDatabaseEntry
+                {
+                    Hash = computedHash,
+                    SizeBytes = sizeBytes,
+                    ComputedAt = DateTimeOffset.UtcNow,
+                    ItemType = itemType,
+                },
+                cancellationToken);
+            return (true, null);
+        }
+
+        if (string.Equals(existing.Hash, computedHash, StringComparison.OrdinalIgnoreCase))
+        {
+            await _eventDispatcher.RaiseHashVerifiedAsync(
+                new HashVerifiedEventArgs(options, itemIdentifier, itemType, existing.Hash, computedHash, sizeBytes, TimeSpan.Zero),
+                cancellationToken);
+            return (true, null);
+        }
+
+        var mismatchArgs = new HashMismatchEventArgs(options, itemIdentifier, itemType, existing.Hash, computedHash, sizeBytes);
+        var strict = settings.FailOnMismatch || string.Equals(settings.Mode, "strict", StringComparison.OrdinalIgnoreCase);
+        if (!strict)
+        {
+            mismatchArgs.Abort = false;
+            mismatchArgs.AllowContinuation = true;
+        }
+
+        await _eventDispatcher.RaiseHashMismatchAsync(mismatchArgs, cancellationToken);
+
+        var shouldAbort = mismatchArgs.Abort && !mismatchArgs.AllowContinuation;
+        if (shouldAbort)
+        {
+            return (false, mismatchArgs.AbortReason ?? $"Hash mismatch for {itemIdentifier}");
+        }
+
+        // Continuation was allowed - accept the new hash as the trusted baseline going forward.
+        await _hashDatabaseService.RecordAsync(
+            hashDatabasePath,
+            itemIdentifier,
+            new HashDatabaseEntry
+            {
+                Hash = computedHash,
+                SizeBytes = sizeBytes,
+                ComputedAt = DateTimeOffset.UtcNow,
+                ItemType = itemType,
+            },
+            cancellationToken);
+        return (true, null);
+    }
+
+    private static string ResolvePathRelativeToConfig(string path, string configPath)
+    {
+        if (Path.IsPathRooted(path))
+        {
+            return path;
+        }
+
+        var configDirectory = Path.GetDirectoryName(configPath) ?? ".";
+        return Path.GetFullPath(Path.Combine(configDirectory, path));
     }
 
     /// <inheritdoc/>

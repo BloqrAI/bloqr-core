@@ -53,6 +53,25 @@ public class CompilerConfiguration
     public string? Version { get; set; }
 
     /// <summary>
+    /// Gets or sets where the compiled output is published and how conflicts with an
+    /// existing file at that path are handled.
+    /// </summary>
+    [JsonPropertyName("output")]
+    public OutputSettings? Output { get; set; }
+
+    /// <summary>
+    /// Gets or sets the hash-verification policy for compiled artifacts.
+    /// </summary>
+    [JsonPropertyName("hashVerification")]
+    public HashVerificationSettings? HashVerification { get; set; }
+
+    /// <summary>
+    /// Gets or sets the archiving policy applied when publishing overwrites an existing output file.
+    /// </summary>
+    [JsonPropertyName("archiving")]
+    public ArchivingSettings? Archiving { get; set; }
+
+    /// <summary>
     /// Gets or sets the list of source filter lists to compile.
     /// </summary>
     /// <remarks>This is a mandatory field. At least one source must be specified.</remarks>

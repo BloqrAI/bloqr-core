@@ -155,6 +155,11 @@ Local source files are locked during compilation to prevent modification:
 3. After compilation, hash is verified
 4. If hash differs, `ZT001` critical finding is raised
 
+This SHA-256 hash is a short-lived, in-memory TOCTOU check scoped to a single compilation run
+- a different mechanism from, and a different algorithm than, the persisted SHA-384 hashes in
+[HASH_VERIFICATION.md](HASH_VERIFICATION.md#why-file-locking-uses-sha-256-while-this-system-uses-sha-384),
+which compare a file's state *across* runs via the `.hashes.json` sidecar. The split is intentional.
+
 ## Implementation Examples
 
 ### .NET

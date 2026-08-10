@@ -214,13 +214,98 @@ public class MyHashHandler : CompilationEventHandlerBase
 ```
 
 **Usage:**
+
+Handlers are registered via `AddCompilationEventHandler<T>()` on the same `IServiceCollection`
+that `AddRulesCompiler()` populates. `RulesCompilerService.RunAsync` raises the three hash
+events at each stage from the diagram above (config file, output file, and - if `--copy` /
+`CopyToRules` is used - the copied rules file), driven by the `hashVerification` block of
+the compiler configuration:
+
 ```csharp
-// To be implemented in compilation pipeline
+services.AddRulesCompiler();
+services.AddCompilationEventHandler<MyHashHandler>();
 ```
+
+```json
+{
+  "hashVerification": {
+    "mode": "warning",
+    "requireHashesForRemote": false,
+    "failOnMismatch": false,
+    "hashDatabasePath": "../bloqr-blocklists/input/.hashes.json"
+  }
+}
+```
+
+- **`mode: "disabled"`** skips the sidecar entirely - hashes are still computed and the
+  `HashComputed` event still fires (for the audit trail), but nothing is checked or recorded
+  in the `.hashes.json` database.
+- **`mode: "warning"`** (the schema default) checks the item's hash against the database. A
+  first-ever run for a given item bootstraps trust: there is nothing to compare against yet,
+  so the computed hash is simply recorded. On a later run, a match raises `HashVerified`; a
+  mismatch raises `HashMismatch` with `Abort = false` / `AllowContinuation = true` already set
+  - compilation continues and the new hash becomes the trusted baseline - unless a registered
+    handler explicitly re-tightens `Abort`/`AllowContinuation` on the event args.
+- **`mode: "strict"`** (or `failOnMismatch: true` under any mode) raises `HashMismatch` with
+  the constructor's default `Abort = true` / `AllowContinuation = false` left in place, so
+  `RunAsync` returns a failed `CompilerResult` unless a handler explicitly opts back in.
+
+Only the **config file**, **output file**, and **copied rules file** stages are implemented
+this way today. Per-source verification of local and remote inputs (`requireHashesForRemote`)
+is not yet wired up: those files are fetched by the external `@bloqr/compiler-core` Deno CLI
+process that `FilterCompiler` shells out to, not read directly by .NET, so verifying them
+would require either re-implementing source fetching in .NET or having that CLI report
+per-source hashes back over stdout/JSON for `RulesCompilerService` to parse. Tracked as
+follow-up work.
+
+### `.hashes.json` sidecar format
+
+The database at `hashVerification.hashDatabasePath` (resolved relative to the config file's
+directory) is a flat JSON object keyed by item path:
+
+```json
+{
+  "/abs/path/to/output/adguard_user_filter.txt": {
+    "hash": "3f8a1c...(96 hex chars)...",
+    "sizeBytes": 48213,
+    "computedAt": "2026-08-10T12:34:56.789Z",
+    "itemType": "output_file"
+  }
+}
+```
+
+This file, not a hash embedded in the output itself, is the primary trust mechanism: an
+embedded hash would have to be recomputed on every manual edit to stay meaningful, while the
+sidecar records what the file looked like the last time the compiler verified it.
+
+### Output conflict strategy and archiving
+
+`RulesCompilerService.RunAsync` also applies the config's `output` and `archiving` blocks (via
+`IOutputPublisher`) immediately after a successful compile and before the output-file hash
+stage, so the recorded/verified hash always describes the file at its durable, published path:
+
+```json
+{
+  "output": { "path": "../bloqr-blocklists/output/adguard_user_filter.txt", "conflictStrategy": "rename" },
+  "archiving": { "enabled": true, "mode": "automatic", "retentionDays": 90 }
+}
+```
+
+`conflictStrategy` (matching `schemas/compiler-config.schema.json`'s enum exactly - the
+`rename`/`overwrite`/`error` values below, not the `rename`/archive/replace prose that
+appeared in an earlier draft of this feature's tracking issue):
+
+- **`rename`** (default) - the existing file at `output.path` is left untouched; the new
+  output is written alongside it as `name_1.ext`, `name_2.ext`, etc.
+- **`overwrite`** - the existing file is replaced. If `archiving.enabled` is `true`, it is
+  moved into an `archive/` subdirectory next to `output.path` first, timestamped, and entries
+  in that subdirectory older than `archiving.retentionDays` are pruned.
+- **`error`** - compilation fails with a clear message instead of touching the existing file.
 
 ### Python
 
-To be implemented (similar pattern to Rust/TypeScript)
+To be implemented (similar pattern to Rust/TypeScript). The `.hashes.json` format and
+conflict/archiving semantics above are language-agnostic and should be reused as-is.
 
 ## Use Cases
 
@@ -288,6 +373,21 @@ impl CompilationEventHandler for DatabaseTracker {
 4. **MITM Prevention**: Hash verification on downloads prevents man-in-the-middle attacks
 5. **Immutable Audit Trail**: Hash events create an immutable log of all file states
 
+### Why file locking uses SHA-256 while this system uses SHA-384
+
+This is intentional, not accidental drift: the two hashes protect against different threats.
+`IFileLockService` (see [event-pipeline.md](event-pipeline.md#file-locking)) uses SHA-256
+purely to detect whether a locked local source file changed *during a single compilation run*
+(a TOCTOU check) - the hash never leaves process memory, isn't persisted, and is compared
+moments later, so SHA-256's collision resistance is more than sufficient and its lower
+computational cost matters more since it runs on every locked file every run. The
+hash-verification system in this document persists hashes to disk in the `.hashes.json`
+sidecar and compares them *across* runs, potentially long after the fact, as an audit trail
+and tamper-evidence record - a higher-stakes, longer-lived use case that warrants SHA-384's
+larger margin. `.NET`'s `OutputWriter.ComputeHashAsync` (the SHA-384 implementation feeding
+this document's events) and `FileLockService`'s internal SHA-256 computation are deliberately
+separate code paths for this reason; neither should be changed to match the other.
+
 ## Testing
 
 Example tests are included in `examples/hash_audit_handler.rs` demonstrating:
@@ -305,7 +405,10 @@ See `examples/hash_audit_handler.rs` for a complete implementation of:
 ## Future Enhancements
 
 Potential additions:
-- Hash database persistence across compilations
+- ~~Hash database persistence across compilations~~ - implemented for .NET via the
+  `.hashes.json` sidecar and `IHashDatabaseService`; still needed for Python.
+- Per-source (local and remote input) hash verification, requiring either re-implementing
+  source fetching in .NET or having `@bloqr/compiler-core` report per-source hashes back
 - Historical hash tracking and drift detection
 - Integration with external validation services
 - Support for multiple hash algorithms (SHA-256, BLAKE3)
