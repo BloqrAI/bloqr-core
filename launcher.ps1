@@ -104,6 +104,7 @@ function Show-MainMenu {
         $choice = Show-Menu -Title "Main Menu" -Options @(
             "🔨 Build Tools"
             "⚙️  Compile Filter Rules"
+            "🖥️  Bloqr Dashboard"
             "🔍 Validation & Testing"
             "📦 Project Management"
             "ℹ️  System Information"
@@ -113,10 +114,11 @@ function Show-MainMenu {
         switch ($choice) {
             "1" { Show-BuildMenu }
             "2" { Show-RulesMenu }
-            "3" { Show-ValidationMenu }
-            "4" { Show-ProjectMenu }
-            "5" { Show-SystemInfo }
-            "6" { exit 0 }
+            "3" { Invoke-Dashboard }
+            "4" { Show-ValidationMenu }
+            "5" { Show-ProjectMenu }
+            "6" { Show-SystemInfo }
+            "7" { exit 0 }
             default { Write-Host "Invalid choice" -ForegroundColor Red; Start-Sleep -Seconds 1 }
         }
     }
@@ -277,6 +279,21 @@ function Show-RulesMenu {
             default { Write-Host "Invalid choice" -ForegroundColor Red; Start-Sleep -Seconds 1 }
         }
     }
+}
+
+# Run the Bloqr Dashboard
+function Invoke-Dashboard {
+    Show-Banner
+    Write-Host "Bloqr Dashboard" -ForegroundColor Magenta
+    Write-Host ""
+    Push-Location src/bloqr-dashboard
+    try {
+        dotnet run --project src/Bloqr.Dashboard.Console
+    }
+    finally {
+        Pop-Location
+    }
+    Pause
 }
 
 # AdGuard API Clients have moved to BloqrAI/bloqr-apiclients; this launcher
