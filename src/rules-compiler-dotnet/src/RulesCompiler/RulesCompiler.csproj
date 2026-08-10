@@ -15,7 +15,7 @@
     <DocumentationFile>bin\$(Configuration)\$(TargetFramework)\RulesCompiler.xml</DocumentationFile>
     <RepositoryUrl>https://github.com/BloqrAI/bloqr-core.git</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
-    <PackageReleaseNotes>Initial release - AdGuard hostlist-compiler .NET wrapper</PackageReleaseNotes>
+    <PackageReleaseNotes>.NET wrapper for @bloqr/compiler-core, shelled out to via Deno</PackageReleaseNotes>
   </PropertyGroup>
 
   <ItemGroup>

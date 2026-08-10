@@ -15,7 +15,13 @@
     <DocumentationFile>bin\$(Configuration)\$(TargetFramework)\Bloqr.Compiler.Core.xml</DocumentationFile>
     <RepositoryUrl>https://github.com/BloqrAI/bloqr-core.git</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
+    <PackageProjectUrl>https://github.com/BloqrAI/bloqr-core</PackageProjectUrl>
+    <PackageLicenseFile>LICENSE</PackageLicenseFile>
   </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="..\..\..\..\LICENSE" Pack="true" PackagePath="" />
+  </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="JsonSchema.Net" />

@@ -9,6 +9,7 @@ The repository uses GitHub Actions to automatically build and attach binaries to
 - **RulesCompiler.Console** - .NET rules compiler console app (Windows, Linux, macOS)
 - **rules-compiler** - Rust rules compiler (Windows, Linux, macOS)
 - **rules-compiler** - Python wheel package (cross-platform)
+- **Bloqr.Compiler.Abstractions** / **Bloqr.Compiler.Core** - the common .NET library, published as NuGet packages to GitHub Packages (see [`docs/architecture/nuget-distribution-strategy.md`](architecture/nuget-distribution-strategy.md))
 
 > AdGuard.ConsoleUI (the API client console UI) moved to [`BloqrAI/bloqr-apiclients`](https://github.com/BloqrAI/bloqr-apiclients) — see that repo's own releases for it.
 
@@ -99,6 +100,10 @@ The Rust binaries are built in **release mode** with:
 
 The Python wheel package is built as a **universal wheel** compatible with Python 3.9+.
 
+### NuGet Packages
+
+`Bloqr.Compiler.Abstractions` and `Bloqr.Compiler.Core` are packed with `dotnet pack` and pushed to GitHub Packages' NuGet feed (`https://nuget.pkg.github.com/BloqrAI/index.json`), authenticated with the workflow's own `GITHUB_TOKEN` — no separate secret to manage. The push is idempotent (`--skip-duplicate`), so re-running the workflow for an already-published version is a no-op. See [`docs/architecture/nuget-distribution-strategy.md`](architecture/nuget-distribution-strategy.md) for why these two libraries are published while everything else in the .NET solution stays on in-repo project references.
+
 ## Troubleshooting
 
 ### Workflow Fails
@@ -183,6 +188,7 @@ python -m build
 - `src/rules-compiler-dotnet/src/RulesCompiler.Console/RulesCompiler.Console.csproj` - .NET Rules Compiler project
 - `src/rules-compiler-rust/Cargo.toml` - Rust project configuration
 - `src/rules-compiler-python/pyproject.toml` - Python project configuration
+- `docs/architecture/nuget-distribution-strategy.md` - NuGet publishing decision record for the common .NET library
 
 ## Support
 
