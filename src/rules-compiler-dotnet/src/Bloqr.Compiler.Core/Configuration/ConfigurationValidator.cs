@@ -24,6 +24,11 @@ public static class ConfigurationValidator
     {
         var result = new ValidationResult();
 
+        // Structural JSON Schema validation first, so shape/type/enum violations the schema
+        // catches (but these hand-written business rules below don't) get schema-accurate messages
+        // rather than surfacing as a confusing downstream failure.
+        CompilerConfigJsonSchemaValidator.Validate(config, result);
+
         // Validate required fields
         if (string.IsNullOrWhiteSpace(config.Name))
         {

@@ -460,7 +460,7 @@ GitHub Actions workflows validate:
 
 - **Main filter list**: `output/adguard_dns_filter.txt` in [`BloqrAI/bloqr-blocklists`](https://github.com/BloqrAI/bloqr-blocklists)
 - **Compiler configs**: `src/rules-compiler-*/`
-- **JSON Schemas**: `schemas/compiler-config.schema.json`, `schemas/dashboard-config.schema.json` (not yet wired into .NET's `ConfigurationValidator`/`ConfigurationReader` — see #258)
+- **JSON Schemas**: `schemas/compiler-config.schema.json`, `schemas/dashboard-config.schema.json` — `compiler-config.schema.json` is wired into `Bloqr.Compiler.Core`'s `ConfigurationValidator` via `CompilerConfigJsonSchemaValidator` (#258); the Dashboard's `ICompilerConfigSchemaValidator` delegates to the same validator rather than re-embedding the schema
 - **Deno configs**: `src/*/deno.json`
 - **OpenAPI spec**: `api/openapi.yaml` in [`BloqrAI/bloqr-apiclients`](https://github.com/BloqrAI/bloqr-apiclients)
 - **Docker config**: `Dockerfile.warp`, `docker-compose.yml`, `.dockerignore`
