@@ -86,10 +86,10 @@ public sealed class GitCompilerConfigVersionHistoryService : ICompilerConfigVers
         }
 
         var revisions = new List<CompilerConfigRevision>();
-        var lines = stdOut.Split('\n', StringSplitOptions.RemoveEmptyEntries).Select(rawLine => rawLine.TrimEnd('\r'));
-        foreach (var line in lines)
+        var parsedLines = stdOut.Split('\n', StringSplitOptions.RemoveEmptyEntries)
+            .Select(rawLine => rawLine.TrimEnd('\r').Split(FieldSeparator));
+        foreach (var parts in parsedLines)
         {
-            var parts = line.Split(FieldSeparator);
             if (parts.Length != 4 || !DateTimeOffset.TryParse(parts[2], out var date))
             {
                 continue;
