@@ -38,7 +38,10 @@ public static class Program
         try
         {
             var services = ConfigureServices(configuration, paths, bootstrapLogLevel);
-            using var serviceProvider = services.BuildServiceProvider();
+
+            // `await using` drains QueuedCompilationEventDispatcher's background queue via
+            // DisposeAsync before the process exits (#274).
+            await using var serviceProvider = services.BuildServiceProvider();
 
             var app = serviceProvider.GetRequiredService<DashboardApplication>();
             return await app.RunAsync(args, cancellationSource.Token).ConfigureAwait(false);
@@ -121,6 +124,12 @@ public static class Program
         services.AddDashboardLogging(paths, bootstrapLogLevel);
 
         services.AddRulesCompiler();
+
+        // Fire-and-forget events (source loaded, file locks, chunk/hash completion, etc.) are
+        // processed on a background queue so a slow handler never blocks the compilation
+        // pipeline or the Dashboard's UI thread (#274).
+        services.AddQueuedCompilationEventDispatching();
+
         services.AddCompilationEventHandler<CompilationLoggingEventHandler>();
 
         services.AddSingleton<IDashboardConfigurationStore, DashboardConfigurationStore>();

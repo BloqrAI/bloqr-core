@@ -161,6 +161,48 @@ This SHA-256 hash is a short-lived, in-memory TOCTOU check scoped to a single co
 [HASH_VERIFICATION.md](HASH_VERIFICATION.md#why-file-locking-uses-sha-256-while-this-system-uses-sha-384),
 which compare a file's state *across* runs via the `.hashes.json` sidecar. The split is intentional.
 
+## Durability: Retry and Queueing (.NET)
+
+Per the epic's "use queueing, Polly, etc for durability" ask (#274), the .NET
+`CompilationEventDispatcher` and its optional `QueuedCompilationEventDispatcher` decorator add
+two independent layers of resilience on top of the pipeline described above.
+
+### Polly retry (always on)
+
+Every individual handler invocation - across all 17 `Raise*Async` methods - runs through a
+shared Polly `ResiliencePipeline`: up to 3 retries with exponential backoff and jitter, for
+`IOException`, `TimeoutException`, and `HttpRequestException`. This absorbs transient faults in
+I/O-bound handlers (a locked log file, a flaky download in a future source-fetching handler)
+without masking genuine bugs - `OperationCanceledException` and other exception types are
+deliberately excluded, so cancellation and real errors propagate immediately. This is unconditional:
+it doesn't change any event's existing throw-vs-swallow behavior, only makes each handler call more
+resilient to transient failures before that behavior kicks in.
+
+### Background queueing (opt-in)
+
+`QueuedCompilationEventDispatcher` decorates `ICompilationEventDispatcher`, splitting the 17
+events into two groups:
+
+- **Pipeline-critical events** - the ones whose `EventArgs` the pipeline inspects afterward to
+  decide whether to continue (`Cancel`/`Abort`/`Skip`), or whose failure the pipeline must
+  observe via a rethrown exception (`CompilationStarting`, `ConfigurationLoaded`, `Validation`,
+  `SourceLoading`, `ChunkStarted`, `ChunksMerging`, `HashMismatch`) - are passed straight through
+  synchronously. Queueing these would silently break the zero-trust abort semantics described
+  above.
+- **Fire-and-forget events** - the ones `CompilationEventDispatcher` already logs-and-continues
+  on handler failure for (`SourceLoaded`, the three `FileLock*` events, `ChunkCompleted`,
+  `ChunksMerged`, `CompilationCompleted`, `CompilationError`, `HashComputed`, `HashVerified`) -
+  are enqueued onto an in-process `System.Threading.Channels.Channel` and processed by a single
+  background consumer, so a slow handler (writing structured logs, updating a future progress UI)
+  never blocks the compilation pipeline that raised the event.
+
+This is opt-in, not the default, via `services.AddQueuedCompilationEventDispatching()` (call it
+*after* `AddRulesCompiler()` - the last registration of `ICompilationEventDispatcher` wins).
+Both `RulesCompiler.Console` and `Bloqr.Dashboard.Console` register it. Because the queue is
+drained by a background task, callers that build their own `ServiceProvider` should dispose it
+with `await using` (not a plain `using`) so `QueuedCompilationEventDispatcher.DisposeAsync()`
+completes the channel and awaits any still-pending queued events before the process exits.
+
 ## Implementation Examples
 
 ### .NET
