@@ -22,7 +22,7 @@ public sealed class DashboardJsonLogFormatter : ITextFormatter
         ArgumentNullException.ThrowIfNull(logEvent);
         ArgumentNullException.ThrowIfNull(output);
 
-        var messageWriter = new StringWriter();
+        using var messageWriter = new StringWriter();
         logEvent.RenderMessage(messageWriter);
 
         var entry = new Dictionary<string, object?>
