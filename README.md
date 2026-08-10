@@ -6,7 +6,7 @@ A multi-language toolkit for compiling and validating AdGuard-syntax ad-blocking
 
 ## What's in this repo
 
-- **Rules compilers** for TypeScript/Deno, C#/.NET, Python, and Rust, plus bash/zsh shell scripts — all reading the same JSON/YAML/TOML configuration schema and producing identical output.
+- **Rules compilers** for TypeScript/Deno, C#/.NET, Python, and Rust, plus bash/zsh shell scripts — all reading the same JSON/JSONC configuration schema and producing identical output.
 - **`@bloqr/compiler-core`** (`src/adblock-compiler-core/`) — the canonical, dependency-free compilation engine, published on [JSR](https://jsr.io/@bloqr/compiler-core). The .NET, Python, and Rust compilers shell out to it via Deno rather than reimplementing compilation logic.
 - **RulesCompiler PowerShell toolkit** (`src/rules-compiler-powershell/`) — class-based modules (`Common`, `RulesCompiler`, `AdGuardWebhook`) with Pester test suites.
 - **`rules-validator`** (`src/rules-validator/`) — a Rust validation library and CLI for filter/config validation (hash verification, URL security, syntax linting).
@@ -52,7 +52,7 @@ deno task test                 # run tests
 ```bash
 cd src/rules-compiler-dotnet
 dotnet restore RulesCompiler.slnx
-dotnet run --project src/RulesCompiler.Console -- --config config.yaml
+dotnet run --project src/RulesCompiler.Console -- --config config.json
 dotnet test RulesCompiler.slnx
 ```
 
@@ -61,7 +61,7 @@ dotnet test RulesCompiler.slnx
 ```bash
 cd src/rules-compiler-python
 pip install -e ".[dev]"
-rules-compiler -c config.yaml
+rules-compiler -c config.json
 pytest
 ```
 
@@ -70,15 +70,15 @@ pytest
 ```bash
 cd src/rules-compiler-rust
 cargo build --release
-cargo run -- -c config.yaml
+cargo run -- -c config.json
 cargo test
 ```
 
 ### Shell (bash/zsh)
 
 ```bash
-./src/rules-compiler-shell/bash/compile-rules.sh -c config.yaml -r
-./src/rules-compiler-shell/zsh/compile-rules.zsh -c config.yaml -r
+./src/rules-compiler-shell/bash/compile-rules.sh -c config.json -r
+./src/rules-compiler-shell/zsh/compile-rules.zsh -c config.json -r
 ```
 
 ### PowerShell
@@ -88,7 +88,7 @@ Import-Module ./src/rules-compiler-powershell/RulesCompiler/RulesCompiler.psd1
 Invoke-RulesCompiler
 ```
 
-Every compiler supports JSON, YAML, and TOML configuration, the full transformation set (`Deduplicate`, `Validate`, `RemoveComments`, `Compress`, and more — see [Configuration Reference](docs/configuration-reference.md)), and per-source inclusions/exclusions/transformations.
+Every compiler supports JSON configuration (the .NET compiler and Dashboard also read JSONC), the full transformation set (`Deduplicate`, `Validate`, `RemoveComments`, `Compress`, and more — see [Configuration Reference](docs/configuration-reference.md)), and per-source inclusions/exclusions/transformations. YAML and TOML remain supported for backward compatibility but are no longer documented — see [Configuration Reference](docs/configuration-reference.md#supported-formats).
 
 ## Docker development environment
 

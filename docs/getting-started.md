@@ -103,45 +103,45 @@ Invoke-RulesCompiler
 
 ### 1. Create a Configuration File
 
-Create `my-config.yaml`:
+Create `my-config.json`:
 
-```yaml
-name: My Ad-Blocking Filter
-description: Custom filter list for blocking ads and trackers
-
-sources:
-  - name: EasyList
-    source: https://easylist.to/easylist/easylist.txt
-    type: adblock
-    transformations:
-      - Validate
-      - RemoveModifiers
-
-  - name: AdGuard Base
-    source: https://raw.githubusercontent.com/AdguardTeam/FiltersRegistry/master/filters/filter_2_Base/filter.txt
-    type: adblock
-
-transformations:
-  - Deduplicate
-  - RemoveEmptyLines
-  - TrimLines
-  - InsertFinalNewLine
+```json
+{
+  "name": "My Ad-Blocking Filter",
+  "description": "Custom filter list for blocking ads and trackers",
+  "sources": [
+    {
+      "name": "EasyList",
+      "source": "https://easylist.to/easylist/easylist.txt",
+      "type": "adblock",
+      "transformations": ["Validate", "RemoveModifiers"]
+    },
+    {
+      "name": "AdGuard Base",
+      "source": "https://raw.githubusercontent.com/AdguardTeam/FiltersRegistry/master/filters/filter_2_Base/filter.txt",
+      "type": "adblock"
+    }
+  ],
+  "transformations": ["Deduplicate", "RemoveEmptyLines", "TrimLines", "InsertFinalNewLine"]
+}
 ```
+
+See [Configuration Reference](configuration-reference.md#supported-formats) for JSONC (commented JSON) support.
 
 ### 2. Compile Your Filter
 
 ```bash
 # TypeScript (Deno)
-deno task compile -- -c my-config.yaml -o my-filter.txt
+deno task compile -- -c my-config.json -o my-filter.txt
 
 # .NET
-dotnet run --project src/RulesCompiler.Console -- -c my-config.yaml -o my-filter.txt
+dotnet run --project src/RulesCompiler.Console -- -c my-config.json -o my-filter.txt
 
 # Python
-rules-compiler -c my-config.yaml -o my-filter.txt
+rules-compiler -c my-config.json -o my-filter.txt
 
 # Rust
-cargo run -- -c my-config.yaml -o my-filter.txt
+cargo run -- -c my-config.json -o my-filter.txt
 ```
 
 ### 3. Review the Output
