@@ -23,7 +23,7 @@ public sealed class LogEntryReaderTests : IDisposable
     }
 
     [Fact]
-    public async Task ReadAsync_ParsesEntriesWrittenByTheDashboardFormatter()
+    public async Task ReadAsync_ParsesEntriesWrittenByTheSharedStructuredFormatter()
     {
         WriteLogEvents();
 
@@ -74,7 +74,7 @@ public sealed class LogEntryReaderTests : IDisposable
 
         using var logger = new LoggerConfiguration()
             .MinimumLevel.Verbose()
-            .WriteTo.File(new DashboardJsonLogFormatter(), logPath, shared: true)
+            .WriteTo.File(new StructuredJsonLogFormatter(), logPath, shared: true)
             .CreateLogger();
 
         logger.Information("First message");

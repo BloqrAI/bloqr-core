@@ -1,7 +1,7 @@
 using Serilog.Events;
 using Serilog.Formatting;
 
-namespace Bloqr.Dashboard.Core.Logging;
+namespace Bloqr.Compiler.Core.Logging;
 
 /// <summary>
 /// Serilog text formatter emitting one JSON line per event matching
@@ -9,10 +9,11 @@ namespace Bloqr.Dashboard.Core.Logging;
 /// <c>messageTemplate</c>, <c>message</c>, and, when present, <c>exception</c>,
 /// <c>sourceContext</c>, <c>application</c>, and any extra structured <c>properties</c>.
 /// Written by hand rather than relying on a built-in formatter (e.g. Serilog's compact JSON
-/// formatter) so the on-disk shape is guaranteed to match the schema the Dashboard's log viewer
-/// (<see cref="LogEntryReader"/>) and any other consumer parse against.
+/// formatter) so the on-disk shape is guaranteed to match the schema, byte-for-byte, across every
+/// app in this repo that logs through <see cref="LoggingServiceCollectionExtensions.AddStructuredLogging"/>
+/// — not just the Dashboard's own log viewer, but any other consumer parsing these files.
 /// </summary>
-public sealed class DashboardJsonLogFormatter : ITextFormatter
+public sealed class StructuredJsonLogFormatter : ITextFormatter
 {
     private static readonly JsonSerializerOptions SerializerOptions = new();
 

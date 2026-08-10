@@ -9,6 +9,18 @@ namespace Bloqr.Dashboard.Console.Services;
 /// </summary>
 public sealed class DiagnosticsMenuService : MenuServiceBase
 {
+    // Remediation guidance for the "deleted binaries" failure mode: a tool being missing isn't
+    // something the Dashboard can safely auto-fix (installing arbitrary external tools without
+    // asking is exactly the kind of thing the epic elsewhere says to always confirm first), but
+    // it can point the user at the fix instead of just reporting "not found".
+    private static readonly IReadOnlyDictionary<string, string> RemediationGuidance = new Dictionary<string, string>
+    {
+        ["dotnet"] = "Install the .NET SDK from https://dotnet.microsoft.com/download (10.0 or later).",
+        ["deno"] = "Install Deno from https://deno.com/ - required by the compilation pipeline.",
+        ["cargo"] = "Install Rust (which includes cargo) from https://rustup.rs/.",
+        ["hostlist-compiler"] = "Optional legacy fallback; install via 'npm install -g @adguard/hostlist-compiler' if needed.",
+    };
+
     private readonly CommandHelper _commandHelper;
     private readonly IDashboardPaths _paths;
     private readonly IDashboardConfigurationStore _configStore;
@@ -48,13 +60,29 @@ public sealed class DiagnosticsMenuService : MenuServiceBase
         table.AddColumn("Status");
         table.AddColumn("Path");
 
+        var missingTools = new List<string>();
         foreach (var tool in new[] { "dotnet", "deno", "cargo", "hostlist-compiler" })
         {
             var path = _commandHelper.FindCommand(tool);
             table.AddRow(tool, path is null ? "not found" : "found", path ?? "-");
+            if (path is null)
+            {
+                missingTools.Add(tool);
+            }
         }
 
         Renderer.RenderTable(table);
+
+        if (missingTools.Count > 0)
+        {
+            Renderer.WriteLine();
+            Renderer.WriteStyled("Missing tools — how to fix:", TextStyle.Warning);
+            foreach (var tool in missingTools.Where(RemediationGuidance.ContainsKey))
+            {
+                Renderer.WriteLine($"  {tool}: {RemediationGuidance[tool]}");
+            }
+        }
+
         return Task.CompletedTask;
     }
 

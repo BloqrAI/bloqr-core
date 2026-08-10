@@ -18,4 +18,8 @@
     <PackageTags>bloqr;dashboard;abstractions</PackageTags>
   </PropertyGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\rules-compiler-dotnet\src\Bloqr.Compiler.Abstractions\Bloqr.Compiler.Abstractions.csproj" />
+  </ItemGroup>
+
 </Project>

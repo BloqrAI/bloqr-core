@@ -62,7 +62,10 @@ public class Program
         // Configuration
         services.AddSingleton(configuration);
 
-        // Logging
+        // Logging: console output as before, plus structured JSON file logging (dedicated
+        // per-app log directory, 24h-or-1MB rollover) matching the convention shared with
+        // bloqr-dashboard - see Bloqr.Compiler.Core.Logging.LoggingServiceCollectionExtensions.
+        var logDirectory = Path.Combine(AppContext.BaseDirectory, "logs");
         services.AddLogging(builder =>
         {
             builder.AddConfiguration(configuration.GetSection("Logging"));
@@ -71,6 +74,7 @@ public class Program
             {
                 options.FormatterName = "simple";
             });
+            builder.AddStructuredFileLogging("rules-compiler-dotnet", logDirectory, LogEventLevel.Information);
         });
 
         // Add RulesCompiler services

@@ -28,8 +28,65 @@ public sealed class LogsMenuService : MenuServiceBase
     {
         ["Tail last 50 entries"] = () => ShowEntriesAsync(new LogEntryFilter { Tail = 50 }),
         ["Show errors and above"] = () => ShowEntriesAsync(new LogEntryFilter { MinimumLevel = "Error" }),
+        ["Filter by application"] = FilterByApplicationAsync,
+        ["Filter by time range"] = FilterByTimeRangeAsync,
         ["List log files"] = ListLogFilesAsync,
     };
+
+    private async Task FilterByApplicationAsync()
+    {
+        var allEntries = await _logEntryReader.ReadAsync(new LogEntryFilter()).ConfigureAwait(false);
+        var applications = allEntries
+            .Select(e => e.Application)
+            .Where(a => !string.IsNullOrWhiteSpace(a))
+            .Select(a => a!)
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .OrderBy(a => a, StringComparer.OrdinalIgnoreCase)
+            .ToList();
+
+        if (applications.Count == 0)
+        {
+            Renderer.WriteStyled("No log entries with an application tag were found.", TextStyle.Warning);
+            return;
+        }
+
+        var application = Prompter.Select("Filter by application", applications);
+        await ShowEntriesAsync(new LogEntryFilter { Application = application }).ConfigureAwait(false);
+    }
+
+    private async Task FilterByTimeRangeAsync()
+    {
+        var choice = Prompter.Select(
+            "Time range",
+            ["Last hour", "Last 24 hours", "Last 7 days", "Custom range"]);
+
+        var now = DateTimeOffset.UtcNow;
+        var filter = choice switch
+        {
+            "Last hour" => new LogEntryFilter { Since = now.AddHours(-1) },
+            "Last 24 hours" => new LogEntryFilter { Since = now.AddDays(-1) },
+            "Last 7 days" => new LogEntryFilter { Since = now.AddDays(-7) },
+            _ => await PromptCustomRangeAsync().ConfigureAwait(false),
+        };
+
+        await ShowEntriesAsync(filter).ConfigureAwait(false);
+    }
+
+    private async Task<LogEntryFilter> PromptCustomRangeAsync()
+    {
+        var sinceText = await Prompter.PromptAsync(
+            "Since (ISO 8601, e.g. 2026-08-10T00:00:00Z; leave blank for no lower bound)",
+            defaultValue: string.Empty).ConfigureAwait(false);
+        var untilText = await Prompter.PromptAsync(
+            "Until (ISO 8601; leave blank for no upper bound)",
+            defaultValue: string.Empty).ConfigureAwait(false);
+
+        return new LogEntryFilter
+        {
+            Since = DateTimeOffset.TryParse(sinceText, out var since) ? since : null,
+            Until = DateTimeOffset.TryParse(untilText, out var until) ? until : null,
+        };
+    }
 
     private async Task ShowEntriesAsync(LogEntryFilter filter)
     {

@@ -1,17 +1,16 @@
-using Serilog;
 using Serilog.Events;
 
 namespace Bloqr.Dashboard.Core.Logging;
 
 /// <summary>
-/// Registers the Dashboard's structured JSON logging: a dedicated log directory, rollover at
-/// 24 hours or 1024 KB (whichever comes first, per the epic's explicit requirement), and a
-/// user-configurable minimum level defaulting to <see cref="DashboardLogLevel.Error"/>.
+/// Registers the Dashboard's structured JSON logging by mapping its own
+/// <see cref="DashboardLogLevel"/> and profile-driven log directory down onto the shared
+/// <c>AddStructuredLogging</c> extension on <see cref="Bloqr.Compiler.Core.Logging.LoggingServiceCollectionExtensions"/>
+/// from <c>Bloqr.Compiler.Core</c> — the actual formatter, rollover policy, and file-naming
+/// convention live there so every app in this repo shares them (issue #275).
 /// </summary>
 public static class ServiceCollectionExtensions
 {
-    private const long MaxFileSizeBytes = 1024 * 1024;
-
     /// <summary>
     /// Configures Serilog as the logging provider, writing structured JSON log lines (matching
     /// <c>schemas/log-entry.schema.json</c>) to <c>IDashboardPaths.LogDirectory</c>.
@@ -27,46 +26,17 @@ public static class ServiceCollectionExtensions
     {
         ArgumentNullException.ThrowIfNull(paths);
 
-        if (minimumLevel == DashboardLogLevel.Silent)
-        {
-            Log.Logger = Serilog.Core.Logger.None;
-        }
-        else
-        {
-            Directory.CreateDirectory(paths.LogDirectory);
-            var logPath = Path.Combine(paths.LogDirectory, "bloqr-dashboard-.jsonl");
-
-            Log.Logger = new LoggerConfiguration()
-                .MinimumLevel.Is(ToSerilogLevel(minimumLevel))
-                .Enrich.WithProperty("Application", "bloqr-dashboard")
-                .WriteTo.File(
-                    new DashboardJsonLogFormatter(),
-                    logPath,
-                    rollingInterval: RollingInterval.Day,
-                    fileSizeLimitBytes: MaxFileSizeBytes,
-                    rollOnFileSizeLimit: true,
-                    retainedFileCountLimit: null,
-                    shared: true)
-                .CreateLogger();
-        }
-
-        services.AddLogging(builder =>
-        {
-            builder.ClearProviders();
-            builder.AddSerilog(dispose: true);
-        });
-
-        return services;
+        return services.AddStructuredLogging("bloqr-dashboard", paths.LogDirectory, ToSerilogLevel(minimumLevel));
     }
 
-    private static LogEventLevel ToSerilogLevel(DashboardLogLevel level) => level switch
+    private static LogEventLevel? ToSerilogLevel(DashboardLogLevel level) => level switch
     {
         DashboardLogLevel.Trace => LogEventLevel.Verbose,
         DashboardLogLevel.Debug => LogEventLevel.Debug,
         DashboardLogLevel.Info => LogEventLevel.Information,
         DashboardLogLevel.Warn => LogEventLevel.Warning,
         DashboardLogLevel.Error => LogEventLevel.Error,
-        DashboardLogLevel.Silent => LogEventLevel.Fatal,
+        DashboardLogLevel.Silent => null,
         _ => LogEventLevel.Error,
     };
 }

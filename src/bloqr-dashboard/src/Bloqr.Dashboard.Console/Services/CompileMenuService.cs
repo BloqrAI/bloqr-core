@@ -9,6 +9,7 @@ public sealed class CompileMenuService : MenuServiceBase
 {
     private readonly IRulesCompilerService _compilerService;
     private readonly IDashboardConfigurationStore _configStore;
+    private readonly ICompilerConfigGuard _configGuard;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="CompileMenuService"/> class.
@@ -18,11 +19,13 @@ public sealed class CompileMenuService : MenuServiceBase
         IConsolePrompter prompter,
         IRulesCompilerService compilerService,
         IDashboardConfigurationStore configStore,
+        ICompilerConfigGuard configGuard,
         ILogger<CompileMenuService> logger)
         : base(renderer, prompter, logger)
     {
         _compilerService = compilerService;
         _configStore = configStore;
+        _configGuard = configGuard;
     }
 
     /// <inheritdoc />
@@ -35,6 +38,8 @@ public sealed class CompileMenuService : MenuServiceBase
         ["Compile using a specific config file"] = CompileSpecificConfigAsync,
         ["Validate a config file"] = ValidateConfigAsync,
         ["Show available transformations"] = ShowTransformationsAsync,
+        ["List backups for a compiler config"] = ListCompilerConfigBackupsAsync,
+        ["Restore a compiler config from backup"] = RestoreCompilerConfigAsync,
     };
 
     private async Task CompileActiveProfileAsync()
@@ -73,6 +78,39 @@ public sealed class CompileMenuService : MenuServiceBase
 
     private async Task RunCompilationAsync(string configPath)
     {
+        // Back up the referenced compiler config on a healthy load (or offer recovery on a
+        // corrupt/missing one) before handing off to the actual compiler, so a later edit that
+        // breaks this file has something to recover from. RunAsync below re-reads and
+        // re-validates the file itself either way - this is a resilience layer, not a substitute.
+        var guardResult = await Renderer.StatusAsync(
+            $"Checking {configPath}...",
+            () => _configGuard.LoadAsync(configPath)).ConfigureAwait(false);
+
+        if (!guardResult.Success)
+        {
+            Renderer.WriteStyled($"Compiler config check failed: {guardResult.Message}", TextStyle.Warning);
+
+            if (_configGuard.ListBackups(configPath).Count == 0)
+            {
+                Renderer.WriteStyled("No backups are available to recover from.", TextStyle.Error);
+                return;
+            }
+
+            if (!Prompter.Confirm("Attempt to recover from the most recent valid backup?", false))
+            {
+                return;
+            }
+
+            var recovery = await _configGuard.RecoverAsync(configPath).ConfigureAwait(false);
+            if (!recovery.Success)
+            {
+                Renderer.WriteStyled($"Recovery failed: {recovery.Message}", TextStyle.Error);
+                return;
+            }
+
+            Renderer.WriteStyled(recovery.Message ?? "Recovered.", TextStyle.Success);
+        }
+
         var result = await Renderer.StatusAsync(
             $"Compiling {configPath}...",
             () => _compilerService.RunAsync(configPath)).ConfigureAwait(false);
@@ -102,6 +140,54 @@ public sealed class CompileMenuService : MenuServiceBase
         foreach (var warning in result.Warnings)
         {
             Renderer.WriteStyled($"  [warn]  {warning.Field}: {warning.Message}", TextStyle.Warning);
+        }
+    }
+
+    private Task ListCompilerConfigBackupsAsync()
+    {
+        var configPath = Prompter.Prompt("Path to compiler config file");
+        var backups = _configGuard.ListBackups(configPath);
+
+        if (backups.Count == 0)
+        {
+            Renderer.WriteLine($"No backups found for {configPath}.");
+            return Task.CompletedTask;
+        }
+
+        var table = new ConsoleTable { Title = $"Backups for {configPath}" };
+        table.AddColumn("Path");
+        foreach (var backup in backups)
+        {
+            table.AddRow(backup);
+        }
+
+        Renderer.RenderTable(table);
+        return Task.CompletedTask;
+    }
+
+    private async Task RestoreCompilerConfigAsync()
+    {
+        var configPath = Prompter.Prompt("Path to compiler config file to restore");
+
+        if (_configGuard.ListBackups(configPath).Count == 0)
+        {
+            Renderer.WriteStyled($"No backups are available for {configPath}.", TextStyle.Warning);
+            return;
+        }
+
+        if (!Prompter.Confirm($"Restore {configPath} from its most recent valid backup?", false))
+        {
+            return;
+        }
+
+        var recovery = await _configGuard.RecoverAsync(configPath).ConfigureAwait(false);
+        if (recovery.Success)
+        {
+            Renderer.WriteStyled(recovery.Message ?? "Restored.", TextStyle.Success);
+        }
+        else
+        {
+            Renderer.WriteStyled($"Restore failed: {recovery.Message}", TextStyle.Error);
         }
     }
 
