@@ -140,6 +140,7 @@ public static class Program
 
         services.AddSingleton<IDashboardConfigurationStore, DashboardConfigurationStore>();
         services.AddSingleton<IProfileManager, ProfileManager>();
+        services.AddSingleton<IDashboardService, DashboardService>();
         services.AddSingleton<ILogEntryReader, LogEntryReader>();
         services.AddSingleton<ICompilerConfigGuard, CompilerConfigGuard>();
         services.AddSingleton<ICompilerConfigSchemaValidator, CompilerConfigSchemaValidator>();

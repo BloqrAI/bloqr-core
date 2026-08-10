@@ -10,12 +10,13 @@ See [`ARCHITECTURE.md`](./ARCHITECTURE.md) for the design patterns and project l
 [`docs/guides/consoleui-architecture.md`](../../docs/guides/consoleui-architecture.md) for the
 sibling console app this one's architecture is modeled after.
 
-This is the scaffold plus first slice of functionality (issues #266, #267, #275 of
-[epic #256](https://github.com/BloqrAI/bloqr-core/issues/256)): the app shell, structured JSON
-logging with rollover, and the Dashboard's own `.jsonc` configuration with profiles and
-corruption recovery. The compiler-config generation wizard, round-trip config editing, rich
-compilation progress UI, full CLI automation surface, and AdGuard API stubs are separate,
-later issues (#268–#272) that build on this foundation.
+Part of [epic #256](https://github.com/BloqrAI/bloqr-core/issues/256): the app shell (#266),
+structured JSON logging with rollover (#275), the Dashboard's own `.jsonc` configuration with
+profiles and corruption recovery (#267), the compiler-config generation wizard (#268),
+round-trip config editing and git-based versioning (#269), rules-validator integration (#264),
+a rich live compilation-progress display (#270), and CLI-switch parity plus an embeddable
+library API boundary (#271) are all implemented. AdGuard API client stubs (#272) remain a
+separate, later issue.
 
 ## Prerequisites
 
@@ -46,20 +47,42 @@ Management, Logs, and Diagnostics.
 
 ### CLI surface
 
-This slice ships a minimal, script-safe CLI surface; full CLI-switch parity with interactive
-operations is issue #271's scope.
+Full CLI-switch parity with the interactive menu's compile/validate/profile-management
+operations (#271):
 
 ```
---help, -h            Show help
---version, -v          Show version information
---config <path>        Use a specific Dashboard configuration file
---profile <name>       Activate a specific profile for this run
---log-level <level>    Override the configured log level (trace|debug|info|warn|error|silent)
+--help, -h              Show help
+--version, -v           Show version information
+--config <path>         Use a specific Dashboard configuration file
+--profile <name>        Activate a specific profile for this run
+--log-level <level>     Override the configured log level (trace|debug|info|warn|error|silent)
 --non-interactive       Load config and print status instead of prompting
+--compile [path]        Compile a specific compiler config, or the active profile's
+                        config(s) if no path is given
+--validate-config <path>
+                        Validate a compiler config file without compiling it
+--list-profiles         List Dashboard profiles (* marks the active one)
+--activate-profile <name>
+                        Activate a profile and persist the change
 ```
 
 The Dashboard also auto-detects redirected/piped stdin and switches to non-interactive
 behavior, so it's safe to invoke from scripts or CI without hanging on a prompt.
+
+Config *generation* (the wizard) remains interactive-only — mirroring its entire prompt tree as
+CLI flags is a materially larger, separate effort. Script-driven config creation means
+hand-writing or generating a compiler-config JSON/JSONC file some other way and checking it with
+`--validate-config`.
+
+### Embedding as a library
+
+Every CLI command above (and every interactive menu action) is backed by `IDashboardService`
+(`Bloqr.Dashboard.Abstractions`) — a single, Spectre.Console-free facade over compile, validate,
+and profile-management operations. A future WPF host embeds the Dashboard by depending on
+`Bloqr.Dashboard.Abstractions`/`Bloqr.Dashboard.Core` and resolving `IDashboardService` (backed
+by `DashboardService` in `Bloqr.Dashboard.Core`) from DI, without pulling in anything from
+`Bloqr.Dashboard.Console` (the only project that references Spectre.Console for terminal
+rendering).
 
 ## Configuration
 

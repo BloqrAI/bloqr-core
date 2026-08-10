@@ -11,8 +11,8 @@ later reconciliation. One deliberate departure is called out below.
 
 | Project | Depends on | Purpose |
 |---|---|---|
-| `Bloqr.Dashboard.Abstractions` | nothing | Rendering/prompting/menu interfaces (`IConsoleRenderer`, `IConsolePrompter`, `IMenuService`, `IDisplayStrategy<T>`) and configuration/profile/log models. The embeddable-library API boundary a future WPF host depends on instead of Spectre.Console. |
-| `Bloqr.Dashboard.Core` | Abstractions | Terminal-agnostic implementations: `DashboardConfigurationStore` (JSONC read/write, schema validation, backup, corruption recovery), `ProfileManager`, `DashboardPaths`, and structured JSON logging (`AddDashboardLogging`, `DashboardJsonLogFormatter`, `LogEntryReader`). No Spectre.Console reference. |
+| `Bloqr.Dashboard.Abstractions` | nothing | Rendering/prompting/menu interfaces (`IConsoleRenderer`, `IConsolePrompter`, `IMenuService`, `IDisplayStrategy<T>`, `ILiveProgressContext`/`ILiveProgressTask`), configuration/profile/log models, and `IDashboardService` - the embeddable-library API boundary (#271) a future WPF host depends on instead of Spectre.Console. |
+| `Bloqr.Dashboard.Core` | Abstractions | Terminal-agnostic implementations: `DashboardConfigurationStore` (JSONC read/write, schema validation, backup, corruption recovery), `ProfileManager`, `DashboardPaths`, structured JSON logging (`AddDashboardLogging`, `DashboardJsonLogFormatter`, `LogEntryReader`), and `DashboardService : IDashboardService` (compile/validate/profile-management operations, wrapping `IRulesCompilerService` and the pieces above). No Spectre.Console reference. |
 | `Bloqr.Dashboard.Console` | Abstractions, Core, `RulesCompiler` | The executable: `Program.cs`, the Spectre.Console-backed `IConsoleRenderer`/`IConsolePrompter` implementations, `DashboardApplication`'s main loop, and the menu services. |
 | `Bloqr.Dashboard.Tests` | Abstractions, Core | xunit tests for the Core layer. |
 

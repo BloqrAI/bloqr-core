@@ -13,6 +13,7 @@ public sealed class DashboardApplication
     private readonly IConsolePrompter _prompter;
     private readonly IMenuServiceFactory _menuServiceFactory;
     private readonly IDashboardConfigurationStore _configStore;
+    private readonly IDashboardService _dashboardService;
     private readonly ILogger<DashboardApplication> _logger;
 
     /// <summary>
@@ -23,20 +24,29 @@ public sealed class DashboardApplication
         IConsolePrompter prompter,
         IMenuServiceFactory menuServiceFactory,
         IDashboardConfigurationStore configStore,
+        IDashboardService dashboardService,
         ILogger<DashboardApplication> logger)
     {
         _renderer = renderer;
         _prompter = prompter;
         _menuServiceFactory = menuServiceFactory;
         _configStore = configStore;
+        _dashboardService = dashboardService;
         _logger = logger;
     }
 
     /// <summary>
-    /// Runs the Dashboard, dispatching to a minimal CLI surface (<c>--version</c>, <c>--help</c>,
-    /// <c>--non-interactive</c>) or the interactive main menu loop. Full CLI-switch parity with
-    /// interactive-mode operations is issue #271's scope; this is the minimal surface needed for
-    /// scripting/CI-safety today.
+    /// Runs the Dashboard, dispatching to a CLI surface (<c>--version</c>, <c>--help</c>,
+    /// <c>--compile</c>, <c>--validate-config</c>, <c>--list-profiles</c>,
+    /// <c>--activate-profile</c>, <c>--non-interactive</c>) or the interactive main menu loop -
+    /// full CLI-switch parity with the interactive menu's compile/validate/profile-management
+    /// operations, per #271. Every CLI branch below calls <see cref="IDashboardService"/>, the
+    /// same embeddable-library API boundary a future WPF host would depend on - the CLI is
+    /// itself just one more consumer of that boundary, not a separate code path. Config
+    /// generation (the wizard) remains interactive-only: mirroring its entire prompt tree as CLI
+    /// flags is a materially larger, separate effort - CLI users hand-edit or generate a
+    /// compiler-config JSON/JSONC file some other way and validate it with
+    /// <c>--validate-config</c>.
     /// </summary>
     /// <param name="args">Command-line arguments.</param>
     /// <param name="cancellationToken">Cancellation token, signaled on Ctrl+C.</param>
@@ -53,6 +63,28 @@ public sealed class DashboardApplication
         {
             PrintHelp();
             return 0;
+        }
+
+        if (TryGetCliCommand(args, out var cliCommand))
+        {
+            try
+            {
+                return await cliCommand(cancellationToken).ConfigureAwait(false);
+            }
+            catch (DashboardConfigurationException)
+            {
+                // Let Program.cs's dedicated catch handle this with its own distinct exit code.
+                throw;
+            }
+            catch (Exception ex)
+            {
+                // CLI commands run outside the interactive loop's per-action try/catch, but
+                // should degrade the same way: a clean message and a non-zero exit code instead
+                // of an unhandled exception reaching Program.cs's generic catch-all.
+                _logger.LogError(ex, "CLI command failed");
+                _renderer.WriteStyled($"Error: {ex.Message}", TextStyle.Error);
+                return 1;
+            }
         }
 
         RegisterGlobalExceptionHandlers();
@@ -108,6 +140,146 @@ public sealed class DashboardApplication
         return 0;
     }
 
+    /// <summary>
+    /// Matches <paramref name="args"/> against the CLI subcommands and, if one matches, returns
+    /// a delegate that runs it. Checked in a fixed priority order since a value-bearing flag
+    /// (e.g. <c>--validate-config &lt;path&gt;</c>) could otherwise be ambiguous with adjacent flags.
+    /// </summary>
+    private bool TryGetCliCommand(string[] args, [NotNullWhen(true)] out Func<CancellationToken, Task<int>>? command)
+    {
+        if (args.Contains("--list-profiles"))
+        {
+            command = RunListProfilesAsync;
+            return true;
+        }
+
+        if (GetOptionValue(args, "--activate-profile") is { } activateProfileName)
+        {
+            command = ct => RunActivateProfileAsync(activateProfileName, ct);
+            return true;
+        }
+
+        if (GetOptionValue(args, "--validate-config") is { } validateConfigPath)
+        {
+            command = ct => RunValidateConfigAsync(validateConfigPath, ct);
+            return true;
+        }
+
+        if (args.Contains("--compile"))
+        {
+            var compileConfigPath = GetOptionValue(args, "--compile");
+            command = ct => RunCompileAsync(compileConfigPath, ct);
+            return true;
+        }
+
+        command = null;
+        return false;
+    }
+
+    private async Task<int> RunListProfilesAsync(CancellationToken cancellationToken)
+    {
+        var profiles = await _dashboardService.ListProfilesAsync(cancellationToken).ConfigureAwait(false);
+        if (profiles.Count == 0)
+        {
+            _renderer.WriteLine("No profiles are defined.");
+            return 0;
+        }
+
+        var active = await _dashboardService.GetActiveProfileAsync(cancellationToken).ConfigureAwait(false);
+        foreach (var profile in profiles)
+        {
+            _renderer.WriteLine(profile == active ? $"* {profile}" : $"  {profile}");
+        }
+
+        return 0;
+    }
+
+    private async Task<int> RunActivateProfileAsync(string profileName, CancellationToken cancellationToken)
+    {
+        try
+        {
+            await _dashboardService.ActivateProfileAsync(profileName, cancellationToken).ConfigureAwait(false);
+            _renderer.WriteStyled($"Activated profile '{profileName}'.", TextStyle.Success);
+            return 0;
+        }
+        catch (KeyNotFoundException)
+        {
+            _renderer.WriteStyled($"No profile named '{profileName}' exists.", TextStyle.Error);
+            return 1;
+        }
+    }
+
+    private async Task<int> RunValidateConfigAsync(string configPath, CancellationToken cancellationToken)
+    {
+        var result = await _dashboardService.ValidateCompilerConfigAsync(configPath, cancellationToken).ConfigureAwait(false);
+
+        _renderer.WriteStyled(
+            result.IsValid ? "Configuration is valid." : $"Configuration has {result.Errors.Count} error(s).",
+            result.IsValid ? TextStyle.Success : TextStyle.Error);
+
+        foreach (var error in result.Errors)
+        {
+            _renderer.WriteStyled($"  [error] {error.Field}: {error.Message}", TextStyle.Error);
+        }
+
+        foreach (var warning in result.Warnings)
+        {
+            _renderer.WriteStyled($"  [warn]  {warning.Field}: {warning.Message}", TextStyle.Warning);
+        }
+
+        return result.IsValid ? 0 : 1;
+    }
+
+    private async Task<int> RunCompileAsync(string? configPath, CancellationToken cancellationToken)
+    {
+        var configPaths = configPath is not null
+            ? [configPath]
+            : await _dashboardService.GetActiveProfileCompilerConfigsAsync(cancellationToken).ConfigureAwait(false);
+
+        if (configPaths.Count == 0)
+        {
+            _renderer.WriteStyled(
+                "No compiler config specified and no active profile has one. Use --compile <path> or --activate-profile <name> first.",
+                TextStyle.Error);
+            return 1;
+        }
+
+        var exitCode = 0;
+        foreach (var path in configPaths)
+        {
+            var result = await _dashboardService.CompileAsync(path, cancellationToken).ConfigureAwait(false);
+            if (result.Success)
+            {
+                _renderer.WriteStyled(
+                    $"Compiled '{result.ConfigName}': {result.RuleCount} rules -> {result.OutputPath} ({result.ElapsedMs}ms)",
+                    TextStyle.Success);
+            }
+            else
+            {
+                _renderer.WriteStyled($"Compilation failed for {path}: {result.ErrorMessage}", TextStyle.Error);
+                exitCode = 1;
+            }
+        }
+
+        return exitCode;
+    }
+
+    /// <summary>
+    /// Returns the value following <paramref name="flag"/> in <paramref name="args"/>, or
+    /// <c>null</c> if the flag isn't present or has no following value (e.g. <c>--compile</c>
+    /// used alone to mean "the active profile's config").
+    /// </summary>
+    private static string? GetOptionValue(string[] args, string flag)
+    {
+        var index = Array.IndexOf(args, flag);
+        if (index >= 0 && index + 1 < args.Length && !args[index + 1].StartsWith("--", StringComparison.Ordinal))
+        {
+            return args[index + 1];
+        }
+
+        return null;
+    }
+
     private void RegisterGlobalExceptionHandlers()
     {
         AppDomain.CurrentDomain.UnhandledException += (_, e) =>
@@ -158,5 +330,12 @@ public sealed class DashboardApplication
         _renderer.WriteLine("  --log-level <level>   Override the configured log level");
         _renderer.WriteLine("                        (trace|debug|info|warn|error|silent)");
         _renderer.WriteLine("  --non-interactive     Print status and exit instead of prompting");
+        _renderer.WriteLine("  --compile [path]      Compile a specific compiler config, or the active");
+        _renderer.WriteLine("                        profile's config(s) if no path is given");
+        _renderer.WriteLine("  --validate-config <path>");
+        _renderer.WriteLine("                        Validate a compiler config file without compiling it");
+        _renderer.WriteLine("  --list-profiles       List Dashboard profiles (* marks the active one)");
+        _renderer.WriteLine("  --activate-profile <name>");
+        _renderer.WriteLine("                        Activate a profile and persist the change");
     }
 }

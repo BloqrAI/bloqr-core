@@ -1,5 +1,6 @@
 // Global using directives
 
+global using System.Diagnostics.CodeAnalysis;
 global using System.Text.Json;
 global using System.Text.Json.Serialization;
 global using Bloqr.Compiler.Abstractions;
@@ -13,6 +14,7 @@ global using DashboardConsoleColor = Bloqr.Dashboard.Abstractions.ConsoleColor;
 global using Bloqr.Dashboard.Console.Services;
 global using Bloqr.Dashboard.Core.Configuration;
 global using Bloqr.Dashboard.Core.Logging;
+global using Bloqr.Dashboard.Core.Services;
 global using Microsoft.Extensions.Configuration;
 global using Microsoft.Extensions.DependencyInjection;
 global using Microsoft.Extensions.Logging;
