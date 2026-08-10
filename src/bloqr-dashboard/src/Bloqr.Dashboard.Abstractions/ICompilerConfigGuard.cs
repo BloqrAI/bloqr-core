@@ -35,4 +35,17 @@ public interface ICompilerConfigGuard
     /// <param name="configPath">Path to the compiler-config file.</param>
     /// <returns>The backup file paths.</returns>
     IReadOnlyList<string> ListBackups(string configPath);
+
+    /// <summary>
+    /// Deletes backups of the compiler config at <paramref name="configPath"/> beyond the newest
+    /// <paramref name="maxBackups"/>, implementing the epic's "standing archive setting with
+    /// configurable retention count" for compiler-config backups (as opposed to #273's separate
+    /// archiving of the compiled *output* file). Not run automatically on every backup - callers
+    /// invoke this explicitly with whatever retention count applies to them.
+    /// </summary>
+    /// <param name="configPath">Path to the compiler-config file.</param>
+    /// <param name="maxBackups">
+    /// The number of newest backups to keep. A negative value means unlimited (no pruning).
+    /// </param>
+    void PruneBackups(string configPath, int maxBackups);
 }

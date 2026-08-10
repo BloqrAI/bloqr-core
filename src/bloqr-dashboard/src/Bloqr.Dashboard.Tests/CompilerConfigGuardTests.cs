@@ -150,6 +150,65 @@ public sealed class CompilerConfigGuardTests : IDisposable
         _guard.ListBackups(pathB).Should().BeEmpty();
     }
 
+    [Fact]
+    public async Task PruneBackups_KeepsOnlyTheNewestBackups()
+    {
+        var configPath = WriteConfig("compiler-config.json", ValidConfigJson);
+        for (var i = 0; i < 5; i++)
+        {
+            File.WriteAllText(configPath, $$"""{ "name": "test-list-{{i}}", "sources": [ { "source": "https://example.com/list.txt" } ] }""");
+            await Task.Delay(5);
+            await _guard.LoadAsync(configPath);
+        }
+
+        _guard.ListBackups(configPath).Should().HaveCount(5);
+
+        _guard.PruneBackups(configPath, 2);
+
+        _guard.ListBackups(configPath).Should().HaveCount(2);
+    }
+
+    [Fact]
+    public async Task PruneBackups_KeepsTheNewestOnes()
+    {
+        var configPath = WriteConfig("compiler-config.json", ValidConfigJson);
+        for (var i = 0; i < 3; i++)
+        {
+            File.WriteAllText(configPath, $$"""{ "name": "test-list-{{i}}", "sources": [ { "source": "https://example.com/list.txt" } ] }""");
+            await Task.Delay(5);
+            await _guard.LoadAsync(configPath);
+        }
+
+        var newestBeforePrune = _guard.ListBackups(configPath)[0];
+
+        _guard.PruneBackups(configPath, 1);
+
+        var remaining = _guard.ListBackups(configPath);
+        remaining.Should().ContainSingle();
+        remaining[0].Should().Be(newestBeforePrune);
+    }
+
+    [Fact]
+    public async Task PruneBackups_WithNegativeMaxBackups_IsANoOp()
+    {
+        var configPath = WriteConfig("compiler-config.json", ValidConfigJson);
+        await _guard.LoadAsync(configPath);
+
+        _guard.PruneBackups(configPath, -1);
+
+        _guard.ListBackups(configPath).Should().HaveCount(1);
+    }
+
+    [Fact]
+    public void PruneBackups_WithNoBackups_DoesNotThrow()
+    {
+        var configPath = Path.Combine(_configDirectory, "never-loaded.json");
+
+        var act = () => _guard.PruneBackups(configPath, 3);
+
+        act.Should().NotThrow();
+    }
+
     private string WriteConfig(string fileName, string content)
     {
         var path = Path.Combine(_configDirectory, fileName);
