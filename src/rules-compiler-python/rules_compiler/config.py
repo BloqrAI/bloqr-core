@@ -172,6 +172,88 @@ class FilterSource:
 
 
 @dataclass
+class OutputSettings:
+    """Output file settings: destination path and conflict-handling strategy."""
+    path: str = ""
+    conflict_strategy: str = "rename"
+
+    VALID_CONFLICT_STRATEGIES = ("rename", "overwrite", "error")
+
+    @classmethod
+    def from_dict(cls, data: dict[str, Any]) -> OutputSettings:
+        return cls(
+            path=data.get("path", ""),
+            conflict_strategy=data.get("conflictStrategy", "rename"),
+        )
+
+    def to_dict(self) -> dict[str, Any]:
+        result: dict[str, Any] = {"path": self.path}
+        if self.conflict_strategy != "rename":
+            result["conflictStrategy"] = self.conflict_strategy
+        return result
+
+
+@dataclass
+class HashVerificationSettings:
+    """Hash-verification settings for the `.hashes.json` sidecar database."""
+    mode: str = "warning"
+    require_hashes_for_remote: bool = False
+    fail_on_mismatch: bool = False
+    hash_database_path: str = ""
+
+    VALID_MODES = ("strict", "warning", "disabled")
+
+    @classmethod
+    def from_dict(cls, data: dict[str, Any]) -> HashVerificationSettings:
+        return cls(
+            mode=data.get("mode", "warning"),
+            require_hashes_for_remote=data.get("requireHashesForRemote", False),
+            fail_on_mismatch=data.get("failOnMismatch", False),
+            hash_database_path=data.get("hashDatabasePath", ""),
+        )
+
+    def to_dict(self) -> dict[str, Any]:
+        result: dict[str, Any] = {}
+        if self.mode != "warning":
+            result["mode"] = self.mode
+        if self.require_hashes_for_remote:
+            result["requireHashesForRemote"] = self.require_hashes_for_remote
+        if self.fail_on_mismatch:
+            result["failOnMismatch"] = self.fail_on_mismatch
+        if self.hash_database_path:
+            result["hashDatabasePath"] = self.hash_database_path
+        return result
+
+
+@dataclass
+class ArchivingSettings:
+    """Archiving settings applied when the output conflict strategy overwrites a file."""
+    enabled: bool = False
+    mode: str = "automatic"
+    retention_days: int = 90
+
+    VALID_MODES = ("automatic", "interactive", "disabled")
+
+    @classmethod
+    def from_dict(cls, data: dict[str, Any]) -> ArchivingSettings:
+        return cls(
+            enabled=data.get("enabled", False),
+            mode=data.get("mode", "automatic"),
+            retention_days=data.get("retentionDays", 90),
+        )
+
+    def to_dict(self) -> dict[str, Any]:
+        result: dict[str, Any] = {}
+        if self.enabled:
+            result["enabled"] = self.enabled
+        if self.mode != "automatic":
+            result["mode"] = self.mode
+        if self.retention_days != 90:
+            result["retentionDays"] = self.retention_days
+        return result
+
+
+@dataclass
 class CompilerConfiguration:
     """Configuration for the hostlist-compiler."""
     name: str = ""
@@ -183,6 +265,9 @@ class CompilerConfiguration:
     transformations: list[str] = field(default_factory=list)
     inclusions: list[str] = field(default_factory=list)
     exclusions: list[str] = field(default_factory=list)
+    output: OutputSettings | None = None
+    hash_verification: HashVerificationSettings | None = None
+    archiving: ArchivingSettings | None = None
 
     # Metadata (not serialized)
     _source_format: ConfigurationFormat | None = field(default=None, repr=False)
@@ -202,6 +287,10 @@ class CompilerConfiguration:
             transformations=data.get("transformations", []),
             inclusions=data.get("inclusions", []),
             exclusions=data.get("exclusions", []),
+            output=OutputSettings.from_dict(data["output"]) if "output" in data else None,
+            hash_verification=HashVerificationSettings.from_dict(data["hashVerification"])
+            if "hashVerification" in data else None,
+            archiving=ArchivingSettings.from_dict(data["archiving"]) if "archiving" in data else None,
         )
 
     def to_dict(self) -> dict[str, Any]:
@@ -216,6 +305,12 @@ class CompilerConfiguration:
             result["license"] = self.license
         if self.version:
             result["version"] = self.version
+        if self.output is not None:
+            result["output"] = self.output.to_dict()
+        if self.hash_verification is not None:
+            result["hashVerification"] = self.hash_verification.to_dict()
+        if self.archiving is not None:
+            result["archiving"] = self.archiving.to_dict()
 
         result["sources"] = [s.to_dict() for s in self.sources]
 
@@ -246,6 +341,36 @@ class CompilerConfiguration:
 
         if not self.sources:
             result.add_error("At least one source is required")
+
+        if self.output is not None and self.output.conflict_strategy not in OutputSettings.VALID_CONFLICT_STRATEGIES:
+            result.add_error(
+                f"Invalid conflict strategy '{self.output.conflict_strategy}'. "
+                f"Valid strategies are: {', '.join(OutputSettings.VALID_CONFLICT_STRATEGIES)}"
+            )
+
+        if self.hash_verification is not None:
+            if self.hash_verification.mode not in HashVerificationSettings.VALID_MODES:
+                result.add_error(
+                    f"Invalid hash verification mode '{self.hash_verification.mode}'. "
+                    f"Valid modes are: {', '.join(HashVerificationSettings.VALID_MODES)}"
+                )
+            if (
+                self.hash_verification.mode != "disabled"
+                and not self.hash_verification.hash_database_path
+            ):
+                result.add_warning(
+                    "Hash verification is enabled but no hashDatabasePath was specified; "
+                    "hashes cannot be recorded or checked."
+                )
+
+        if self.archiving is not None:
+            if self.archiving.mode not in ArchivingSettings.VALID_MODES:
+                result.add_error(
+                    f"Invalid archiving mode '{self.archiving.mode}'. "
+                    f"Valid modes are: {', '.join(ArchivingSettings.VALID_MODES)}"
+                )
+            if self.archiving.retention_days < 1:
+                result.add_error("Retention days must be at least 1")
 
         # Validate sources
         for i, source in enumerate(self.sources):

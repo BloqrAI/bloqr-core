@@ -34,9 +34,12 @@ Features:
 __version__ = "2.0.0"
 
 from rules_compiler.config import (
+    ArchivingSettings,
     ConfigurationFormat,
     CompilerConfiguration,
     FilterSource,
+    HashVerificationSettings,
+    OutputSettings,
     SourceType,
     Transformation,
     read_configuration,
@@ -45,6 +48,8 @@ from rules_compiler.config import (
     to_yaml,
     to_toml,
 )
+from rules_compiler.hash_database import HashDatabaseEntry, load_hash_database, record_hash
+from rules_compiler.output_publisher import OutputPublishResult, publish_output
 from rules_compiler.compiler import (
     CompilerResult,
     VersionInfo,
@@ -110,6 +115,9 @@ from rules_compiler.events import (
     ChunksMergedEventArgs,
     CompilationCompletedEventArgs,
     CompilationErrorEventArgs,
+    HashComputedEventArgs,
+    HashVerifiedEventArgs,
+    HashMismatchEventArgs,
     # Handler and dispatcher
     CompilationEventHandler,
     EventDispatcher,
@@ -128,12 +136,22 @@ __all__ = [
     "FilterSource",
     "SourceType",
     "Transformation",
+    "OutputSettings",
+    "HashVerificationSettings",
+    "ArchivingSettings",
     # Config functions
     "read_configuration",
     "detect_format",
     "to_json",
     "to_yaml",
     "to_toml",
+    # Hash database (.hashes.json sidecar)
+    "HashDatabaseEntry",
+    "load_hash_database",
+    "record_hash",
+    # Output publishing (conflict strategy + archiving)
+    "OutputPublishResult",
+    "publish_output",
     # Compiler types
     "CompilerResult",
     "VersionInfo",
@@ -196,6 +214,9 @@ __all__ = [
     "ChunksMergedEventArgs",
     "CompilationCompletedEventArgs",
     "CompilationErrorEventArgs",
+    "HashComputedEventArgs",
+    "HashVerifiedEventArgs",
+    "HashMismatchEventArgs",
     # Event handling
     "CompilationEventHandler",
     "EventDispatcher",

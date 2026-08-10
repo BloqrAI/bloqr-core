@@ -304,8 +304,65 @@ appeared in an earlier draft of this feature's tracking issue):
 
 ### Python
 
-To be implemented (similar pattern to Rust/TypeScript). The `.hashes.json` format and
-conflict/archiving semantics above are language-agnostic and should be reused as-is.
+**Event Handler:**
+```python
+from rules_compiler.events import (
+    CompilationEventHandler,
+    HashComputedEventArgs,
+    HashVerifiedEventArgs,
+    HashMismatchEventArgs,
+)
+
+class MyHashHandler(CompilationEventHandler):
+    async def on_hash_computed(self, args: HashComputedEventArgs) -> None:
+        print(f"Hash for {args.item_type}: {args.hash[:16]}...")
+
+    async def on_hash_verified(self, args: HashVerifiedEventArgs) -> None:
+        print(f"Hash verified for {args.item_identifier}")
+
+    async def on_hash_mismatch(self, args: HashMismatchEventArgs) -> None:
+        print(f"Hash mismatch for {args.item_identifier}")
+        # Optionally allow continuation:
+        # args.allow_continuation = True
+        # args.abort = False
+```
+
+**Usage:**
+
+`compile_rules`/`compile_rules_async` (and `RulesCompiler.compile`/`compile_async`) accept an
+optional `event_dispatcher` parameter; the three hash events are raised at each stage from the
+diagram above (config file, output file, and - if `copy_to_rules` is used - the copied rules
+file), driven by the `hash_verification` block of the compiler configuration. Hash
+recording/verification against the `.hashes.json` sidecar happens regardless of whether a
+dispatcher is supplied - the dispatcher only adds observability, matching every mode's default
+behavior when no handler overrides it.
+
+```python
+from rules_compiler.compiler import compile_rules
+from rules_compiler.events import EventDispatcher
+
+dispatcher = EventDispatcher()
+dispatcher.add_handler(MyHashHandler())
+
+result = compile_rules("config.json", event_dispatcher=dispatcher)
+```
+
+```json
+{
+  "hashVerification": {
+    "mode": "warning",
+    "requireHashesForRemote": false,
+    "failOnMismatch": false,
+    "hashDatabasePath": "../bloqr-blocklists/input/.hashes.json"
+  }
+}
+```
+
+Mode semantics, output conflict strategy, and archiving behave identically to the .NET
+implementation described above - see `rules_compiler.hash_database` and
+`rules_compiler.output_publisher` for the sidecar and publishing implementations. As with
+.NET, only the config file, output file, and copied rules file stages are implemented today;
+per-source verification of local and remote inputs is tracked as follow-up work.
 
 ## Use Cases
 
@@ -406,9 +463,10 @@ See `examples/hash_audit_handler.rs` for a complete implementation of:
 
 Potential additions:
 - ~~Hash database persistence across compilations~~ - implemented for .NET via the
-  `.hashes.json` sidecar and `IHashDatabaseService`; still needed for Python.
+  `.hashes.json` sidecar and `IHashDatabaseService`, and for Python via
+  `rules_compiler.hash_database`.
 - Per-source (local and remote input) hash verification, requiring either re-implementing
-  source fetching in .NET or having `@bloqr/compiler-core` report per-source hashes back
+  source fetching in .NET/Python or having `@bloqr/compiler-core` report per-source hashes back
 - Historical hash tracking and drift detection
 - Integration with external validation services
 - Support for multiple hash algorithms (SHA-256, BLAKE3)
