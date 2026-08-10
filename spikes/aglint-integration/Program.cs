@@ -80,46 +80,32 @@ static string? FindOnPath(string command)
 {
     var pathEnv = Environment.GetEnvironmentVariable("PATH") ?? string.Empty;
     var extensions = OperatingSystem.IsWindows() ? [".exe", ".cmd", ".bat"] : new[] { "" };
-    foreach (var dir in pathEnv.Split(Path.PathSeparator, StringSplitOptions.RemoveEmptyEntries))
-    {
-        foreach (var ext in extensions)
-        {
-            var candidate = Path.Combine(dir, command + ext);
-            if (File.Exists(candidate))
-            {
-                return candidate;
-            }
-        }
-    }
-    return null;
+    var dirs = pathEnv.Split(Path.PathSeparator, StringSplitOptions.RemoveEmptyEntries);
+
+    return dirs
+        .SelectMany(dir => extensions.Select(ext => Path.Combine(dir, command + ext)))
+        .FirstOrDefault(File.Exists);
 }
 
 // Parses AGLint's tabular CLI text output. There is no --json/--format flag (confirmed
 // via `aglint --help` during the #265 spike), so this is regex-over-text - deliberately
 // isolated in one small function per the ADR's "Consequences" section, so switching to
 // a JSON output source later only touches this function.
-static List<AglintFinding> ParseFindings(string stdout)
+static List<AglintFinding> ParseFindings(string output)
 {
-    var findings = new List<AglintFinding>();
     var lineRegex = new Regex(@"^\s*(\d+):(\d+)\s+(\w+)\s+(.+?)\s{2,}(\S+)\s*$");
 
-    foreach (var line in stdout.Split('\n'))
-    {
-        var match = lineRegex.Match(line.TrimEnd('\r'));
-        if (!match.Success)
-        {
-            continue;
-        }
-
-        findings.Add(new AglintFinding(
+    return output
+        .Split('\n')
+        .Select(line => lineRegex.Match(line.TrimEnd('\r')))
+        .Where(match => match.Success)
+        .Select(match => new AglintFinding(
             Line: int.Parse(match.Groups[1].Value),
             Column: int.Parse(match.Groups[2].Value),
             Severity: match.Groups[3].Value,
             Message: match.Groups[4].Value.Trim(),
-            RuleId: match.Groups[5].Value));
-    }
-
-    return findings;
+            RuleId: match.Groups[5].Value))
+        .ToList();
 }
 
 internal sealed record AglintFinding(int Line, int Column, string Severity, string Message, string RuleId);
