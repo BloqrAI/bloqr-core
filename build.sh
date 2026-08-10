@@ -157,7 +157,16 @@ build_dotnet() {
         echo -e "${RED}✗ Rules Compiler (.NET) build failed${NC}"
         BUILD_FAILED=true
     fi
-    
+
+    # Build Dashboard (.NET)
+    echo "→ Building Dashboard (.NET)..."
+    if (cd src/bloqr-dashboard && dotnet restore BloqrDashboard.slnx && dotnet build BloqrDashboard.slnx --no-restore --configuration $configuration); then
+        echo -e "${GREEN}✓ Dashboard (.NET) built successfully${NC}"
+    else
+        echo -e "${RED}✗ Dashboard (.NET) build failed${NC}"
+        BUILD_FAILED=true
+    fi
+
     echo ""
 }
 

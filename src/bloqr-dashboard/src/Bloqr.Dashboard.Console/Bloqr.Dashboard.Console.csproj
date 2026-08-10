@@ -1,0 +1,31 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <RootNamespace>Bloqr.Dashboard.Console</RootNamespace>
+    <AssemblyName>Bloqr.Dashboard.Console</AssemblyName>
+    <Version>1.0.0</Version>
+    <Authors>Bloqr</Authors>
+    <Company>Bloqr</Company>
+    <Description>Menu- and wizard-driven console application for generating and consuming Bloqr filter-rules compiler configs, running compilations, and managing Dashboard profiles and logs.</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Bloqr.Dashboard.Abstractions\Bloqr.Dashboard.Abstractions.csproj" />
+    <ProjectReference Include="..\Bloqr.Dashboard.Core\Bloqr.Dashboard.Core.csproj" />
+    <ProjectReference Include="..\..\..\rules-compiler-dotnet\src\RulesCompiler\RulesCompiler.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.Configuration" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.EnvironmentVariables" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.Json" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.CommandLine" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" />
+    <PackageReference Include="Microsoft.Extensions.Logging" />
+    <PackageReference Include="Serilog" />
+    <PackageReference Include="Spectre.Console" />
+  </ItemGroup>
+
+</Project>

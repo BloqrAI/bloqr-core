@@ -1,0 +1,40 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <AssemblyName>Bloqr.Dashboard.Core</AssemblyName>
+    <PackageId>Bloqr.Dashboard.Core</PackageId>
+    <OutputType>Library</OutputType>
+    <Authors>Bloqr</Authors>
+    <Company>Bloqr</Company>
+    <AssemblyTitle>Bloqr Dashboard Core</AssemblyTitle>
+    <Description>Terminal-agnostic implementation of the Bloqr Dashboard's configuration store (JSONC read/write, schema validation, backup and corruption recovery), profile management, and structured JSON logging with rollover.</Description>
+    <Copyright>Copyright 2026</Copyright>
+    <RootNamespace>Bloqr.Dashboard.Core</RootNamespace>
+    <Version>1.0.0</Version>
+    <DocumentationFile>bin\$(Configuration)\$(TargetFramework)\Bloqr.Dashboard.Core.xml</DocumentationFile>
+    <RepositoryUrl>https://github.com/BloqrAI/bloqr-core.git</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PackageTags>bloqr;dashboard;configuration;logging</PackageTags>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="JsonSchema.Net" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" />
+    <PackageReference Include="Serilog" />
+    <PackageReference Include="Serilog.Extensions.Logging" />
+    <PackageReference Include="Serilog.Sinks.File" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Bloqr.Dashboard.Abstractions\Bloqr.Dashboard.Abstractions.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="..\..\..\..\schemas\dashboard-config.schema.json">
+      <LogicalName>dashboard-config.schema.json</LogicalName>
+    </EmbeddedResource>
+  </ItemGroup>
+
+</Project>

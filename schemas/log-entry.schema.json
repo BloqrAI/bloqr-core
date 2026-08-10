@@ -1,0 +1,46 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://github.com/BloqrAI/bloqr-core/schemas/log-entry.schema.json",
+  "title": "Structured Log Entry Schema",
+  "description": "JSON Schema for a single line of Bloqr Dashboard's structured JSON log output (one JSON object per line, newline-delimited, in the app's rolling .jsonl log files). Consistent across bloqr-dashboard, rules-compiler-dotnet, and any other .NET app in this repo that adopts structured JSON logging per issue #275.",
+  "type": "object",
+  "required": ["timestamp", "level", "messageTemplate", "message"],
+  "additionalProperties": true,
+  "properties": {
+    "timestamp": {
+      "type": "string",
+      "description": "UTC timestamp the log event was emitted, ISO 8601 / RFC 3339 format",
+      "format": "date-time"
+    },
+    "level": {
+      "type": "string",
+      "description": "Log severity level",
+      "enum": ["Verbose", "Debug", "Information", "Warning", "Error", "Fatal"]
+    },
+    "messageTemplate": {
+      "type": "string",
+      "description": "The structured message template (Serilog-style, with {PropertyName} placeholders) before substitution"
+    },
+    "message": {
+      "type": "string",
+      "description": "The rendered, human-readable log message with template placeholders substituted"
+    },
+    "exception": {
+      "type": "string",
+      "description": "Full exception details (type, message, stack trace) when the log event is associated with an exception"
+    },
+    "sourceContext": {
+      "type": "string",
+      "description": "The logger's source context, typically the fully-qualified type name that emitted the event"
+    },
+    "application": {
+      "type": "string",
+      "description": "Name of the application/process that emitted the log entry, e.g. 'bloqr-dashboard', 'rules-compiler-dotnet'"
+    },
+    "properties": {
+      "type": "object",
+      "description": "Additional structured properties captured with the log event (arbitrary key/value pairs)",
+      "additionalProperties": true
+    }
+  }
+}

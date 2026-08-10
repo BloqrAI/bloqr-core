@@ -1,6 +1,6 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "$id": "https://github.com/BloqrAI/bloqr-lists/schemas/dashboard-config.schema.json",
+  "$id": "https://github.com/BloqrAI/bloqr-core/schemas/dashboard-config.schema.json",
   "title": "Dashboard Configuration Schema",
   "description": "JSON Schema for bloqr-dashboard's own configuration file (.jsonc). Persists user settings and named profiles (collections of settings + references to compiler-config files). See issue #267 for the full design.",
   "type": "object",
@@ -27,7 +27,7 @@
           "type": "string",
           "description": "Default log verbosity",
           "enum": ["trace", "debug", "info", "warn", "error", "silent"],
-          "default": "info"
+          "default": "error"
         },
         "defaultRulesDirectory": {
           "type": "string",
@@ -54,7 +54,7 @@
           }
         },
         "activeProfile": {
-          "type": "string",
+          "type": ["string", "null"],
           "description": "Name of the currently active profile (must match a key in `profiles`), or null if none active"
         }
       }

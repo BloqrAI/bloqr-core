@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <AssemblyName>Bloqr.Dashboard.Abstractions</AssemblyName>
+    <PackageId>Bloqr.Dashboard.Abstractions</PackageId>
+    <OutputType>Library</OutputType>
+    <Authors>Bloqr</Authors>
+    <Company>Bloqr</Company>
+    <AssemblyTitle>Bloqr Dashboard Abstractions</AssemblyTitle>
+    <Description>Terminal-agnostic contracts for the Bloqr Dashboard console application: rendering/prompting interfaces, menu-service abstractions, and configuration/profile/log models. Forms the embeddable-library API boundary a future WPF host can depend on without pulling in Spectre.Console.</Description>
+    <Copyright>Copyright 2026</Copyright>
+    <RootNamespace>Bloqr.Dashboard.Abstractions</RootNamespace>
+    <Version>1.0.0</Version>
+    <DocumentationFile>bin\$(Configuration)\$(TargetFramework)\Bloqr.Dashboard.Abstractions.xml</DocumentationFile>
+    <RepositoryUrl>https://github.com/BloqrAI/bloqr-core.git</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PackageTags>bloqr;dashboard;abstractions</PackageTags>
+  </PropertyGroup>
+
+</Project>

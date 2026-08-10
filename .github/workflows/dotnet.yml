@@ -12,11 +12,13 @@ on:
     branches: ["main"]
     paths:
       - 'src/rules-compiler-dotnet/**'
+      - 'src/bloqr-dashboard/**'
       - '.github/workflows/dotnet.yml'
   pull_request:
     branches: ["main"]
     paths:
       - 'src/rules-compiler-dotnet/**'
+      - 'src/bloqr-dashboard/**'
       - '.github/workflows/dotnet.yml'
 
 env:
@@ -35,6 +37,10 @@ jobs:
           - name: Build Rules Compiler
             path: src/rules-compiler-dotnet
             solution: RulesCompiler.slnx
+            filter: ""
+          - name: Build Dashboard
+            path: src/bloqr-dashboard
+            solution: BloqrDashboard.slnx
             filter: ""
 
     defaults:
