@@ -134,7 +134,8 @@ mod tests {
 
     #[test]
     fn test_version_constant() {
-        assert!(!VERSION.is_empty());
+        // VERSION comes from CARGO_PKG_VERSION, a compile-time constant clippy can now prove
+        // is always non-empty - the meaningful regression check is the format, not emptiness.
         assert!(VERSION.contains('.'));
     }
 
