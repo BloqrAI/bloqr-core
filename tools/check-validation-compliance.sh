@@ -29,8 +29,11 @@ check_validation_library() {
         ERRORS=$((ERRORS + 1))
         return 1
     fi
-    
-    if [ ! -f "$REPO_ROOT/src/rules-validator/Cargo.toml" ]; then
+
+    # rules-validator-core/rules-validator-cli are workspace members of the root
+    # Cargo.toml, not a standalone crate under src/rules-validator/ itself.
+    if [ ! -f "$REPO_ROOT/src/rules-validator/rules-validator-core/Cargo.toml" ] \
+        || [ ! -f "$REPO_ROOT/src/rules-validator/rules-validator-cli/Cargo.toml" ]; then
         echo -e "${RED}✗ Validation library Cargo.toml missing${NC}"
         ERRORS=$((ERRORS + 1))
         return 1
@@ -84,9 +87,12 @@ check_dotnet_integration() {
         return 0
     fi
     
-    # Check for native library reference (when integrated)
-    if grep -rq "rules_validator\|ValidationLibrary" "$dotnet_dir" 2>/dev/null; then
-        echo -e "${GREEN}✓ .NET: Validation library reference found${NC}"
+    # Check for the P/Invoke wrapper (RulesValidatorService, #264) and its wiring
+    # into the compilation pipeline (RulesCompilerService raising the RV001
+    # validation code documented in docs/event-pipeline.md).
+    if grep -rq "rules_validator_new\|IRulesValidatorService" "$dotnet_dir/src" 2>/dev/null \
+        && grep -rq "RV001" "$dotnet_dir/src" 2>/dev/null; then
+        echo -e "${GREEN}✓ .NET: Validation library integrated (#264)${NC}"
     else
         echo -e "${YELLOW}⚠ .NET: Validation library not yet integrated (pending Phase 3)${NC}"
         WARNINGS=$((WARNINGS + 1))
