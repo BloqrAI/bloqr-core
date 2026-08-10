@@ -150,9 +150,23 @@
               "type": "string"
             }
           },
+          "inclusions_sources": {
+            "type": "array",
+            "description": "Files containing source-specific inclusion patterns",
+            "items": {
+              "type": "string"
+            }
+          },
           "exclusions": {
             "type": "array",
             "description": "Source-specific exclusion patterns",
+            "items": {
+              "type": "string"
+            }
+          },
+          "exclusions_sources": {
+            "type": "array",
+            "description": "Files containing source-specific exclusion patterns",
             "items": {
               "type": "string"
             }
