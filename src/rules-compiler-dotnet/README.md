@@ -187,6 +187,8 @@ As of the `Bloqr.Compiler.*` extraction, this project is split across three asse
 - **`Bloqr.Compiler.Core`** — the common implementation: multi-format config reading/validation, chunking, file locking, the compilation event pipeline, and the plugin system. References `Bloqr.Compiler.Abstractions` only.
 - **`RulesCompiler`** (this project) — the compiler-specific pieces: `FilterCompiler` (shells out to `@bloqr/compiler-core` via Deno), `OutputWriter`, `RulesCompilerService` (top-level orchestration). References `Bloqr.Compiler.Core`.
 
+`Bloqr.Compiler.Abstractions` and `Bloqr.Compiler.Core` are also published as NuGet packages to GitHub Packages for out-of-repo consumers — in-repo projects (including this one) keep using `<ProjectReference>`. See [`docs/architecture/nuget-distribution-strategy.md`](../../docs/architecture/nuget-distribution-strategy.md) for the decision record.
+
 ### Abstractions (`Bloqr.Compiler.Abstractions`)
 
 | Interface | Description |

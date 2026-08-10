@@ -208,6 +208,65 @@ jobs:
             *.tar.gz
           if-no-files-found: error
 
+  publish-nuget:
+    name: Publish NuGet Packages
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Cache NuGet packages
+        uses: actions/cache@v6
+        with:
+          path: ~/.nuget/packages
+          key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj', '**/*.slnx') }}
+          restore-keys: ${{ runner.os }}-nuget-
+
+      - name: Restore Rules Compiler dependencies
+        shell: bash
+        run: |
+          dotnet restore src/rules-compiler-dotnet/RulesCompiler.slnx
+
+      # Bloqr.Compiler.Abstractions/Core are "the common .NET library" the epic asks about
+      # (#261). RulesCompiler, RulesCompiler.Console, and Bloqr.Dashboard.* stay on
+      # <ProjectReference> as in-repo consumers - this is only for out-of-repo consumers
+      # (a future WPF host, or this library becoming its own repo). See
+      # docs/architecture/nuget-distribution-strategy.md for the full decision record.
+      - name: Pack common library packages
+        shell: bash
+        run: |
+          dotnet pack src/rules-compiler-dotnet/src/Bloqr.Compiler.Abstractions/Bloqr.Compiler.Abstractions.csproj \
+            --configuration Release \
+            --no-restore \
+            --output ./nuget-packages
+          dotnet pack src/rules-compiler-dotnet/src/Bloqr.Compiler.Core/Bloqr.Compiler.Core.csproj \
+            --configuration Release \
+            --no-restore \
+            --output ./nuget-packages
+
+      - name: Push to GitHub Packages
+        shell: bash
+        run: |
+          dotnet nuget push "./nuget-packages/*.nupkg" \
+            --source "https://nuget.pkg.github.com/BloqrAI/index.json" \
+            --api-key "${{ secrets.GITHUB_TOKEN }}" \
+            --skip-duplicate
+
+      - name: Upload nupkg artifacts
+        uses: actions/upload-artifact@v7
+        with:
+          name: nuget-packages
+          path: ./nuget-packages/*.nupkg
+          if-no-files-found: error
+
   build-rust:
     name: Build Rust Executable
     runs-on: ${{ matrix.os }}
@@ -277,7 +336,7 @@ jobs:
 
   create-release:
     name: Create Release
-    needs: [build-dotnet, build-rust, build-rules-validator]
+    needs: [build-dotnet, build-rust, build-rules-validator, publish-nuget]
     runs-on: ubuntu-latest
 
     steps:
@@ -343,6 +402,8 @@ jobs:
             - **Bloqr.Dashboard.Console** - .NET Dashboard app (Windows, Linux, macOS)
             - **rules-compiler** (Rust) - Rust rules compiler (Windows, Linux, macOS)
             - **rules-validator** - native validation library (`rules_validator`) and its `rules-validate` CLI (Windows, Linux, macOS)
+
+            `Bloqr.Compiler.Abstractions` and `Bloqr.Compiler.Core` (the common .NET library) are also published to this release's tag as NuGet packages on [GitHub Packages](https://github.com/orgs/BloqrAI/packages?repo_name=bloqr-core) — see [`docs/architecture/nuget-distribution-strategy.md`](https://github.com/BloqrAI/bloqr-core/blob/main/docs/architecture/nuget-distribution-strategy.md) for why and how to consume them.
 
             AdGuard.ConsoleUI has moved to [BloqrAI/bloqr-apiclients](https://github.com/BloqrAI/bloqr-apiclients) along with the other API clients — see that repo's own releases for it.
 
