@@ -1,0 +1,3 @@
+||example.com^
+||broken.com^$badmodifier
+example.com##.ad[
