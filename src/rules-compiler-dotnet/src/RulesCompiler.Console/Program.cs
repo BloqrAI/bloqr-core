@@ -16,7 +16,10 @@ public class Program
         {
             var configuration = BuildConfiguration(args);
             var services = ConfigureServices(configuration);
-            var serviceProvider = services.BuildServiceProvider();
+
+            // `await using` drains QueuedCompilationEventDispatcher's background queue (if
+            // registered) via DisposeAsync before the process exits (#274).
+            await using var serviceProvider = services.BuildServiceProvider();
 
             var logger = serviceProvider.GetRequiredService<ILoggerFactory>()
                 .CreateLogger<Program>();
@@ -79,6 +82,11 @@ public class Program
 
         // Add RulesCompiler services
         services.AddRulesCompiler();
+
+        // Fire-and-forget events (source loaded, file locks, chunk/hash completion, etc.) are
+        // processed on a background queue so a slow handler (e.g. writing structured logs)
+        // never blocks the compilation pipeline (#274).
+        services.AddQueuedCompilationEventDispatching();
 
         // Console application
         services.AddSingleton<ConsoleApplication>();

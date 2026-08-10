@@ -6,6 +6,26 @@ namespace Bloqr.Compiler.Core.Services;
 /// </summary>
 public class CompilationEventDispatcher : ICompilationEventDispatcher
 {
+    // Transient-fault retry around each individual handler invocation (not the dispatch loop as
+    // a whole), per the epic's "use queueing, Polly, etc for durability" ask. Handlers can be
+    // I/O-bound (e.g. a logging handler writing to disk, a future handler downloading a source),
+    // so a handful of retries with backoff+jitter absorbs transient failures without masking
+    // genuine bugs - OperationCanceledException is deliberately excluded so cancellation still
+    // propagates immediately instead of being retried.
+    private static readonly ResiliencePipeline HandlerRetryPipeline = new ResiliencePipelineBuilder()
+        .AddRetry(new RetryStrategyOptions
+        {
+            ShouldHandle = new PredicateBuilder()
+                .Handle<IOException>()
+                .Handle<TimeoutException>()
+                .Handle<HttpRequestException>(),
+            MaxRetryAttempts = 3,
+            Delay = TimeSpan.FromMilliseconds(200),
+            BackoffType = DelayBackoffType.Exponential,
+            UseJitter = true,
+        })
+        .Build();
+
     private readonly ILogger<CompilationEventDispatcher> _logger;
     private readonly IEnumerable<ICompilationEventHandler> _handlers;
 
@@ -22,6 +42,15 @@ public class CompilationEventDispatcher : ICompilationEventDispatcher
         _handlers = handlers ?? throw new ArgumentNullException(nameof(handlers));
     }
 
+    /// <summary>
+    /// Invokes a single handler through <see cref="HandlerRetryPipeline"/>, so a transient
+    /// exception (e.g. a locked log file) is retried before the caller's existing
+    /// throw-vs-swallow handling for that event type takes over.
+    /// </summary>
+    private static Task InvokeHandlerAsync(
+        Func<CancellationToken, Task> invokeHandler, CancellationToken cancellationToken)
+        => HandlerRetryPipeline.ExecuteAsync(ct => new ValueTask(invokeHandler(ct)), cancellationToken).AsTask();
+
     /// <inheritdoc/>
     public async Task RaiseCompilationStartingAsync(
         CompilationStartedEventArgs args,
@@ -33,7 +62,7 @@ public class CompilationEventDispatcher : ICompilationEventDispatcher
         {
             try
             {
-                await handler.OnCompilationStartingAsync(args, cancellationToken);
+                await InvokeHandlerAsync(ct => handler.OnCompilationStartingAsync(args, ct), cancellationToken);
                 if (args.Cancel)
                 {
                     _logger.LogInformation(
@@ -65,7 +94,7 @@ public class CompilationEventDispatcher : ICompilationEventDispatcher
         {
             try
             {
-                await handler.OnConfigurationLoadedAsync(args, cancellationToken);
+                await InvokeHandlerAsync(ct => handler.OnConfigurationLoadedAsync(args, ct), cancellationToken);
             }
             catch (Exception ex)
             {
@@ -91,7 +120,7 @@ public class CompilationEventDispatcher : ICompilationEventDispatcher
         {
             try
             {
-                await handler.OnValidationAsync(args, cancellationToken);
+                await InvokeHandlerAsync(ct => handler.OnValidationAsync(args, ct), cancellationToken);
                 if (args.Abort)
                 {
                     _logger.LogWarning(
@@ -127,7 +156,7 @@ public class CompilationEventDispatcher : ICompilationEventDispatcher
         {
             try
             {
-                await handler.OnSourceLoadingAsync(args, cancellationToken);
+                await InvokeHandlerAsync(ct => handler.OnSourceLoadingAsync(args, ct), cancellationToken);
                 if (args.Skip)
                 {
                     _logger.LogInformation(
@@ -162,7 +191,7 @@ public class CompilationEventDispatcher : ICompilationEventDispatcher
         {
             try
             {
-                await handler.OnSourceLoadedAsync(args, cancellationToken);
+                await InvokeHandlerAsync(ct => handler.OnSourceLoadedAsync(args, ct), cancellationToken);
             }
             catch (Exception ex)
             {
@@ -188,7 +217,7 @@ public class CompilationEventDispatcher : ICompilationEventDispatcher
         {
             try
             {
-                await handler.OnFileLockAcquiredAsync(args, cancellationToken);
+                await InvokeHandlerAsync(ct => handler.OnFileLockAcquiredAsync(args, ct), cancellationToken);
             }
             catch (Exception ex)
             {
@@ -214,7 +243,7 @@ public class CompilationEventDispatcher : ICompilationEventDispatcher
         {
             try
             {
-                await handler.OnFileLockReleasedAsync(args, cancellationToken);
+                await InvokeHandlerAsync(ct => handler.OnFileLockReleasedAsync(args, ct), cancellationToken);
             }
             catch (Exception ex)
             {
@@ -240,7 +269,7 @@ public class CompilationEventDispatcher : ICompilationEventDispatcher
         {
             try
             {
-                await handler.OnFileLockFailedAsync(args, cancellationToken);
+                await InvokeHandlerAsync(ct => handler.OnFileLockFailedAsync(args, ct), cancellationToken);
             }
             catch (Exception ex)
             {
@@ -266,7 +295,7 @@ public class CompilationEventDispatcher : ICompilationEventDispatcher
         {
             try
             {
-                await handler.OnChunkStartedAsync(args, cancellationToken);
+                await InvokeHandlerAsync(ct => handler.OnChunkStartedAsync(args, ct), cancellationToken);
                 if (args.Skip)
                 {
                     _logger.LogInformation(
@@ -301,7 +330,7 @@ public class CompilationEventDispatcher : ICompilationEventDispatcher
         {
             try
             {
-                await handler.OnChunkCompletedAsync(args, cancellationToken);
+                await InvokeHandlerAsync(ct => handler.OnChunkCompletedAsync(args, ct), cancellationToken);
             }
             catch (Exception ex)
             {
@@ -327,7 +356,7 @@ public class CompilationEventDispatcher : ICompilationEventDispatcher
         {
             try
             {
-                await handler.OnChunksMergingAsync(args, cancellationToken);
+                await InvokeHandlerAsync(ct => handler.OnChunksMergingAsync(args, ct), cancellationToken);
             }
             catch (Exception ex)
             {
@@ -353,7 +382,7 @@ public class CompilationEventDispatcher : ICompilationEventDispatcher
         {
             try
             {
-                await handler.OnChunksMergedAsync(args, cancellationToken);
+                await InvokeHandlerAsync(ct => handler.OnChunksMergedAsync(args, ct), cancellationToken);
             }
             catch (Exception ex)
             {
@@ -377,7 +406,7 @@ public class CompilationEventDispatcher : ICompilationEventDispatcher
         {
             try
             {
-                await handler.OnCompilationCompletedAsync(args, cancellationToken);
+                await InvokeHandlerAsync(ct => handler.OnCompilationCompletedAsync(args, ct), cancellationToken);
             }
             catch (Exception ex)
             {
@@ -401,7 +430,7 @@ public class CompilationEventDispatcher : ICompilationEventDispatcher
         {
             try
             {
-                await handler.OnCompilationErrorAsync(args, cancellationToken);
+                await InvokeHandlerAsync(ct => handler.OnCompilationErrorAsync(args, ct), cancellationToken);
             }
             catch (Exception ex)
             {
@@ -427,7 +456,7 @@ public class CompilationEventDispatcher : ICompilationEventDispatcher
         {
             try
             {
-                await handler.OnHashComputedAsync(args, cancellationToken);
+                await InvokeHandlerAsync(ct => handler.OnHashComputedAsync(args, ct), cancellationToken);
             }
             catch (Exception ex)
             {
@@ -453,7 +482,7 @@ public class CompilationEventDispatcher : ICompilationEventDispatcher
         {
             try
             {
-                await handler.OnHashVerifiedAsync(args, cancellationToken);
+                await InvokeHandlerAsync(ct => handler.OnHashVerifiedAsync(args, ct), cancellationToken);
             }
             catch (Exception ex)
             {
@@ -479,7 +508,7 @@ public class CompilationEventDispatcher : ICompilationEventDispatcher
         {
             try
             {
-                await handler.OnHashMismatchAsync(args, cancellationToken);
+                await InvokeHandlerAsync(ct => handler.OnHashMismatchAsync(args, ct), cancellationToken);
                 if (args.Abort)
                 {
                     _logger.LogWarning(
