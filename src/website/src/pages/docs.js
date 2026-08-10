@@ -7,18 +7,14 @@ const DocsPage = ({ data }) => {
   const docsByCategory = {
     core: [],
     guides: [],
-    api: [],
     technical: [],
   }
 
   data.allMarkdownRemark.nodes.forEach((node) => {
-    const path = node.fileAbsolutePath
     const relativePath = node.fields.slug
 
     if (relativePath.includes("/guides/")) {
       docsByCategory.guides.push(node)
-    } else if (relativePath.includes("/api/")) {
-      docsByCategory.api.push(node)
     } else if (
       relativePath.includes("getting-started") ||
       relativePath.includes("compiler-comparison") ||
@@ -34,8 +30,7 @@ const DocsPage = ({ data }) => {
   return (
     <Layout pageTitle="Documentation">
       <p style={{ fontSize: "1.1rem", marginBottom: "2rem" }}>
-        Explore comprehensive documentation for all components of the
-        Bloqr List Utils.
+        Explore comprehensive documentation for all components of Bloqr Core.
       </p>
 
       <section style={{ marginBottom: "3rem" }}>
@@ -54,18 +49,6 @@ const DocsPage = ({ data }) => {
         <h2>User Guides</h2>
         <ul className="doc-list">
           {docsByCategory.guides.map((node) => (
-            <li key={node.id}>
-              <Link to={node.fields.slug}>{node.frontmatter.title || node.fields.slug}</Link>
-              {node.excerpt && <p>{node.excerpt}</p>}
-            </li>
-          ))}
-        </ul>
-      </section>
-
-      <section style={{ marginBottom: "3rem" }}>
-        <h2>API Documentation</h2>
-        <ul className="doc-list">
-          {docsByCategory.api.map((node) => (
             <li key={node.id}>
               <Link to={node.fields.slug}>{node.frontmatter.title || node.fields.slug}</Link>
               {node.excerpt && <p>{node.excerpt}</p>}
@@ -112,4 +95,4 @@ export const query = graphql`
 
 export default DocsPage
 
-export const Head = () => <title>Documentation - Bloqr List Utils</title>
+export const Head = () => <title>Documentation - Bloqr Core</title>

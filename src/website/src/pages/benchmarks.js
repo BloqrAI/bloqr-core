@@ -312,7 +312,7 @@ Maximum speedup: 6.75x`}
           </div>
           <div className="feature">
             <h3>
-              <a href="https://github.com/BloqrAI/bloqr-lists/tree/main/benchmarks">
+              <a href="https://github.com/BloqrAI/bloqr-core/tree/main/benchmarks">
                 View Benchmark Code
               </a>
             </h3>
@@ -346,4 +346,4 @@ Maximum speedup: 6.75x`}
 
 export default BenchmarksPage
 
-export const Head = () => <title>Performance Benchmarks - Bloqr List Utils</title>
+export const Head = () => <title>Performance Benchmarks - Bloqr Core</title>

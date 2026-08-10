@@ -660,7 +660,6 @@ echo "All tests passed!"
 ## Related Documentation
 
 - [TypeScript Rules Compiler Guide](./typescript-rules-compiler.md)
-- [TypeScript API SDK Guide](./typescript-api-sdk.md)
 - [.NET Compiler README](../../src/rules-compiler-dotnet/README.md)
 - [Python Compiler README](../../src/rules-compiler-python/README.md)
 - [Rust Compiler README](../../src/rules-compiler-rust/README.md)

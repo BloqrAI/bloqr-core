@@ -1,7 +1,7 @@
 {
-  "name": "bloqr-lists-website",
+  "name": "bloqr-core-website",
   "version": "1.0.0",
-  "description": "Documentation website for the Bloqr List Utils repository",
+  "description": "Documentation website for the Bloqr Core repository",
   "keywords": [
     "bloqr",
     "ad-blocking",

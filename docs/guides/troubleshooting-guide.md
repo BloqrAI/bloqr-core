@@ -892,7 +892,6 @@ cat compiler-config.yaml
 ## Related Documentation
 
 - [TypeScript Rules Compiler Guide](./typescript-rules-compiler.md)
-- [TypeScript API SDK Guide](./typescript-api-sdk.md)
 - [Testing Guide](./testing-guide.md)
 - [Deployment Guide](./deployment-guide.md)
 - [Configuration Reference](../configuration-reference.md)

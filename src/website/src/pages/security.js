@@ -549,7 +549,7 @@ const SecurityPage = () => {
           </div>
           <div className="feature">
             <h3>
-              <a href="https://github.com/BloqrAI/bloqr-lists/blob/main/SECURITY.md">
+              <a href="https://github.com/BloqrAI/bloqr-core/blob/main/SECURITY.md">
                 Security Policy
               </a>
             </h3>
@@ -567,5 +567,5 @@ const SecurityPage = () => {
 export default SecurityPage
 
 export const Head = () => (
-  <title>Security - Bloqr List Utils</title>
+  <title>Security - Bloqr Core</title>
 )
