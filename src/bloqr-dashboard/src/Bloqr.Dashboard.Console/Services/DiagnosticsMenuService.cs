@@ -77,12 +77,9 @@ public sealed class DiagnosticsMenuService : MenuServiceBase
         {
             Renderer.WriteLine();
             Renderer.WriteStyled("Missing tools — how to fix:", TextStyle.Warning);
-            foreach (var tool in missingTools)
+            foreach (var tool in missingTools.Where(RemediationGuidance.ContainsKey))
             {
-                if (RemediationGuidance.TryGetValue(tool, out var guidance))
-                {
-                    Renderer.WriteLine($"  {tool}: {guidance}");
-                }
+                Renderer.WriteLine($"  {tool}: {RemediationGuidance[tool]}");
             }
         }
 
