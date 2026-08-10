@@ -43,6 +43,8 @@ This directory contains comprehensive documentation for the ad-blocking reposito
 | Document | Description |
 |----------|--------------|
 | [Versioning Strategy](architecture/versioning-strategy.md) | Org-wide per-package JSR versioning standard, with `@bloqr/compiler-core` as the reference implementation |
+| [NuGet Distribution Strategy](architecture/nuget-distribution-strategy.md) | Decision record for publishing `Bloqr.Compiler.Abstractions`/`Core` to GitHub Packages, and why in-repo consumers keep `<ProjectReference>` |
+| [Release Packaging Strategy](architecture/release-packaging-strategy.md) | Source vs. binary-only release shapes, self-contained-vs-Native-AOT evaluation, and launcher dependency preflight checks |
 | [Restructuring Retrospective](RESTRUCTURING_RETROSPECTIVE.md) | How this repo got split into `bloqr-core`/`bloqr-blocklists`/`bloqr-apiclients`, the JSR publishing story, and lessons learned |
 | [Compiler Comparison](compiler-comparison.md) | Feature comparison of all compilers |
 
