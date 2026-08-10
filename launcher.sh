@@ -98,6 +98,46 @@ check_tool() {
     fi
 }
 
+# Dependency preflight: detects a required tool and, if missing, informs the
+# user what would be installed and how, then asks before running the official
+# installer - never installs silently. Returns 0 if the tool is present (or
+# was just installed successfully), 1 if the user aborted or install failed,
+# so callers can skip the action that needed it (#277).
+#   require_tool <command-name> <human-label> <install-description> <install-command>
+require_tool() {
+    local tool="$1" label="$2" description="$3" install_cmd="$4"
+
+    if command -v "$tool" &> /dev/null; then
+        return 0
+    fi
+
+    echo -e "${RED}✗ $label is not installed.${NC}"
+    echo -e "${YELLOW}  $description${NC}"
+    echo -e "${CYAN}  Install command: ${NC}$install_cmd"
+    echo ""
+    read -p "Run this install command now? [y/N] " -n 1 -r reply
+    echo ""
+
+    if [[ ! "$reply" =~ ^[Yy]$ ]]; then
+        echo -e "${YELLOW}Aborted - $label was not installed.${NC}"
+        return 1
+    fi
+
+    echo -e "${CYAN}Installing $label...${NC}"
+    if ! eval "$install_cmd"; then
+        echo -e "${RED}Install command failed - aborting.${NC}"
+        return 1
+    fi
+
+    if command -v "$tool" &> /dev/null; then
+        echo -e "${GREEN}✓ $label installed successfully.${NC}"
+        return 0
+    fi
+
+    echo -e "${RED}$label still not found on PATH after install - you may need to restart your shell. Aborting.${NC}"
+    return 1
+}
+
 # Main Menu
 main_menu() {
     while true; do
@@ -193,25 +233,33 @@ rules_menu() {
         
         case $choice in
             1)
-                if command -v deno &> /dev/null; then
+                if require_tool deno "Deno" \
+                    "Required to run @bloqr/compiler-core, the TypeScript compilation engine." \
+                    'curl -fsSL https://deno.land/install.sh | sh && export PATH="$PATH:$HOME/.deno/bin"'; then
                     cd src/adblock-compiler-core
                     deno task compile
                     cd "$SCRIPT_DIR"
-                else
-                    echo -e "${RED}✗ Deno is not installed${NC}"
                 fi
                 pause
                 ;;
             2)
-                cd src/rules-compiler-dotnet
-                dotnet run --project src/RulesCompiler.Console
-                cd "$SCRIPT_DIR"
+                if require_tool dotnet ".NET SDK" \
+                    "Required to build/run the .NET rules compiler (installs to ~/.dotnet; add to PATH if it isn't already)." \
+                    'curl -sSL https://dot.net/v1/dotnet-install.sh | bash -s -- --channel 10.0 --install-dir "$HOME/.dotnet" && export PATH="$PATH:$HOME/.dotnet"'; then
+                    cd src/rules-compiler-dotnet
+                    dotnet run --project src/RulesCompiler.Console
+                    cd "$SCRIPT_DIR"
+                fi
                 pause
                 ;;
             3)
-                cd src/rules-compiler-rust
-                cargo run --release
-                cd "$SCRIPT_DIR"
+                if require_tool cargo "Rust toolchain" \
+                    "Required to build/run the Rust rules compiler." \
+                    'curl --proto "=https" --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y && source "$HOME/.cargo/env"'; then
+                    cd src/rules-compiler-rust
+                    cargo run --release
+                    cd "$SCRIPT_DIR"
+                fi
                 pause
                 ;;
             4)
@@ -246,9 +294,13 @@ run_dashboard() {
     show_banner
     echo -e "${MAGENTA}Bloqr Dashboard${NC}"
     echo ""
-    cd src/bloqr-dashboard
-    dotnet run --project src/Bloqr.Dashboard.Console
-    cd "$SCRIPT_DIR"
+    if require_tool dotnet ".NET SDK" \
+        "Required to run the Dashboard (installs to ~/.dotnet; add to PATH if it isn't already)." \
+        'curl -sSL https://dot.net/v1/dotnet-install.sh | bash -s -- --channel 10.0 --install-dir "$HOME/.dotnet" && export PATH="$PATH:$HOME/.dotnet"'; then
+        cd src/bloqr-dashboard
+        dotnet run --project src/Bloqr.Dashboard.Console
+        cd "$SCRIPT_DIR"
+    fi
     pause
 }
 

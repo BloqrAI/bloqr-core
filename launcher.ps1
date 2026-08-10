@@ -67,11 +67,55 @@ function Pause {
 # Function to check tool availability
 function Test-Tool {
     param([string]$Command)
-    
+
     if (Get-Command $Command -ErrorAction SilentlyContinue) {
         return "✓"
     }
     return "✗"
+}
+
+# Dependency preflight: detects a required tool and, if missing, informs the
+# user what would be installed and how, then asks before running the official
+# installer - never installs silently. Returns $true if the tool is present
+# (or was just installed successfully), $false if the user aborted or install
+# failed, so callers can skip the action that needed it (#277).
+function Request-Tool {
+    param(
+        [string]$Command,
+        [string]$Label,
+        [string]$Description,
+        [scriptblock]$InstallAction
+    )
+
+    if (Get-Command $Command -ErrorAction SilentlyContinue) {
+        return $true
+    }
+
+    Write-Host "✗ $Label is not installed." -ForegroundColor Red
+    Write-Host "  $Description" -ForegroundColor Yellow
+    $reply = Read-Host "Run the official installer for $Label now? [y/N]"
+
+    if ($reply -notmatch '^[Yy]$') {
+        Write-Host "Aborted - $Label was not installed." -ForegroundColor Yellow
+        return $false
+    }
+
+    Write-Host "Installing $Label..." -ForegroundColor Cyan
+    try {
+        & $InstallAction
+    }
+    catch {
+        Write-Host "Install failed: $($_.Exception.Message)" -ForegroundColor Red
+        return $false
+    }
+
+    if (Get-Command $Command -ErrorAction SilentlyContinue) {
+        Write-Host "✓ $Label installed successfully." -ForegroundColor Green
+        return $true
+    }
+
+    Write-Host "$Label still not found on PATH after install - you may need to restart your shell. Aborting." -ForegroundColor Red
+    return $false
 }
 
 # Function to run command with error handling
@@ -186,7 +230,10 @@ function Show-RulesMenu {
         
         switch ($choice) {
             "1" {
-                if (Get-Command deno -ErrorAction SilentlyContinue) {
+                $ready = Request-Tool -Command deno -Label "Deno" `
+                    -Description "Required to run @bloqr/compiler-core, the TypeScript compilation engine." `
+                    -InstallAction { winget install --id DenoLand.Deno -e }
+                if ($ready) {
                     Push-Location "$Script:RootDir\src\adblock-compiler-core"
                     try {
                         deno task compile
@@ -195,33 +242,40 @@ function Show-RulesMenu {
                         Pop-Location
                     }
                 }
-                else {
-                    Write-Host "✗ Deno is not installed" -ForegroundColor Red
-                }
                 Pause
             }
             "2" {
-                Invoke-SafeCommand {
-                    Push-Location "$Script:RootDir\src\rules-compiler-dotnet"
-                    try {
-                        dotnet run --project src\RulesCompiler.Console
-                    }
-                    finally {
-                        Pop-Location
-                    }
-                } "Compiling with .NET"
+                $ready = Request-Tool -Command dotnet -Label ".NET SDK" `
+                    -Description "Required to build/run the .NET rules compiler." `
+                    -InstallAction { winget install --id Microsoft.DotNet.SDK.10 -e }
+                if ($ready) {
+                    Invoke-SafeCommand {
+                        Push-Location "$Script:RootDir\src\rules-compiler-dotnet"
+                        try {
+                            dotnet run --project src\RulesCompiler.Console
+                        }
+                        finally {
+                            Pop-Location
+                        }
+                    } "Compiling with .NET"
+                }
                 Pause
             }
             "3" {
-                Invoke-SafeCommand {
-                    Push-Location "$Script:RootDir\src\rules-compiler-rust"
-                    try {
-                        cargo run --release
-                    }
-                    finally {
-                        Pop-Location
-                    }
-                } "Compiling with Rust"
+                $ready = Request-Tool -Command cargo -Label "Rust toolchain" `
+                    -Description "Required to build/run the Rust rules compiler." `
+                    -InstallAction { winget install --id Rustlang.Rustup -e }
+                if ($ready) {
+                    Invoke-SafeCommand {
+                        Push-Location "$Script:RootDir\src\rules-compiler-rust"
+                        try {
+                            cargo run --release
+                        }
+                        finally {
+                            Pop-Location
+                        }
+                    } "Compiling with Rust"
+                }
                 Pause
             }
             "4" {
@@ -286,12 +340,17 @@ function Invoke-Dashboard {
     Show-Banner
     Write-Host "Bloqr Dashboard" -ForegroundColor Magenta
     Write-Host ""
-    Push-Location src/bloqr-dashboard
-    try {
-        dotnet run --project src/Bloqr.Dashboard.Console
-    }
-    finally {
-        Pop-Location
+    $ready = Request-Tool -Command dotnet -Label ".NET SDK" `
+        -Description "Required to run the Dashboard." `
+        -InstallAction { winget install --id Microsoft.DotNet.SDK.10 -e }
+    if ($ready) {
+        Push-Location src/bloqr-dashboard
+        try {
+            dotnet run --project src/Bloqr.Dashboard.Console
+        }
+        finally {
+            Pop-Location
+        }
     }
     Pause
 }
