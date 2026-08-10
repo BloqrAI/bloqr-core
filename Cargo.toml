@@ -12,7 +12,7 @@ edition = "2021"
 authors = ["jaypatrick"]
 license = "GPL-3.0"
 repository = "https://github.com/BloqrAI/bloqr-core"
-rust-version = "1.83"
+rust-version = "1.86"
 
 [workspace.dependencies]
 # Async runtime

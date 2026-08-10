@@ -34,9 +34,6 @@
     <EmbeddedResource Include="..\..\..\..\schemas\dashboard-config.schema.json">
       <LogicalName>dashboard-config.schema.json</LogicalName>
     </EmbeddedResource>
-    <EmbeddedResource Include="..\..\..\..\schemas\compiler-config.schema.json">
-      <LogicalName>compiler-config.schema.json</LogicalName>
-    </EmbeddedResource>
   </ItemGroup>
 
 </Project>

@@ -18,6 +18,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="JsonSchema.Net" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" />
     <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" />
     <PackageReference Include="Microsoft.Extensions.Options" />
@@ -30,6 +31,12 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Bloqr.Compiler.Abstractions\Bloqr.Compiler.Abstractions.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="..\..\..\..\schemas\compiler-config.schema.json">
+      <LogicalName>compiler-config.schema.json</LogicalName>
+    </EmbeddedResource>
   </ItemGroup>
 
 </Project>

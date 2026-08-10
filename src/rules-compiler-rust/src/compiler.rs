@@ -1156,10 +1156,12 @@ mod tests {
 
     #[test]
     fn test_compiler_result_helpers() {
-        let mut result = CompilerResult::default();
-        result.output_path = PathBuf::from("/path/to/output.txt");
-        result.output_hash = "a".repeat(96);
-        result.elapsed_ms = 1500;
+        let mut result = CompilerResult {
+            output_path: PathBuf::from("/path/to/output.txt"),
+            output_hash: "a".repeat(96),
+            elapsed_ms: 1500,
+            ..Default::default()
+        };
 
         assert_eq!(result.output_path_str(), "/path/to/output.txt");
         assert_eq!(result.hash_short().len(), 32);

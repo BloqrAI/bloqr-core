@@ -77,27 +77,27 @@ public class CommandHelper
 
         using var process = new Process { StartInfo = startInfo };
 
-        var stdOutTask = Task.Run(async () =>
-        {
-            var output = new System.Text.StringBuilder();
-            process.OutputDataReceived += (_, e) =>
-            {
-                if (e.Data != null)
-                    output.AppendLine(e.Data);
-            };
-            return output;
-        }, cancellationToken);
+        // Event handlers must be subscribed before Start() - subscribing via a Task.Run scheduled
+        // after Start() (as this used to) is racy: a fast-completing process (e.g. `git
+        // rev-parse`, which emits one line and exits almost immediately) can finish and fire its
+        // output events before the thread-pool task actually runs and subscribes, silently
+        // dropping that output. Plain StringBuilders are safe here because Process guarantees
+        // OutputDataReceived/ErrorDataReceived are each raised serially, never concurrently with
+        // themselves, and the two streams use separate builders so they can't race each other.
+        var stdOutBuilder = new System.Text.StringBuilder();
+        var stdErrBuilder = new System.Text.StringBuilder();
 
-        var stdErrTask = Task.Run(async () =>
+        process.OutputDataReceived += (_, e) =>
         {
-            var output = new System.Text.StringBuilder();
-            process.ErrorDataReceived += (_, e) =>
-            {
-                if (e.Data != null)
-                    output.AppendLine(e.Data);
-            };
-            return output;
-        }, cancellationToken);
+            if (e.Data != null)
+                stdOutBuilder.AppendLine(e.Data);
+        };
+
+        process.ErrorDataReceived += (_, e) =>
+        {
+            if (e.Data != null)
+                stdErrBuilder.AppendLine(e.Data);
+        };
 
         process.Start();
         process.BeginOutputReadLine();
@@ -105,12 +105,9 @@ public class CommandHelper
 
         await process.WaitForExitAsync(cancellationToken);
 
-        var stdOut = (await stdOutTask).ToString();
-        var stdErr = (await stdErrTask).ToString();
-
         _logger.LogDebug("Command exited with code {ExitCode}", process.ExitCode);
 
-        return (process.ExitCode, stdOut, stdErr);
+        return (process.ExitCode, stdOutBuilder.ToString(), stdErrBuilder.ToString());
     }
 
     /// <summary>

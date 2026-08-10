@@ -307,6 +307,59 @@ class ChunksMergedEventArgs(CompilationEventArgs):
 
 
 # =============================================================================
+# Hash Verification Events
+# =============================================================================
+#
+# See docs/HASH_VERIFICATION.md. These use SHA-384 (96 hex chars), distinct from
+# FileLockService.compute_hash's SHA-256 below - that split is intentional (see the doc's
+# "Why file locking uses SHA-256 while this system uses SHA-384" section): file locking hashes
+# are a short-lived same-process integrity check, while these events feed a durable,
+# cross-run `.hashes.json` trust record that warrants SHA-384's larger margin.
+
+
+@dataclass
+class HashComputedEventArgs(CompilationEventArgs):
+    """Event arguments for when a hash is computed for any file (audit trail)."""
+
+    item_identifier: str = ""
+    item_type: str = ""
+    hash: str = ""
+    size_bytes: int = 0
+    is_verification: bool = False
+
+
+@dataclass
+class HashVerifiedEventArgs(CompilationEventArgs):
+    """Event arguments for when a computed hash matches the recorded expected value."""
+
+    item_identifier: str = ""
+    item_type: str = ""
+    expected_hash: str = ""
+    actual_hash: str = ""
+    size_bytes: int = 0
+    computation_duration_ms: float = 0.0
+
+
+@dataclass
+class HashMismatchEventArgs(CompilationEventArgs):
+    """
+    Event arguments for when a computed hash does NOT match the recorded expected value.
+
+    Defaults to aborting; a handler can set allow_continuation=True (and/or abort=False) to
+    accept the new hash as the trusted baseline going forward instead of failing compilation.
+    """
+
+    item_identifier: str = ""
+    item_type: str = ""
+    expected_hash: str = ""
+    actual_hash: str = ""
+    size_bytes: int = 0
+    abort: bool = True
+    abort_reason: Optional[str] = None
+    allow_continuation: bool = False
+
+
+# =============================================================================
 # Completion Events
 # =============================================================================
 
@@ -409,6 +462,18 @@ class CompilationEventHandler(ABC):
         self, args: CompilationErrorEventArgs
     ) -> None:
         """Called when compilation fails."""
+        pass
+
+    async def on_hash_computed(self, args: HashComputedEventArgs) -> None:
+        """Called whenever a hash is computed for any file."""
+        pass
+
+    async def on_hash_verified(self, args: HashVerifiedEventArgs) -> None:
+        """Called when a computed hash matches the recorded expected value."""
+        pass
+
+    async def on_hash_mismatch(self, args: HashMismatchEventArgs) -> None:
+        """Called when a computed hash does not match the recorded expected value."""
         pass
 
 
@@ -694,6 +759,54 @@ class EventDispatcher:
                     f"CompilationError: {e}"
                 )
                 # Don't rethrow - error already occurred
+
+    async def raise_hash_computed(self, args: HashComputedEventArgs) -> None:
+        """Raise the hash computed event."""
+        logger.debug(
+            f"Raising HashComputed event ({args.item_type}: {args.item_identifier}) "
+            f"to {len(self._handlers)} handlers"
+        )
+        for handler in self._handlers:
+            try:
+                await handler.on_hash_computed(args)
+            except Exception as e:
+                logger.error(
+                    f"Error in handler {handler.__class__.__name__} during "
+                    f"HashComputed: {e}"
+                )
+                # Don't rethrow - hash is already computed
+
+    async def raise_hash_verified(self, args: HashVerifiedEventArgs) -> None:
+        """Raise the hash verified event."""
+        logger.debug(
+            f"Raising HashVerified event ({args.item_type}: {args.item_identifier}) "
+            f"to {len(self._handlers)} handlers"
+        )
+        for handler in self._handlers:
+            try:
+                await handler.on_hash_verified(args)
+            except Exception as e:
+                logger.error(
+                    f"Error in handler {handler.__class__.__name__} during "
+                    f"HashVerified: {e}"
+                )
+                # Don't rethrow - hash is already verified
+
+    async def raise_hash_mismatch(self, args: HashMismatchEventArgs) -> None:
+        """Raise the hash mismatch event."""
+        logger.debug(
+            f"Raising HashMismatch event ({args.item_type}: {args.item_identifier}) "
+            f"to {len(self._handlers)} handlers"
+        )
+        for handler in self._handlers:
+            try:
+                await handler.on_hash_mismatch(args)
+            except Exception as e:
+                logger.error(
+                    f"Error in handler {handler.__class__.__name__} during "
+                    f"HashMismatch: {e}"
+                )
+                raise
 
 
 # =============================================================================

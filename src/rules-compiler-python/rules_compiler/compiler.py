@@ -17,7 +17,7 @@ import platform
 import shutil
 import subprocess
 import tempfile
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from datetime import datetime
 from pathlib import Path
 from typing import Any
@@ -31,6 +31,7 @@ except ImportError:
 from rules_compiler.config import (
     CompilerConfiguration,
     ConfigurationFormat,
+    HashVerificationSettings,
     read_configuration,
     to_json,
 )
@@ -42,6 +43,14 @@ from rules_compiler.errors import (
     TimeoutError as CompilerTimeoutError,
     ValidationError,
 )
+from rules_compiler.events import (
+    EventDispatcher,
+    HashComputedEventArgs,
+    HashMismatchEventArgs,
+    HashVerifiedEventArgs,
+)
+from rules_compiler.hash_database import HashDatabaseEntry, load_hash_database, record_hash
+from rules_compiler.output_publisher import publish_output
 
 logger = logging.getLogger(__name__)
 
@@ -306,6 +315,103 @@ def format_elapsed(elapsed_ms: int) -> str:
     return f"{elapsed_ms}ms"
 
 
+async def _raise_hash_computed(
+    event_dispatcher: EventDispatcher | None,
+    item_identifier: str,
+    item_type: str,
+    hash_value: str,
+    size_bytes: int,
+) -> None:
+    """Raise a HashComputed event if a dispatcher was supplied."""
+    if event_dispatcher is None:
+        return
+    await event_dispatcher.raise_hash_computed(
+        HashComputedEventArgs(
+            item_identifier=item_identifier,
+            item_type=item_type,
+            hash=hash_value,
+            size_bytes=size_bytes,
+        )
+    )
+
+
+async def _verify_and_record_hash(
+    hash_database_path: str | Path,
+    item_identifier: str,
+    item_type: str,
+    computed_hash: str,
+    settings: HashVerificationSettings,
+    event_dispatcher: EventDispatcher | None,
+) -> tuple[bool, str | None]:
+    """
+    Compare a freshly computed hash against the `.hashes.json` sidecar, raising
+    HashVerified/HashMismatch events (if a dispatcher was supplied) and recording the hash
+    when it is new or a mismatch was allowed to continue.
+
+    Returns:
+        Tuple of (can_continue, error_message).
+    """
+    size_bytes = Path(item_identifier).stat().st_size
+    entries = load_hash_database(hash_database_path)
+    existing = entries.get(item_identifier)
+
+    if existing is None:
+        # First time this item has been seen: bootstrap trust for future runs.
+        record_hash(
+            hash_database_path,
+            item_identifier,
+            HashDatabaseEntry(hash=computed_hash, size_bytes=size_bytes, item_type=item_type),
+        )
+        return True, None
+
+    if existing.hash.lower() == computed_hash.lower():
+        if event_dispatcher is not None:
+            await event_dispatcher.raise_hash_verified(
+                HashVerifiedEventArgs(
+                    item_identifier=item_identifier,
+                    item_type=item_type,
+                    expected_hash=existing.hash,
+                    actual_hash=computed_hash,
+                    size_bytes=size_bytes,
+                )
+            )
+        return True, None
+
+    mismatch_args = HashMismatchEventArgs(
+        item_identifier=item_identifier,
+        item_type=item_type,
+        expected_hash=existing.hash,
+        actual_hash=computed_hash,
+        size_bytes=size_bytes,
+    )
+    strict = settings.fail_on_mismatch or settings.mode.lower() == "strict"
+    if not strict:
+        mismatch_args.abort = False
+        mismatch_args.allow_continuation = True
+
+    if event_dispatcher is not None:
+        await event_dispatcher.raise_hash_mismatch(mismatch_args)
+
+    should_abort = mismatch_args.abort and not mismatch_args.allow_continuation
+    if should_abort:
+        return False, mismatch_args.abort_reason or f"Hash mismatch for {item_identifier}"
+
+    # Continuation was allowed - accept the new hash as the trusted baseline going forward.
+    record_hash(
+        hash_database_path,
+        item_identifier,
+        HashDatabaseEntry(hash=computed_hash, size_bytes=size_bytes, item_type=item_type),
+    )
+    return True, None
+
+
+def _resolve_relative_to_config(path: str, config_path: Path) -> Path:
+    """Resolve a config-relative path (e.g. hashDatabasePath, output.path) against the
+    config file's own directory, matching the .NET/Rust/TypeScript compilers' behavior."""
+    candidate = Path(path)
+    return candidate if candidate.is_absolute() else (config_path.parent / candidate).resolve()
+
+
 _JSR_PACKAGE_SPECIFIER = "jsr:@bloqr/compiler-core/cli"
 _DENO_PERMISSIONS = (
     "--allow-read",
@@ -380,6 +486,7 @@ class RulesCompiler:
         format: ConfigurationFormat | None = None,
         validate: bool = True,
         fail_on_warnings: bool = False,
+        event_dispatcher: EventDispatcher | None = None,
     ) -> CompilerResult:
         """
         Compile filter rules.
@@ -392,6 +499,7 @@ class RulesCompiler:
             format: Force configuration format.
             validate: Validate configuration before compiling.
             fail_on_warnings: Fail compilation if configuration has validation warnings.
+            event_dispatcher: Optional dispatcher for hash-verification events.
 
         Returns:
             Compilation result.
@@ -400,6 +508,7 @@ class RulesCompiler:
             config_path=config_path,
             output_path=output_path,
             copy_to_rules=copy_to_rules,
+            event_dispatcher=event_dispatcher,
             rules_directory=rules_directory,
             format=format,
             debug=self.debug,
@@ -455,6 +564,7 @@ class RulesCompiler:
         format: ConfigurationFormat | None = None,
         validate: bool = True,
         fail_on_warnings: bool = False,
+        event_dispatcher: EventDispatcher | None = None,
     ) -> CompilerResult:
         """
         Asynchronously compile filter rules.
@@ -470,6 +580,7 @@ class RulesCompiler:
             format: Force configuration format.
             validate: Validate configuration before compiling.
             fail_on_warnings: Fail compilation if configuration has validation warnings.
+            event_dispatcher: Optional dispatcher for hash-verification events.
 
         Returns:
             Compilation result.
@@ -489,6 +600,7 @@ class RulesCompiler:
             debug=self.debug,
             validate=validate,
             fail_on_warnings=fail_on_warnings,
+            event_dispatcher=event_dispatcher,
         )
 
 
@@ -501,6 +613,7 @@ def compile_rules(
     debug: bool = False,
     validate: bool = True,
     fail_on_warnings: bool = False,
+    event_dispatcher: EventDispatcher | None = None,
 ) -> CompilerResult:
     """
     Compile filter rules using adblock-compiler-core (via Deno).
@@ -514,6 +627,10 @@ def compile_rules(
         debug: Enable debug logging.
         validate: Validate configuration before compiling.
         fail_on_warnings: Fail compilation if configuration has validation warnings.
+        event_dispatcher: Optional dispatcher to raise HashComputed/HashVerified/HashMismatch
+            events at each stage (see docs/HASH_VERIFICATION.md). Hash recording/verification
+            against the `.hashes.json` sidecar (config.hash_verification) happens regardless
+            of whether a dispatcher is supplied - the dispatcher only adds observability.
 
     Returns:
         Compilation result.
@@ -527,6 +644,14 @@ def compile_rules(
         config = read_configuration(config_path, format)
         result.config_name = config.name
         result.config_version = config.version
+
+        # Stage 1 of the hash-verification pipeline: hash the config file itself for the
+        # audit trail. Not checked against the sidecar database - the database's own
+        # location and policy live inside this file, so there's nothing to compare against.
+        config_hash = compute_hash(config_path)
+        asyncio.run(_raise_hash_computed(
+            event_dispatcher, str(config_path), "config_file", config_hash, config_path.stat().st_size,
+        ))
 
         # Validate configuration if requested
         if validate:
@@ -605,6 +730,25 @@ def compile_rules(
         if not actual_output.exists():
             raise OutputNotCreatedError(str(actual_output))
 
+        # Publish to the configured durable destination, if any, applying the conflict
+        # strategy and archiving policy before anything downstream (hashing, copying) sees
+        # the file.
+        if config.output is not None and config.output.path:
+            resolved_path = _resolve_relative_to_config(config.output.path, config_path)
+            resolved_output = replace(config.output, path=str(resolved_path))
+            publish_result = publish_output(actual_output, resolved_output, config.archiving)
+
+            if not publish_result.success or publish_result.final_path is None:
+                result.success = False
+                result.error_message = publish_result.error_message
+                logger.error(f"Failed to publish output: {publish_result.error_message}")
+                return result
+
+            actual_output = Path(publish_result.final_path)
+            result.output_path = str(actual_output)
+            if publish_result.archived_path:
+                logger.info(f"Archived previous output to {publish_result.archived_path}")
+
         # Calculate statistics
         result.rule_count = count_rules(actual_output)
         result.output_hash = compute_hash(actual_output)
@@ -613,6 +757,28 @@ def compile_rules(
         if debug:
             logger.debug(f"Compiled {result.rule_count} rules")
             logger.debug(f"Output hash: {result.hash_short()}...")
+
+        asyncio.run(_raise_hash_computed(
+            event_dispatcher, str(actual_output), "output_file",
+            result.output_hash, actual_output.stat().st_size,
+        ))
+
+        if (
+            config.hash_verification is not None
+            and config.hash_verification.mode.lower() != "disabled"
+            and config.hash_verification.hash_database_path
+        ):
+            hash_database_path = _resolve_relative_to_config(
+                config.hash_verification.hash_database_path, config_path
+            )
+            can_continue, error_message = asyncio.run(_verify_and_record_hash(
+                hash_database_path, str(actual_output), "output_file", result.output_hash,
+                config.hash_verification, event_dispatcher,
+            ))
+            if not can_continue:
+                result.success = False
+                result.error_message = error_message
+                return result
 
         # Copy to rules directory if requested
         if copy_to_rules:
@@ -631,6 +797,29 @@ def compile_rules(
                     logger.debug(f"Copied to: {dest_path}")
             except (OSError, IOError) as e:
                 raise CopyError(str(actual_output), str(dest_path), str(e))
+
+            copied_hash = compute_hash(dest_path)
+            asyncio.run(_raise_hash_computed(
+                event_dispatcher, str(dest_path), "copied_rules_file",
+                copied_hash, dest_path.stat().st_size,
+            ))
+
+            if (
+                config.hash_verification is not None
+                and config.hash_verification.mode.lower() != "disabled"
+                and config.hash_verification.hash_database_path
+            ):
+                hash_database_path = _resolve_relative_to_config(
+                    config.hash_verification.hash_database_path, config_path
+                )
+                can_continue, error_message = asyncio.run(_verify_and_record_hash(
+                    hash_database_path, str(dest_path), "copied_rules_file", copied_hash,
+                    config.hash_verification, event_dispatcher,
+                ))
+                if not can_continue:
+                    result.success = False
+                    result.error_message = error_message
+                    return result
 
     except (ValidationError, CompilationError, CompilerNotFoundError,
             OutputNotCreatedError, CopyError, CompilerTimeoutError) as e:
@@ -663,6 +852,7 @@ async def compile_rules_async(
     debug: bool = False,
     validate: bool = True,
     fail_on_warnings: bool = False,
+    event_dispatcher: EventDispatcher | None = None,
 ) -> CompilerResult:
     """
     Asynchronously compile filter rules using adblock-compiler-core (via Deno).
@@ -679,6 +869,10 @@ async def compile_rules_async(
         debug: Enable debug logging.
         validate: Validate configuration before compiling.
         fail_on_warnings: Fail compilation if configuration has validation warnings.
+        event_dispatcher: Optional dispatcher to raise HashComputed/HashVerified/HashMismatch
+            events at each stage (see docs/HASH_VERIFICATION.md). Hash recording/verification
+            against the `.hashes.json` sidecar (config.hash_verification) happens regardless
+            of whether a dispatcher is supplied - the dispatcher only adds observability.
 
     Returns:
         Compilation result.
@@ -692,6 +886,14 @@ async def compile_rules_async(
         config = read_configuration(config_path, format)
         result.config_name = config.name
         result.config_version = config.version
+
+        # Stage 1 of the hash-verification pipeline: hash the config file itself for the
+        # audit trail. Not checked against the sidecar database - the database's own
+        # location and policy live inside this file, so there's nothing to compare against.
+        config_hash = await compute_hash_async(config_path)
+        await _raise_hash_computed(
+            event_dispatcher, str(config_path), "config_file", config_hash, config_path.stat().st_size,
+        )
 
         # Validate configuration if requested
         if validate:
@@ -776,6 +978,28 @@ async def compile_rules_async(
         if not actual_output.exists():
             raise OutputNotCreatedError(str(actual_output))
 
+        # Publish to the configured durable destination, if any, applying the conflict
+        # strategy and archiving policy before anything downstream (hashing, copying) sees
+        # the file.
+        if config.output is not None and config.output.path:
+            resolved_path = _resolve_relative_to_config(config.output.path, config_path)
+            resolved_output = replace(config.output, path=str(resolved_path))
+            loop = asyncio.get_event_loop()
+            publish_result = await loop.run_in_executor(
+                None, publish_output, actual_output, resolved_output, config.archiving
+            )
+
+            if not publish_result.success or publish_result.final_path is None:
+                result.success = False
+                result.error_message = publish_result.error_message
+                logger.error(f"Failed to publish output: {publish_result.error_message}")
+                return result
+
+            actual_output = Path(publish_result.final_path)
+            result.output_path = str(actual_output)
+            if publish_result.archived_path:
+                logger.info(f"Archived previous output to {publish_result.archived_path}")
+
         # Calculate statistics asynchronously
         result.rule_count = await count_rules_async(actual_output)
         result.output_hash = await compute_hash_async(actual_output)
@@ -784,6 +1008,28 @@ async def compile_rules_async(
         if debug:
             logger.debug(f"Compiled {result.rule_count} rules")
             logger.debug(f"Output hash: {result.hash_short()}...")
+
+        await _raise_hash_computed(
+            event_dispatcher, str(actual_output), "output_file",
+            result.output_hash, actual_output.stat().st_size,
+        )
+
+        if (
+            config.hash_verification is not None
+            and config.hash_verification.mode.lower() != "disabled"
+            and config.hash_verification.hash_database_path
+        ):
+            hash_database_path = _resolve_relative_to_config(
+                config.hash_verification.hash_database_path, config_path
+            )
+            can_continue, error_message = await _verify_and_record_hash(
+                hash_database_path, str(actual_output), "output_file", result.output_hash,
+                config.hash_verification, event_dispatcher,
+            )
+            if not can_continue:
+                result.success = False
+                result.error_message = error_message
+                return result
 
         # Copy to rules directory if requested
         if copy_to_rules:
@@ -804,6 +1050,29 @@ async def compile_rules_async(
                     logger.debug(f"Copied to: {dest_path}")
             except (OSError, IOError) as e:
                 raise CopyError(str(actual_output), str(dest_path), str(e))
+
+            copied_hash = await compute_hash_async(dest_path)
+            await _raise_hash_computed(
+                event_dispatcher, str(dest_path), "copied_rules_file",
+                copied_hash, dest_path.stat().st_size,
+            )
+
+            if (
+                config.hash_verification is not None
+                and config.hash_verification.mode.lower() != "disabled"
+                and config.hash_verification.hash_database_path
+            ):
+                hash_database_path = _resolve_relative_to_config(
+                    config.hash_verification.hash_database_path, config_path
+                )
+                can_continue, error_message = await _verify_and_record_hash(
+                    hash_database_path, str(dest_path), "copied_rules_file", copied_hash,
+                    config.hash_verification, event_dispatcher,
+                )
+                if not can_continue:
+                    result.success = False
+                    result.error_message = error_message
+                    return result
 
     except (ValidationError, CompilationError, CompilerNotFoundError,
             OutputNotCreatedError, CopyError, CompilerTimeoutError) as e:

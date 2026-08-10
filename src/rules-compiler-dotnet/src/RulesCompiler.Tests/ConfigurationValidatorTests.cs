@@ -211,6 +211,24 @@ public class ConfigurationValidatorTests
     }
 
     [Fact]
+    public void Validate_ReturnsError_WhenVersionIsNotStrictSemver()
+    {
+        // Regression test for #258: schema validation is now wired into the main Validate() entry
+        // point, not just available as a standalone call - so a schema-only violation (no business
+        // rule checks version format at all) surfaces here too.
+        var config = new CompilerConfiguration
+        {
+            Name = "Test",
+            Version = "v1",
+            Sources = [new FilterSource { Source = "test.txt" }]
+        };
+
+        var result = ConfigurationValidator.Validate(config);
+
+        Assert.False(result.IsValid);
+    }
+
+    [Fact]
     public void Validate_ReturnsWarning_ForInvalidRegexPattern()
     {
         // Arrange

@@ -22,7 +22,7 @@ Rust compiler for AdGuard filter rules using `@bloqr/compiler-core`.
 
 ## Prerequisites
 
-- **Rust**: 1.83 or later (enforced by `rust-toolchain.toml`)
+- **Rust**: 1.86 or later (enforced by `rust-toolchain.toml`)
 - **Cargo**: Latest version
 
 The toolchain will be automatically selected when you run cargo commands in this directory.
@@ -95,7 +95,7 @@ Workspace-wide lints are configured in `Cargo.toml`:
 
 ### Configuration Files
 
-- **`rust-toolchain.toml`**: Specifies Rust version (1.83)
+- **`rust-toolchain.toml`**: Specifies Rust version (1.86)
 - **`.cargo/config.toml`**: Build configuration
 - **`.rustfmt.toml`**: Formatting rules
 - **`clippy.toml`**: Clippy configuration

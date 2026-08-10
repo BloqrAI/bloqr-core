@@ -13,10 +13,12 @@ public class ConfigurationReaderTests
 
     [Theory]
     [InlineData("config.json", ConfigurationFormat.Json)]
+    [InlineData("config.jsonc", ConfigurationFormat.Json)]
     [InlineData("config.yaml", ConfigurationFormat.Yaml)]
     [InlineData("config.yml", ConfigurationFormat.Yaml)]
     [InlineData("config.toml", ConfigurationFormat.Toml)]
     [InlineData("path/to/config.JSON", ConfigurationFormat.Json)]
+    [InlineData("path/to/config.JSONC", ConfigurationFormat.Json)]
     [InlineData("path/to/config.YAML", ConfigurationFormat.Yaml)]
     public void DetectFormat_ReturnsCorrectFormat(string filePath, ConfigurationFormat expected)
     {
@@ -91,6 +93,47 @@ public class ConfigurationReaderTests
             Assert.Single(config.Sources);
             Assert.Equal("Local", config.Sources[0].Name);
             Assert.Equal(2, config.Transformations.Count);
+        }
+        finally
+        {
+            if (File.Exists(newPath))
+                File.Delete(newPath);
+        }
+    }
+
+    [Fact]
+    public async Task ReadConfigurationAsync_ParsesJsoncWithCommentsAndTrailingCommas()
+    {
+        // Regression test: the Dashboard's compiler-config wizard (#268) writes .jsonc files,
+        // and DetectFormat previously had no mapping for that extension at all (threw
+        // ArgumentException), while the JSON parser separately couldn't tolerate comments or
+        // trailing commas even for a plain .json file. Both are needed for #269's round-trip
+        // editing to actually work.
+        var tempFile = Path.GetTempFileName();
+        var newPath = Path.ChangeExtension(tempFile, ".jsonc");
+        File.Move(tempFile, newPath);
+
+        try
+        {
+            var jsoncContent = """
+                {
+                  // Filter list name (required).
+                  "name": "Test Rules",
+                  "sources": [
+                    {
+                      "source": "./rules.txt",
+                      "type": "adblock",
+                    },
+                  ],
+                }
+                """;
+            await File.WriteAllTextAsync(newPath, jsoncContent);
+
+            var config = await _reader.ReadConfigurationAsync(newPath);
+
+            Assert.Equal("Test Rules", config.Name);
+            Assert.Single(config.Sources);
+            Assert.Equal("./rules.txt", config.Sources[0].Source);
         }
         finally
         {
