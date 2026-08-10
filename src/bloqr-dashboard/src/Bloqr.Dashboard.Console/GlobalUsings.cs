@@ -6,6 +6,7 @@ global using Bloqr.Compiler.Abstractions;
 global using Bloqr.Compiler.Core.Configuration;
 global using Bloqr.Compiler.Core.Services;
 global using Bloqr.Dashboard.Abstractions;
+global using Bloqr.Dashboard.Console.Progress;
 global using Bloqr.Dashboard.Console.Rendering;
 global using Bloqr.Dashboard.Core;
 global using DashboardConsoleColor = Bloqr.Dashboard.Abstractions.ConsoleColor;

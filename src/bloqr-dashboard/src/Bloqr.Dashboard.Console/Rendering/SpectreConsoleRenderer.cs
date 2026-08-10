@@ -96,6 +96,43 @@ public sealed class SpectreConsoleRenderer : IConsoleRenderer
             return result;
         });
 
+    /// <inheritdoc />
+    public Task<T> LiveProgressAsync<T>(Func<ILiveProgressContext, Task<T>> operation) =>
+        AnsiConsole.Progress().StartAsync(ctx => operation(new SpectreLiveProgressContext(ctx)));
+
+    private sealed class SpectreLiveProgressContext(ProgressContext context) : ILiveProgressContext
+    {
+        public ILiveProgressTask AddTask(string description, double maxValue = 100) =>
+            new SpectreLiveProgressTask(context.AddTask(Markup.Escape(description), maxValue: maxValue));
+    }
+
+    private sealed class SpectreLiveProgressTask(ProgressTask task) : ILiveProgressTask
+    {
+        public string Description
+        {
+            get => task.Description;
+            set => task.Description = Markup.Escape(value);
+        }
+
+        public double Value
+        {
+            get => task.Value;
+            set => task.Value = Math.Clamp(value, 0, task.MaxValue);
+        }
+
+        public double MaxValue => task.MaxValue;
+
+        public bool IsFinished => task.IsFinished;
+
+        public void Increment(double amount) => task.Increment(amount);
+
+        public void Complete()
+        {
+            task.Value = task.MaxValue;
+            task.StopTask();
+        }
+    }
+
     private static Style ToSpectreStyle(TextStyle style)
     {
         var decoration = Decoration.None;

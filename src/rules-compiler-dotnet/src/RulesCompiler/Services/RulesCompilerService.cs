@@ -73,6 +73,58 @@ public class RulesCompilerService : IRulesCompilerService
         CompilerOptions options,
         CancellationToken cancellationToken = default)
     {
+        // CompilationStarting/Completed/Error were declared on the dispatcher and handled on
+        // ICompilationEventHandler, but nothing ever raised them - confirmed by grep before this
+        // change (#270). Wrapping the whole run this way, rather than raising Completed/Error at
+        // each of RunAsyncCore's several early-return branches, guarantees exactly one raise per
+        // outcome regardless of which branch returns.
+        var startingArgs = new CompilationStartedEventArgs(options);
+        await _eventDispatcher.RaiseCompilationStartingAsync(startingArgs, cancellationToken);
+
+        if (startingArgs.Cancel)
+        {
+            var cancelResult = new CompilerResult
+            {
+                Success = false,
+                ErrorMessage = startingArgs.CancelReason ?? "Compilation cancelled by an event handler.",
+            };
+            await _eventDispatcher.RaiseCompilationErrorAsync(
+                new CompilationErrorEventArgs(options, new OperationCanceledException(cancelResult.ErrorMessage)),
+                cancellationToken);
+            return cancelResult;
+        }
+
+        var stopwatch = Stopwatch.StartNew();
+        try
+        {
+            var result = await RunAsyncCore(options, cancellationToken);
+            stopwatch.Stop();
+
+            if (result.Success)
+            {
+                await _eventDispatcher.RaiseCompilationCompletedAsync(
+                    new CompilationCompletedEventArgs(options, result, stopwatch.Elapsed), cancellationToken);
+            }
+            else
+            {
+                await _eventDispatcher.RaiseCompilationErrorAsync(
+                    new CompilationErrorEventArgs(options, new InvalidOperationException(result.ErrorMessage ?? "Compilation failed.")),
+                    cancellationToken);
+            }
+
+            return result;
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            await _eventDispatcher.RaiseCompilationErrorAsync(new CompilationErrorEventArgs(options, ex), cancellationToken);
+            throw;
+        }
+    }
+
+    private async Task<CompilerResult> RunAsyncCore(
+        CompilerOptions options,
+        CancellationToken cancellationToken)
+    {
         // Resolve config path
         var actualConfigPath = ResolveConfigPath(options.ConfigPath);
         _logger.LogInformation("Starting compilation with config: {ConfigPath}", actualConfigPath);
@@ -127,6 +179,8 @@ public class RulesCompilerService : IRulesCompilerService
         // Read configuration once for the settings this method acts on directly
         // (output publishing, hash verification) rather than the compiler itself.
         var config = await ReadConfigurationAsync(actualConfigPath, options.Format, cancellationToken);
+        await _eventDispatcher.RaiseConfigurationLoadedAsync(
+            new ConfigurationLoadedEventArgs(compilerOptions, config), cancellationToken);
 
         // Stage 1 of the hash-verification pipeline: hash the config file itself for
         // the audit trail. Not checked against the sidecar database - the database's

@@ -10,6 +10,7 @@ public sealed class CompileMenuService : MenuServiceBase
     private readonly IRulesCompilerService _compilerService;
     private readonly IDashboardConfigurationStore _configStore;
     private readonly ICompilerConfigGuard _configGuard;
+    private readonly LiveProgressSession _liveProgressSession;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="CompileMenuService"/> class.
@@ -20,12 +21,14 @@ public sealed class CompileMenuService : MenuServiceBase
         IRulesCompilerService compilerService,
         IDashboardConfigurationStore configStore,
         ICompilerConfigGuard configGuard,
+        LiveProgressSession liveProgressSession,
         ILogger<CompileMenuService> logger)
         : base(renderer, prompter, logger)
     {
         _compilerService = compilerService;
         _configStore = configStore;
         _configGuard = configGuard;
+        _liveProgressSession = liveProgressSession;
     }
 
     /// <inheritdoc />
@@ -112,9 +115,20 @@ public sealed class CompileMenuService : MenuServiceBase
             Renderer.WriteStyled(recovery.Message ?? "Recovered.", TextStyle.Success);
         }
 
-        var result = await Renderer.StatusAsync(
-            $"Compiling {configPath}...",
-            () => _compilerService.RunAsync(configPath)).ConfigureAwait(false);
+        var result = await Renderer.LiveProgressAsync(async ctx =>
+        {
+            // CompilationProgressEventHandler (#270) picks this up to drive per-stage/per-chunk
+            // progress bars and color-coded validation output for the duration of this compile.
+            _liveProgressSession.Current = ctx;
+            try
+            {
+                return await _compilerService.RunAsync(configPath).ConfigureAwait(false);
+            }
+            finally
+            {
+                _liveProgressSession.Current = null;
+            }
+        }).ConfigureAwait(false);
 
         DisplayResult(result);
     }

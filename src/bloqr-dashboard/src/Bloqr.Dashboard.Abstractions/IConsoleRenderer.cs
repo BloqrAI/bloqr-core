@@ -78,4 +78,14 @@ public interface IConsoleRenderer
     /// <param name="operation">The operation, which reports fractional (0.0-1.0) progress.</param>
     /// <returns>The operation result.</returns>
     Task<T> ProgressAsync<T>(string description, Func<IProgress<double>, Task<T>> operation);
+
+    /// <summary>
+    /// Displays a live, multi-task progress session for an asynchronous operation - per-stage
+    /// progress bars, overall progress, and free-form status lines can all be shown at once via
+    /// the returned <see cref="ILiveProgressContext"/>, unlike the single-bar <see cref="ProgressAsync{T}"/>.
+    /// </summary>
+    /// <typeparam name="T">The result type.</typeparam>
+    /// <param name="operation">The operation, given the live progress context to drive.</param>
+    /// <returns>The operation result.</returns>
+    Task<T> LiveProgressAsync<T>(Func<ILiveProgressContext, Task<T>> operation);
 }

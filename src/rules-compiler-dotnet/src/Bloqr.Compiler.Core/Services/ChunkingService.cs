@@ -8,6 +8,7 @@ public class ChunkingService : IChunkingService
     private readonly ILogger<ChunkingService> _logger;
     private readonly IConfigurationReader _configurationReader;
     private readonly CommandHelper _commandHelper;
+    private readonly ICompilationEventDispatcher _eventDispatcher;
 
     private const string CompilerCommand = "hostlist-compiler";
     private const string NpxCommand = "npx";
@@ -18,11 +19,13 @@ public class ChunkingService : IChunkingService
     public ChunkingService(
         ILogger<ChunkingService> logger,
         IConfigurationReader configurationReader,
-        CommandHelper commandHelper)
+        CommandHelper commandHelper,
+        ICompilationEventDispatcher eventDispatcher)
     {
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         _configurationReader = configurationReader ?? throw new ArgumentNullException(nameof(configurationReader));
         _commandHelper = commandHelper ?? throw new ArgumentNullException(nameof(commandHelper));
+        _eventDispatcher = eventDispatcher ?? throw new ArgumentNullException(nameof(eventDispatcher));
     }
 
     /// <inheritdoc/>
@@ -175,6 +178,9 @@ public class ChunkingService : IChunkingService
                 var chunkStopwatch = Stopwatch.StartNew();
                 var (config, metadata) = chunk;
 
+                await _eventDispatcher.RaiseChunkStartedAsync(
+                    new ChunkStartedEventArgs(options, metadata, metadata.Sources), cancellationToken);
+
                 try
                 {
                     _logger.LogDebug(
@@ -197,6 +203,12 @@ public class ChunkingService : IChunkingService
                         rules.Length,
                         metadata.ElapsedMs);
 
+                    await _eventDispatcher.RaiseChunkCompletedAsync(
+                        new ChunkCompletedEventArgs(
+                            options, metadata, success: true, ruleCount: rules.Length,
+                            duration: chunkStopwatch.Elapsed),
+                        cancellationToken);
+
                     return (metadata, rules);
                 }
                 catch (Exception ex)
@@ -213,6 +225,11 @@ public class ChunkingService : IChunkingService
                         metadata.Index + 1,
                         metadata.Total,
                         ex.Message);
+
+                    await _eventDispatcher.RaiseChunkCompletedAsync(
+                        new ChunkCompletedEventArgs(
+                            options, metadata, success: false, duration: chunkStopwatch.Elapsed, errorMessage: ex.Message),
+                        cancellationToken);
 
                     return (metadata, Array.Empty<string>());
                 }
@@ -239,10 +256,22 @@ public class ChunkingService : IChunkingService
         // Merge results
         if (chunkResults.Count > 0)
         {
+            var mergeStopwatch = Stopwatch.StartNew();
+            var totalRulesBeforeMerge = chunkResults.Sum(r => r.Length);
+            await _eventDispatcher.RaiseChunksMergingAsync(
+                new ChunksMergingEventArgs(options, chunkResults.Count, totalRulesBeforeMerge), cancellationToken);
+
             var (mergedRules, duplicatesRemoved) = MergeChunks(chunkResults);
             result.MergedRules = mergedRules;
             result.DuplicatesRemoved = duplicatesRemoved;
             result.FinalRuleCount = mergedRules.Length;
+            mergeStopwatch.Stop();
+
+            await _eventDispatcher.RaiseChunksMergedAsync(
+                new ChunksMergedEventArgs(
+                    options, chunkResults.Count, totalRulesBeforeMerge, mergedRules.Length, duplicatesRemoved,
+                    mergeStopwatch.Elapsed),
+                cancellationToken);
         }
 
         result.TotalRules = result.Chunks.Sum(c => c.ActualRules ?? 0);

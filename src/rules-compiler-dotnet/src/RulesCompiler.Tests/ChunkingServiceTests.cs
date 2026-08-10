@@ -5,6 +5,7 @@ public class ChunkingServiceTests
     private readonly Mock<ILogger<ChunkingService>> _loggerMock;
     private readonly Mock<IConfigurationReader> _configReaderMock;
     private readonly Mock<CommandHelper> _commandHelperMock;
+    private readonly Mock<ICompilationEventDispatcher> _eventDispatcherMock;
     private readonly ChunkingService _service;
 
     public ChunkingServiceTests()
@@ -12,10 +13,12 @@ public class ChunkingServiceTests
         _loggerMock = new Mock<ILogger<ChunkingService>>();
         _configReaderMock = new Mock<IConfigurationReader>();
         _commandHelperMock = new Mock<CommandHelper>(Mock.Of<ILogger<CommandHelper>>());
+        _eventDispatcherMock = new Mock<ICompilationEventDispatcher>();
         _service = new ChunkingService(
             _loggerMock.Object,
             _configReaderMock.Object,
-            _commandHelperMock.Object);
+            _commandHelperMock.Object,
+            _eventDispatcherMock.Object);
     }
 
     #region ShouldEnableChunking Tests
@@ -185,6 +188,43 @@ public class ChunkingServiceTests
         Assert.Equal(1, chunks[1].Metadata.Index);
         Assert.Equal(2, chunks[1].Metadata.Total);
         Assert.Single(chunks[1].Metadata.Sources);
+    }
+
+    #endregion
+
+    #region CompileChunksAsync Event Tests
+
+    [Fact]
+    public async Task CompileChunksAsync_RaisesChunkStartedAndChunkCompletedForEachChunk()
+    {
+        // No hostlist-compiler/npx on PATH in this deterministic test environment ->
+        // CompileSingleChunkAsync always throws, exercising the failure branch of the
+        // newly-wired ChunkStarted/ChunkCompleted events without depending on real file I/O.
+        _commandHelperMock.Setup(c => c.FindCommand(It.IsAny<string>())).Returns((string?)null);
+
+        var chunks = new List<(CompilerConfiguration Config, ChunkMetadata Metadata)>
+        {
+            (new CompilerConfiguration { Name = "chunk-1" }, new ChunkMetadata { Index = 0, Total = 2 }),
+            (new CompilerConfiguration { Name = "chunk-2" }, new ChunkMetadata { Index = 1, Total = 2 }),
+        };
+        var options = new CompilerOptions { ConfigPath = "config.json" };
+        var chunkingOptions = new ChunkingOptions { MaxParallel = 2 };
+
+        var result = await _service.CompileChunksAsync(chunks, options, chunkingOptions);
+
+        _eventDispatcherMock.Verify(
+            d => d.RaiseChunkStartedAsync(It.IsAny<ChunkStartedEventArgs>(), It.IsAny<CancellationToken>()),
+            Times.Exactly(2));
+        _eventDispatcherMock.Verify(
+            d => d.RaiseChunkCompletedAsync(
+                It.Is<ChunkCompletedEventArgs>(a => !a.Success), It.IsAny<CancellationToken>()),
+            Times.Exactly(2));
+
+        // All chunks failed, so nothing reaches the merge step.
+        _eventDispatcherMock.Verify(
+            d => d.RaiseChunksMergingAsync(It.IsAny<ChunksMergingEventArgs>(), It.IsAny<CancellationToken>()),
+            Times.Never);
+        Assert.False(result.Success);
     }
 
     #endregion

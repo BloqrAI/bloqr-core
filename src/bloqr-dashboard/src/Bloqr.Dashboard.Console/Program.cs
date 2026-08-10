@@ -132,6 +132,12 @@ public static class Program
 
         services.AddCompilationEventHandler<CompilationLoggingEventHandler>();
 
+        // Live progress display (#270): LiveProgressSession is the shared handoff point between
+        // CompileMenuService (which opens a live progress session for the duration of a compile)
+        // and CompilationProgressEventHandler (which drives it from the event pipeline).
+        services.AddSingleton<LiveProgressSession>();
+        services.AddCompilationEventHandler<CompilationProgressEventHandler>();
+
         services.AddSingleton<IDashboardConfigurationStore, DashboardConfigurationStore>();
         services.AddSingleton<IProfileManager, ProfileManager>();
         services.AddSingleton<ILogEntryReader, LogEntryReader>();

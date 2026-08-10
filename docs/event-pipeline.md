@@ -108,6 +108,54 @@ The compilation pipeline consists of these stages:
 | `ChunksMerging` | No | Chunks are about to be merged |
 | `ChunksMerged` | No | Chunks have been merged with deduplication |
 
+### What actually raises these (.NET)
+
+Every event above is declared on `ICompilationEventDispatcher`/`ICompilationEventHandler`, but
+until #270, most of them were pure infrastructure - nothing in `RulesCompilerService` or
+`ChunkingService` ever called the corresponding `Raise*Async` method. As of #270:
+
+- **`RulesCompilerService.RunAsync`** raises `CompilationStarting` (honoring a handler setting
+  `Cancel = true` by failing the run before compiling), `ConfigurationLoaded` (right after the
+  config file is read), and exactly one of `CompilationCompleted` or `CompilationError` at the
+  end, regardless of which of `RunAsync`'s several internal early-return branches produced the
+  result. `Validation` and the three `Hash*` events were already wired by #264/#273.
+- **`ChunkingService.CompileChunksAsync`** raises `ChunkStarted`/`ChunkCompleted` around each
+  chunk's compile call and `ChunksMerging`/`ChunksMerged` around the merge step - this is the one
+  place .NET has real, non-opaque visibility into per-unit progress (see the caveat below).
+- **`SourceLoading`/`SourceLoaded` are still not raised anywhere.** `FilterCompiler`'s
+  non-chunked path (the common case) shells out to the external `@bloqr/compiler-core` Deno CLI
+  as a single opaque subprocess call - .NET has no visibility into individual sources being
+  loaded inside it. Raising these for real would need the CLI to emit structured per-source
+  progress that .NET parses from stdout, a materially larger cross-language protocol change
+  that's out of scope here and belongs in its own follow-up issue.
+
+## Live Progress Display (Dashboard)
+
+`Bloqr.Dashboard.Console`'s `CompilationProgressEventHandler` (`Progress/` folder) consumes the
+now-real lifecycle, chunk, and validation events above to drive a live, multi-task
+Spectre.Console progress display for the duration of a compile - an overall progress bar, a
+per-chunk progress bar that only appears for chunked compiles, and color-coded validation/error
+output as findings stream in (per the epic's "lots of visual feedback... per-stage progress,
+overall progress... color coded and beautiful" ask, #270).
+
+- **`IConsoleRenderer.LiveProgressAsync<T>`** (`Bloqr.Dashboard.Abstractions`) is a new,
+  Spectre-agnostic multi-task progress abstraction (`ILiveProgressContext`/`ILiveProgressTask`),
+  alongside the existing single-bar `ProgressAsync<T>`. Only `SpectreConsoleRenderer` implements
+  it, per the Dashboard's existing rule that only `Rendering/Spectre*.cs` may reference
+  Spectre.Console directly.
+- **`LiveProgressSession`** is the handoff point between `CompileMenuService` (which opens a live
+  progress session for the duration of a single compile) and `CompilationProgressEventHandler`
+  (which drives it). It's a plain shared field behind a lock, not an `AsyncLocal<T>` - several of
+  the events this handler needs (`ChunkCompleted`, `ChunksMerged`, `CompilationCompleted`) are
+  processed on `QueuedCompilationEventDispatcher`'s single long-lived background consumer task
+  when that decorator is registered (#274), and that task's captured execution context never
+  picks up an `AsyncLocal` value set later by a specific compile's caller. Since the Dashboard
+  only ever runs one compile at a time, a single shared "current session" is correct here.
+- Registered via `services.AddCompilationEventHandler<CompilationProgressEventHandler>()`
+  alongside `CompilationLoggingEventHandler`, which keeps writing every event to the structured
+  JSON log unconditionally - the live display only adds terminal presentation on top, it doesn't
+  replace the log.
+
 ## Zero-Trust Validation
 
 The event pipeline implements zero-trust principles at each stage boundary:
