@@ -128,6 +128,7 @@ public static class Program
         services.AddSingleton<ILogEntryReader, LogEntryReader>();
         services.AddSingleton<ICompilerConfigGuard, CompilerConfigGuard>();
         services.AddSingleton<ICompilerConfigSchemaValidator, CompilerConfigSchemaValidator>();
+        services.AddSingleton<ICompilerConfigVersionHistoryService, GitCompilerConfigVersionHistoryService>();
 
         services.AddSingleton<IConsoleRenderer, SpectreConsoleRenderer>();
         services.AddSingleton<IConsolePrompter, SpectreConsolePrompter>();
@@ -135,6 +136,7 @@ public static class Program
         services.AddSingleton<CompileMenuService>();
         services.AddSingleton<ConfigMenuService>();
         services.AddSingleton<CompilerConfigWizardMenuService>();
+        services.AddSingleton<CompilerConfigEditorMenuService>();
         services.AddSingleton<ProfileMenuService>();
         services.AddSingleton<LogsMenuService>();
         services.AddSingleton<DiagnosticsMenuService>();
@@ -145,6 +147,7 @@ public static class Program
                 typeof(CompileMenuService),
                 typeof(ConfigMenuService),
                 typeof(CompilerConfigWizardMenuService),
+                typeof(CompilerConfigEditorMenuService),
                 typeof(ProfileMenuService),
                 typeof(LogsMenuService),
                 typeof(DiagnosticsMenuService),

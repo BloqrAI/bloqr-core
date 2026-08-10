@@ -136,6 +136,30 @@ public sealed class CompilerConfigGuard : ICompilerConfigGuard
             .ToList();
     }
 
+    /// <inheritdoc />
+    public void PruneBackups(string configPath, int maxBackups)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(configPath);
+
+        if (maxBackups < 0)
+        {
+            return;
+        }
+
+        foreach (var stale in ListBackups(configPath).Skip(maxBackups))
+        {
+            try
+            {
+                File.Delete(stale);
+                _logger.LogDebug("Pruned expired compiler-config backup {Path}", stale);
+            }
+            catch (IOException ex)
+            {
+                _logger.LogWarning(ex, "Failed to prune compiler-config backup {Path}", stale);
+            }
+        }
+    }
+
     private async Task BackupAsync(string configPath, CancellationToken cancellationToken)
     {
         var existingBackups = ListBackups(configPath);

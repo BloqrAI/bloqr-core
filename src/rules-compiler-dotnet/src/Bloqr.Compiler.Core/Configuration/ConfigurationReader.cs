@@ -43,12 +43,18 @@ public class ConfigurationReader : IConfigurationReader
             .ConfigureDefaultValuesHandling(DefaultValuesHandling.OmitNull | DefaultValuesHandling.OmitEmptyCollections)
             .Build();
 
-        // JSON options with snake_case for compatibility with hostlist-compiler
+        // JSON options with snake_case for compatibility with hostlist-compiler. ReadCommentHandling/
+        // AllowTrailingCommas only affect deserialization, never serialization, so it's safe to set
+        // them here even though this same instance is also used for writing (ToJson) - they let this
+        // reader round-trip the heavily-commented .jsonc files the Dashboard's compiler-config wizard
+        // (#268) and DetectFormat below both treat as JSON.
         _jsonOptions = new JsonSerializerOptions
         {
             WriteIndented = true,
             PropertyNamingPolicy = JsonNamingPolicy.SnakeCaseLower,
-            DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
+            DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
+            ReadCommentHandling = JsonCommentHandling.Skip,
+            AllowTrailingCommas = true
         };
     }
 
@@ -90,7 +96,7 @@ public class ConfigurationReader : IConfigurationReader
 
         return extension switch
         {
-            ".json" => ConfigurationFormat.Json,
+            ".json" or ".jsonc" => ConfigurationFormat.Json,
             ".yaml" or ".yml" => ConfigurationFormat.Yaml,
             ".toml" => ConfigurationFormat.Toml,
             _ => throw new ArgumentException($"Unknown configuration file extension: {extension}")

@@ -40,6 +40,7 @@ public sealed class CompileMenuService : MenuServiceBase
         ["Show available transformations"] = ShowTransformationsAsync,
         ["List backups for a compiler config"] = ListCompilerConfigBackupsAsync,
         ["Restore a compiler config from backup"] = RestoreCompilerConfigAsync,
+        ["Prune backups for a compiler config"] = PruneCompilerConfigBackupsAsync,
     };
 
     private async Task CompileActiveProfileAsync()
@@ -189,6 +190,46 @@ public sealed class CompileMenuService : MenuServiceBase
         {
             Renderer.WriteStyled($"Restore failed: {recovery.Message}", TextStyle.Error);
         }
+    }
+
+    private async Task PruneCompilerConfigBackupsAsync()
+    {
+        var configPath = Prompter.Prompt("Path to compiler config file");
+        var backups = _configGuard.ListBackups(configPath);
+
+        if (backups.Count == 0)
+        {
+            Renderer.WriteLine($"No backups found for {configPath}.");
+            return;
+        }
+
+        // Default to the same retention count the Dashboard already applies to its own config's
+        // backups, so there's one shared "how many backups do we keep" setting rather than two
+        // - per the epic's "standing archive setting with configurable retention count".
+        var load = await _configStore.LoadAsync(allowInteractiveRecovery: true).ConfigureAwait(false);
+        var defaultRetention = load.Configuration.Settings.Backup.MaxBackups;
+
+        var retentionText = Prompter.Prompt($"Keep how many of the {backups.Count} backups?", defaultRetention.ToString());
+        if (!int.TryParse(retentionText, out var retention) || retention < 0)
+        {
+            Renderer.WriteStyled("Retention count must be a non-negative integer.", TextStyle.Warning);
+            return;
+        }
+
+        var toRemove = Math.Max(0, backups.Count - retention);
+        if (toRemove == 0)
+        {
+            Renderer.WriteLine("Nothing to prune.");
+            return;
+        }
+
+        if (!Prompter.Confirm($"Delete {toRemove} old backup(s), keeping the {retention} newest?", false))
+        {
+            return;
+        }
+
+        _configGuard.PruneBackups(configPath, retention);
+        Renderer.WriteStyled($"Pruned {toRemove} backup(s) for {configPath}.", TextStyle.Success);
     }
 
     private Task ShowTransformationsAsync()
