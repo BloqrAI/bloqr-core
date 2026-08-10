@@ -107,6 +107,7 @@ main_menu() {
         choice=$(show_menu "Main Menu" \
             "🔨 Build Tools" \
             "⚙️  Compile Filter Rules" \
+            "🖥️  Bloqr Dashboard" \
             "🔍 Validation & Testing" \
             "📦 Project Management" \
             "ℹ️  System Information" \
@@ -115,10 +116,11 @@ main_menu() {
         case $choice in
             1) build_menu ;;
             2) rules_menu ;;
-            3) validation_menu ;;
-            4) project_menu ;;
-            5) system_info ;;
-            6|"") exit 0 ;;
+            3) run_dashboard ;;
+            4) validation_menu ;;
+            5) project_menu ;;
+            6) system_info ;;
+            7|"") exit 0 ;;
             *) echo "Invalid choice" ;;
         esac
     done
@@ -237,6 +239,17 @@ rules_menu() {
             6|"") return ;;
         esac
     done
+}
+
+# Run the Bloqr Dashboard
+run_dashboard() {
+    show_banner
+    echo -e "${MAGENTA}Bloqr Dashboard${NC}"
+    echo ""
+    cd src/bloqr-dashboard
+    dotnet run --project src/Bloqr.Dashboard.Console
+    cd "$SCRIPT_DIR"
+    pause
 }
 
 # AdGuard API Clients have moved to BloqrAI/bloqr-apiclients; this launcher

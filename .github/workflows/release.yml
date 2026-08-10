@@ -15,8 +15,94 @@ permissions:
   contents: write
 
 jobs:
+  build-rules-validator:
+    name: Build rules-validator
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            target: x86_64-unknown-linux-gnu
+            artifact: linux
+            cdylib: librules_validator.so
+            cli_ext: ''
+          - os: windows-latest
+            target: x86_64-pc-windows-msvc
+            artifact: windows
+            cdylib: rules_validator.dll
+            cli_ext: '.exe'
+          - os: macos-latest
+            target: x86_64-apple-darwin
+            artifact: macos
+            cdylib: librules_validator.dylib
+            cli_ext: ''
+
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0  # Full history needed for tagging
+
+      - name: Setup Rust
+        uses: actions-rust-lang/setup-rust-toolchain@v1
+        with:
+          toolchain: stable
+          target: ${{ matrix.target }}
+
+      - name: Cache Cargo
+        uses: actions/cache@v6
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: ${{ runner.os }}-cargo-validator-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: ${{ runner.os }}-cargo-validator-
+
+      - name: Build rules-validator-core (cdylib) and rules-validator-cli
+        shell: bash
+        run: cargo build --release --target ${{ matrix.target }} -p rules-validator-core -p rules-validator-cli
+
+      - name: Stage artifacts
+        shell: bash
+        run: |
+          mkdir -p ./staging/rules-validator
+          cp "target/${{ matrix.target }}/release/${{ matrix.cdylib }}" ./staging/rules-validator/
+          cp "target/${{ matrix.target }}/release/rules-validate${{ matrix.cli_ext }}" ./staging/rules-validator/
+          cp src/rules-validator/rules-validator-core/rules_validator.h ./staging/rules-validator/
+          cp src/rules-validator/README.md ./staging/rules-validator/
+
+      - name: Package binaries (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          Compress-Archive -Path ./staging/rules-validator/* -DestinationPath rules-validator-${{ matrix.artifact }}.zip
+
+      - name: Package binaries (Unix)
+        if: runner.os != 'Windows'
+        shell: bash
+        run: |
+          cd ./staging/rules-validator && tar -czf ../../rules-validator-${{ matrix.artifact }}.tar.gz * && cd ../..
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v7
+        with:
+          name: rules-validator-${{ matrix.artifact }}
+          path: |
+            *.zip
+            *.tar.gz
+          if-no-files-found: error
+
+      - name: Upload native library for xcopy into .NET apps
+        uses: actions/upload-artifact@v7
+        with:
+          name: rules-validator-native-${{ matrix.artifact }}
+          path: ./staging/rules-validator/${{ matrix.cdylib }}
+          if-no-files-found: error
+
   build-dotnet:
     name: Build .NET Executables
+    needs: build-rules-validator
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
@@ -52,6 +138,12 @@ jobs:
           key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj', '**/*.slnx') }}
           restore-keys: ${{ runner.os }}-nuget-
 
+      - name: Download native rules-validator library
+        uses: actions/download-artifact@v8
+        with:
+          name: rules-validator-native-${{ matrix.artifact }}
+          path: ./native-lib
+
       - name: Restore Rules Compiler dependencies
         shell: bash
         run: |
@@ -68,17 +160,44 @@ jobs:
             -p:IncludeNativeLibrariesForSelfExtract=true \
             --output ./artifacts/rules-compiler-dotnet
 
+      - name: Restore Dashboard dependencies
+        shell: bash
+        run: |
+          dotnet restore src/bloqr-dashboard/BloqrDashboard.slnx
+
+      - name: Publish Bloqr.Dashboard.Console
+        shell: bash
+        run: |
+          dotnet publish src/bloqr-dashboard/src/Bloqr.Dashboard.Console/Bloqr.Dashboard.Console.csproj \
+            --configuration Release \
+            --runtime ${{ matrix.runtime }} \
+            --self-contained true \
+            -p:PublishSingleFile=true \
+            -p:IncludeNativeLibrariesForSelfExtract=true \
+            --output ./artifacts/bloqr-dashboard
+
+      - name: Copy rules-validator native library into each app's xcopy output
+        shell: bash
+        run: |
+          # Each self-contained publish output is its own xcopy-deployable unit, so the
+          # rules-validator native library (P/Invoked by IRulesValidatorService, #264) is
+          # copied into both rather than shared via a relative path between them.
+          cp ./native-lib/* ./artifacts/rules-compiler-dotnet/
+          cp ./native-lib/* ./artifacts/bloqr-dashboard/
+
       - name: Package binaries (Windows)
         if: runner.os == 'Windows'
         shell: pwsh
         run: |
           Compress-Archive -Path ./artifacts/rules-compiler-dotnet/* -DestinationPath RulesCompiler.Console-${{ matrix.artifact }}.zip
+          Compress-Archive -Path ./artifacts/bloqr-dashboard/* -DestinationPath Bloqr.Dashboard.Console-${{ matrix.artifact }}.zip
 
       - name: Package binaries (Unix)
         if: runner.os != 'Windows'
         shell: bash
         run: |
           cd ./artifacts/rules-compiler-dotnet && tar -czf ../../RulesCompiler.Console-${{ matrix.artifact }}.tar.gz * && cd ../..
+          cd ./artifacts/bloqr-dashboard && tar -czf ../../Bloqr.Dashboard.Console-${{ matrix.artifact }}.tar.gz * && cd ../..
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v7
@@ -158,7 +277,7 @@ jobs:
 
   create-release:
     name: Create Release
-    needs: [build-dotnet, build-rust]
+    needs: [build-dotnet, build-rust, build-rules-validator]
     runs-on: ubuntu-latest
 
     steps:
@@ -221,17 +340,25 @@ jobs:
 
             This release includes pre-built binaries for:
             - **RulesCompiler.Console** - .NET rules compiler (Windows, Linux, macOS)
+            - **Bloqr.Dashboard.Console** - .NET Dashboard app (Windows, Linux, macOS)
             - **rules-compiler** (Rust) - Rust rules compiler (Windows, Linux, macOS)
+            - **rules-validator** - native validation library (`rules_validator`) and its `rules-validate` CLI (Windows, Linux, macOS)
 
             AdGuard.ConsoleUI has moved to [BloqrAI/bloqr-apiclients](https://github.com/BloqrAI/bloqr-apiclients) along with the other API clients — see that repo's own releases for it.
 
             ### Installation
 
             #### Rules Compiler (.NET)
-            Download and extract:
+            Download and extract (already bundles the `rules_validator` native library alongside the executable):
             - Windows: `RulesCompiler.Console-windows.zip`
             - Linux: `RulesCompiler.Console-linux.tar.gz`
             - macOS: `RulesCompiler.Console-macos.tar.gz`
+
+            #### Bloqr Dashboard (.NET)
+            Download and extract (also bundles the `rules_validator` native library):
+            - Windows: `Bloqr.Dashboard.Console-windows.zip`
+            - Linux: `Bloqr.Dashboard.Console-linux.tar.gz`
+            - macOS: `Bloqr.Dashboard.Console-macos.tar.gz`
 
             #### Rules Compiler (Rust)
             Download and extract:
@@ -239,11 +366,17 @@ jobs:
             - Linux: `rules-compiler-rust-linux.tar.gz`
             - macOS: `rules-compiler-rust-macos.tar.gz`
 
+            #### Rules Validator (native library + CLI)
+            Download and extract:
+            - Windows: `rules-validator-windows.zip`
+            - Linux: `rules-validator-linux.tar.gz`
+            - macOS: `rules-validator-macos.tar.gz`
+
             ### Usage
 
             After extraction, run the executables:
-            - Windows: `.\RulesCompiler.Console.exe` or `.\rules-compiler.exe`
-            - Linux/macOS: `./RulesCompiler.Console` or `./rules-compiler`
+            - Windows: `.\RulesCompiler.Console.exe`, `.\Bloqr.Dashboard.Console.exe`, `.\rules-compiler.exe`, or `.\rules-validate.exe`
+            - Linux/macOS: `./RulesCompiler.Console`, `./Bloqr.Dashboard.Console`, `./rules-compiler`, or `./rules-validate`
 
             For detailed documentation, see the [README](https://github.com/BloqrAI/bloqr-core/blob/main/README.md).
           draft: false
