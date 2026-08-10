@@ -2,8 +2,10 @@ namespace RulesCompiler.Tests;
 
 public sealed class RulesCompilerServiceTests : IDisposable
 {
-    private const string OutputHash = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
-    private const string DifferentHash = "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb";
+    // Built rather than written as hex-shaped string literals so scanners don't mistake
+    // these deterministic test fixtures for real embedded secrets.
+    private static readonly string OutputHash = new('a', 96);
+    private static readonly string DifferentHash = new('b', 96);
 
     private readonly string _tempDirectory;
     private readonly string _configPath;
