@@ -21,7 +21,7 @@ public class CommandHelper
     /// </summary>
     /// <param name="commandName">The name of the command.</param>
     /// <returns>The full path to the command, or null if not found.</returns>
-    public string? FindCommand(string commandName)
+    public virtual string? FindCommand(string commandName)
     {
         var extensions = PlatformHelper.GetExecutableExtensions();
         var pathEnv = Environment.GetEnvironmentVariable("PATH") ?? string.Empty;
@@ -52,7 +52,7 @@ public class CommandHelper
     /// <param name="workingDirectory">Optional working directory.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>Tuple of (exitCode, stdout, stderr).</returns>
-    public async Task<(int ExitCode, string StdOut, string StdErr)> ExecuteAsync(
+    public virtual async Task<(int ExitCode, string StdOut, string StdErr)> ExecuteAsync(
         string command,
         string arguments,
         string? workingDirectory = null,

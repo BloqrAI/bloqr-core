@@ -333,4 +333,71 @@ public sealed class RulesCompilerServiceTests : IDisposable
 
         Assert.True(result.Success);
     }
+
+    [Fact]
+    public async Task RunAsync_OnSuccess_RaisesStartingConfigurationLoadedAndCompletedEvents()
+    {
+        SetUpConfiguration(new CompilerConfiguration { Name = "Test", Sources = [new FilterSource { Source = "x" }] });
+        SetUpSuccessfulCompilation();
+
+        var result = await _service.RunAsync(new CompilerOptions { ConfigPath = _configPath, ValidateConfig = false });
+
+        Assert.True(result.Success);
+        _eventDispatcher.Verify(
+            d => d.RaiseCompilationStartingAsync(It.IsAny<CompilationStartedEventArgs>(), It.IsAny<CancellationToken>()),
+            Times.Once);
+        _eventDispatcher.Verify(
+            d => d.RaiseConfigurationLoadedAsync(
+                It.Is<ConfigurationLoadedEventArgs>(a => a.Configuration.Name == "Test"), It.IsAny<CancellationToken>()),
+            Times.Once);
+        _eventDispatcher.Verify(
+            d => d.RaiseCompilationCompletedAsync(
+                It.Is<CompilationCompletedEventArgs>(a => a.Result == result), It.IsAny<CancellationToken>()),
+            Times.Once);
+        _eventDispatcher.Verify(
+            d => d.RaiseCompilationErrorAsync(It.IsAny<CompilationErrorEventArgs>(), It.IsAny<CancellationToken>()),
+            Times.Never);
+    }
+
+    [Fact]
+    public async Task RunAsync_WhenCompilationFails_RaisesCompilationErrorInsteadOfCompleted()
+    {
+        SetUpConfiguration(new CompilerConfiguration { Name = "Test", Sources = [new FilterSource { Source = "x" }] });
+        _filterCompiler
+            .Setup(c => c.CompileAsync(It.IsAny<CompilerOptions>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new CompilerResult { Success = false, ErrorMessage = "boom" });
+
+        var result = await _service.RunAsync(new CompilerOptions { ConfigPath = _configPath, ValidateConfig = false });
+
+        Assert.False(result.Success);
+        _eventDispatcher.Verify(
+            d => d.RaiseCompilationErrorAsync(It.IsAny<CompilationErrorEventArgs>(), It.IsAny<CancellationToken>()),
+            Times.Once);
+        _eventDispatcher.Verify(
+            d => d.RaiseCompilationCompletedAsync(It.IsAny<CompilationCompletedEventArgs>(), It.IsAny<CancellationToken>()),
+            Times.Never);
+    }
+
+    [Fact]
+    public async Task RunAsync_WhenCompilationStartingHandlerCancels_ReturnsFailureWithoutCompiling()
+    {
+        _eventDispatcher
+            .Setup(d => d.RaiseCompilationStartingAsync(It.IsAny<CompilationStartedEventArgs>(), It.IsAny<CancellationToken>()))
+            .Callback<CompilationStartedEventArgs, CancellationToken>((args, _) =>
+            {
+                args.Cancel = true;
+                args.CancelReason = "not now";
+            })
+            .Returns(Task.CompletedTask);
+
+        var result = await _service.RunAsync(new CompilerOptions { ConfigPath = _configPath, ValidateConfig = false });
+
+        Assert.False(result.Success);
+        Assert.Equal("not now", result.ErrorMessage);
+        _filterCompiler.Verify(
+            c => c.CompileAsync(It.IsAny<CompilerOptions>(), It.IsAny<CancellationToken>()), Times.Never);
+        _eventDispatcher.Verify(
+            d => d.RaiseCompilationErrorAsync(It.IsAny<CompilationErrorEventArgs>(), It.IsAny<CancellationToken>()),
+            Times.Once);
+    }
 }
