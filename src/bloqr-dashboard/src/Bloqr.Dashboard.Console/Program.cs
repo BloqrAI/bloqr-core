@@ -126,6 +126,7 @@ public static class Program
         services.AddSingleton<IDashboardConfigurationStore, DashboardConfigurationStore>();
         services.AddSingleton<IProfileManager, ProfileManager>();
         services.AddSingleton<ILogEntryReader, LogEntryReader>();
+        services.AddSingleton<ICompilerConfigGuard, CompilerConfigGuard>();
 
         services.AddSingleton<IConsoleRenderer, SpectreConsoleRenderer>();
         services.AddSingleton<IConsolePrompter, SpectreConsolePrompter>();

@@ -1,6 +1,9 @@
 // Global using directives
 
 global using System.Text.Json;
+global using Bloqr.Compiler.Abstractions;
+global using Bloqr.Compiler.Core.Configuration;
+global using Bloqr.Compiler.Core.Logging;
 global using Bloqr.Dashboard.Abstractions;
 global using Bloqr.Dashboard.Core;
 global using Bloqr.Dashboard.Core.Configuration;

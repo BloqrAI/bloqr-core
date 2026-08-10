@@ -2,6 +2,9 @@
 
 global using System.Text.Json;
 global using System.Text.Json.Serialization;
+global using Bloqr.Compiler.Abstractions;
+global using Bloqr.Compiler.Core.Configuration;
+global using Bloqr.Compiler.Core.Logging;
 global using Bloqr.Dashboard.Abstractions;
 global using Bloqr.Dashboard.Core.Configuration;
 global using Bloqr.Dashboard.Core.Logging;

@@ -8,7 +8,7 @@
     <Authors>Bloqr</Authors>
     <Company>Bloqr</Company>
     <AssemblyTitle>Bloqr Compiler Core</AssemblyTitle>
-    <Description>Common .NET library for Bloqr's filter-rules compilers and Dashboard: multi-format (JSON/YAML/TOML) configuration reading and validation, chunked parallel compilation support, file locking, the compilation event pipeline, and the plugin system. Extracted from RulesCompiler so it can be shared across compiler-specific projects.</Description>
+    <Description>Common .NET library for Bloqr's filter-rules compilers and Dashboard: multi-format (JSON/YAML/TOML) configuration reading and validation, chunked parallel compilation support, file locking, the compilation event pipeline, the plugin system, and shared structured JSON logging. Extracted from RulesCompiler so it can be shared across compiler-specific projects.</Description>
     <Copyright>Copyright 2024</Copyright>
     <RootNamespace>Bloqr.Compiler.Core</RootNamespace>
     <Version>1.0.0</Version>
@@ -18,8 +18,12 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" />
     <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" />
     <PackageReference Include="Microsoft.Extensions.Options" />
+    <PackageReference Include="Serilog" />
+    <PackageReference Include="Serilog.Extensions.Logging" />
+    <PackageReference Include="Serilog.Sinks.File" />
     <PackageReference Include="YamlDotNet" />
     <PackageReference Include="Tomlyn" />
   </ItemGroup>

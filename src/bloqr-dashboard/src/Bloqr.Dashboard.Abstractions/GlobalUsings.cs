@@ -3,3 +3,4 @@
 // System.Linq, System.Threading.Tasks, etc.)
 
 global using System.Text.Json.Serialization;
+global using Bloqr.Compiler.Abstractions;
