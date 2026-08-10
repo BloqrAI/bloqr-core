@@ -26,7 +26,7 @@ Install the required tools for the language you're working with:
 - **TypeScript/Deno**: [Deno 2.0+](https://deno.land/)
 - **.NET**: [.NET 10 SDK](https://dotnet.microsoft.com/download/dotnet/10.0)
 - **Python**: [Python 3.9+](https://www.python.org/)
-- **Rust**: [Rust 1.83+](https://rustup.rs/)
+- **Rust**: [Rust 1.86+](https://rustup.rs/)
 - **PowerShell**: [PowerShell 7+](https://github.com/PowerShell/PowerShell)
 
 ### Initial Setup
