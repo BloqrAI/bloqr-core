@@ -122,4 +122,6 @@ def _prune_archive(
                 continue
             file_path.unlink()
         except OSError:
+            # Best-effort pruning: a file that's already gone, locked, or otherwise
+            # unremovable shouldn't fail the publish that triggered this cleanup.
             pass

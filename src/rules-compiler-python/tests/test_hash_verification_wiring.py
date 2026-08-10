@@ -10,8 +10,6 @@ which does not exercise `compile_rules` end-to-end either).
 import asyncio
 from pathlib import Path
 
-import pytest
-
 from rules_compiler.compiler import _raise_hash_computed, _verify_and_record_hash
 from rules_compiler.config import HashVerificationSettings
 from rules_compiler.events import (
@@ -133,7 +131,7 @@ class TestVerifyAndRecordHash:
         )
         asyncio.run(_verify_and_record_hash(db_path, str(item), "output_file", "a" * 96, settings, None))
 
-        can_continue, error = asyncio.run(
+        can_continue, _error = asyncio.run(
             _verify_and_record_hash(db_path, str(item), "output_file", "b" * 96, settings, None)
         )
 
