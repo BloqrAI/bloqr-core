@@ -48,6 +48,12 @@ public sealed class DashboardConfigurationStoreTests : IDisposable
                 LogLevel = DashboardLogLevel.Debug,
                 DefaultRulesDirectory = "/tmp/rules",
                 ActiveProfile = "prod",
+                AdGuardApi = new AdGuardApiSettings
+                {
+                    Enabled = true,
+                    BaseUrl = "https://api.adguard-dns.io",
+                    ApiKeyEnvironmentVariable = "ADGUARD_API_KEY",
+                },
             },
         };
         configuration.Profiles["prod"] = new DashboardProfile
@@ -65,6 +71,9 @@ public sealed class DashboardConfigurationStoreTests : IDisposable
         reloaded.Configuration.Settings.LogLevel.Should().Be(DashboardLogLevel.Debug);
         reloaded.Configuration.Settings.DefaultRulesDirectory.Should().Be("/tmp/rules");
         reloaded.Configuration.Settings.ActiveProfile.Should().Be("prod");
+        reloaded.Configuration.Settings.AdGuardApi.Enabled.Should().BeTrue();
+        reloaded.Configuration.Settings.AdGuardApi.BaseUrl.Should().Be("https://api.adguard-dns.io");
+        reloaded.Configuration.Settings.AdGuardApi.ApiKeyEnvironmentVariable.Should().Be("ADGUARD_API_KEY");
         reloaded.Configuration.Profiles.Should().ContainKey("prod");
         reloaded.Configuration.Profiles["prod"].CompilerConfigs.Should().Equal("configs/prod.json");
         reloaded.Configuration.Profiles["prod"].SettingsOverrides!.LogLevel.Should().Be(DashboardLogLevel.Warn);
