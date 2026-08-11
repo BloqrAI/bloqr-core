@@ -121,7 +121,7 @@ services:
       - ./rules:/app/rules
       - ./Config:/app/Config
     environment:
-      - CONFIG_PATH=/app/Config/compiler-config.yaml
+      - CONFIG_PATH=/app/Config/compiler-config.json
     restart: unless-stopped
 
   # For a deployable AdGuard DNS API service, see the API client Dockerfiles
@@ -158,18 +158,24 @@ kind: ConfigMap
 metadata:
   name: compiler-config
 data:
-  compiler-config.yaml: |
-    name: Production Filter List
-    version: "1.0.0"
-    sources:
-      - name: EasyList
-        source: https://easylist.to/easylist/easylist.txt
-        type: adblock
-    transformations:
-      - Validate
-      - Deduplicate
-      - RemoveEmptyLines
-      - InsertFinalNewLine
+  compiler-config.json: |
+    {
+      "name": "Production Filter List",
+      "version": "1.0.0",
+      "sources": [
+        {
+          "name": "EasyList",
+          "source": "https://easylist.to/easylist/easylist.txt",
+          "type": "adblock"
+        }
+      ],
+      "transformations": [
+        "Validate",
+        "Deduplicate",
+        "RemoveEmptyLines",
+        "InsertFinalNewLine"
+      ]
+    }
 ```
 
 #### Secret for API Keys
@@ -208,7 +214,7 @@ spec:
         image: ad-blocking-compiler:latest
         env:
         - name: CONFIG_PATH
-          value: /config/compiler-config.yaml
+          value: /config/compiler-config.json
         - name: ADGUARD_AdGuard__ApiKey
           valueFrom:
             secretKeyRef:
@@ -247,7 +253,7 @@ spec:
             image: ad-blocking-compiler:latest
             env:
             - name: CONFIG_PATH
-              value: /config/compiler-config.yaml
+              value: /config/compiler-config.json
             volumeMounts:
             - name: config
               mountPath: /config
