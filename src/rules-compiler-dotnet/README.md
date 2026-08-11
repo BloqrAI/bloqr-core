@@ -181,48 +181,18 @@ var invalid = TransformationHelper.GetInvalidTransformations(["Valid", "Invalid"
 
 ## Library Architecture
 
-As of the `Bloqr.Compiler.*` extraction, this project is split across three assemblies:
+This project is a thin, compiler-specific layer over the shared `Bloqr.Compiler.Abstractions`/`Bloqr.Compiler.Core` library, which now lives in its own solution at [`src/compiler-common-dotnet/`](../compiler-common-dotnet/) — see that project's README for the full API reference (interfaces, models, services) of the shared library.
 
-- **`Bloqr.Compiler.Abstractions`** — interfaces, event-args, and shared model/DTO types. No implementation, no external dependencies beyond the framework. Reusable by any compiler-specific project or the future Dashboard.
-- **`Bloqr.Compiler.Core`** — the common implementation: multi-format config reading/validation, chunking, file locking, the compilation event pipeline, and the plugin system. References `Bloqr.Compiler.Abstractions` only.
+- **`Bloqr.Compiler.Abstractions`/`Bloqr.Compiler.Core`** (`src/compiler-common-dotnet/`) — interfaces, event-args, models, and the common implementation (config reading/validation, chunking, file locking, hash verification, the compilation event pipeline, and the plugin system). Consumed via `<ProjectReference>`, not part of this project's solution.
 - **`RulesCompiler`** (this project) — the compiler-specific pieces: `FilterCompiler` (shells out to `@bloqr/compiler-core` via Deno), `OutputWriter`, `RulesCompilerService` (top-level orchestration). References `Bloqr.Compiler.Core`.
 
-`Bloqr.Compiler.Abstractions` and `Bloqr.Compiler.Core` are also published as NuGet packages to GitHub Packages for out-of-repo consumers — in-repo projects (including this one) keep using `<ProjectReference>`. See [`docs/architecture/nuget-distribution-strategy.md`](../../docs/architecture/nuget-distribution-strategy.md) for the decision record.
+### Services (`RulesCompiler`)
 
-### Abstractions (`Bloqr.Compiler.Abstractions`)
-
-| Interface | Description |
-|-----------|-------------|
-| `IConfigurationReader` | Reads and parses configuration files |
-| `IFilterCompiler` | Compiles filter rules |
-| `IOutputWriter` | Handles output file operations |
-| `IRulesCompilerService` | Main orchestration service |
-
-### Models (`Bloqr.Compiler.Abstractions`)
-
-| Model | Description |
-|-------|-------------|
-| `CompilerConfiguration` | Configuration file model with all compiler options |
-| `FilterSource` | Source filter list definition |
-| `CompilerResult` | Compilation result with metrics |
-| `CompilerOptions` | Compilation options (verbose, validate, etc.) |
-| `Transformation` | Enum of all available transformations |
-| `SourceType` | Enum for source types (adblock, hosts) |
-| `VersionInfo` | Component version information |
-| `ConfigurationFormat` | Enum for JSON/YAML/TOML formats (JSON/JSONC documented; YAML/TOML supported for backward compatibility only) |
-| `ValidationResult` / `ValidationError` | Shared validation-result shape, used by `IRulesCompilerService` without depending on `ConfigurationValidator`'s concrete implementation |
-
-### Services
-
-| Service | Assembly | Description |
-|---------|----------|-------------|
-| `ConfigurationReader` | `Bloqr.Compiler.Core` | Parses JSON/JSONC (documented), YAML, and TOML (backward compatible) configs with snake_case support |
-| `ConfigurationValidator` | `Bloqr.Compiler.Core` | Validates configuration with error/warning reporting |
-| `ChunkingService`, `FileLockService`, `PluginManager`, `CompilationPipeline(Builder)`, `CompilationEventDispatcher` | `Bloqr.Compiler.Core` | Chunked compilation, file locking, plugin system, event pipeline |
-| `CommandHelper`, `PlatformHelper` | `Bloqr.Compiler.Core` | Generic process-execution and platform-detection utilities |
-| `FilterCompiler` | `RulesCompiler` | Executes the compiler CLI with verbose support |
-| `OutputWriter` | `RulesCompiler` | Copies output, computes hashes, counts rules |
-| `RulesCompilerService` | `RulesCompiler` | Orchestrates the full pipeline with validation |
+| Service | Description |
+|---------|-------------|
+| `FilterCompiler` | Executes the compiler CLI with verbose support |
+| `OutputWriter` | Copies output, computes hashes, counts rules |
+| `RulesCompilerService` | Orchestrates the full pipeline with validation |
 
 ## Dependency Injection
 
@@ -270,11 +240,6 @@ src/rules-compiler-dotnet/
 │   ├── compiler-config.toml         # TOML format (undocumented, backward compat)
 │   └── compiler-config-advanced.yaml # Advanced example (YAML, undocumented)
 ├── src/
-│   ├── Bloqr.Compiler.Abstractions/ # Shared interfaces, event-args, and models
-│   ├── Bloqr.Compiler.Core/         # Common implementation (config, chunking, plugins, events)
-│   │   ├── Configuration/
-│   │   ├── Helpers/
-│   │   └── Services/
 │   ├── RulesCompiler/               # Compiler-specific library
 │   │   ├── Extensions/              # DI extensions
 │   │   └── Services/                # FilterCompiler, OutputWriter, RulesCompilerService
@@ -292,6 +257,7 @@ src/rules-compiler-dotnet/
 
 ## Related Projects
 
+- [Compiler Common (.NET)](../compiler-common-dotnet/) - `Bloqr.Compiler.Abstractions`/`Bloqr.Compiler.Core`, the shared library this project builds on
 - [Rules Compiler (TypeScript)](../adblock-compiler-core/) - `@bloqr/compiler-core`, the canonical compilation engine this project shells out to
 - [Rules Compiler (Python)](../rules-compiler-python/) - Python implementation
 - [Rules Compiler (Rust)](../rules-compiler-rust/) - Rust implementation
