@@ -60,6 +60,7 @@ The AdGuard DNS API clients (and their generated API reference docs) moved to [`
 |---------|----------|
 | Repository Overview | [README.md](../README.md) |
 | TypeScript Compiler (`@bloqr/compiler-core`) | [src/adblock-compiler-core/README.md](../src/adblock-compiler-core/README.md) |
+| Common .NET Library (`Bloqr.Compiler.Abstractions`/`Core`) | [src/compiler-common-dotnet/README.md](../src/compiler-common-dotnet/README.md) |
 | .NET Compiler | [src/rules-compiler-dotnet/README.md](../src/rules-compiler-dotnet/README.md) |
 | Python Compiler | [src/rules-compiler-python/README.md](../src/rules-compiler-python/README.md) |
 | Rust Compiler | [src/rules-compiler-rust/README.md](../src/rules-compiler-rust/README.md) |
