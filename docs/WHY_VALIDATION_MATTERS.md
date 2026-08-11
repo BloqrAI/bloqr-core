@@ -473,4 +473,4 @@ See [CONTRIBUTING.md](../CONTRIBUTING.md) for how to get involved.
 
 ---
 
-**Questions or concerns?** Open an issue on [GitHub](https://github.com/BloqrAI/bloqr-lists/issues).
+**Questions or concerns?** Open an issue on [GitHub](https://github.com/BloqrAI/bloqr-core/issues).
