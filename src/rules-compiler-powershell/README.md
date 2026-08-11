@@ -51,7 +51,7 @@ Modern OOP-based rules compiler module.
 **Usage:**
 ```powershell
 Import-Module ./src/rules-compiler-powershell/RulesCompiler/RulesCompiler.psd1
-Invoke-RulesCompiler -ConfigPath config.yaml
+Invoke-RulesCompiler -ConfigPath config.json
 ```
 
 ### AdGuardWebhook

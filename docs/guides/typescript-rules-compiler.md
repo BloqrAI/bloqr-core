@@ -242,7 +242,7 @@ You can grant all permissions with `-A` or be more restrictive:
 
 ```bash
 deno run --allow-read=. --allow-write=. --allow-run=deno,npm --allow-net \
-  src/mod.ts -c config.yaml
+  src/mod.ts -c config.json
 ```
 
 ## Environment Variables
@@ -257,80 +257,100 @@ deno run --allow-read=. --allow-write=. --allow-run=deno,npm --allow-net \
 
 ### Compile for AdGuard DNS
 
-```yaml
-name: AdGuard DNS Filter
-description: Optimized for AdGuard DNS
-
-sources:
-  - name: AdGuard Base
-    source: https://raw.githubusercontent.com/AdguardTeam/FiltersRegistry/master/filters/filter_2_Base/filter.txt
-    transformations:
-      - RemoveModifiers
-      - Validate
-
-transformations:
-  - Deduplicate
-  - RemoveEmptyLines
-  - InsertFinalNewLine
+```json
+{
+  "name": "AdGuard DNS Filter",
+  "description": "Optimized for AdGuard DNS",
+  "sources": [
+    {
+      "name": "AdGuard Base",
+      "source": "https://raw.githubusercontent.com/AdguardTeam/FiltersRegistry/master/filters/filter_2_Base/filter.txt",
+      "transformations": [
+        "RemoveModifiers",
+        "Validate"
+      ]
+    }
+  ],
+  "transformations": [
+    "Deduplicate",
+    "RemoveEmptyLines",
+    "InsertFinalNewLine"
+  ]
+}
 ```
 
 ```bash
-deno task compile -- -c adguard-config.yaml -r
+deno task compile -- -c adguard-config.json -r
 ```
 
 ### Compile with Multiple Sources
 
-```yaml
-name: Combined Filter
-version: "2.0.0"
-
-sources:
-  - name: EasyList
-    source: https://easylist.to/easylist/easylist.txt
-    type: adblock
-
-  - name: EasyPrivacy
-    source: https://easylist.to/easylist/easyprivacy.txt
-    type: adblock
-
-  - name: Steven Black Hosts
-    source: https://raw.githubusercontent.com/StevenBlack/hosts/master/hosts
-    type: hosts
-    transformations:
-      - Compress  # Convert hosts to adblock format
-
-transformations:
-  - Validate
-  - Deduplicate
-  - RemoveEmptyLines
-  - InsertFinalNewLine
+```json
+{
+  "name": "Combined Filter",
+  "version": "2.0.0",
+  "sources": [
+    {
+      "name": "EasyList",
+      "source": "https://easylist.to/easylist/easylist.txt",
+      "type": "adblock"
+    },
+    {
+      "name": "EasyPrivacy",
+      "source": "https://easylist.to/easylist/easyprivacy.txt",
+      "type": "adblock"
+    },
+    {
+      "name": "Steven Black Hosts",
+      "source": "https://raw.githubusercontent.com/StevenBlack/hosts/master/hosts",
+      "type": "hosts",
+      "transformations": [
+        "Compress"
+      ]
+    }
+  ],
+  "transformations": [
+    "Validate",
+    "Deduplicate",
+    "RemoveEmptyLines",
+    "InsertFinalNewLine"
+  ]
+}
 ```
 
 ### Custom Transformations per Source
 
-```yaml
-name: Selective Transformations
-
-sources:
-  - name: Strict Source
-    source: https://example.com/strict-list.txt
-    transformations:
-      - RemoveComments
-      - Validate
-      - RemoveModifiers
-    exclusions:
-      - "*.facebook.com"
-
-  - name: Permissive Source
-    source: https://example.com/permissive-list.txt
-    inclusions:
-      - "*ad*"
-      - "*tracker*"
-
-transformations:
-  - Deduplicate
-  - RemoveEmptyLines
-  - InsertFinalNewLine
+```json
+{
+  "name": "Selective Transformations",
+  "sources": [
+    {
+      "name": "Strict Source",
+      "source": "https://example.com/strict-list.txt",
+      "transformations": [
+        "RemoveComments",
+        "Validate",
+        "RemoveModifiers"
+      ],
+      "exclusions": [
+        "*.facebook.com"
+      ]
+    },
+    {
+      "name": "Permissive Source",
+      "source": "https://example.com/permissive-list.txt",
+      "inclusions": [
+        "*ad*",
+        "*tracker*"
+      ]
+    }
+  ],
+  "transformations": [
+    "Deduplicate",
+    "RemoveEmptyLines",
+    "InsertFinalNewLine"
+  ]
+}
 ```
 
 ## Troubleshooting
@@ -377,14 +397,14 @@ deno cache src/mod.ts
 
 ### Configuration Parse Errors
 
-Verify your configuration format:
+Verify your JSON/JSONC configuration format:
 
 ```bash
-# Test YAML syntax
-deno task compile -- -c config.yaml -d
+# Test with verbose output to see parsing details
+deno task compile -- -c config.json -d
 
-# Force specific format
-deno task compile -- -c config.txt -f yaml
+# Validate JSON syntax (using Deno or jq if available)
+deno run --allow-read https://deno.land/std/json/parse.ts config.json
 ```
 
 ## Integration with Other Tools

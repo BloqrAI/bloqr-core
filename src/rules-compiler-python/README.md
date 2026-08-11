@@ -27,7 +27,7 @@ pip install -e ".[dev]"
 rules-compiler
 
 # Use specific configuration file
-rules-compiler -c compiler-config.yaml
+rules-compiler -c compiler-config.json
 
 # Compile and copy to rules directory
 rules-compiler -c config.json -r
@@ -36,16 +36,16 @@ rules-compiler -c config.json -r
 rules-compiler -v
 
 # Enable debug output
-rules-compiler -c config.yaml -d
+rules-compiler -c config.json -d
 
 # Show help
 rules-compiler -h
 
 # Disable validation before compilation
-rules-compiler -c config.yaml --no-validate-config
+rules-compiler -c config.json --no-validate-config
 
 # Fail on validation warnings
-rules-compiler -c config.yaml --fail-on-warnings
+rules-compiler -c config.json --fail-on-warnings
 ```
 
 ### CLI Options
@@ -55,7 +55,7 @@ rules-compiler -c config.yaml --fail-on-warnings
 | `--config PATH` | `-c` | Path to configuration file |
 | `--output PATH` | `-o` | Path to output file |
 | `--copy-to-rules` | `-r` | Copy output to rules directory |
-| `--format FORMAT` | `-f` | Force format (json, yaml, toml) |
+| `--format FORMAT` | `-f` | Force format (`json`; `yaml`/`toml` accepted for backward compatibility only) |
 | `--version` | `-v` | Show version information |
 | `--debug` | `-d` | Enable debug output |
 | `--validate` | | Validate configuration only (no compilation) |
@@ -75,7 +75,7 @@ from rules_compiler import RulesCompiler
 compiler = RulesCompiler()
 
 # Compile rules
-result = compiler.compile("compiler-config.yaml", copy_to_rules=True)
+result = compiler.compile("compiler-config.json", copy_to_rules=True)
 
 if result.success:
     print(f"Compiled {result.rule_count} rules")
@@ -97,7 +97,7 @@ async def main():
     
     # Use async API for better performance
     result = await compiler.compile_async(
-        "compiler-config.yaml",
+        "compiler-config.json",
         copy_to_rules=True
     )
     
@@ -119,7 +119,7 @@ import asyncio
 from rules_compiler import compile_rules_async
 
 async def compile_all():
-    configs = ["config1.yaml", "config2.yaml", "config3.yaml"]
+    configs = ["config1.json", "config2.json", "config3.json"]
     
     # Compile all configurations in parallel
     tasks = [compile_rules_async(config) for config in configs]
@@ -176,12 +176,12 @@ asyncio.run(analyze_file("rules.txt"))
 from rules_compiler import read_configuration, ConfigurationFormat
 
 # Auto-detect format from extension
-config = read_configuration("config.yaml")
+config = read_configuration("config.json")
 print(f"Name: {config.name}")
 print(f"Sources: {len(config.sources)}")
 
 # Force specific format
-config = read_configuration("config.txt", format=ConfigurationFormat.YAML)
+config = read_configuration("config.txt", format=ConfigurationFormat.JSON)
 ```
 
 ### Version Information
@@ -204,15 +204,15 @@ from rules_compiler import RulesCompiler, ConfigurationFormat
 compiler = RulesCompiler(debug=True)
 
 # Read and inspect configuration
-config = compiler.read_config("config.yaml")
+config = compiler.read_config("config.json")
 print(f"Will compile {len(config.sources)} sources")
 
 # Compile with options
 result = compiler.compile(
-    config_path="config.yaml",
+    config_path="config.json",
     output_path="my-rules.txt",
     copy_to_rules=True,
-    format=ConfigurationFormat.YAML,
+    format=ConfigurationFormat.JSON,
 )
 
 # Access result details
@@ -223,6 +223,8 @@ print(f"Time: {result.elapsed_ms}ms")
 ```
 
 ## Configuration Formats
+
+JSON (and JSONC, JSON with comments) is the only documented configuration format. YAML and TOML remain readable for backward compatibility but are undocumented — see [`docs/guides/migration-guide.md`](../../docs/guides/migration-guide.md) for converting legacy configs to JSON.
 
 ### JSON
 
@@ -237,7 +239,7 @@ print(f"Time: {result.elapsed_ms}ms")
 }
 ```
 
-### YAML
+### YAML (backward compatibility only)
 
 ```yaml
 name: My Filter Rules
@@ -251,7 +253,7 @@ transformations:
   - Validate
 ```
 
-### TOML
+### TOML (backward compatibility only)
 
 ```toml
 name = "My Filter Rules"
@@ -319,7 +321,7 @@ ruff check --fix rules_compiler
 
 | Enum | Values |
 |------|--------|
-| `ConfigurationFormat` | `JSON`, `YAML`, `TOML` |
+| `ConfigurationFormat` | `JSON`, `YAML`, `TOML` (YAML/TOML supported for backward compatibility only) |
 
 ### Functions
 

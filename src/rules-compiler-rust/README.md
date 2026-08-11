@@ -6,7 +6,7 @@ Rust API for compiling AdGuard filter rules.
 
 - Fast, single-binary CLI tool
 - Library for embedding in other Rust projects
-- Supports JSON, YAML, and TOML configuration formats
+- Supports JSON/JSONC configuration format (YAML and TOML remain readable for backward compatibility only)
 - Cross-platform (Windows, macOS, Linux)
 - Zero runtime dependencies (statically linked)
 
@@ -55,7 +55,7 @@ This means you can run the compiler from any subdirectory and it will find the n
 rules-compiler
 
 # Use specific configuration file
-rules-compiler -c compiler-config.yaml
+rules-compiler -c compiler-config.json
 
 # Compile and copy to rules directory
 rules-compiler -c config.json -r
@@ -70,7 +70,7 @@ rules-compiler config
 rules-compiler -i
 
 # Enable debug output
-rules-compiler -c config.yaml -d
+rules-compiler -c config.json -d
 
 # Show help
 rules-compiler --help
@@ -89,7 +89,7 @@ rules-compiler compile --validate --fail-on-warnings
 | `--config PATH` | `-c` | Path to configuration file |
 | `--output PATH` | `-o` | Path to output file |
 | `--copy-to-rules` | `-r` | Copy output to rules directory |
-| `--format FORMAT` | `-f` | Force format (json, yaml, toml) |
+| `--format FORMAT` | `-f` | Force format (`json`; `yaml`/`toml` accepted for backward compatibility only) |
 | `--version-info` | `-V` | Show version information |
 | `--debug` | `-d` | Enable debug output |
 | `--interactive` | `-i` | Run in interactive mode |
@@ -120,7 +120,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let compiler = RulesCompiler::new();
 
     let result = compiler.compile(
-        "compiler-config.yaml",
+        "compiler-config.json",
         None,           // output_path
         true,           // copy_to_rules
         None,           // rules_directory
@@ -145,12 +145,12 @@ use rules_compiler::{read_configuration, ConfigurationFormat};
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Auto-detect format from extension
-    let config = read_configuration("config.yaml", None)?;
+    let config = read_configuration("config.json", None)?;
     println!("Name: {}", config.name);
     println!("Sources: {}", config.sources.len());
 
     // Force specific format
-    let config = read_configuration("config.txt", Some(ConfigurationFormat::Yaml))?;
+    let config = read_configuration("config.txt", Some(ConfigurationFormat::Json))?;
 
     Ok(())
 }
@@ -194,6 +194,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
 ## Configuration Formats
 
+JSON (and JSONC, JSON with comments) is the only documented configuration format. YAML and TOML remain readable for backward compatibility but are undocumented — see [`docs/guides/migration-guide.md`](../../docs/guides/migration-guide.md) for converting legacy configs to JSON.
+
 ### JSON
 
 ```json
@@ -207,7 +209,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 }
 ```
 
-### YAML
+### YAML (backward compatibility only)
 
 ```yaml
 name: My Filter Rules
@@ -221,7 +223,7 @@ transformations:
   - Validate
 ```
 
-### TOML
+### TOML (backward compatibility only)
 
 ```toml
 name = "My Filter Rules"
@@ -251,7 +253,7 @@ type = "adblock"
 
 | Enum | Values |
 |------|--------|
-| `ConfigurationFormat` | `Json`, `Yaml`, `Toml` |
+| `ConfigurationFormat` | `Json`, `Yaml`, `Toml` (`Yaml`/`Toml` supported for backward compatibility only) |
 | `CompilerError` | Various error types |
 
 ### Functions

@@ -20,23 +20,26 @@ All rules compilers share the same configuration schema, making migration straig
 
 **Step 1: Verify Configuration Compatibility**
 
-Your existing configuration file works across all compilers:
+Your existing JSON/JSONC configuration file works across all compilers:
 
-```yaml
-# This configuration works with ALL compilers
-name: My Filter List
-description: Works everywhere
-version: "1.0.0"
-
-sources:
-  - name: EasyList
-    source: https://easylist.to/easylist/easylist.txt
-    type: adblock
-
-transformations:
-  - Validate
-  - Deduplicate
-  - InsertFinalNewLine
+```json
+{
+  "name": "My Filter List",
+  "description": "Works everywhere",
+  "version": "1.0.0",
+  "sources": [
+    {
+      "name": "EasyList",
+      "source": "https://easylist.to/easylist/easylist.txt",
+      "type": "adblock"
+    }
+  ],
+  "transformations": [
+    "Validate",
+    "Deduplicate",
+    "InsertFinalNewLine"
+  ]
+}
 ```
 
 **Step 2: Install Target Compiler**
@@ -68,16 +71,16 @@ cargo build --release
 ```bash
 # Test that output is identical
 # TypeScript
-deno task compile -- -c config.yaml -o output-ts.txt
+deno task compile -- -c config.json -o output-ts.txt
 
 # .NET
-dotnet run --project src/RulesCompiler.Console -- -c config.yaml -o output-dotnet.txt
+dotnet run --project src/RulesCompiler.Console -- -c config.json -o output-dotnet.txt
 
 # Python
-rules-compiler -c config.yaml -o output-python.txt
+rules-compiler -c config.json -o output-python.txt
 
 # Rust
-cargo run -- -c config.yaml -o output-rust.txt
+cargo run -- -c config.json -o output-rust.txt
 
 # Compare outputs (should be identical)
 diff output-ts.txt output-dotnet.txt
@@ -219,6 +222,8 @@ from configparser import ConfigParser
 5. Run: `python -m pytest`
 
 ## API SDK Migration
+
+**Note:** The AdGuard DNS API clients (TypeScript, .NET, Rust, PowerShell) and their documentation have moved to [`BloqrAI/bloqr-apiclients`](https://github.com/BloqrAI/bloqr-apiclients) (internal repository). This section remains for reference on general SDK migration patterns.
 
 ### Migrating Between SDK Implementations
 
@@ -365,9 +370,34 @@ deviceType: 'IOS' | 'ANDROID' | 'WINDOWS' | 'MAC' | etc.
 
 ## Configuration Format Migration
 
-### From JSON to YAML
+**Note:** As of issue #259, only **JSON** and **JSONC** (JSON with Comments) are the documented, supported configuration formats. Earlier YAML and TOML support was for backward compatibility only; all new configurations should use JSON or JSONC.
 
-**Before (JSON):**
+### From Legacy YAML/TOML to JSON
+
+If you have an existing YAML or TOML configuration, convert it to JSON for full schema validation and IDE autocomplete support:
+
+**From YAML:**
+```bash
+# Option 1: Use yq (if available)
+yq eval -o=json config.yaml > config.json
+
+# Option 2: Manual conversion - rewrite in JSON format following the schema at:
+# https://github.com/BloqrAI/bloqr-core/blob/main/schemas/compiler-config.schema.json
+```
+
+**From TOML:**
+```bash
+# Option 1: Use a TOML-to-JSON converter online or via CLI
+python -c 'import toml, json; print(json.dumps(toml.load(open("config.toml"))))' > config.json
+
+# Option 2: Manual conversion - rewrite in JSON format
+```
+
+### JSON vs JSONC
+
+Both JSON and JSONC are supported. JSONC (JSON with Comments) is useful for documenting configurations inline:
+
+**JSON (strict):**
 ```json
 {
   "name": "My Filter",
@@ -382,54 +412,26 @@ deviceType: 'IOS' | 'ANDROID' | 'WINDOWS' | 'MAC' | etc.
 }
 ```
 
-**After (YAML):**
-```yaml
-name: My Filter
-sources:
-  - name: EasyList
-    source: https://easylist.to/easylist/easylist.txt
-    type: adblock
-transformations:
-  - Deduplicate
-  - Validate
+**JSONC (with comments):**
+```jsonc
+{
+  "name": "My Filter",
+  // Main filter sources
+  "sources": [
+    {
+      "name": "EasyList",
+      "source": "https://easylist.to/easylist/easylist.txt",
+      "type": "adblock"  // Adblock format list
+    }
+  ],
+  // Cleanup and deduplication
+  "transformations": ["Deduplicate", "Validate"]
+}
 ```
 
-**Auto-conversion:**
-```bash
-# JSON to YAML
-python -c 'import json, yaml, sys; yaml.dump(json.load(sys.stdin), sys.stdout)' < config.json > config.yaml
-
-# YAML to JSON
-python -c 'import json, yaml, sys; json.dump(yaml.safe_load(sys.stdin), sys.stdout, indent=2)' < config.yaml > config.json
-```
-
-### From YAML to TOML
-
-**Before (YAML):**
-```yaml
-name: My Filter
-sources:
-  - name: EasyList
-    source: https://example.com/list.txt
-transformations:
-  - Deduplicate
-```
-
-**After (TOML):**
-```toml
-name = "My Filter"
-transformations = ["Deduplicate"]
-
-[[sources]]
-name = "EasyList"
-source = "https://example.com/list.txt"
-```
-
-**Key Differences:**
-- TOML uses `=` instead of `:`
-- Arrays of tables use `[[table]]` syntax
-- Strings must be quoted
-- No complex nested structures
+**Compiler Support:**
+- **.NET** and **Dashboard** can read both `.json` and `.jsonc` files
+- **TypeScript, Python, and Rust** compilers parse with strict JSON (no comments) — use `.json` extension with those, or convert via .NET/Dashboard first if you need comments
 
 ## Environment Variable Migration
 
