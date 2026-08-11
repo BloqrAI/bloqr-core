@@ -32,4 +32,10 @@ public sealed class DashboardSettings
     /// <see cref="DashboardConfiguration.Profiles"/>), or <c>null</c> if none is active.
     /// </summary>
     public string? ActiveProfile { get; set; }
+
+    /// <summary>
+    /// Gets or sets the placeholder settings for the future <c>adguard-api-dotnet</c>
+    /// integration (#272). Disabled by default.
+    /// </summary>
+    public AdGuardApiSettings AdGuardApi { get; set; } = new();
 }

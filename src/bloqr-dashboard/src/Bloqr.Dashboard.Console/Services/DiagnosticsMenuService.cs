@@ -56,6 +56,8 @@ public sealed class DiagnosticsMenuService : MenuServiceBase
         ["Show resolved paths"] = ShowResolvedPathsAsync,
         ["Check configuration health"] = CheckConfigurationHealthAsync,
         ["Validate a filter file"] = ValidateFilterFileAsync,
+        ["Check AdGuard API configuration"] = CheckAdGuardApiConfigurationAsync,
+        ["Run quick benchmark (synthetic)"] = RunQuickBenchmarkAsync,
     };
 
     private Task CheckExternalToolsAsync()
@@ -188,5 +190,87 @@ public sealed class DiagnosticsMenuService : MenuServiceBase
                 Renderer.WriteLine($"  {message}");
             }
         }
+    }
+
+    private async Task CheckAdGuardApiConfigurationAsync()
+    {
+        var load = await _configStore.LoadAsync(allowInteractiveRecovery: false).ConfigureAwait(false);
+        var settings = load.Configuration.Settings.AdGuardApi;
+
+        var table = new ConsoleTable { Title = "AdGuard API" };
+        table.AddColumn("Field");
+        table.AddColumn("Value");
+        table.AddRow("Enabled", settings.Enabled ? "yes" : "no");
+        table.AddRow("Base URL", settings.BaseUrl ?? "-");
+        table.AddRow("API key env var", settings.ApiKeyEnvironmentVariable ?? "-");
+        Renderer.RenderTable(table);
+
+        Renderer.WriteLine();
+        Renderer.WriteStyled(
+            "This is a configuration placeholder only - no AdGuard DNS API client is wired in yet. "
+            + "See #272: the actual adguard-api-dotnet integration is a separate future issue.",
+            TextStyle.Warning);
+    }
+
+    private async Task RunQuickBenchmarkAsync()
+    {
+        var pythonPath = _commandHelper.FindCommand("python3") ?? _commandHelper.FindCommand("python");
+        if (pythonPath is null)
+        {
+            Renderer.WriteStyled(
+                "python3 not found on PATH - see 'Check external tools' for remediation.",
+                TextStyle.Error);
+            return;
+        }
+
+        var benchmarksDir = FindBenchmarksDirectory();
+        if (benchmarksDir is null)
+        {
+            Renderer.WriteStyled(
+                "benchmarks/quick_benchmark.py not found. This action only works from a full "
+                + "source checkout (not a binary-only release) - see docs/architecture/"
+                + "release-packaging-strategy.md.",
+                TextStyle.Warning);
+            return;
+        }
+
+        var (exitCode, stdOut, stdErr) = await Renderer
+            .StatusAsync(
+                "Running synthetic chunking benchmark...",
+                () => _commandHelper.ExecuteAsync(pythonPath, "quick_benchmark.py", benchmarksDir))
+            .ConfigureAwait(false);
+
+        Renderer.WriteLine();
+        if (!string.IsNullOrWhiteSpace(stdOut))
+        {
+            Renderer.WriteLine(stdOut);
+        }
+
+        if (exitCode != 0)
+        {
+            Renderer.WriteStyled($"quick_benchmark.py exited with code {exitCode}.", TextStyle.Error);
+            if (!string.IsNullOrWhiteSpace(stdErr))
+            {
+                Renderer.WriteLine(stdErr);
+            }
+        }
+    }
+
+    // Walks up from the current directory looking for benchmarks/quick_benchmark.py. Only
+    // relevant in source-checkout mode - a binary-only release (#277) doesn't bundle it, so
+    // this returning null there is expected, not an error.
+    private static string? FindBenchmarksDirectory()
+    {
+        var current = new DirectoryInfo(Directory.GetCurrentDirectory());
+        for (var depth = 0; current is not null && depth < 6; depth++, current = current.Parent)
+        {
+            var candidate = Path.Combine(current.FullName, "benchmarks", "quick_benchmark.py");
+            if (File.Exists(candidate))
+            {
+                return Path.Combine(current.FullName, "benchmarks");
+            }
+        }
+
+        return null;
     }
 }

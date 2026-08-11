@@ -80,7 +80,21 @@ public static class JsoncWriter
         Blank(sb);
 
         AppendLine(sb, level, "// Name of the currently active profile (must match a key in \"profiles\"), or null if none active.");
-        AppendLine(sb, level, $"\"activeProfile\": {JsonString(settings.ActiveProfile)}");
+        AppendLine(sb, level, $"\"activeProfile\": {JsonString(settings.ActiveProfile)},");
+        Blank(sb);
+
+        AppendLine(sb, level, "// Placeholder for the future adguard-api-dotnet integration (#272). Disabled by");
+        AppendLine(sb, level, "// default - not a functioning client yet.");
+        AppendLine(sb, level, "\"adGuardApi\": {");
+        AppendAdGuardApiBody(sb, level + 1, settings.AdGuardApi);
+        AppendLine(sb, level, "}");
+    }
+
+    private static void AppendAdGuardApiBody(StringBuilder sb, int level, AdGuardApiSettings adGuardApi)
+    {
+        AppendLine(sb, level, $"\"enabled\": {JsonBool(adGuardApi.Enabled)},");
+        AppendLine(sb, level, $"\"baseUrl\": {JsonString(adGuardApi.BaseUrl)},");
+        AppendLine(sb, level, $"\"apiKeyEnvironmentVariable\": {JsonString(adGuardApi.ApiKeyEnvironmentVariable)}");
     }
 
     private static void AppendBackupBody(StringBuilder sb, int level, BackupSettings backup)

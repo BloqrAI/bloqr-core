@@ -14,9 +14,10 @@ Part of [epic #256](https://github.com/BloqrAI/bloqr-core/issues/256): the app s
 structured JSON logging with rollover (#275), the Dashboard's own `.jsonc` configuration with
 profiles and corruption recovery (#267), the compiler-config generation wizard (#268),
 round-trip config editing and git-based versioning (#269), rules-validator integration (#264),
-a rich live compilation-progress display (#270), and CLI-switch parity plus an embeddable
-library API boundary (#271) are all implemented. AdGuard API client stubs (#272) remain a
-separate, later issue.
+a rich live compilation-progress display (#270), CLI-switch parity plus an embeddable
+library API boundary (#271), and lightweight AdGuard API client / benchmarks stubs (#272)
+are all implemented. Full `adguard-api-dotnet` integration remains a separate, later issue —
+#272 only wires configuration extension points and diagnostics, not a real client.
 
 ## Prerequisites
 

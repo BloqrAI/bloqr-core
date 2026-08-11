@@ -56,6 +56,25 @@
         "activeProfile": {
           "type": ["string", "null"],
           "description": "Name of the currently active profile (must match a key in `profiles`), or null if none active"
+        },
+        "adGuardApi": {
+          "type": "object",
+          "description": "Placeholder settings for the future adguard-api-dotnet integration (#272). Disabled by default; not a functioning client.",
+          "additionalProperties": false,
+          "properties": {
+            "enabled": {
+              "type": "boolean",
+              "default": false
+            },
+            "baseUrl": {
+              "type": "string",
+              "description": "AdGuard DNS API base URL to use once a client is wired in"
+            },
+            "apiKeyEnvironmentVariable": {
+              "type": "string",
+              "description": "Name of the environment variable an API key/token will be read from. Never store the credential itself here."
+            }
+          }
         }
       }
     },
