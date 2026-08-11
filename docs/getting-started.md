@@ -26,8 +26,8 @@ This guide will help you get up and running with the ad-blocking toolkit.
 ### 1. Clone the Repository
 
 ```bash
-git clone https://github.com/BloqrAI/bloqr-lists.git
-cd bloqr-lists
+git clone https://github.com/BloqrAI/bloqr-core.git
+cd bloqr-core
 ```
 
 ### 2. Install Deno
@@ -233,5 +233,5 @@ rustup update stable
 
 ## Getting Help
 
-- [GitHub Issues](https://github.com/BloqrAI/bloqr-lists/issues)
+- [GitHub Issues](https://github.com/BloqrAI/bloqr-core/issues)
 - [Security Policy](../SECURITY.md)

@@ -9,7 +9,7 @@ The TypeScript rules compiler (`src/adblock-compiler-core/`) is a Deno-based imp
 ## Features
 
 - **Native TypeScript Execution**: No build step required with Deno 2.0+
-- **Multi-Format Configuration**: Support for JSON, YAML, and TOML
+- **Multi-Format Configuration**: Support for JSON and JSONC (JSON with Comments)
 - **Interactive CLI Mode**: Menu-driven interface for easy use
 - **Chunked Parallel Compilation**: For large rule lists (10M+ entries)
 - **Secure by Default**: Explicit permissions required with Deno
@@ -40,8 +40,8 @@ deno --version
 ### Clone and Setup
 
 ```bash
-git clone https://github.com/BloqrAI/bloqr-lists.git
-cd bloqr-lists/src/adblock-compiler-core
+git clone https://github.com/BloqrAI/bloqr-core.git
+cd bloqr-core/src/adblock-compiler-core
 
 # Cache dependencies
 deno cache src/mod.ts
@@ -73,23 +73,20 @@ deno task interactive
 # Compile with default config
 deno task compile
 
-# Compile with specific config
-deno task compile -- -c path/to/config.yaml
+# Compile with specific config (JSON)
+deno task compile -- -c path/to/config.json
 
-# Compile with YAML config
-deno task compile:yaml
-
-# Compile with TOML config
-deno task compile:toml
+# Compile with JSONC config
+deno task compile -- -c path/to/config.jsonc
 
 # Custom output file
-deno task compile -- -c config.yaml -o output.txt
+deno task compile -- -c config.json -o output.txt
 
 # Compile and copy to rules directory
-deno task compile -- -c config.yaml -r
+deno task compile -- -c config.json -r
 
 # Debug mode with verbose output
-deno task compile -- -c config.yaml -d
+deno task compile -- -c config.json -d
 
 # Show version information
 deno task compile -- --version
@@ -105,7 +102,7 @@ deno task compile -- --help
 | `--config PATH` | `-c` | Path to configuration file |
 | `--output PATH` | `-o` | Path to output file |
 | `--copy-to-rules` | `-r` | Copy output to rules directory |
-| `--format FORMAT` | `-f` | Force format (json, yaml, toml) |
+| `--format FORMAT` | `-f` | Force format (json or jsonc) |
 | `--debug` | `-d` | Enable debug output |
 | `--version` | | Show version information |
 | `--help` | | Show help message |
@@ -117,39 +114,43 @@ You can also run the compiler directly:
 ```bash
 # Run directly
 deno run --allow-read --allow-write --allow-run --allow-net --allow-env \
-  src/mod.ts -c config.yaml
+  src/mod.ts -c config.json
 
 # Or with all permissions
-deno run -A src/mod.ts -c config.yaml
+deno run -A src/mod.ts -c config.json
 ```
 
 ## Configuration
 
-The compiler supports JSON, YAML, and TOML configuration formats with the same schema as all other compilers.
+The compiler supports JSON and JSONC (JSON with Comments) configuration formats with the same schema as all other compilers.
 
 ### Basic Configuration Example
 
-```yaml
-name: My Filter List
-description: Custom ad-blocking filter
-version: "1.0.0"
-
-sources:
-  - name: EasyList
-    source: https://easylist.to/easylist/easylist.txt
-    type: adblock
-    transformations:
-      - Validate
-      - RemoveModifiers
-
-  - name: Local Rules
-    source: ./my-rules.txt
-    type: adblock
-
-transformations:
-  - Deduplicate
-  - RemoveEmptyLines
-  - TrimLines
+```json
+{
+  "name": "My Filter List",
+  "description": "Custom ad-blocking filter",
+  "version": "1.0.0",
+  "sources": [
+    {
+      "name": "EasyList",
+      "source": "https://easylist.to/easylist/easylist.txt",
+      "type": "adblock",
+      "transformations": [
+        "Validate",
+        "RemoveModifiers"
+      ]
+    },
+    {
+      "name": "Local Rules",
+      "source": "./my-rules.txt",
+      "type": "adblock"
+    }
+  ],
+  "transformations": [
+    "Deduplicate",
+    "RemoveEmptyLines",
+    "TrimLines"
   - InsertFinalNewLine
 
 exclusions:

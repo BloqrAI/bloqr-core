@@ -29,7 +29,7 @@ A comprehensive guide to `@bloqr/compiler-core` — the in-repo, dependency-free
 
 **Package Information:**
 - **Registry**: [jsr.io/@bloqr/compiler-core](https://jsr.io/@bloqr/compiler-core)
-- **Source**: [`src/adblock-compiler-core/`](../../src/adblock-compiler-core/) in this repo ([BloqrAI/bloqr-lists](https://github.com/BloqrAI/bloqr-lists))
+- **Source**: [`src/adblock-compiler-core/`](../../src/adblock-compiler-core/) in this repo ([BloqrAI/bloqr-core](https://github.com/BloqrAI/bloqr-core))
 - **Current Version**: 1.0.0
 - **License**: GPL-3.0
 
@@ -920,9 +920,8 @@ deno run --allow-read --allow-write --allow-env --allow-net --allow-run jsr:@blo
 
 - **JSR Package**: https://jsr.io/@bloqr/compiler-core
 - **Source Code**: [`src/adblock-compiler-core/`](../../src/adblock-compiler-core/) in this repo
-- **Issue Tracker**: https://github.com/BloqrAI/bloqr-lists/issues
-- **This Repository**: https://github.com/BloqrAI/bloqr-lists
-- **Documentation Website**: https://bloqrai.github.io/bloqr-lists/
+- **Issue Tracker**: https://github.com/BloqrAI/bloqr-core/issues
+- **This Repository**: https://github.com/BloqrAI/bloqr-core
 - **ADR 0001**: [Canonical Rules Compilation Engine](../adr/0001-canonical-rules-compilation-engine.md)
 - **Backporting Policy**: [docs/backporting-policy.md](../backporting-policy.md)
 
@@ -938,7 +937,7 @@ Contributions to `@bloqr/compiler-core` are welcome! Please:
 
 1. Work in [`src/adblock-compiler-core/`](../../src/adblock-compiler-core/) in this repository
 2. Review [CONTRIBUTING.md](../../CONTRIBUTING.md)
-3. Submit issues or pull requests against [BloqrAI/bloqr-lists](https://github.com/BloqrAI/bloqr-lists)
+3. Submit issues or pull requests against [BloqrAI/bloqr-core](https://github.com/BloqrAI/bloqr-core)
 
 ## License
 

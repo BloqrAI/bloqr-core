@@ -221,19 +221,18 @@ dotnet test --filter "FullyQualifiedName~YourTestName"
 
 ```bash
 # Check file path (use absolute paths or ensure working directory is correct)
-dotnet run --project src/RulesCompiler.Console -- -c "$(pwd)/Config/compiler-config.yaml"
+dotnet run --project src/RulesCompiler.Console -- -c "$(pwd)/Config/compiler-config.json"
 
 # Verify file format
-# YAML files must use .yaml or .yml extension
 # JSON files must use .json extension
-# TOML files must use .toml extension
+# JSONC (JSON with comments) files must use .jsonc extension
 
 # Test configuration validity
-dotnet run --project src/RulesCompiler.Console -- -c config.yaml --validate
+dotnet run --project src/RulesCompiler.Console -- -c config.json --validate
 
 # Enable debug logging
 export RULESCOMPILER_Logging__LogLevel__Default=Debug
-dotnet run --project src/RulesCompiler.Console -- -c config.yaml --verbose
+dotnet run --project src/RulesCompiler.Console -- -c config.json --verbose
 ```
 
 ## Python Issues
@@ -302,30 +301,25 @@ python -m pytest
 pytest --version
 ```
 
-### YAML/TOML Parsing Errors
+### JSON Parsing Errors
 
-**Symptom:** `yaml.scanner.ScannerError` or `TOMLDecodeError`
+**Symptom:** `json.decoder.JSONDecodeError` or `Invalid JSON`
 
 **Solution:**
 
 ```bash
-# Install missing dependencies
-pip install pyyaml tomlkit
+# Verify file format using online validators
+# - JSON: https://jsonlint.com/
 
-# Verify file format
-# Use online validators:
-# - YAML: https://www.yamllint.com/
-# - TOML: https://www.toml-lint.com/
+# Check for common JSON issues:
+# - Trailing commas (not allowed in JSON)
+# - Unquoted keys
+# - Single quotes instead of double quotes
+# - Missing colons between keys and values
+# - Improper array/object syntax
 
-# Check for common YAML issues:
-# - Incorrect indentation (use spaces, not tabs)
-# - Missing colons
-# - Unquoted special characters
-
-# Check for common TOML issues:
-# - Incorrect array syntax
-# - Missing quotes around strings
-# - Invalid escape sequences
+# Use Python to validate locally
+python3 -c "import json; json.load(open('config.json'))" && echo "Valid JSON"
 ```
 
 ## Rust Issues
@@ -488,44 +482,38 @@ Invoke-Pester -Path ./Tests/ -Output Detailed
 
 ### Invalid Configuration Format
 
-**Symptom:** `Failed to parse configuration` or `Invalid YAML/JSON/TOML`
+**Symptom:** `Failed to parse configuration` or `Invalid JSON`
 
 **Solution:**
 
 1. **Validate format online:**
-   - YAML: https://www.yamllint.com/
    - JSON: https://jsonlint.com/
-   - TOML: https://www.toml-lint.com/
 
-2. **Common YAML issues:**
-```yaml
-# Bad: Tab indentation
-❌ sources:
-	- name: EasyList
-
-# Good: Space indentation
-✅ sources:
-  - name: EasyList
-
-# Bad: Missing colon
-❌ name "My Filter"
-
-# Good: Proper syntax
-✅ name: "My Filter"
-```
-
-3. **Common JSON issues:**
+2. **Common JSON issues:**
 ```json
 ❌ {
   "name": "Test",
   "sources": [
     {
       "name": "EasyList",
-    }  // Trailing comma
+    }  // Trailing comma (not allowed)
   ]
 }
 
 ✅ {
+  "name": "Test",
+  "sources": [
+    {
+      "name": "EasyList"
+    }
+  ]
+}
+```
+
+3. **JSONC (JSON with Comments) is also supported:**
+```jsonc
+{
+  // This is a comment - allowed in .jsonc files
   "name": "Test",
   "sources": [
     {
@@ -541,16 +529,20 @@ Invoke-Pester -Path ./Tests/ -Output Detailed
 
 **Solution:**
 
-```yaml
-# Minimum valid configuration
-name: My Filter List
-sources:
-  - name: Source 1
-    source: https://example.com/list.txt
-    type: adblock
-
-# Check required fields in configuration-reference.md
+```json
+{
+  "name": "My Filter List",
+  "sources": [
+    {
+      "name": "Source 1",
+      "source": "https://example.com/list.txt",
+      "type": "adblock"
+    }
+  ]
+}
 ```
+
+Check required fields in `configuration-reference.md`.
 
 ### Invalid Transformation Names
 
@@ -558,23 +550,25 @@ sources:
 
 **Solution:**
 
-```yaml
-# Valid transformations (case-sensitive):
-transformations:
-  - RemoveComments      # Not removeComments or remove_comments
-  - Compress
-  - RemoveModifiers
-  - Validate
-  - ValidateAllowIp
-  - Deduplicate
-  - InvertAllow
-  - RemoveEmptyLines
-  - TrimLines
-  - InsertFinalNewLine
-  - ConvertToAscii
-
-# Check exact spelling in configuration-reference.md
+```json
+{
+  "transformations": [
+    "RemoveComments",
+    "Compress",
+    "RemoveModifiers",
+    "Validate",
+    "ValidateAllowIp",
+    "Deduplicate",
+    "InvertAllow",
+    "RemoveEmptyLines",
+    "TrimLines",
+    "InsertFinalNewLine",
+    "ConvertToAscii"
+  ]
+}
 ```
+
+Note: Transformation names are case-sensitive. Check `configuration-reference.md` for the exact spelling.
 
 ## Network Issues
 
@@ -702,19 +696,26 @@ echo "*.log" >> .dockerignore
 **Solutions:**
 
 1. **Use local copies of frequently-used lists:**
-```yaml
-sources:
-  - name: EasyList
-    source: ./cache/easylist.txt  # Local copy
-    type: adblock
+```json
+{
+  "sources": [
+    {
+      "name": "EasyList",
+      "source": "./cache/easylist.txt",
+      "type": "adblock"
+    }
+  ]
+}
 ```
 
 2. **Reduce transformations:**
-```yaml
-# Minimal transformations
-transformations:
-  - Deduplicate
-  - InsertFinalNewLine
+```json
+{
+  "transformations": [
+    "Deduplicate",
+    "InsertFinalNewLine"
+  ]
+}
 ```
 
 3. **Enable parallel processing (where supported):**
@@ -726,10 +727,10 @@ cargo build --release
 pytest -n auto
 ```
 
-4. **Use faster config format:**
+4. **Use compiled binaries for faster execution:**
 ```bash
-# TOML is generally fastest to parse
-rules-compiler -c config.toml
+# Rust release binary is fastest
+./target/release/rules-compiler -c config.json
 ```
 
 ### High Memory Usage
@@ -884,7 +885,7 @@ cat compiler-config.yaml
 
 ### Where to Get Help
 
-- **GitHub Issues**: https://github.com/BloqrAI/bloqr-lists/issues
+- **GitHub Issues**: https://github.com/BloqrAI/bloqr-core/issues
 - **Documentation**: Check all guides in `docs/guides/`
 - **AdGuard Forums**: https://forum.adguard.com/
 - **Stack Overflow**: Tag with `adguard`, `deno`, `.net`, etc.
