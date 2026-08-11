@@ -1,6 +1,4 @@
 <Solution>
-  <Project Path="src/Bloqr.Compiler.Abstractions/Bloqr.Compiler.Abstractions.csproj" />
-  <Project Path="src/Bloqr.Compiler.Core/Bloqr.Compiler.Core.csproj" />
   <Project Path="src/RulesCompiler/RulesCompiler.csproj" />
   <Project Path="BenchmarkSuite1/BenchmarkSuite1.csproj" />
   <Project Path="src/RulesCompiler.Console/RulesCompiler.Console.csproj" />

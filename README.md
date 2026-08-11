@@ -114,12 +114,14 @@ docker compose --profile test run --rm test   # run all tests
 bloqr-core/
 ├── src/
 │   ├── adblock-compiler-core/    # TypeScript/Deno — canonical @bloqr/compiler-core (JSR)
+│   ├── compiler-common-dotnet/   # C#/.NET 10 — shared library (own solution), consumed by the two below
 │   ├── rules-compiler-dotnet/    # C#/.NET 10 — library + Spectre.Console CLI
 │   ├── rules-compiler-python/    # Python 3.9+ — pip-installable package + CLI
 │   ├── rules-compiler-rust/      # Rust — single-binary CLI, zero runtime deps
 │   ├── rules-compiler-shell/     # bash + zsh scripts
 │   ├── rules-compiler-powershell/# PowerShell modules + Pester tests
 │   ├── rules-validator/          # Rust validation library + CLI
+│   ├── bloqr-dashboard/          # C#/.NET 10 — Dashboard console app
 │   └── website/                  # Gatsby 5 documentation site
 ├── docs/                         # Guides, reference docs, security docs
 └── schemas/                      # Shared configuration schema

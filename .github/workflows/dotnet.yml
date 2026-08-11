@@ -11,12 +11,14 @@ on:
   push:
     branches: ["main"]
     paths:
+      - 'src/compiler-common-dotnet/**'
       - 'src/rules-compiler-dotnet/**'
       - 'src/bloqr-dashboard/**'
       - '.github/workflows/dotnet.yml'
   pull_request:
     branches: ["main"]
     paths:
+      - 'src/compiler-common-dotnet/**'
       - 'src/rules-compiler-dotnet/**'
       - 'src/bloqr-dashboard/**'
       - '.github/workflows/dotnet.yml'
@@ -34,6 +36,10 @@ jobs:
       fail-fast: false
       matrix:
         include:
+          - name: Build Compiler Common
+            path: src/compiler-common-dotnet
+            solution: CompilerCommon.slnx
+            filter: ""
           - name: Build Rules Compiler
             path: src/rules-compiler-dotnet
             solution: RulesCompiler.slnx
