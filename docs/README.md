@@ -34,9 +34,7 @@ This directory contains comprehensive documentation for the ad-blocking reposito
 | [Configuration Reference](configuration-reference.md) | Full configuration schema documentation |
 | [Compiler Comparison](compiler-comparison.md) | Feature comparison of all compilers |
 | [Release Guide](release-guide.md) | Creating releases with automatic binary builds |
-| [API Client Usage Guide](guides/api-client-usage.md) | AdGuard DNS API client usage (C# examples; client now lives in [`bloqr-apiclients`](https://github.com/BloqrAI/bloqr-apiclients)) |
-| [API Client Examples](guides/api-client-examples.md) | Code examples with helper classes (client now lives in [`bloqr-apiclients`](https://github.com/BloqrAI/bloqr-apiclients)) |
-| [ConsoleUI Architecture](guides/consoleui-architecture.md) | Console UI design documentation (client now lives in [`bloqr-apiclients`](https://github.com/BloqrAI/bloqr-apiclients)) |
+| [ConsoleUI Architecture](guides/consoleui-architecture.md) | Console UI design documentation (the Dashboard's architecture template — see `src/bloqr-dashboard/ARCHITECTURE.md`) |
 
 ### Architecture & Restructuring
 

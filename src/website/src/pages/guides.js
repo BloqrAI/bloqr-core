@@ -6,8 +6,8 @@ const GuidesPage = ({ data }) => {
   return (
     <Layout pageTitle="User Guides">
       <p style={{ fontSize: "1.1rem", marginBottom: "2rem" }}>
-        Step-by-step guides to help you get the most out of the AdGuard Tools
-        and Utilities.
+        Step-by-step guides to help you get the most out of Bloqr Core's
+        compilers, Dashboard, and validation tooling.
       </p>
 
       <ul className="doc-list">
@@ -46,4 +46,4 @@ export const query = graphql`
 
 export default GuidesPage
 
-export const Head = () => <title>Guides - Bloqr List Utils</title>
+export const Head = () => <title>Guides - Bloqr Core</title>

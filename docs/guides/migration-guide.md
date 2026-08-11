@@ -774,7 +774,6 @@ If you encounter issues during migration:
 ## Related Documentation
 
 - [TypeScript Rules Compiler Guide](./typescript-rules-compiler.md)
-- [TypeScript API SDK Guide](./typescript-api-sdk.md)
 - [Deployment Guide](./deployment-guide.md)
 - [Configuration Reference](../configuration-reference.md)
 - [Compiler Comparison](../compiler-comparison.md)

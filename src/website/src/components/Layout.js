@@ -35,7 +35,7 @@ const Layout = ({ children, pageTitle }) => {
           <Link to="/" className="brand-mark">
             <img src={bloqrMark} alt="" width="24" height="24" />
             <span className="brand-name">Bloqr</span>
-            <span className="brand-sub">List Utils</span>
+            <span className="brand-sub">Core</span>
           </Link>
           <div className="header-actions">
             <Search searchIndex={searchIndex} />
@@ -62,9 +62,6 @@ const Layout = ({ children, pageTitle }) => {
               <Link to="/guides">Guides</Link>
             </li>
             <li>
-              <Link to="/api">API Reference</Link>
-            </li>
-            <li>
               <Link to="/benchmarks">Benchmarks</Link>
             </li>
             <li>
@@ -82,13 +79,13 @@ const Layout = ({ children, pageTitle }) => {
       <footer>
         <div className="container">
           <p>
-            Bloqr List Utils - Licensed under{" "}
-            <a href="https://github.com/BloqrAI/bloqr-lists/blob/main/LICENSE">
+            Bloqr Core - Licensed under{" "}
+            <a href="https://github.com/BloqrAI/bloqr-core/blob/main/LICENSE">
               GPL-3.0
             </a>
           </p>
           <p>
-            <a href="https://github.com/BloqrAI/bloqr-lists">
+            <a href="https://github.com/BloqrAI/bloqr-core">
               View on GitHub
             </a>
           </p>

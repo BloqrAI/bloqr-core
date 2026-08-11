@@ -7,7 +7,7 @@ const GettingStartedPage = () => {
     <Layout pageTitle="Getting Started">
       <p style={{ fontSize: "1.1rem", marginBottom: "2rem" }}>
         This guide will help get started with the
-        Bloqr List Utils in just a few minutes.
+        Bloqr Core in just a few minutes.
       </p>
 
       <section>
@@ -62,13 +62,13 @@ const GettingStartedPage = () => {
             <strong>Deno 2.0+</strong> for TypeScript compiler
           </li>
           <li>
-            <strong>.NET 10 SDK</strong> for .NET compiler and API client
+            <strong>.NET 10 SDK</strong> for .NET compiler and Dashboard
           </li>
           <li>
             <strong>Python 3.9+</strong> for Python compiler
           </li>
           <li>
-            <strong>Rust 1.83+</strong> for Rust compiler and tools
+            <strong>Rust 1.85+</strong> for Rust compiler and tools
           </li>
           <li>
             <strong>PowerShell 7+</strong> for PowerShell scripts
@@ -88,9 +88,9 @@ const GettingStartedPage = () => {
           <li>
             <strong>Clone the repository:</strong>
             <pre style={{ marginTop: "0.5rem" }}>
-              git clone https://github.com/BloqrAI/bloqr-lists.git
+              git clone https://github.com/BloqrAI/bloqr-core.git
               <br />
-              cd bloqr-lists
+              cd bloqr-core
             </pre>
           </li>
           <li>
@@ -162,7 +162,7 @@ const GettingStartedPage = () => {
           </div>
           <div className="feature">
             <h3>
-              <a href="https://github.com/BloqrAI/bloqr-lists">
+              <a href="https://github.com/BloqrAI/bloqr-core">
                 Join the Community
               </a>
             </h3>
@@ -204,4 +204,4 @@ const GettingStartedPage = () => {
 
 export default GettingStartedPage
 
-export const Head = () => <title>Getting Started - Bloqr List Utils</title>
+export const Head = () => <title>Getting Started - Bloqr Core</title>

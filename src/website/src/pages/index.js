@@ -6,15 +6,16 @@ const IndexPage = () => {
   return (
     <Layout>
       <div className="hero">
-        <h1>Bloqr List Utils</h1>
+        <h1>Bloqr Core</h1>
         <p>
-          A comprehensive multi-language toolkit for ad-blocking, network
-          protection, and AdGuard DNS management.
+          A comprehensive multi-language toolkit for compiling, validating,
+          and managing AdGuard-syntax ad-blocking filter lists — with a
+          Dashboard app to tie it all together.
         </p>
       </div>
 
       <section>
-        <h2>What is Bloqr List Utils?</h2>
+        <h2>What is Bloqr Core?</h2>
         <p style={{ fontSize: "1.1rem", marginBottom: "2rem" }}>
           This toolkit helps you protect your network from ads, trackers, and
           malware. It works with IoT devices, smart TVs, and any device on your
@@ -45,10 +46,12 @@ const IndexPage = () => {
             </p>
           </div>
           <div className="feature">
-            <h3>AdGuard DNS Integration</h3>
+            <h3>Bloqr Dashboard</h3>
             <p>
-              Complete API SDKs for managing AdGuard DNS devices, servers, and
-              filter lists.
+              A .NET console app that's the single pane of glass for
+              generating configs, running compilations, and managing
+              profiles — with a config-generation wizard, live compilation
+              progress, and full CLI/library API parity.
             </p>
           </div>
           <div className="feature">
@@ -78,6 +81,15 @@ const IndexPage = () => {
             <p>
               New to the toolkit? Start here for installation and your first
               compilation.
+            </p>
+          </div>
+          <div className="feature">
+            <h3>
+              <Link to="/docs">Bloqr Dashboard</Link>
+            </h3>
+            <p>
+              The console app that ties everything together — config
+              generation, compilation, profiles, and logs in one place.
             </p>
           </div>
           <div className="feature">
@@ -127,12 +139,13 @@ const IndexPage = () => {
             merge and validate blocking lists from multiple sources.
           </li>
           <li>
-            <strong>Deploy to AdGuard DNS:</strong> Upload your compiled rules
-            to AdGuard DNS using the API clients.
+            <strong>Publish Your Filter List:</strong> Host the compiled
+            output wherever your DNS provider reads custom filter lists from.
           </li>
           <li>
             <strong>Configure Your Network:</strong> Point your router or
-            devices to use AdGuard DNS as their DNS server.
+            devices to use AdGuard DNS (or any DNS-based filtering provider)
+            as their DNS server.
           </li>
           <li>
             <strong>Enjoy Ad-Free Browsing:</strong> All devices on your
@@ -146,4 +159,4 @@ const IndexPage = () => {
 
 export default IndexPage
 
-export const Head = () => <title>Bloqr List Utils</title>
+export const Head = () => <title>Bloqr Core</title>

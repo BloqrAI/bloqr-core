@@ -182,12 +182,6 @@ See [Docker Guide](docker-guide.md) for more details.
 - [Compiler Comparison](compiler-comparison.md) - Choose the right compiler for your needs
 - [Configuration Reference](configuration-reference.md) - Learn all configuration options
 
-### API Clients
-
-- [TypeScript API SDK Guide](guides/typescript-api-sdk.md) - Complete TypeScript API documentation
-- [API Client Usage Guide](guides/api-client-usage.md) - .NET API client documentation
-- [API Client Examples](guides/api-client-examples.md) - Code examples for all SDKs
-
 ### Additional Resources
 
 - [Testing Guide](guides/testing-guide.md) - Test all components

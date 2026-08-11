@@ -40,7 +40,7 @@ The AdGuard DNS API clients (.NET, TypeScript, Rust, PowerShell) and the Linear 
 
 ### Compiler Equivalence
 All four compilers (TypeScript, .NET, Python, Rust) use **[@bloqr/compiler-core](../src/adblock-compiler-core/)** and **must**:
-- Support JSON, YAML, TOML config formats (except PowerShell: JSON only)
+- Support JSON config (JSONC on .NET/Dashboard); YAML/TOML remain functional but undocumented (see #259)
 - Count rules identically (exclude empty lines and `!`/`#` comments)
 - Compute SHA-384 hash of output (96 hex chars)
 - Return same result structure: `{ success, ruleCount, hash, elapsedMs, outputPath }`
@@ -138,7 +138,7 @@ cd src/adblock-compiler-core && npm run compile
 
 3. **Verify rule counts match** - all compilers must report same number after filtering
 
-4. **Test with different configs** (JSON, YAML, TOML where supported)
+4. **Test with different configs** (JSON is documented; YAML/TOML remain functional but undocumented)
 
 **Test file patterns** that verify this:
 - TypeScript: `src/adblock-compiler-core/src/__tests__/compiler.test.ts`
@@ -518,7 +518,6 @@ See `docs/release-guide.md` for full process.
 
 ## Documentation
 
-- **API Reference**: `docs/api/` - Generated from OpenAPI spec
-- **Guides**: `docs/guides/` - consoleui-architecture.md, api-client-usage.md
+- **Guides**: `docs/guides/` - consoleui-architecture.md, adblock-compiler-guide.md, troubleshooting-guide.md, and more
 - **Comparison**: `docs/compiler-comparison.md` - Choose the right compiler
 - **Docker**: `docs/docker-guide.md` - Container development setup

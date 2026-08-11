@@ -17,7 +17,7 @@ const AdBlockCompilerPage = () => {
           <code>@bloqr/compiler-core</code> is this repository's own
           package — its canonical source lives at{" "}
           <a
-            href="https://github.com/BloqrAI/bloqr-lists/tree/main/src/adblock-compiler-core"
+            href="https://github.com/BloqrAI/bloqr-core/tree/main/src/adblock-compiler-core"
             target="_blank"
             rel="noopener noreferrer"
           >
@@ -149,7 +149,7 @@ console.log(\`Compiled \${rules.length} rules\`);`}
         <pre style={{ marginTop: "0.5rem" }}>
           # Compile from config file
           <br />
-          deno run --allow-read --allow-write --allow-env --allow-net --allow-run jsr:@bloqr/compiler-core/cli -c config.yaml
+          deno run --allow-read --allow-write --allow-env --allow-net --allow-run jsr:@bloqr/compiler-core/cli -c config.json
           <br />
           <br />
           # Show version
@@ -175,7 +175,7 @@ console.log(\`Compiled \${rules.length} rules\`);`}
           Each compiler keeps its own public API and field names unchanged
           across this migration — only what populates them changed. See the{" "}
           <a
-            href="https://github.com/BloqrAI/bloqr-lists/blob/main/docs/guides/adblock-compiler-guide.md"
+            href="https://github.com/BloqrAI/bloqr-core/blob/main/docs/guides/adblock-compiler-guide.md"
             target="_blank"
             rel="noopener noreferrer"
           >
@@ -239,7 +239,7 @@ console.log(\`Compiled \${rules.length} rules\`);`}
           <div className="feature">
             <h3>
               <a
-                href="https://github.com/BloqrAI/bloqr-lists/tree/main/src/adblock-compiler-core"
+                href="https://github.com/BloqrAI/bloqr-core/tree/main/src/adblock-compiler-core"
                 target="_blank"
                 rel="noopener noreferrer"
               >
@@ -265,7 +265,7 @@ console.log(\`Compiled \${rules.length} rules\`);`}
           <div className="feature">
             <h3>
               <a
-                href="https://github.com/BloqrAI/bloqr-lists/blob/main/docs/guides/adblock-compiler-guide.md"
+                href="https://github.com/BloqrAI/bloqr-core/blob/main/docs/guides/adblock-compiler-guide.md"
                 target="_blank"
                 rel="noopener noreferrer"
               >
@@ -361,7 +361,7 @@ console.log(\`Compiled \${rules.length} rules\`);`}
           <div className="feature">
             <h3>
               <a
-                href="https://github.com/BloqrAI/bloqr-lists"
+                href="https://github.com/BloqrAI/bloqr-core"
                 target="_blank"
                 rel="noopener noreferrer"
               >
@@ -378,4 +378,4 @@ console.log(\`Compiled \${rules.length} rules\`);`}
 
 export default AdBlockCompilerPage
 
-export const Head = () => <title>@bloqr/compiler-core - Bloqr List Utils</title>
+export const Head = () => <title>@bloqr/compiler-core - Bloqr Core</title>
