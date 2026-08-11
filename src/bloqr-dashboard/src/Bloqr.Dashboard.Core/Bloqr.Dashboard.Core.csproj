@@ -27,7 +27,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Bloqr.Dashboard.Abstractions\Bloqr.Dashboard.Abstractions.csproj" />
-    <ProjectReference Include="..\..\..\rules-compiler-dotnet\src\Bloqr.Compiler.Core\Bloqr.Compiler.Core.csproj" />
+    <ProjectReference Include="..\..\..\compiler-common-dotnet\src\Bloqr.Compiler.Core\Bloqr.Compiler.Core.csproj" />
   </ItemGroup>
 
   <ItemGroup>

@@ -19,6 +19,9 @@ This repository is a comprehensive multi-language toolkit for ad-blocking, netwo
 ### PowerShell Modules
 - **RulesCompiler Toolkit** (`src/rules-compiler-powershell/`) - Canonical, actively-developed modular PowerShell toolkit (class-based `Common`, `RulesCompiler`, `AdGuardWebhook` modules with Pester tests)
 
+### Common .NET Library
+- **`Bloqr.Compiler.Abstractions`/`Bloqr.Compiler.Core`** (`src/compiler-common-dotnet/`) - Shared .NET library (own solution, `CompilerCommon.slnx`) consumed by the .NET rules compiler and Dashboard via `<ProjectReference>`; not part of either consumer's solution
+
 ### Rules Validator
 - **Rules Validator** (`src/rules-validator/`) - Rust validation library (`rules-validator-core`) and CLI (`rules-validator-cli`) for filter/config validation
 
@@ -96,6 +99,15 @@ deno run --allow-read --allow-write --allow-env --allow-run src/mod.ts --version
 ./src/rules-compiler-shell/zsh/compile-rules.zsh                    # Use default config
 ./src/rules-compiler-shell/zsh/compile-rules.zsh -c config.yaml -r  # YAML config, copy to rules
 ./src/rules-compiler-shell/zsh/compile-rules.zsh -v                 # Show version
+```
+
+### Common .NET Library (`src/compiler-common-dotnet/`)
+```bash
+cd src/compiler-common-dotnet
+dotnet restore CompilerCommon.slnx
+dotnet build CompilerCommon.slnx
+dotnet pack src/Bloqr.Compiler.Abstractions/Bloqr.Compiler.Abstractions.csproj -c Release -o ./nuget-packages
+dotnet pack src/Bloqr.Compiler.Core/Bloqr.Compiler.Core.csproj -c Release -o ./nuget-packages
 ```
 
 ### .NET Rules Compiler (`src/rules-compiler-dotnet/`)
@@ -258,12 +270,17 @@ cargo test config::                       # Tests in module
 - `zsh/compile-rules.zsh` - Zsh script with native zsh features (zparseopts, EPOCHREALTIME)
 - Supports JSON, YAML, TOML via external tools (yq, Python)
 
+### Common .NET Library (`src/compiler-common-dotnet/`)
+- Its own independent .NET solution (`CompilerCommon.slnx`), isolated from `RulesCompiler.slnx` and `BloqrDashboard.slnx` — every in-repo .NET consumer reaches it via `<ProjectReference>` across directories, not via shared solution membership
+- `Bloqr.Compiler.Abstractions` - Interfaces, event-args, and model/DTO types shared across the compiler stack
+- `Bloqr.Compiler.Core` - Configuration reading/validation, chunking, file-locking, plugin management, and the compilation pipeline, built on `Bloqr.Compiler.Abstractions`
+- Consumed by `RulesCompiler` (`src/rules-compiler-dotnet/`) and `Bloqr.Dashboard.Abstractions`/`Bloqr.Dashboard.Core` (`src/bloqr-dashboard/`)
+- Published as NuGet packages to GitHub Packages — see `docs/architecture/nuget-distribution-strategy.md`
+
 ### Rules Compiler - .NET (`src/rules-compiler-dotnet/`)
 - .NET 10 library for filter compilation
 - Supports JSON, YAML, and TOML configuration formats
-- `Bloqr.Compiler.Abstractions` - Interfaces, event-args, and model/DTO types shared across the compiler stack
-- `Bloqr.Compiler.Core` - Configuration reading/validation, chunking, file-locking, plugin management, and the compilation pipeline, built on `Bloqr.Compiler.Abstractions`
-- `RulesCompiler` - Thin library referencing `Bloqr.Compiler.Abstractions`/`Bloqr.Compiler.Core`, plus compiler-specific services (e.g. `FilterCompiler`)
+- `RulesCompiler` - Thin library referencing `Bloqr.Compiler.Abstractions`/`Bloqr.Compiler.Core` (from `src/compiler-common-dotnet/`), plus compiler-specific services (e.g. `FilterCompiler`)
 - `RulesCompiler.Console` - Spectre.Console interactive and CLI frontend
 - `RulesCompiler.Tests` - xUnit tests
 - Key interfaces: `IRulesCompilerService`, `IConfigurationReader`, `IFilterCompiler`
@@ -347,7 +364,7 @@ RemoveComments, Compress, RemoveModifiers, Validate, ValidateAllowIp, Deduplicat
 ## CI/CD Alignment
 
 GitHub Actions workflows validate:
-- `.github/workflows/dotnet.yml` - Builds/tests the .NET rules compiler with .NET 10
+- `.github/workflows/dotnet.yml` - Builds/tests the common .NET library, rules compiler, and Dashboard (three matrix entries, one per `.slnx`) with .NET 10
 - `.github/workflows/typescript.yml` - Deno 2.x for the TypeScript rules compiler
 - `.github/workflows/rust-clippy.yml` - Builds, tests, formats, and lints the Rust workspace (rules compiler, validation library)
 - `.github/workflows/python.yml` - Builds and tests the Python rules compiler across supported Python versions
@@ -460,6 +477,7 @@ GitHub Actions workflows validate:
 
 - **Main filter list**: `output/adguard_dns_filter.txt` in [`BloqrAI/bloqr-blocklists`](https://github.com/BloqrAI/bloqr-blocklists)
 - **Compiler configs**: `src/rules-compiler-*/`
+- **Common .NET library**: `src/compiler-common-dotnet/` (`Bloqr.Compiler.Abstractions`/`Bloqr.Compiler.Core`, own solution)
 - **JSON Schemas**: `schemas/compiler-config.schema.json`, `schemas/dashboard-config.schema.json` — `compiler-config.schema.json` is wired into `Bloqr.Compiler.Core`'s `ConfigurationValidator` via `CompilerConfigJsonSchemaValidator` (#258); the Dashboard's `ICompilerConfigSchemaValidator` delegates to the same validator rather than re-embedding the schema
 - **Deno configs**: `src/*/deno.json`
 - **OpenAPI spec**: `api/openapi.yaml` in [`BloqrAI/bloqr-apiclients`](https://github.com/BloqrAI/bloqr-apiclients)

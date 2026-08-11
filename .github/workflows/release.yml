@@ -230,24 +230,26 @@ jobs:
           key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj', '**/*.slnx') }}
           restore-keys: ${{ runner.os }}-nuget-
 
-      - name: Restore Rules Compiler dependencies
+      - name: Restore Compiler Common dependencies
         shell: bash
         run: |
-          dotnet restore src/rules-compiler-dotnet/RulesCompiler.slnx
+          dotnet restore src/compiler-common-dotnet/CompilerCommon.slnx
 
       # Bloqr.Compiler.Abstractions/Core are "the common .NET library" the epic asks about
-      # (#261). RulesCompiler, RulesCompiler.Console, and Bloqr.Dashboard.* stay on
-      # <ProjectReference> as in-repo consumers - this is only for out-of-repo consumers
-      # (a future WPF host, or this library becoming its own repo). See
-      # docs/architecture/nuget-distribution-strategy.md for the full decision record.
+      # (#261), reorganized into its own solution under src/compiler-common-dotnet/ so it
+      # lives independent of the rules-compiler-dotnet solution. RulesCompiler,
+      # RulesCompiler.Console, and Bloqr.Dashboard.* stay on <ProjectReference> as in-repo
+      # consumers - this is only for out-of-repo consumers (a future WPF host, or this
+      # library becoming its own repo). See docs/architecture/nuget-distribution-strategy.md
+      # for the full decision record.
       - name: Pack common library packages
         shell: bash
         run: |
-          dotnet pack src/rules-compiler-dotnet/src/Bloqr.Compiler.Abstractions/Bloqr.Compiler.Abstractions.csproj \
+          dotnet pack src/compiler-common-dotnet/src/Bloqr.Compiler.Abstractions/Bloqr.Compiler.Abstractions.csproj \
             --configuration Release \
             --no-restore \
             --output ./nuget-packages
-          dotnet pack src/rules-compiler-dotnet/src/Bloqr.Compiler.Core/Bloqr.Compiler.Core.csproj \
+          dotnet pack src/compiler-common-dotnet/src/Bloqr.Compiler.Core/Bloqr.Compiler.Core.csproj \
             --configuration Release \
             --no-restore \
             --output ./nuget-packages
