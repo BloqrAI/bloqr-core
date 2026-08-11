@@ -26,8 +26,6 @@
     "start": "deno run --allow-read --allow-write --allow-env --allow-net --allow-run src/mod.ts",
     "interactive": "deno run --allow-read --allow-write --allow-env --allow-net --allow-run src/mod.ts --interactive",
     "compile": "deno run --allow-read --allow-write --allow-env --allow-net --allow-run src/mod.ts --compile",
-    "compile:yaml": "deno run --allow-read --allow-write --allow-env --allow-net --allow-run src/mod.ts -c compiler-config.yaml",
-    "compile:toml": "deno run --allow-read --allow-write --allow-env --allow-net --allow-run src/mod.ts -c compiler-config.toml",
     "dev": "deno run --allow-read --allow-write --allow-env --allow-net --allow-run --watch src/mod.ts",
     "test": "deno test --allow-read --allow-write --allow-env --allow-net src/",
     "test:coverage": "deno test --allow-read --allow-write --allow-env --allow-net --coverage=coverage src/",
