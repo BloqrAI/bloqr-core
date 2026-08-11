@@ -20,7 +20,7 @@ Cross-platform Bash script for compiling AdGuard filter rules.
 
 **Usage:**
 ```bash
-./src/rules-compiler-shell/bash/compile-rules.sh -c config.yaml
+./src/rules-compiler-shell/bash/compile-rules.sh -c config.json
 ```
 
 ## Zsh Scripts
@@ -30,7 +30,7 @@ Zsh-optimized script with native features.
 
 **Usage:**
 ```zsh
-./src/rules-compiler-shell/zsh/compile-rules.zsh -c config.yaml
+./src/rules-compiler-shell/zsh/compile-rules.zsh -c config.json
 ```
 
 ## CLI Options
