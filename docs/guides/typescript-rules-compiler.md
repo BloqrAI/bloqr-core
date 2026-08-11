@@ -150,12 +150,14 @@ The compiler supports JSON and JSONC (JSON with Comments) configuration formats 
   "transformations": [
     "Deduplicate",
     "RemoveEmptyLines",
-    "TrimLines"
-  - InsertFinalNewLine
-
-exclusions:
-  - "*.google.com"
-  - "*facebook*"
+    "TrimLines",
+    "InsertFinalNewLine"
+  ],
+  "exclusions": [
+    "*.google.com",
+    "*facebook*"
+  ]
+}
 ```
 
 ### Configuration Properties
