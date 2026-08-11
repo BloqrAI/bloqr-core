@@ -25,7 +25,7 @@ When in doubt: if the change is inside a module that adblock-compiler-core doesn
 ## Process
 
 1. **Identify the source change** in `bloqr-compiler` — the commit or PR with the fix/improvement.
-2. **Classify it** against the criteria table above. If it's ambiguous, open an issue on `bloqr-lists` tagged `backport-candidate` and ask before porting.
+2. **Classify it** against the criteria table above. If it's ambiguous, open an issue on `bloqr-core` tagged `backport-candidate` and ask before porting.
 3. **Locate the equivalent file** in `src/adblock-compiler-core/`. Module layout intentionally mirrors `bloqr-compiler`'s (`transformations/`, `downloader/`, `formatters/`, `compiler/`, `configuration/`), so most files have a 1:1 counterpart — but remember `RuleUtils.ts` and `ValidateTransformation.ts` are hand-written, non-AGTree reimplementations, not verbatim ports. A fix in `bloqr-compiler`'s AGTree-based `RuleUtils`/`ValidateTransformation` needs to be re-expressed in string/regex terms for the adblock-compiler-core versions, not copy-pasted.
 4. **Port the change**, adapting for the two differences above (no AGTree, no plugin/diagnostics infrastructure beyond the no-op seam).
 5. **Run the adblock-compiler-core test suite** (`cd src/adblock-compiler-core && deno task test`) and add/adjust tests for the ported change.
