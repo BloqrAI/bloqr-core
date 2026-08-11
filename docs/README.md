@@ -7,6 +7,7 @@ This directory contains comprehensive documentation for the ad-blocking reposito
 | Document | Description |
 |----------|-------------|
 | [**Why Validation Matters**](WHY_VALIDATION_MATTERS.md) | 🔒 **Start Here** - Understand why security validation is essential |
+| [**Dashboard User Guide**](guides/dashboard-guide.md) | Single pane of glass: compiler configs, compilations, profiles, and operations |
 | [Getting Started](getting-started.md) | Installation and first steps |
 | [Configuration Reference](configuration-reference.md) | Complete configuration schema |
 | [Docker Guide](docker-guide.md) | Docker development environment |
@@ -29,6 +30,7 @@ This directory contains comprehensive documentation for the ad-blocking reposito
 | Guide | Description |
 |-------|-------------|
 | [Getting Started](getting-started.md) | Installation, prerequisites, and quick start |
+| [**Dashboard User Guide**](guides/dashboard-guide.md) | Console application for compiler configs, profiles, compilations, and diagnostics |
 | [**@bloqr/compiler-core Guide**](guides/adblock-compiler-guide.md) | **Core compilation package with CI/CD examples** |
 | [Docker Guide](docker-guide.md) | Using Docker for development |
 | [Configuration Reference](configuration-reference.md) | Full configuration schema documentation |
