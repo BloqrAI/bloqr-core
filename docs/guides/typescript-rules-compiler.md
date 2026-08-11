@@ -181,10 +181,6 @@ src/adblock-compiler-core/
 │   ├── compiler.test.ts    # Compiler tests
 │   ├── config.test.ts      # Configuration tests
 │   └── cli.test.ts         # CLI tests
-├── Config/
-│   ├── compiler-config.json
-│   ├── compiler-config.yaml
-│   └── compiler-config.toml
 └── deno.json               # Deno configuration
 ```
 
@@ -224,8 +220,6 @@ The `deno.json` file defines these tasks:
 | Task | Command | Description |
 |------|---------|-------------|
 | `compile` | Default compilation | Compile with default config |
-| `compile:yaml` | Compile with YAML | Use YAML configuration |
-| `compile:toml` | Compile with TOML | Use TOML configuration |
 | `interactive` | Interactive mode | Launch interactive CLI |
 | `dev` | Watch mode | Development with auto-reload |
 | `test` | Run tests | Execute test suite |
