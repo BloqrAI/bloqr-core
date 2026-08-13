@@ -148,7 +148,16 @@ build_dotnet() {
     if [[ "$BUILD_PROFILE" == "release" ]]; then
         configuration="Release"
     fi
-    
+
+    # Build Compiler Common (.NET) - shared library, standalone solution
+    echo "→ Building Compiler Common (.NET)..."
+    if (cd src/compiler-common-dotnet && dotnet restore CompilerCommon.slnx && dotnet build CompilerCommon.slnx --no-restore --configuration $configuration); then
+        echo -e "${GREEN}✓ Compiler Common (.NET) built successfully${NC}"
+    else
+        echo -e "${RED}✗ Compiler Common (.NET) build failed${NC}"
+        BUILD_FAILED=true
+    fi
+
     # Build Rules Compiler .NET
     echo "→ Building Rules Compiler (.NET)..."
     if (cd src/rules-compiler-dotnet && dotnet restore RulesCompiler.slnx && dotnet build RulesCompiler.slnx --no-restore --configuration $configuration); then

@@ -1,4 +1,4 @@
-namespace RulesCompiler.Tests;
+namespace Bloqr.Compiler.Core.Tests;
 
 /// <summary>
 /// Exercises <see cref="RulesValidatorService"/> against the real native <c>rules_validator</c>

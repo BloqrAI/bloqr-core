@@ -1,4 +1,5 @@
 <Solution>
   <Project Path="src/Bloqr.Compiler.Abstractions/Bloqr.Compiler.Abstractions.csproj" />
   <Project Path="src/Bloqr.Compiler.Core/Bloqr.Compiler.Core.csproj" />
+  <Project Path="src/Bloqr.Compiler.Core.Tests/Bloqr.Compiler.Core.Tests.csproj" />
 </Solution>

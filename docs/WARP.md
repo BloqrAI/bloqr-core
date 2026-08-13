@@ -39,8 +39,9 @@ Running a single test
 - TypeScript/Deno
   - By file: cd src/adblock-compiler-core && deno test src/cli.test.ts
   - All tests: deno task test
-- .NET (xUnit under src/rules-compiler-dotnet)
-  - By class pattern: cd src/rules-compiler-dotnet && dotnet test RulesCompiler.slnx --filter "FullyQualifiedName~ConfigurationValidatorTests"
+- .NET (xUnit)
+  - By class pattern (rules compiler): cd src/rules-compiler-dotnet && dotnet test RulesCompiler.slnx --filter "FullyQualifiedName~RulesCompilerServiceTests"
+  - By class pattern (shared library): cd src/compiler-common-dotnet && dotnet test CompilerCommon.slnx --filter "FullyQualifiedName~ConfigurationValidatorTests"
 - Python: pytest -k "test_read_yaml"
 - Rust: cargo test test_count_rules
 

@@ -219,9 +219,11 @@ dotnet test RulesCompiler.slnx
 dotnet test RulesCompiler.slnx --verbosity detailed
 
 # Run specific test class
-dotnet test --filter "FullyQualifiedName~ConfigurationValidatorTests"
-dotnet test --filter "FullyQualifiedName~TransformationTests"
+dotnet test --filter "FullyQualifiedName~RulesCompilerServiceTests"
+dotnet test --filter "FullyQualifiedName~OutputWriterTests"
 ```
+
+Tests for the shared library (`ConfigurationValidator`, `TransformationHelper`, etc.) live in `Bloqr.Compiler.Core.Tests` — see [`src/compiler-common-dotnet/README.md`](../compiler-common-dotnet/README.md#running-tests).
 
 ## Environment Variables
 

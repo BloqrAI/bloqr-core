@@ -1,4 +1,4 @@
-namespace RulesCompiler.Tests;
+namespace Bloqr.Compiler.Core.Tests;
 
 public class ConfigurationValidatorTests
 {

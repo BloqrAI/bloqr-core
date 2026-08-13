@@ -1,4 +1,4 @@
-namespace RulesCompiler.Tests;
+namespace Bloqr.Compiler.Core.Tests;
 
 public sealed class OutputPublisherTests : IDisposable
 {
