@@ -119,7 +119,25 @@ function Build-DotNetProjects {
     Write-Host "Building .NET projects..." -ForegroundColor Blue
     
     $configuration = if ($BuildProfile -eq "release") { "Release" } else { "Debug" }
-    
+
+    # Build Compiler Common (.NET) - shared library, standalone solution
+    Write-Host "→ Building Compiler Common (.NET)..."
+    try {
+        Push-Location src/compiler-common-dotnet
+        try {
+            dotnet restore CompilerCommon.slnx
+            dotnet build CompilerCommon.slnx --no-restore --configuration $configuration
+            Write-Host "✓ Compiler Common (.NET) built successfully" -ForegroundColor Green
+        }
+        finally {
+            Pop-Location
+        }
+    }
+    catch {
+        Write-Host "✗ Compiler Common (.NET) build failed" -ForegroundColor Red
+        $script:BuildFailed = $true
+    }
+
     # Build Rules Compiler .NET
     Write-Host "→ Building Rules Compiler (.NET)..."
     try {

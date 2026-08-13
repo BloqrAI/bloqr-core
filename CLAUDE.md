@@ -106,6 +106,7 @@ deno run --allow-read --allow-write --allow-env --allow-run src/mod.ts --version
 cd src/compiler-common-dotnet
 dotnet restore CompilerCommon.slnx
 dotnet build CompilerCommon.slnx
+dotnet test CompilerCommon.slnx
 dotnet pack src/Bloqr.Compiler.Abstractions/Bloqr.Compiler.Abstractions.csproj -c Release -o ./nuget-packages
 dotnet pack src/Bloqr.Compiler.Core/Bloqr.Compiler.Core.csproj -c Release -o ./nuget-packages
 ```
@@ -205,8 +206,11 @@ deno task test:coverage                    # With coverage
 ### .NET (xUnit)
 ```bash
 cd src/rules-compiler-dotnet
-dotnet test RulesCompiler.slnx --filter "FullyQualifiedName~ConfigurationValidatorTests"
-dotnet test RulesCompiler.slnx --filter "FullyQualifiedName~TransformationTests"
+dotnet test RulesCompiler.slnx --filter "FullyQualifiedName~RulesCompilerServiceTests"
+
+cd ../compiler-common-dotnet
+dotnet test CompilerCommon.slnx --filter "FullyQualifiedName~ConfigurationValidatorTests"
+dotnet test CompilerCommon.slnx --filter "FullyQualifiedName~TransformationTests"
 ```
 
 ### PowerShell (Pester)

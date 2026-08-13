@@ -96,14 +96,16 @@ Out-of-repo consumers (a future WPF host, or this library becoming its own repo)
 
 ## Running Tests
 
-There's no dedicated test project in this solution yet — `Bloqr.Compiler.Core`'s services are exercised through `RulesCompiler.Tests` (`src/rules-compiler-dotnet/src/RulesCompiler.Tests/`), which references `RulesCompiler` and, transitively, this library:
+`Bloqr.Compiler.Core.Tests` covers everything that doesn't need a `RulesCompiler`-specific fixture — `ConfigurationReader`, `ConfigurationValidator`, `CompilerConfigJsonSchemaValidator`, `ChunkingService`, `HashDatabaseService`, `OutputPublisher`, `RulesValidatorService`, `CompilationEventDispatcher`/`QueuedCompilationEventDispatcher`, `PlatformHelper`, `StructuredJsonLogFormatter`, the DI extensions, and the `Bloqr.Compiler.Abstractions` models/enums:
 
 ```bash
-cd src/rules-compiler-dotnet
-dotnet test RulesCompiler.slnx
+cd src/compiler-common-dotnet
+dotnet test CompilerCommon.slnx
 ```
 
-`dotnet test CompilerCommon.slnx` from this directory currently succeeds with zero tests found — CI runs it anyway to catch build regressions independent of `RulesCompiler.slnx`.
+`RulesCompiler`-specific behavior (`RulesCompilerService`, `OutputWriter`) stays covered by `RulesCompiler.Tests` (`src/rules-compiler-dotnet/src/RulesCompiler.Tests/`), which references `RulesCompiler` and, transitively, this library — see that project's own test run instructions.
+
+`build.sh`/`build.ps1` build this solution but don't run any .NET tests (neither do they for `RulesCompiler.slnx`/`BloqrDashboard.slnx`) — test execution is CI-only, via `.github/workflows/dotnet.yml`'s matrix.
 
 ## Publishing
 
@@ -122,11 +124,12 @@ dotnet pack src/Bloqr.Compiler.Core/Bloqr.Compiler.Core.csproj -c Release -o ./n
 src/compiler-common-dotnet/
 ├── src/
 │   ├── Bloqr.Compiler.Abstractions/ # Shared interfaces, event-args, and models
-│   └── Bloqr.Compiler.Core/         # Common implementation
-│       ├── Configuration/           # ConfigurationReader, ConfigurationValidator, schema validation
-│       ├── Helpers/                 # CommandHelper, PlatformHelper
-│       ├── Logging/                 # StructuredJsonLogFormatter, logging DI extensions
-│       └── Services/                # Chunking, file locking, plugins, events, hash verification, output publishing, rules-validator
+│   ├── Bloqr.Compiler.Core/         # Common implementation
+│   │   ├── Configuration/           # ConfigurationReader, ConfigurationValidator, schema validation
+│   │   ├── Helpers/                 # CommandHelper, PlatformHelper
+│   │   ├── Logging/                 # StructuredJsonLogFormatter, logging DI extensions
+│   │   └── Services/                # Chunking, file locking, plugins, events, hash verification, output publishing, rules-validator
+│   └── Bloqr.Compiler.Core.Tests/   # xUnit tests for Abstractions models and Core services
 └── CompilerCommon.slnx              # Solution file
 ```
 

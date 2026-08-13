@@ -103,13 +103,21 @@ dotnet test RulesCompiler.slnx
 dotnet test RulesCompiler.slnx --verbosity detailed
 
 # Run specific test class
-dotnet test --filter "FullyQualifiedName~ConfigurationValidatorTests"
+dotnet test --filter "FullyQualifiedName~RulesCompilerServiceTests"
 
 # Run specific test method
 dotnet test --filter "Name~ShouldValidateConfiguration"
 
 # Run tests with coverage (requires coverlet)
 dotnet test /p:CollectCoverage=true /p:CoverletOutputFormat=opencover
+```
+
+Tests for the shared `Bloqr.Compiler.Core`/`Bloqr.Compiler.Abstractions` library (`ConfigurationValidator`, `ChunkingService`, `TransformationHelper`, etc.) live in a separate solution:
+
+```bash
+cd src/compiler-common-dotnet
+dotnet test CompilerCommon.slnx
+dotnet test --filter "FullyQualifiedName~ConfigurationValidatorTests"
 ```
 
 ### API Client Tests

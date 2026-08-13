@@ -1,7 +1,7 @@
 using System.Text.Json;
 using Serilog;
 
-namespace RulesCompiler.Tests;
+namespace Bloqr.Compiler.Core.Tests;
 
 public sealed class StructuredJsonLogFormatterTests : IDisposable
 {
