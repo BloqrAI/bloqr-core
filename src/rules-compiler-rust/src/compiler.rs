@@ -16,8 +16,9 @@ use crate::config::{read_config, to_json, CompilerConfig, ConfigFormat};
 use crate::error::{CompilerError, Result};
 use crate::events::{
     EventDispatcher, EventTimestamp, HashComputedEventArgs, HashMismatchEventArgs,
-    HashVerifiedEventArgs,
+    HashVerifiedEventArgs, ValidationEventArgs,
 };
+use rules_validator::{ValidationConfig, Validator};
 
 /// JSR package specifier for the compiler CLI, run via `deno run`.
 const JSR_PACKAGE_SPECIFIER: &str = "jsr:@bloqr/compiler-core/cli";
@@ -593,6 +594,66 @@ fn get_rules_directory(config_path: &Path, custom: Option<&Path>) -> PathBuf {
     })
 }
 
+/// Run the native rules-validator syntax check against the compiled output and fire a
+/// `Validation` event with its findings. Findings are informational by default - a
+/// registered handler must explicitly set `abort` on the event args to fail compilation
+/// over them, matching this pipeline's other zero-trust checkpoints.
+///
+/// Returns `Some(reason)` if a handler aborted, `None` to continue. Silently continues
+/// if rules-validator fails to run at all (e.g. the file can't be read).
+fn validate_output_with_events<P: AsRef<Path>>(
+    path: P,
+    dispatcher: &EventDispatcher,
+    config: &ValidationConfig,
+) -> Option<String> {
+    let path = path.as_ref();
+    let mut validator = Validator::new(config.clone());
+
+    let syntax_result = match validator.validate_local_file(path) {
+        Ok(result) => result,
+        Err(_) => return None,
+    };
+
+    let mut validation_args = ValidationEventArgs {
+        stage_name: "rules-validator".to_string(),
+        items_validated: syntax_result.valid_rules + syntax_result.invalid_rules,
+        ..Default::default()
+    };
+
+    if syntax_result.messages.is_empty() {
+        if !syntax_result.is_valid {
+            validation_args.add_error(
+                "RV001",
+                format!(
+                    "Output file failed rules-validator syntax validation ({} invalid rule(s) of {}).",
+                    syntax_result.invalid_rules,
+                    syntax_result.valid_rules + syntax_result.invalid_rules
+                ),
+            );
+        }
+    } else {
+        for message in &syntax_result.messages {
+            if syntax_result.is_valid {
+                validation_args.add_warning("RV001", message.clone());
+            } else {
+                validation_args.add_error("RV001", message.clone());
+            }
+        }
+    }
+
+    dispatcher.raise_validation(&mut validation_args);
+
+    if validation_args.abort {
+        Some(
+            validation_args.abort_reason.unwrap_or_else(|| {
+                format!("rules-validator validation failed for {}", path.display())
+            }),
+        )
+    } else {
+        None
+    }
+}
+
 /// Compile filter rules using adblock-compiler-core (via Deno).
 ///
 /// # Arguments
@@ -880,6 +941,17 @@ pub fn compile_rules_with_events<P: AsRef<Path>>(
     result.rule_count = count_rules(&output_path);
     result.output_hash = compute_hash_with_events(&output_path, "output_file", Some(dispatcher))?;
     result.success = true;
+
+    // Run the rules-validator syntax check and give handlers a chance to abort
+    if let Some(abort_reason) =
+        validate_output_with_events(&output_path, dispatcher, &ValidationConfig::default())
+    {
+        result.error_message = Some(abort_reason);
+        result.success = false;
+        result.end_time = Utc::now();
+        result.elapsed_ms = start.elapsed().as_millis() as u64;
+        return Ok(result);
+    }
 
     // Copy to rules directory if requested
     if options.copy_to_rules {
@@ -1177,5 +1249,70 @@ mod tests {
         let output_path = generate_output_path(&config_path);
         assert!(output_path.to_str().unwrap().contains("compiled-"));
         assert!(output_path.to_str().unwrap().ends_with(".txt"));
+    }
+
+    /// Test-only [`crate::events::CompilationEventHandler`] that unconditionally aborts
+    /// on the `Validation` event, mirroring how a real handler would opt in to failing
+    /// compilation over rules-validator findings.
+    struct AbortingHandler;
+
+    impl crate::events::CompilationEventHandler for AbortingHandler {
+        fn on_validation(&self, args: &mut ValidationEventArgs) {
+            args.abort = true;
+            args.abort_reason = Some("aborted by test handler".to_string());
+        }
+    }
+
+    fn scoped_validation_config(dir: &TempDir) -> ValidationConfig {
+        let mut config = ValidationConfig::default();
+        config.hash_verification.hash_database_path = dir
+            .path()
+            .join(".hashes.json")
+            .to_string_lossy()
+            .into_owned();
+        config
+    }
+
+    #[test]
+    fn test_validate_output_with_events_no_handler_does_not_abort() {
+        let dir = TempDir::new().unwrap();
+        let path = dir.path().join("output.txt");
+        fs::write(&path, "||example.com^\n").unwrap();
+
+        let dispatcher = EventDispatcher::new();
+        let config = scoped_validation_config(&dir);
+
+        // No handlers registered - findings are informational by default, so nothing aborts.
+        assert_eq!(
+            validate_output_with_events(&path, &dispatcher, &config),
+            None
+        );
+    }
+
+    #[test]
+    fn test_validate_output_with_events_handler_can_abort() {
+        let dir = TempDir::new().unwrap();
+        let path = dir.path().join("output.txt");
+        fs::write(&path, "||example.com^\n").unwrap();
+
+        let mut dispatcher = EventDispatcher::new();
+        dispatcher.add_handler(Box::new(AbortingHandler));
+        let config = scoped_validation_config(&dir);
+
+        assert_eq!(
+            validate_output_with_events(&path, &dispatcher, &config),
+            Some("aborted by test handler".to_string())
+        );
+    }
+
+    #[test]
+    fn test_validate_output_with_events_unreadable_file_returns_none() {
+        let dispatcher = EventDispatcher::new();
+        let config = ValidationConfig::default();
+
+        assert_eq!(
+            validate_output_with_events("/nonexistent/output.txt", &dispatcher, &config),
+            None
+        );
     }
 }

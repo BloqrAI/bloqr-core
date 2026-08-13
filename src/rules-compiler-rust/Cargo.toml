@@ -19,6 +19,9 @@ name = "rules-compiler"
 path = "src/main.rs"
 
 [dependencies]
+# Rules validation (workspace sibling - no registry involved)
+rules-validator-core = { path = "../rules-validator/rules-validator-core" }
+
 # Async runtime
 tokio = { workspace = true, features = ["fs", "process", "io-util"] }
 

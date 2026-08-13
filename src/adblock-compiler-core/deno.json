@@ -27,8 +27,8 @@
     "interactive": "deno run --allow-read --allow-write --allow-env --allow-net --allow-run src/mod.ts --interactive",
     "compile": "deno run --allow-read --allow-write --allow-env --allow-net --allow-run src/mod.ts --compile",
     "dev": "deno run --allow-read --allow-write --allow-env --allow-net --allow-run --watch src/mod.ts",
-    "test": "deno test --allow-read --allow-write --allow-env --allow-net src/",
-    "test:coverage": "deno test --allow-read --allow-write --allow-env --allow-net --coverage=coverage src/",
+    "test": "deno test --allow-read --allow-write --allow-env --allow-net --allow-run src/",
+    "test:coverage": "deno test --allow-read --allow-write --allow-env --allow-net --allow-run --coverage=coverage src/",
     "check": "deno check src/mod.ts src/mod.bun.ts",
     "lint": "deno lint src/",
     "lint:docs": "deno run --allow-read --allow-run scripts/check-symbol-docs.ts",
@@ -50,6 +50,9 @@
     "node:fs/promises": "node:fs/promises",
     "node:path": "node:path",
     "node:crypto": "node:crypto",
+    "node:url": "node:url",
+    "node:child_process": "node:child_process",
+    "node:os": "node:os",
     // ora: no JSR-native terminal-spinner library with comparable maturity/adoption exists
     // (audited for #294; only near-equivalents found were unmaintained/zero-dependent forks).
     "ora": "npm:ora@^9.4.1",

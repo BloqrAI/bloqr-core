@@ -296,3 +296,45 @@ export interface HashVerificationCallbacks {
   /** Called when a hash verification fails */
   onHashMismatch?: (event: HashMismatchEvent) => void | Promise<void>;
 }
+
+/**
+ * Event callback types for rules-validator syntax validation
+ */
+
+/** Severity of a single rules-validator finding */
+export type ValidationSeverity = 'info' | 'warning' | 'error' | 'critical';
+
+/** A single finding reported by the rules-validator */
+export interface ValidationFinding {
+  /** Severity of the finding */
+  severity: ValidationSeverity;
+  /** Human-readable finding message */
+  message: string;
+}
+
+/** Event arguments for a rules-validator syntax-validation run */
+export interface ValidationEvent {
+  /** Name of the validation stage (always "rules-validator") */
+  stageName: string;
+  /** Number of rules that were checked */
+  itemsValidated: number;
+  /** Whether the output passed syntax validation */
+  passed: boolean;
+  /** Individual findings reported by the validator */
+  findings: ValidationFinding[];
+  /** Whether to abort compilation. Findings are informational by default;
+   *  a handler must explicitly set this to stop compilation. */
+  abort: boolean;
+  /** Reason for aborting (if abort is true) */
+  abortReason?: string;
+  /** Timestamp of the event */
+  timestamp: Date;
+}
+
+/**
+ * Rules-validator event callbacks
+ */
+export interface ValidationCallbacks {
+  /** Called after a rules-validator syntax-validation run completes */
+  onValidation?: (event: ValidationEvent) => void | Promise<void>;
+}

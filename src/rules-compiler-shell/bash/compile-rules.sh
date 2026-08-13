@@ -249,6 +249,99 @@ compute_hash() {
     fi
 }
 
+# Locate the rules-validate CLI binary (from src/rules-validator/).
+# Resolution order: RULES_VALIDATE_PATH env override, then PATH, then a
+# dev-convenience fallback to the Cargo workspace's target/{release,debug}
+# output. Prints nothing and returns non-zero when not found, so callers can
+# degrade gracefully.
+find_rules_validate_binary() {
+    if [[ -n "${RULES_VALIDATE_PATH:-}" && -f "${RULES_VALIDATE_PATH}" ]]; then
+        echo "${RULES_VALIDATE_PATH}"
+        return 0
+    fi
+
+    if command -v rules-validate &> /dev/null; then
+        command -v rules-validate
+        return 0
+    fi
+
+    local candidate profile
+    for profile in release debug; do
+        candidate="${PROJECT_ROOT}/target/${profile}/rules-validate"
+        if [[ -f "${candidate}" ]]; then
+            echo "${candidate}"
+            return 0
+        fi
+    done
+
+    return 1
+}
+
+# Runs the rules-validate CLI's syntax check against a compiled output file.
+# Findings are informational: this never fails compilation, it only logs
+# what the validator found. A missing binary, empty output, or output that
+# can't be parsed as JSON is treated as a skip, not a failure.
+run_rules_validator() {
+    local output_path="$1"
+    local binary hash_db json_output report
+
+    if ! binary=$(find_rules_validate_binary); then
+        log_debug "rules-validate binary not found; skipping syntax validation"
+        return 0
+    fi
+
+    hash_db="$(dirname "${output_path}")/.hashes.json"
+    json_output=$("${binary}" --json file "${output_path}" --hash-db "${hash_db}" 2>/dev/null) || true
+
+    if [[ -z "${json_output}" ]]; then
+        log_debug "rules-validate produced no output; skipping syntax validation"
+        return 0
+    fi
+
+    if ! command -v python3 &> /dev/null; then
+        log_debug "python3 not found; cannot parse rules-validate output"
+        return 0
+    fi
+
+    report=$(printf '%s' "${json_output}" | python3 -c '
+import json, sys
+try:
+    data = json.load(sys.stdin)
+except Exception:
+    sys.exit(0)
+
+is_valid = bool(data.get("is_valid", False))
+valid_rules = data.get("valid_rules", 0)
+invalid_rules = data.get("invalid_rules", 0)
+messages = data.get("messages") or []
+
+if not messages and not is_valid:
+    messages = [f"RV001: syntax validation failed ({valid_rules} valid, {invalid_rules} invalid rules)"]
+
+severity = "INFO" if is_valid else "WARN"
+print(f"{severity}|rules-validator: {valid_rules} valid, {invalid_rules} invalid rule(s)")
+for m in messages:
+    print(f"{severity}|{m}")
+') || true
+
+    if [[ -z "${report}" ]]; then
+        log_debug "rules-validate produced output that could not be parsed as JSON; skipping"
+        return 0
+    fi
+
+    local severity text
+    while IFS='|' read -r severity text; do
+        [[ -z "${severity}" ]] && continue
+        if [[ "${severity}" == "WARN" ]]; then
+            log_warn "${text}"
+        else
+            log_info "${text}"
+        fi
+    done <<< "${report}"
+
+    return 0
+}
+
 # Main compilation function
 compile_rules() {
     local config_path="$1"
@@ -311,6 +404,9 @@ compile_rules() {
         # Get statistics
         local rule_count=$(count_rules "${output_path}")
         local output_hash=$(compute_hash "${output_path}")
+
+        # Findings are informational and never fail compilation
+        run_rules_validator "${output_path}"
 
         log_info "Compilation successful!"
         echo ""

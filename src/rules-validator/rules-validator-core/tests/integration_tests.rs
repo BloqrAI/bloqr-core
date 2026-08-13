@@ -58,6 +58,7 @@ fn test_compilation_rejects_invalid_syntax() {
     let temp_dir = TempDir::new().unwrap();
     let input_file = temp_dir.path().join("invalid.txt");
     let output_file = temp_dir.path().join("output.txt");
+    let hash_db_path = temp_dir.path().join(".hashes.json");
 
     // Create input file with NO valid rules (only comments)
     fs::write(&input_file, "! Comment\n# Another comment\n").unwrap();
@@ -68,8 +69,11 @@ fn test_compilation_rejects_invalid_syntax() {
         expected_hashes: HashMap::new(),
     };
 
+    let mut validation_config = ValidationConfig::default();
+    validation_config.hash_verification.hash_database_path = hash_db_path.display().to_string();
+
     let options = CompilationOptions {
-        validation_config: ValidationConfig::default(),
+        validation_config,
         output_path: output_file,
         create_archive: false,
     };
