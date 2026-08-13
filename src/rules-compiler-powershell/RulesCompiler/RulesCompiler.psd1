@@ -21,11 +21,12 @@
     
     # Classes to load
     NestedModules = @(
-        'Classes\CompilerConfiguration.psm1'
+        'Classes\CompilerConfiguration.psm1',
+        'Classes\RulesValidatorResult.psm1'
     )
-    
+
     # Functions to export
-    FunctionsToExport = @('Invoke-RulesCompiler')
+    FunctionsToExport = @('Invoke-RulesCompiler', 'Invoke-RulesValidator')
     CmdletsToExport = @()
     VariablesToExport = @()
     AliasesToExport = @()

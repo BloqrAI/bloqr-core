@@ -24,6 +24,10 @@ export type {
   ExtendedConfiguration,
   Logger,
   PlatformInfo,
+  ValidationCallbacks,
+  ValidationEvent,
+  ValidationFinding,
+  ValidationSeverity,
   VersionInfo,
 } from './types.ts';
 
@@ -38,6 +42,7 @@ export {
   copyToRulesDirectory,
   countRules,
   runCompiler,
+  runRulesValidator,
   writeOutput,
 } from './compiler.ts';
 export type { CompilerOptions, ExtendedCompileOptions } from './compiler.ts';

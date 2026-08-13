@@ -1069,6 +1069,7 @@ dependencies = [
  "hex",
  "libc",
  "rand",
+ "rules-validator-core",
  "rustc_version_runtime",
  "serde",
  "serde_json",
@@ -1090,6 +1091,7 @@ dependencies = [
  "anyhow",
  "clap",
  "rules-validator-core",
+ "serde",
  "serde_json",
 ]
 

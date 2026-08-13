@@ -14,6 +14,8 @@ import {
 } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { createHash } from 'node:crypto';
+import { fileURLToPath } from 'node:url';
+import { spawnSync } from 'node:child_process';
 import type {
   CompileOptions,
   CompilerResult,
@@ -22,6 +24,9 @@ import type {
   HashVerificationCallbacks,
   HashVerifiedEvent,
   Logger,
+  ValidationCallbacks,
+  ValidationEvent,
+  ValidationFinding,
 } from './types.ts';
 import { readConfiguration } from './config-reader.ts';
 import { logger as defaultLogger } from './logger.ts';
@@ -207,6 +212,150 @@ export function copyToRulesDirectory(
 }
 
 /**
+ * Reads an environment variable across Deno and Node/Bun runtimes.
+ * @param key - Environment variable name
+ * @returns Value if set, otherwise `undefined`
+ */
+function getEnvVar(key: string): string | undefined {
+  return typeof Deno !== 'undefined' && Deno.env ? Deno.env.get(key) : process.env[key];
+}
+
+/**
+ * Locates the `rules-validate` CLI binary (from `src/rules-validator/`).
+ *
+ * Resolution order: `RULES_VALIDATE_PATH` env override, then `PATH`, then a
+ * dev-convenience fallback to the Cargo workspace's `target/{release,debug}`
+ * output. Returns `undefined` (rather than throwing) when not found, so
+ * syntax validation degrades gracefully - mirroring the other language
+ * wrappers' `find_rules_validate_binary` equivalents.
+ * @returns Absolute path to the binary, or `undefined` if not found
+ */
+function findRulesValidateBinary(): string | undefined {
+  const envOverride = getEnvVar('RULES_VALIDATE_PATH');
+  if (envOverride && existsSync(envOverride)) {
+    return envOverride;
+  }
+
+  const isWindows = process.platform === 'win32';
+  const binaryName = isWindows ? 'rules-validate.exe' : 'rules-validate';
+
+  const pathEnv = getEnvVar('PATH') ?? '';
+  const pathSeparator = isWindows ? ';' : ':';
+  for (const dir of pathEnv.split(pathSeparator)) {
+    if (!dir) continue;
+    const candidate = join(dir, binaryName);
+    if (existsSync(candidate)) {
+      return candidate;
+    }
+  }
+
+  // Dev-convenience fallback: compiler.ts -> orchestration/ -> src/ -> adblock-compiler-core/ -> src/ -> repo root
+  const repoRoot = fileURLToPath(new URL('../../../../', import.meta.url));
+  for (const profile of ['release', 'debug']) {
+    const candidate = join(repoRoot, 'target', profile, binaryName);
+    if (existsSync(candidate)) {
+      return candidate;
+    }
+  }
+
+  return undefined;
+}
+
+/** Parsed `--json file` output from the `rules-validate` CLI */
+interface RulesValidateFileResult {
+  is_valid: boolean;
+  valid_rules: number;
+  invalid_rules: number;
+  messages: string[];
+}
+
+/**
+ * Shells out to the `rules-validate` CLI to syntax-check compiled output and
+ * fires `callbacks.onValidation` with the result. Findings are informational
+ * by default; only a handler that explicitly sets `event.abort = true` stops
+ * compilation (mirroring the Rust/.NET/Python rules-validator wiring).
+ *
+ * A missing/unusable binary or malformed output is treated as a skip, not a
+ * failure, so this check degrades gracefully wherever the CLI hasn't been
+ * built or installed.
+ * @param outputPath - Path to the compiled output file
+ * @param callbacks - Optional validation callbacks
+ * @param logger - Logger instance
+ * @throws {Error} If a handler sets `event.abort = true`
+ */
+export async function runRulesValidator(
+  outputPath: string,
+  callbacks?: ValidationCallbacks,
+  logger: Logger = defaultLogger,
+): Promise<void> {
+  const binary = findRulesValidateBinary();
+  if (!binary) {
+    logger.debug('rules-validate binary not found; skipping syntax validation');
+    return;
+  }
+
+  const hashDbPath = join(dirname(outputPath), '.hashes.json');
+
+  let stdout: string;
+  try {
+    const spawnResult = spawnSync(
+      binary,
+      ['--json', 'file', outputPath, '--hash-db', hashDbPath],
+      { encoding: 'utf8' },
+    );
+    if (spawnResult.error) {
+      throw spawnResult.error;
+    }
+    stdout = spawnResult.stdout ?? '';
+  } catch (error) {
+    logger.debug(
+      `rules-validate invocation failed, skipping syntax validation: ${
+        error instanceof Error ? error.message : String(error)
+      }`,
+    );
+    return;
+  }
+
+  let parsed: RulesValidateFileResult;
+  try {
+    parsed = JSON.parse(stdout);
+  } catch {
+    logger.debug('rules-validate produced non-JSON output; skipping syntax validation');
+    return;
+  }
+
+  const findings: ValidationFinding[] = [];
+  if (parsed.messages.length === 0 && !parsed.is_valid) {
+    findings.push({
+      severity: 'error',
+      message:
+        `RV001: syntax validation failed (${parsed.valid_rules} valid, ${parsed.invalid_rules} invalid rules)`,
+    });
+  } else {
+    for (const message of parsed.messages) {
+      findings.push({ severity: parsed.is_valid ? 'warning' : 'error', message });
+    }
+  }
+
+  const event: ValidationEvent = {
+    stageName: 'rules-validator',
+    itemsValidated: parsed.valid_rules + parsed.invalid_rules,
+    passed: parsed.is_valid,
+    findings,
+    abort: false,
+    timestamp: new Date(),
+  };
+
+  if (callbacks?.onValidation) {
+    await Promise.resolve(callbacks.onValidation(event));
+  }
+
+  if (event.abort) {
+    throw new Error(event.abortReason ?? 'Rules validation aborted by handler');
+  }
+}
+
+/**
  * Compiler options with resource limits
  */
 export interface CompilerOptions {
@@ -286,6 +435,8 @@ export interface ExtendedCompileOptions extends CompileOptions {
   maxOutputSize?: number;
   /** Hash verification callbacks for monitoring integrity */
   hashCallbacks?: HashVerificationCallbacks;
+  /** Rules-validator syntax-validation callbacks */
+  validationCallbacks?: ValidationCallbacks;
 }
 
 /**
@@ -421,6 +572,9 @@ export async function runCompiler(options: ExtendedCompileOptions): Promise<Comp
     }
 
     logger.debug(`Hash: ${result.outputHash}`);
+
+    // Run the rules-validator syntax check; findings are informational unless a handler aborts
+    await runRulesValidator(result.outputPath, options.validationCallbacks, logger);
 
     // Copy to rules directory if requested
     if (options.copyToRules) {

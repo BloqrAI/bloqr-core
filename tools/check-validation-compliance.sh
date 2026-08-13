@@ -56,20 +56,12 @@ check_typescript_integration() {
         return 0
     fi
     
-    # Check for validation library import in package.json (when integrated)
-    # Currently this is aspirational - not yet implemented
-    if grep -q "adguard.*validation" "$ts_dir/package.json" 2>/dev/null; then
-        echo -e "${GREEN}✓ TypeScript: Validation library dependency found${NC}"
+    # TypeScript shells out to the rules-validate CLI (runRulesValidator in
+    # orchestration/compiler.ts, #361) rather than binding the native lib.
+    if grep -rq "runRulesValidator\|findRulesValidateBinary" "$ts_dir/src" 2>/dev/null; then
+        echo -e "${GREEN}✓ TypeScript: Validation library integrated (#361)${NC}"
     else
-        echo -e "${YELLOW}⚠ TypeScript: Validation library not yet integrated (pending Phase 2)${NC}"
-        WARNINGS=$((WARNINGS + 1))
-    fi
-    
-    # Check for validation calls in source code
-    if grep -rq "validate_local_file\|validate_remote_url\|Validator" "$ts_dir/src" 2>/dev/null; then
-        echo -e "${GREEN}✓ TypeScript: Validation calls found in source${NC}"
-    else
-        echo -e "${YELLOW}⚠ TypeScript: No validation calls found (pending Phase 2)${NC}"
+        echo -e "${YELLOW}⚠ TypeScript: Validation library not yet integrated${NC}"
         WARNINGS=$((WARNINGS + 1))
     fi
 }
@@ -112,11 +104,12 @@ check_python_integration() {
         return 0
     fi
     
-    # Check for validation library in requirements (when integrated)
-    if [ -f "$python_dir/requirements.txt" ] && grep -q "rules-validator" "$python_dir/requirements.txt" 2>/dev/null; then
-        echo -e "${GREEN}✓ Python: Validation library dependency found${NC}"
+    # Python shells out to the rules-validate CLI (_run_rules_validator in
+    # rules_compiler/compiler.py, #361) rather than depending on a package.
+    if grep -rq "_run_rules_validator\|find_rules_validate_binary" "$python_dir/rules_compiler" 2>/dev/null; then
+        echo -e "${GREEN}✓ Python: Validation library integrated (#361)${NC}"
     else
-        echo -e "${YELLOW}⚠ Python: Validation library not yet integrated (pending Phase 3)${NC}"
+        echo -e "${YELLOW}⚠ Python: Validation library not yet integrated${NC}"
         WARNINGS=$((WARNINGS + 1))
     fi
 }
@@ -134,11 +127,58 @@ check_rust_integration() {
         return 0
     fi
     
-    # Check for validation library dependency
+    # Rust depends on rules-validator-core directly as a Cargo workspace path
+    # dependency (#361) - same language, no FFI/shellout needed.
     if grep -q "rules-validator\|rules_validator" "$rust_dir/Cargo.toml" 2>/dev/null; then
-        echo -e "${GREEN}✓ Rust: Validation library dependency found${NC}"
+        echo -e "${GREEN}✓ Rust: Validation library integrated (#361)${NC}"
     else
-        echo -e "${YELLOW}⚠ Rust: Validation library not yet integrated (pending Phase 3)${NC}"
+        echo -e "${YELLOW}⚠ Rust: Validation library not yet integrated${NC}"
+        WARNINGS=$((WARNINGS + 1))
+    fi
+}
+
+# Function to check PowerShell module integration
+check_powershell_integration() {
+    echo ""
+    echo "→ Checking PowerShell module integration..."
+
+    local ps_dir="$REPO_ROOT/src/rules-compiler-powershell"
+
+    if [ ! -d "$ps_dir" ]; then
+        echo -e "${YELLOW}⚠ PowerShell toolkit not found${NC}"
+        WARNINGS=$((WARNINGS + 1))
+        return 0
+    fi
+
+    # PowerShell shells out to the rules-validate CLI (Invoke-RulesValidator /
+    # Find-RulesValidateBinary in the RulesCompiler module, #361).
+    if grep -rq "Invoke-RulesValidator\|Find-RulesValidateBinary" "$ps_dir/RulesCompiler" 2>/dev/null; then
+        echo -e "${GREEN}✓ PowerShell: Validation library integrated (#361)${NC}"
+    else
+        echo -e "${YELLOW}⚠ PowerShell: Validation library not yet integrated${NC}"
+        WARNINGS=$((WARNINGS + 1))
+    fi
+}
+
+# Function to check Shell (bash/zsh) script integration
+check_shell_integration() {
+    echo ""
+    echo "→ Checking Shell (bash/zsh) script integration..."
+
+    local shell_dir="$REPO_ROOT/src/rules-compiler-shell"
+
+    if [ ! -d "$shell_dir" ]; then
+        echo -e "${YELLOW}⚠ Shell scripts not found${NC}"
+        WARNINGS=$((WARNINGS + 1))
+        return 0
+    fi
+
+    # Both compile-rules.sh and compile-rules.zsh shell out to the
+    # rules-validate CLI (run_rules_validator/find_rules_validate_binary, #361).
+    if grep -rq "run_rules_validator\|find_rules_validate_binary" "$shell_dir/bash" "$shell_dir/zsh" 2>/dev/null; then
+        echo -e "${GREEN}✓ Shell: Validation library integrated (#361)${NC}"
+    else
+        echo -e "${YELLOW}⚠ Shell: Validation library not yet integrated${NC}"
         WARNINGS=$((WARNINGS + 1))
     fi
 }
@@ -181,6 +221,8 @@ check_typescript_integration
 check_dotnet_integration
 check_python_integration
 check_rust_integration
+check_powershell_integration
+check_shell_integration
 
 # Summary
 echo ""

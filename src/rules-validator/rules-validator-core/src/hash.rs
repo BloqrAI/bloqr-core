@@ -72,12 +72,19 @@ impl HashDatabase {
         Ok(serde_json::from_str(&content)?)
     }
 
-    /// Save database to file.
+    /// Save database to file, creating its parent directory if it doesn't exist.
     ///
     /// # Errors
     ///
-    /// Returns an error if the file cannot be written.
+    /// Returns an error if the parent directory or file cannot be created/written.
     pub fn save<P: AsRef<Path>>(&self, path: P) -> Result<()> {
+        let path = path.as_ref();
+        if let Some(parent) = path.parent() {
+            if !parent.as_os_str().is_empty() {
+                fs::create_dir_all(parent)?;
+            }
+        }
+
         let content = serde_json::to_string_pretty(self)?;
         fs::write(path, content)?;
         Ok(())
@@ -259,6 +266,28 @@ mod tests {
         assert_eq!(db.len(), 1);
         assert!(db.get("test.txt").is_some());
         assert_eq!(db.get("test.txt").unwrap().hash, "abc123");
+    }
+
+    #[test]
+    fn test_save_creates_missing_parent_directory() {
+        let dir = tempfile::TempDir::new().unwrap();
+        let db_path = dir
+            .path()
+            .join("nested")
+            .join("does-not-exist-yet")
+            .join(".hashes.json");
+        assert!(!db_path.parent().unwrap().exists());
+
+        let mut db = HashDatabase::new();
+        db.insert(
+            "test.txt".to_string(),
+            HashEntry::new("abc123".to_string(), 100),
+        );
+        db.save(&db_path).unwrap();
+
+        assert!(db_path.exists());
+        let reloaded = HashDatabase::load(&db_path).unwrap();
+        assert_eq!(reloaded.get("test.txt").unwrap().hash, "abc123");
     }
 
     #[test]

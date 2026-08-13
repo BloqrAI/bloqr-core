@@ -6,6 +6,7 @@ using module ..\Common\Common.psm1
 
 # Load module-specific classes
 using module .\Classes\CompilerConfiguration.psm1
+using module .\Classes\RulesValidatorResult.psm1
 
 # Dot-source public functions
 $publicFunctions = Get-ChildItem -Path "$PSScriptRoot\Public\*.ps1" -ErrorAction SilentlyContinue

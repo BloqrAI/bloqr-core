@@ -48,6 +48,7 @@ from rules_compiler.events import (
     HashComputedEventArgs,
     HashMismatchEventArgs,
     HashVerifiedEventArgs,
+    ValidationEventArgs,
 )
 from rules_compiler.hash_database import HashDatabaseEntry, load_hash_database, record_hash
 from rules_compiler.output_publisher import publish_output
@@ -145,6 +146,35 @@ def get_platform_info() -> PlatformInfo:
 def find_command(command: str) -> str | None:
     """Find a command in PATH."""
     return shutil.which(command)
+
+
+def find_rules_validate_binary() -> str | None:
+    """
+    Locate the `rules-validate` CLI (from `src/rules-validator/rules-validator-cli`).
+
+    Checks, in order: the `RULES_VALIDATE_PATH` environment variable, PATH, then a
+    couple of dev-convenience fallback locations relative to this repo's Cargo
+    workspace `target/` directory (debug/release). Returns `None` if not found -
+    callers should skip validation silently in that case, matching the .NET
+    integration's `IsAvailable` behavior.
+    """
+    env_override = os.environ.get("RULES_VALIDATE_PATH")
+    if env_override and Path(env_override).is_file():
+        return env_override
+
+    on_path = shutil.which("rules-validate")
+    if on_path:
+        return on_path
+
+    binary_name = "rules-validate.exe" if platform.system() == "Windows" else "rules-validate"
+    # compiler.py -> rules_compiler/ -> rules-compiler-python/ -> src/ -> repo root
+    repo_root = Path(__file__).resolve().parents[3]
+    for profile in ("release", "debug"):
+        candidate = repo_root / "target" / profile / binary_name
+        if candidate.is_file():
+            return str(candidate)
+
+    return None
 
 
 def get_version_info() -> VersionInfo:
@@ -402,6 +432,82 @@ async def _verify_and_record_hash(
         item_identifier,
         HashDatabaseEntry(hash=computed_hash, size_bytes=size_bytes, item_type=item_type),
     )
+    return True, None
+
+
+async def _run_rules_validator(
+    output_path: Path,
+    event_dispatcher: EventDispatcher | None,
+) -> tuple[bool, str | None]:
+    """
+    Shell out to the native `rules-validate` CLI to run its syntax check against the
+    compiled output, and raise a `Validation` event with its findings. Findings are
+    informational by default - a registered handler must explicitly set `abort` to fail
+    compilation over them, matching this pipeline's other zero-trust checkpoints.
+
+    Silently continues (returns `(True, None)`) if `rules-validate` isn't found or
+    fails to run at all, matching the .NET integration's graceful degradation when the
+    native library is unavailable.
+
+    Returns:
+        Tuple of (can_continue, error_message).
+    """
+    binary = find_rules_validate_binary()
+    if binary is None:
+        return True, None
+
+    hash_db_path = output_path.parent / ".hashes.json"
+    try:
+        proc = subprocess.run(
+            [binary, "--json", "file", str(output_path), "--hash-db", str(hash_db_path)],
+            capture_output=True,
+            text=True,
+            timeout=60,
+        )
+    except (OSError, subprocess.TimeoutExpired) as e:
+        logger.warning(f"rules-validate failed to run: {e}")
+        return True, None
+
+    try:
+        payload = json.loads(proc.stdout)
+    except (json.JSONDecodeError, ValueError):
+        logger.warning(f"rules-validate produced unparseable output: {proc.stdout!r}")
+        return True, None
+
+    validation_args = ValidationEventArgs(stage_name="rules-validator")
+
+    if "error" in payload:
+        # rules-validate itself failed (e.g. unreadable file) - informational only,
+        # doesn't block compilation unless a handler explicitly aborts.
+        validation_args.add_warning("RV001", payload["error"])
+    else:
+        is_valid = payload.get("is_valid", False)
+        messages = payload.get("messages", [])
+        validation_args.items_validated = payload.get("valid_rules", 0) + payload.get(
+            "invalid_rules", 0
+        )
+
+        if not messages:
+            if not is_valid:
+                validation_args.add_error(
+                    "RV001",
+                    "Output file failed rules-validator syntax validation "
+                    f"({payload.get('invalid_rules', 0)} invalid rule(s) of "
+                    f"{validation_args.items_validated}).",
+                )
+        else:
+            for message in messages:
+                if is_valid:
+                    validation_args.add_warning("RV001", message)
+                else:
+                    validation_args.add_error("RV001", message)
+
+    if event_dispatcher is not None:
+        await event_dispatcher.raise_validation(validation_args)
+
+    if validation_args.abort:
+        return False, validation_args.abort_reason or f"rules-validator validation failed for {output_path}"
+
     return True, None
 
 
@@ -780,6 +886,14 @@ def compile_rules(
                 result.error_message = error_message
                 return result
 
+        can_continue, error_message = asyncio.run(
+            _run_rules_validator(actual_output, event_dispatcher)
+        )
+        if not can_continue:
+            result.success = False
+            result.error_message = error_message
+            return result
+
         # Copy to rules directory if requested
         if copy_to_rules:
             if rules_directory:
@@ -1030,6 +1144,12 @@ async def compile_rules_async(
                 result.success = False
                 result.error_message = error_message
                 return result
+
+        can_continue, error_message = await _run_rules_validator(actual_output, event_dispatcher)
+        if not can_continue:
+            result.success = False
+            result.error_message = error_message
+            return result
 
         # Copy to rules directory if requested
         if copy_to_rules:
