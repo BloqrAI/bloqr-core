@@ -87,7 +87,7 @@ jobs:
           pkgid=$(cargo pkgid -p bloqr-validator-core)
           version="${pkgid##*@}"
           echo "version=${version}" >> "$GITHUB_OUTPUT"
-          status=$(curl -s -o /dev/null -w "%{http_code}" "https://crates.io/api/v1/crates/bloqr-validator-core/${version}")
+          status=$(curl -s -o /dev/null -w "%{http_code}" -A "bloqr-core-ci (https://github.com/BloqrAI/bloqr-core)" "https://crates.io/api/v1/crates/bloqr-validator-core/${version}")
           if [ "$status" = "200" ]; then
             echo "Version ${version} is already published - skipping (idempotent re-run)."
             echo "already_published=true" >> "$GITHUB_OUTPUT"
@@ -157,7 +157,7 @@ jobs:
           pkgid=$(cargo pkgid -p bloqr-validator-core-cli)
           version="${pkgid##*@}"
           echo "version=${version}" >> "$GITHUB_OUTPUT"
-          status=$(curl -s -o /dev/null -w "%{http_code}" "https://crates.io/api/v1/crates/bloqr-validator-core-cli/${version}")
+          status=$(curl -s -o /dev/null -w "%{http_code}" -A "bloqr-core-ci (https://github.com/BloqrAI/bloqr-core)" "https://crates.io/api/v1/crates/bloqr-validator-core-cli/${version}")
           if [ "$status" = "200" ]; then
             echo "Version ${version} is already published - skipping (idempotent re-run)."
             echo "already_published=true" >> "$GITHUB_OUTPUT"
