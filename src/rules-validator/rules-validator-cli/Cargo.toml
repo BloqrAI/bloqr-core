@@ -1,6 +1,10 @@
 [package]
 name = "bloqr-validator-core-cli"
-version.workspace = true
+# Independent version, not workspace-inherited: the CLI's own release cadence
+# (flag/UX changes) is decoupled from the library's (validation-logic
+# changes) even though it's not yet independently published - see
+# docs/architecture/versioning-strategy.md.
+version = "1.0.0"
 edition.workspace = true
 authors.workspace = true
 license.workspace = true

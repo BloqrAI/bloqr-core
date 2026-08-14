@@ -66,10 +66,34 @@ When a piece of `bloqr-core` (or a brand-new repo) becomes its own `@bloqr/*` JS
 5. That package's own `publish-jsr.yml` (or a shared one filtered by path — either is fine, `bloqr-core` currently has one workflow per publishable package) — path-filtered trigger, `deno publish --token ${{ secrets.JSR_WORKFLOW_TOKEN }}` per `docs/jsr-token-authentication.md`.
 6. Add the new package to `docs/jsr-org-standards.md`'s package table.
 
+## Reference implementation: `bloqr-validator-core` (crates.io)
+
+The core rule — **independent version per publishable package identity, one place to edit it** — applies to crates.io exactly as it does to JSR, with two Cargo-specific differences:
+
+1. **No separate `version.ts`/sync-script indirection is needed.** Cargo's manifest (`Cargo.toml`'s `[package] version` field) already *is* the single source of writable truth — there's no JSONC-vs-JSON split to work around like `deno.json`. So the "sync" step from the JSR pattern simply doesn't exist for Rust crates.
+2. **`version.workspace = true` (inheriting `[workspace.package] version`) must not be used for any independently-published or independently-cadenced crate.** Workspace-inherited versioning is the crates.io equivalent of the "one repo, one version" anti-pattern this doc's introduction already rejects for JSR — it would force `bloqr-validator-core` and `bloqr-validator-core-cli` to bump in lockstep with each other and with `rules-compiler`, even when only one of them changed. As of #365's follow-up, both `bloqr-validator-core` and `bloqr-validator-core-cli` (`src/rules-validator/`) declare an explicit, independent `version = "1.0.0"` instead. `rules-compiler` (`src/rules-compiler-rust/`) is unpublished and workspace-internal, so it stays on `version.workspace = true` for now — revisit if it's ever published independently.
+
+### The FOSS/commercial × library/CLI version-independence matrix
+
+Per the Rust package-naming standard (`docs/jsr-org-standards.md`), a single product surface can have up to four crates: FOSS library, FOSS CLI, commercial library, commercial CLI. All four version **independently** — none of them share a version number by convention, even where one embeds another as a dependency:
+
+| Crate | Versions independently because |
+|---|---|
+| `bloqr-validator-core` (FOSS lib) | Its cadence is driven by validation-logic changes; this is the published, externally-consumed artifact. |
+| `bloqr-validator-core-cli` (FOSS CLI) | Its cadence is driven by flag/UX/output-format changes, which don't always coincide with a library-logic change (and vice versa — a library patch doesn't always need a CLI release). |
+| `bloqr-validator` (commercial lib, reserved) | A different product surface with its own release cadence and its own team ownership boundary, even when the same engineers work both sides. May depend on `bloqr-validator-core` as a Cargo dependency, but that's a *dependency* version pin, not a lockstep release version. |
+| `bloqr-validator-cli` (commercial CLI, reserved) | Same reasoning as the FOSS CLI, applied to the commercial surface. |
+
+This mirrors the crates.io convention itself (any crate can depend on any version-compatible range of any other crate) and avoids the classic monorepo trap where an unrelated CLI flag tweak forces a version bump — and a fresh audit/compliance review — of the validation library it happens to wrap.
+
+### What's still manual for crates.io (unlike JSR)
+
+Unlike `publish-jsr.yml` (which publishes on every path-scoped push to `main`, independent of any tag), crates.io publishing today rides along with this repo's repo-wide binary release process: `release.yml`'s `publish-crates` job runs on push of a `v*` tag (`docs/release-guide.md`), gated by an idempotency check against the crates.io API rather than a `cargo publish --skip-duplicate` flag (which doesn't exist). This is a deliberate, current-state difference, not an oversight — `bloqr-validator-core-cli`'s and `rules-compiler`'s release binaries are bundled into the same multi-language GitHub Release as the .NET/Python artifacts, so anchoring the crates.io publish to that same tag keeps one release event instead of two. There is no automated Conventional-Commits bump/tag workflow pair (the `compiler-core-version-bump.yml`/`compiler-core-create-version-tag.yml` equivalents) for `bloqr-validator-core` yet — today its version is bumped by hand in `Cargo.toml` as part of preparing a release. Building that automation (and deciding whether crates.io publishing should detach from the repo-wide release tag entirely, matching JSR's independence) is tracked as follow-up under #372, not this doc.
+
 ## What this doc does *not* cover yet
 
-- The non-JSR wrapper projects in this repo (.NET, Python, Rust, PowerShell) have their own version fields (`.csproj`, `pyproject.toml`, `Cargo.toml`) and are not yet wired into an equivalent automated bump/tag/release pattern for their own registries (NuGet, PyPI, crates.io). `docs/release-guide.md` describes their current (manual, repo-wide-tag) release process, which predates this standard and still reflects the pre-split repo shape in places — it needs its own pass to either adopt an equivalent per-package pattern or explicitly document why it stays manual. Tracked as follow-up, not blocking this doc.
-- `rules-validator` (Rust) — same situation as above.
+- The non-JSR, non-Rust wrapper projects in this repo (.NET, Python, PowerShell) have their own version fields (`.csproj`, `pyproject.toml`) and are not yet wired into an equivalent automated bump/tag/release pattern for their own registries (NuGet, PyPI). `docs/release-guide.md` describes their current (manual, repo-wide-tag) release process, which predates this standard and still reflects the pre-split repo shape in places — it needs its own pass to either adopt an equivalent per-package pattern or explicitly document why it stays manual. Tracked as follow-up, not blocking this doc.
+- Full crates.io bump/tag automation and the repo-wide-tag-vs-independent-publish question for Rust — see the "What's still manual for crates.io" note above.
 - Cross-repo propagation: once packages are actually split out of `bloqr-core` into their own repos, this document (or a copy of it) needs to travel with them. For now, see `docs/org-documentation-strategy.md` for how org-wide docs are being tracked during this transitional period (`.github-private` for internal standards while things are still moving; this doc lives in `bloqr-core` itself since it's currently the one place with a working reference implementation).
 
 ## Related
