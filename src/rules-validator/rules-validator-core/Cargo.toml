@@ -4,14 +4,15 @@ name = "bloqr-validator-core"
 # own published crates.io artifact (#365) and must be bumpable on its own
 # cadence, decoupled from bloqr-validator-core-cli and rules-compiler - see
 # docs/architecture/versioning-strategy.md.
-version = "1.0.0"
+version = "1.0.1"
 edition.workspace = true
 authors.workspace = true
 license.workspace = true
 repository.workspace = true
 rust-version.workspace = true
-description = "Core validation library for AdGuard filter compilation with hash verification, URL security, and syntax validation"
-keywords = ["adguard", "validation", "security", "filter", "adblock"]
+description = "Bloqr's core validation library for adblock/hosts filter list compilation: hash verification, URL security, and syntax validation. Part of the bloqr-core toolkit (github.com/BloqrAI/bloqr-core)."
+readme = "README.md"
+keywords = ["bloqr", "adblock", "validation", "security", "filter"]
 categories = ["web-programming", "cryptography", "parser-implementations"]
 
 [lib]

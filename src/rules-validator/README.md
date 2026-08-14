@@ -13,6 +13,12 @@ Published to crates.io as [`bloqr-validator-core`](https://crates.io/crates/bloq
 bloqr-validator-core = "1"
 ```
 
+The CLI is published too, as [`bloqr-validator-core-cli`](https://crates.io/crates/bloqr-validator-core-cli):
+
+```sh
+cargo install bloqr-validator-core-cli
+```
+
 ## Features
 
 - **At-Rest Hash Verification**: SHA-384 hashing for local files with automatic database management
