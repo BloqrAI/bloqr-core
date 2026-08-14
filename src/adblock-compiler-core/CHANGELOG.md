@@ -15,6 +15,12 @@ All notable changes to `@bloqr/compiler-core` (formerly `@jk-com/adblock-compile
 
 - **Breaking**: package renamed from `@jk-com/adblock-compiler` to `@bloqr/compiler-core`. `@jk-com` was a personal-project JSR scope; all Bloqr JSR packages (this one, and future ones like `@bloqr/diagnostics`) now live under the `@bloqr` scope. No functional changes — same package contents, same exports, just a new name and scope. See `README.md`'s Architecture section for the full story.
 
+## [1.2.1] - 2026-08-14
+
+### Changed
+
+- **chore**: no functional changes. Patch bump solely to force a real `publish-jsr.yml` run and confirm JSR OIDC ("trusted publishing") actually authenticates now that this GitHub Enterprise account's custom OIDC issuer setting has been disabled — see #291 / jsr-io/jsr#1485.
+
 ## [1.2.0] - 2026-08-14
 
 ### Added

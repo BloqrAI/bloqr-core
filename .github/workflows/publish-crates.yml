@@ -13,8 +13,25 @@ name: Publish Rust Validator Crates to crates.io
 # external consumer as a library and its binary already ships via
 # release.yml's GitHub Release bundle.
 #
-# AUTHENTICATION: CARGO_REGISTRY_TOKEN (org-level Action secret).
+# AUTHENTICATION: crates.io Trusted Publishing (OIDC) via
+# rust-lang/crates-io-auth-action - no long-lived CARGO_REGISTRY_TOKEN
+# secret needed. Requires a Trusted Publisher entry configured on
+# crates.io for each of bloqr-validator-core and bloqr-validator-core-cli
+# (crate settings page -> Trusted Publishing -> GitHub -> owner BloqrAI,
+# repo bloqr-core, workflow filename publish-crates.yml). The workflow
+# needs `permissions: id-token: write` for the OIDC token exchange.
 #
+# HISTORY: this was tried once before and reverted - this org's GitHub
+# Enterprise account had the "Use enterprise-specific issuer URL" OIDC
+# setting enabled (issuer https://token.actions.githubusercontent.com/
+# bloqrsystems instead of the plain https://token.actions.githubusercontent.com),
+# which crates.io's trusted-publishing backend rejected outright
+# ("Unsupported JWT issuer"). That setting has since been disabled
+# enterprise-wide, so OIDC is back in use. If it starts failing with the
+# same "Unsupported JWT issuer" error again, check whether that Enterprise
+# setting got re-enabled before assuming this workflow is broken.
+#
+
 # VERSIONING: each crate's own Cargo.toml `version` field is the source of
 # truth, bumped by hand today (no automated Conventional-Commits bump
 # workflow yet - see docs/architecture/versioning-strategy.md's "what's
@@ -48,6 +65,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
+      id-token: write
 
     steps:
       - uses: actions/checkout@v7
@@ -76,7 +94,7 @@ jobs:
           pkgid=$(cargo pkgid -p bloqr-validator-core)
           version="${pkgid##*@}"
           echo "version=${version}" >> "$GITHUB_OUTPUT"
-          status=$(curl -s -o /dev/null -w "%{http_code}" "https://crates.io/api/v1/crates/bloqr-validator-core/${version}")
+          status=$(curl -s -o /dev/null -w "%{http_code}" -A "bloqr-core-ci (https://github.com/BloqrAI/bloqr-core)" "https://crates.io/api/v1/crates/bloqr-validator-core/${version}")
           if [ "$status" = "200" ]; then
             echo "Version ${version} is already published - skipping (idempotent re-run)."
             echo "already_published=true" >> "$GITHUB_OUTPUT"
@@ -84,17 +102,26 @@ jobs:
             echo "already_published=false" >> "$GITHUB_OUTPUT"
           fi
 
+      # Exchanges this workflow run's OIDC identity for a short-lived
+      # crates.io token (auto-revoked when the job ends) - requires the
+      # Trusted Publisher entry on bloqr-validator-core's crates.io settings
+      # page to reference this exact repo + workflow filename.
+      - name: Authenticate with crates.io
+        id: auth
+        if: steps.check.outputs.already_published == 'false'
+        uses: rust-lang/crates-io-auth-action@v1
+
       - name: Publish bloqr-validator-core to crates.io
         id: publish
         if: steps.check.outputs.already_published == 'false'
         env:
-          CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
+          CARGO_REGISTRY_TOKEN: ${{ steps.auth.outputs.token }}
         run: cargo publish -p bloqr-validator-core --locked
 
       - name: Report publish failure
         if: failure() && steps.publish.outcome == 'failure'
         run: |
-          echo "::error::crates.io publish failed. Check CARGO_REGISTRY_TOKEN is configured as an org-level action secret with publish-new/publish-update/yank scopes for bloqr-validator-core."
+          echo "::error::crates.io publish failed. Check bloqr-validator-core's Trusted Publisher entry on crates.io points at BloqrAI/bloqr-core, workflow publish-crates.yml, and that the enterprise custom-OIDC-issuer setting is still disabled."
           exit 1
 
   publish-cli:
@@ -103,6 +130,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
+      id-token: write
 
     steps:
       - uses: actions/checkout@v7
@@ -146,7 +174,7 @@ jobs:
           pkgid=$(cargo pkgid -p bloqr-validator-core-cli)
           version="${pkgid##*@}"
           echo "version=${version}" >> "$GITHUB_OUTPUT"
-          status=$(curl -s -o /dev/null -w "%{http_code}" "https://crates.io/api/v1/crates/bloqr-validator-core-cli/${version}")
+          status=$(curl -s -o /dev/null -w "%{http_code}" -A "bloqr-core-ci (https://github.com/BloqrAI/bloqr-core)" "https://crates.io/api/v1/crates/bloqr-validator-core-cli/${version}")
           if [ "$status" = "200" ]; then
             echo "Version ${version} is already published - skipping (idempotent re-run)."
             echo "already_published=true" >> "$GITHUB_OUTPUT"
@@ -154,15 +182,24 @@ jobs:
             echo "already_published=false" >> "$GITHUB_OUTPUT"
           fi
 
+      # Exchanges this workflow run's OIDC identity for a short-lived
+      # crates.io token (auto-revoked when the job ends) - requires the
+      # Trusted Publisher entry on bloqr-validator-core-cli's crates.io
+      # settings page to reference this exact repo + workflow filename.
+      - name: Authenticate with crates.io
+        id: auth
+        if: steps.check.outputs.already_published == 'false'
+        uses: rust-lang/crates-io-auth-action@v1
+
       - name: Publish bloqr-validator-core-cli to crates.io
         id: publish
         if: steps.check.outputs.already_published == 'false'
         env:
-          CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
+          CARGO_REGISTRY_TOKEN: ${{ steps.auth.outputs.token }}
         run: cargo publish -p bloqr-validator-core-cli --locked
 
       - name: Report publish failure
         if: failure() && steps.publish.outcome == 'failure'
         run: |
-          echo "::error::crates.io publish failed. Check CARGO_REGISTRY_TOKEN is configured as an org-level action secret with publish-new/publish-update/yank scopes for bloqr-validator-core-cli."
+          echo "::error::crates.io publish failed. Check bloqr-validator-core-cli's Trusted Publisher entry on crates.io points at BloqrAI/bloqr-core, workflow publish-crates.yml, and that the enterprise custom-OIDC-issuer setting is still disabled."
           exit 1

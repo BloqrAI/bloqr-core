@@ -392,11 +392,23 @@ GitHub Actions workflows validate:
 
 ## Operational Notes for AI-Assisted Work
 
-- **JSR publishing uses token auth, not OIDC.** OIDC trusted publishing
-  fails with `InvalidIssuer` on this org-owned repo — a JSR-side issue
-  (tracked in [jsr-io/jsr#1485](https://github.com/jsr-io/jsr/issues/1485)),
-  not a config problem here. Don't re-attempt OIDC without checking that
-  issue for updates first. See `docs/jsr-token-authentication.md`.
+- **JSR and crates.io publishing both use OIDC ("trusted publishing") as of
+  2026-08-14.** Both previously failed OIDC — JSR with `InvalidIssuer`
+  (#291, reported upstream as [jsr-io/jsr#1485](https://github.com/jsr-io/jsr/issues/1485)
+  before the real cause was found), crates.io with `Unsupported JWT issuer`.
+  Root cause for both: this org's GitHub Enterprise account ("Bloqr
+  Systems") had **"Use enterprise-specific issuer URL"** enabled (Enterprise
+  Settings → Policies → Actions → OIDC Configuration), which appends the
+  enterprise slug to every Actions OIDC token's issuer — neither registry's
+  trusted-publishing backend accepts that non-standard issuer. Not a JSR
+  bug, not a crates.io bug, not fixable in workflow YAML. That Enterprise
+  setting has since been disabled, and OIDC is now live-verified working
+  end-to-end for both (real version publishes, not just green CI). If
+  `InvalidIssuer` / `Unsupported JWT issuer` reappears on *any* future
+  OIDC-based integration (npm trusted publishing, PyPI, a cloud provider,
+  etc.), check that Enterprise setting before assuming the new integration
+  itself is broken. See `docs/jsr-token-authentication.md` and the auth
+  comment block at the top of `.github/workflows/publish-crates.yml`.
 - **Versioning is per-package, not per-repo.** Each independently-JSR-published
   package gets its own `VERSION` source-of-truth, its own `version:sync`
   script, its own `<package-slug>-v<semver>` tag prefix, and its own
