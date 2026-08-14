@@ -4,12 +4,20 @@ This document describes how BloqrAI uses JSR tokens for package publishing and c
 
 ## Overview
 
+`publish-jsr.yml`'s actual publish step (`deno publish`) now authenticates via **JSR OIDC** ("trusted publishing") — GitHub Actions' own OIDC identity, no token involved. See "Publishing via OIDC (current)" below. `JSR_WORKFLOW_TOKEN` remains documented here as the fallback mechanism (used briefly while OIDC was blocked — see "Known Issues"), and `JSR_API_TOKEN` is still the mechanism for *consuming* `@bloqr/*` packages, which OIDC doesn't cover.
+
 JSR provides two types of tokens:
 
-1. **Workflow Tokens** (`JSR_WORKFLOW_TOKEN`): Used for publishing packages from CI/CD pipelines. Scoped to specific namespaces/scopes (e.g., `@bloqr`).
+1. **Workflow Tokens** (`JSR_WORKFLOW_TOKEN`): Fallback for publishing packages from CI/CD pipelines when OIDC isn't usable. Scoped to specific namespaces/scopes (e.g., `@bloqr`).
 2. **API Tokens** (`JSR_API_TOKEN`): Used for programmatic API access and package consumption (e.g., adding JSR packages as dependencies). General-purpose authentication.
 
 Both tokens are stored as **organization-level GitHub Action secrets** in the BloqrAI organization and are scoped to the `@bloqr` JSR namespace.
+
+## Publishing via OIDC (current)
+
+`publish-jsr.yml`'s `publish` job has `permissions: id-token: write` and runs plain `deno publish` (no `--token`). `deno publish` auto-detects it's running in GitHub Actions with that permission and authenticates via GitHub's OIDC token — no secret needed, nothing to rotate. This requires `@bloqr/compiler-core` to be linked to `BloqrAI/bloqr-core` in JSR's package settings (already done).
+
+Live-verified end-to-end on 2026-08-14: a real `@bloqr/compiler-core@1.2.1` patch release published successfully via OIDC after this org's GitHub Enterprise account's custom-OIDC-issuer setting was disabled (see "Known Issues").
 
 ## Token Security & Rotation
 
@@ -18,7 +26,9 @@ Both tokens are stored as **organization-level GitHub Action secrets** in the Bl
 - **Tokens must be rotated regularly** (recommend quarterly or when staff changes)
 - Never hardcode tokens; always use `${{ secrets.JSR_WORKFLOW_TOKEN }}` or `${{ secrets.JSR_API_TOKEN }}`
 
-## Publishing with Workflow Tokens
+## Publishing with Workflow Tokens (fallback)
+
+`publish-jsr.yml` does not use this today (see "Publishing via OIDC" above) — kept here in case OIDC breaks again (e.g. the Enterprise custom-issuer setting getting re-enabled) and a quick fallback is needed.
 
 ### Configuration
 
@@ -38,15 +48,15 @@ Pass the token via the `--token` flag to `deno publish`:
 
 **Important**: Use the `--token` flag (not environment variable) — this is how `deno publish` accepts the token.
 
-### Example: `.github/workflows/publish-jsr.yml`
+### Reverting to this fallback
 
-See `.github/workflows/publish-jsr.yml` for the full implementation. The workflow:
+If OIDC starts failing again, revert `publish-jsr.yml`'s `Publish to JSR` step to the `--token` form above and remove `id-token: write` from the job's `permissions`. The rest of the workflow (checkout, Deno setup, type check, tests, lint, symbol docs, dry-run) is unaffected either way.
 
 1. Checks out the repository
 2. Sets up Deno v2.x
 3. Runs type checking, tests, and linting
 4. Performs a dry-run validation with `deno publish --dry-run`
-5. Publishes to JSR using the `JSR_WORKFLOW_TOKEN`
+5. Publishes to JSR (OIDC today; `JSR_WORKFLOW_TOKEN` if reverted)
 6. Reports any failures with actionable error messages
 
 ## Consuming Packages with API Tokens
@@ -115,11 +125,15 @@ All BloqrAI repositories that interact with JSR should follow this pattern:
 
 ## Known Issues
 
-### OIDC Publishing Limitations (Archived)
+### OIDC Publishing — resolved, was never a JSR bug (#291)
 
-Previous attempts to use OIDC-based trusted publishing from GitHub Actions failed with `InvalidIssuer` errors. While OIDC provides provenance attestations, token-based authentication is reliable and is the recommended approach for org-owned repositories.
+OIDC-based trusted publishing from GitHub Actions previously failed with `InvalidIssuer` (tracked in [bloqr-core#291](https://github.com/BloqrAI/bloqr-core/issues/291) and reported upstream as [jsr-io/jsr#1485](https://github.com/jsr-io/jsr/issues/1485)). At the time, org settings showed no OIDC policy configured — because the actual cause lives at the **GitHub Enterprise** level, not the org level, so it wasn't visible from where the investigation looked.
 
-See GitHub issue [bloqr-core#XXX](https://github.com/BloqrAI/bloqr-core/issues) for details on OIDC investigation.
+Root cause: this org's GitHub Enterprise account ("Bloqr Systems") had **"Use enterprise-specific issuer URL"** enabled under Enterprise Settings → Policies → Actions → OIDC Configuration. That customizes every GitHub Actions OIDC token's `iss` claim to `https://token.actions.githubusercontent.com/bloqrsystems` instead of the plain `https://token.actions.githubusercontent.com`. JSR's OIDC verifier expects the plain issuer and rejects the customized one as invalid — hence `InvalidIssuer`.
+
+This was confirmed, not just inferred: crates.io's Trusted Publishing hit the *identical* failure mode against the same repo at the same time, but with a more descriptive rejection message (`Unsupported JWT issuer: https://token.actions.githubusercontent.com/bloqrsystems`) that named the actual issuer string. That setting was disabled org-wide, and both crates.io and JSR OIDC were then live-verified end-to-end with real version publishes — no JSR-side or Deno-side fix was needed.
+
+**If `InvalidIssuer` reappears**: check Enterprise Settings → Policies → Actions → OIDC Configuration → "Use enterprise-specific issuer URL" before assuming JSR or this workflow regressed.
 
 ## Token Rotation Checklist
 
@@ -135,5 +149,5 @@ When rotating tokens:
 
 ---
 
-**Last Updated**: 2026-08-09  
+**Last Updated**: 2026-08-14  
 **Owned By**: @BloqrAI/core-team
