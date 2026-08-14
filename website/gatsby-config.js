@@ -1,5 +1,15 @@
 /**
- * Gatsby configuration for Ad-Blocking documentation website
+ * Gatsby configuration for the Bloqr Core documentation website.
+ *
+ * This package lives at the repo root (`website/`), one level up from
+ * `src/`, deliberately — it's not one of the compiler wrappers, and the
+ * plan is to eventually extract it into its own repository (like
+ * `bloqr-apiclients`/`bloqr-blocklists` before it). When that happens,
+ * the two `gatsby-source-filesystem` entries below (which currently read
+ * `docs/` and other root-level files straight out of the monorepo) will
+ * need to switch to a vendoring step (git subtree/submodule, or a sync
+ * script that copies `docs/` in at build time) instead of a relative
+ * filesystem path, since `docs/` won't be a sibling directory anymore.
  * @type {import('gatsby').GatsbyConfig}
  */
 module.exports = {
@@ -18,19 +28,20 @@ module.exports = {
       resolve: `gatsby-source-filesystem`,
       options: {
         name: `docs`,
-        path: `${__dirname}/../../docs`,
+        path: `${__dirname}/../docs`,
       },
     },
     {
       resolve: `gatsby-source-filesystem`,
       options: {
         name: `root-docs`,
-        path: `${__dirname}/../..`,
+        path: `${__dirname}/..`,
         ignore: [
           `**/node_modules/**`,
           `**/.*`,
           `**/data/**`,
           `**/src/**`,
+          `**/website/**`,
           `**/.github/**`,
           `**/tools/**`,
           `**/api/**`,

@@ -213,7 +213,7 @@ cargo run -- --help
 
 **Requirements**: Rust toolchain
 
-### Website (`src/website/`)
+### Website (`website/`)
 ```bash
 # Install dependencies
 npm ci

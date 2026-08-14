@@ -3,7 +3,7 @@
 This file provides guidance to WARP (warp.dev) when working with code in this repository.
 
 Project scope
-- This repo houses the multi-language rules-compiler toolkit: TypeScript/Deno, C#/.NET 10, Python, and Rust compilers, bash/zsh shell scripts, a PowerShell toolkit, the Rust `rules-validator`, and the Gatsby documentation site (`src/website/`).
+- This repo houses the multi-language rules-compiler toolkit: TypeScript/Deno, C#/.NET 10, Python, and Rust compilers, bash/zsh shell scripts, a PowerShell toolkit, the Rust `rules-validator`, and the Gatsby documentation site (`website/`, at the repo root).
 - The AdGuard DNS API clients (.NET, TypeScript, Rust, PowerShell) and the Linear import tool moved to [`BloqrAI/bloqr-apiclients`](https://github.com/BloqrAI/bloqr-apiclients) and are no longer part of this repo.
 - CI pipelines (GitHub Actions) validate the .NET, TypeScript/Deno, Python, Rust, and PowerShell compilers, plus the Gatsby site. Keep local commands aligned with the workflows below.
 
@@ -29,7 +29,7 @@ Python – rules compiler (src/rules-compiler-python)
 
 Rust – rules compiler (src/rules-compiler-rust)
 - Build/test: cd src/rules-compiler-rust && cargo build && cargo test
-- Run: cargo run -- -c config.yaml
+- Run: cargo run -- -c config.json
 
 PowerShell scripts (src/rules-compiler-powershell)
 - Static analysis (same as CI): Invoke-ScriptAnalyzer -Path src/rules-compiler-powershell -Recurse
@@ -56,9 +56,9 @@ High-level architecture and structure
   - `src/rules-compiler-shell/` — bash and zsh scripts for compiling rules without a language runtime.
   - `src/rules-compiler-powershell/` — class-based PowerShell modules with Pester tests.
 - Validation
-  - `src/rules-validator/` — Rust library (`rules-validator-core`) and CLI (`rules-validator-cli`) for filter/config validation.
+  - `src/rules-validator/` — Rust library (published to crates.io as `bloqr-validator-core`) and CLI (published as `bloqr-validator-core-cli`) for filter/config validation.
 - Documentation site
-  - `src/website/` — Gatsby 5 site sourcing content from `docs/` and repo root.
+  - `website/` — Gatsby 5 site (repo root, not under `src/`) sourcing content from `docs/` and repo root.
 
 Notes pulled from existing docs
 - Root README lists prerequisites: .NET 10, Deno 2.0+, Python 3.9+, Rust 1.85+, and PowerShell 7+. It also documents the typical steps to compile filters with each toolchain.

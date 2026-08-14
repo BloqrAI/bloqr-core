@@ -10,7 +10,7 @@ A multi-language toolkit for compiling and validating AdGuard-syntax ad-blocking
 - **`@bloqr/compiler-core`** (`src/adblock-compiler-core/`) — the canonical, dependency-free compilation engine, published on [JSR](https://jsr.io/@bloqr/compiler-core). The .NET, Python, and Rust compilers shell out to it via Deno rather than reimplementing compilation logic.
 - **RulesCompiler PowerShell toolkit** (`src/rules-compiler-powershell/`) — class-based modules (`Common`, `RulesCompiler`, `AdGuardWebhook`) with Pester test suites.
 - **`rules-validator`** (`src/rules-validator/`) — a Rust validation library and CLI for filter/config validation (hash verification, URL security, syntax linting).
-- **Documentation website** (`src/website/`) — a Gatsby 5 site that builds guides, API reference, and security docs from `docs/` and this README.
+- **Documentation website** (`website/`) — a Gatsby 5 site that builds guides, API reference, and security docs from `docs/` and this README.
 
 **What moved out:** the compiled filter lists (and their input/archive files) now live in [`BloqrAI/bloqr-blocklists`](https://github.com/BloqrAI/bloqr-blocklists), and the AdGuard DNS API clients (.NET, TypeScript, Rust, PowerShell) plus the Linear import tool now live in [`BloqrAI/bloqr-apiclients`](https://github.com/BloqrAI/bloqr-apiclients). Neither is part of this repo anymore — see [Related repositories](#related-repositories) below.
 
@@ -149,7 +149,7 @@ The TypeScript compiler is the only one that implements compilation logic direct
 - [`docs/docker-guide.md`](docs/docker-guide.md) — Docker development environment
 - [`docs/release-guide.md`](docs/release-guide.md) — creating releases with automatic binary builds
 - [`CLAUDE.md`](CLAUDE.md) / [`.github/copilot-instructions.md`](.github/copilot-instructions.md) — AI agent instructions for working in this repo
-- [`src/website/`](src/website/) — the Gatsby site that publishes the above as a browsable documentation site (`npm install && npm run develop` to preview locally)
+- [`website/`](website/) — the Gatsby site that publishes the above as a browsable documentation site (`npm install && npm run develop` to preview locally)
 
 ## Testing
 

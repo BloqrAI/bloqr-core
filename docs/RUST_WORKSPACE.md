@@ -9,8 +9,8 @@ The workspace includes the following crates:
 ### 1. **rules-validator** (`src/rules-validator/`)
 Centralized validation library for AdGuard filter compilation with comprehensive security features.
 
-- **rules-validator-core**: Core library with validation, hashing, URL security
-- **rules-validator-cli**: CLI tool (`rules-validate`)
+- **rules-validator-core** (published to crates.io as `bloqr-validator-core`): Core library with validation, hashing, URL security
+- **rules-validator-cli** (published to crates.io as `bloqr-validator-core-cli`): CLI tool (`rules-validate`)
 
 > The Rust AdGuard DNS API client (`adguard-api-rust`) that used to live in this workspace moved to [`BloqrAI/bloqr-apiclients`](https://github.com/BloqrAI/bloqr-apiclients) and is no longer a member of this Cargo workspace.
 
@@ -73,7 +73,7 @@ cargo run -p bloqr-validator-core-cli -- --help
 cargo run -p rules-compiler -- --help
 
 # Release mode (faster)
-cargo run --release -p rules-compiler -- -c config.yaml
+cargo run --release -p rules-compiler -- -c config.json
 ```
 
 ## Development

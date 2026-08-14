@@ -140,7 +140,7 @@ use rules_compiler::{compile_rules_with_events, EventDispatcher};
 let mut dispatcher = EventDispatcher::new();
 dispatcher.add_handler(Box::new(MyHandler));
 
-let result = compile_rules_with_events("config.yaml", &options, &dispatcher)?;
+let result = compile_rules_with_events("config.json", &options, &dispatcher)?;
 ```
 
 ### TypeScript
@@ -171,7 +171,7 @@ const callbacks: HashVerificationCallbacks = {
 import { runCompiler } from './compiler.ts';
 
 const result = await runCompiler({
-  configPath: 'config.yaml',
+  configPath: 'config.json',
   hashCallbacks: callbacks,
 });
 ```

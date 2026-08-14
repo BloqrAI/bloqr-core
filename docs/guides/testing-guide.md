@@ -226,7 +226,7 @@ class TestRulesCompiler:
         return RulesCompiler()
 
     def test_compile(self, compiler):
-        result = compiler.compile("config.yaml")
+        result = compiler.compile("config.json")
         assert result.success
         assert result.rule_count > 0
 
@@ -244,7 +244,7 @@ class TestRulesCompiler:
 
     @pytest.mark.asyncio
     async def test_async_operation(self, compiler):
-        result = await compiler.async_compile("config.yaml")
+        result = await compiler.async_compile("config.json")
         assert result is not None
 ```
 
@@ -304,7 +304,7 @@ mod tests {
     #[test]
     fn test_basic_functionality() {
         let compiler = RulesCompiler::new();
-        let result = compiler.compile("config.yaml", None);
+        let result = compiler.compile("config.json", None);
         assert!(result.is_ok());
     }
 

@@ -53,6 +53,9 @@ const Layout = ({ children, pageTitle }) => {
               <Link to="/getting-started">Getting Started</Link>
             </li>
             <li>
+              <Link to="/dashboard">Dashboard</Link>
+            </li>
+            <li>
               <Link to="/security">Security</Link>
             </li>
             <li>
