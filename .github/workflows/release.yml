@@ -61,7 +61,7 @@ jobs:
 
       - name: Build rules-validator-core (cdylib) and rules-validator-cli
         shell: bash
-        run: cargo build --release --target ${{ matrix.target }} -p rules-validator-core -p rules-validator-cli
+        run: cargo build --release --target ${{ matrix.target }} -p bloqr-validator-core -p rules-validator-cli
 
       - name: Stage artifacts
         shell: bash
@@ -269,6 +269,57 @@ jobs:
           path: ./nuget-packages/*.nupkg
           if-no-files-found: error
 
+  publish-crates:
+    name: Publish Crates
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Install Rust toolchain
+        uses: actions-rust-lang/setup-rust-toolchain@v1
+        with:
+          toolchain: stable
+
+      - name: Cache Cargo
+        uses: actions/cache@v6
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: ${{ runner.os }}-cargo-publish-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: ${{ runner.os }}-cargo-publish-
+
+      # bloqr-validator-core (#365) is the only crate published today - it's the native
+      # validation library linked into every wrapper (directly via Cargo for
+      # rules-compiler-rust, via P/Invoke for .NET, via CLI shellout for everything
+      # else). The value is supply-chain provenance for that shared native library, not
+      # "Rust developers depend on our crate" - the wrapper crates (rules-compiler,
+      # rules-validator-cli) have no external consumer and stay workspace-internal,
+      # unpublished. AUTHENTICATION: CARGO_REGISTRY_TOKEN (org-level Action secret).
+      - name: Check if this version is already published
+        id: check
+        run: |
+          pkgid=$(cargo pkgid -p bloqr-validator-core)
+          version="${pkgid##*@}"
+          echo "version=${version}" >> "$GITHUB_OUTPUT"
+          status=$(curl -s -o /dev/null -w "%{http_code}" "https://crates.io/api/v1/crates/bloqr-validator-core/${version}")
+          if [ "$status" = "200" ]; then
+            echo "Version ${version} is already published - skipping (idempotent re-run)."
+            echo "already_published=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "already_published=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Publish bloqr-validator-core to crates.io
+        if: steps.check.outputs.already_published == 'false'
+        env:
+          CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
+        run: cargo publish -p bloqr-validator-core --locked
+
   build-rust:
     name: Build Rust Executable
     runs-on: ${{ matrix.os }}
@@ -338,7 +389,7 @@ jobs:
 
   create-release:
     name: Create Release
-    needs: [build-dotnet, build-rust, build-rules-validator, publish-nuget]
+    needs: [build-dotnet, build-rust, build-rules-validator, publish-nuget, publish-crates]
     runs-on: ubuntu-latest
 
     steps:

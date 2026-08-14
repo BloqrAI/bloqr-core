@@ -1,5 +1,5 @@
 [package]
-name = "rules-validator-core"
+name = "bloqr-validator-core"
 version.workspace = true
 edition.workspace = true
 authors.workspace = true

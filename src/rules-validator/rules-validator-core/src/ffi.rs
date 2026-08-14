@@ -1,4 +1,4 @@
-//! C-compatible FFI surface for `rules-validator-core`.
+//! C-compatible FFI surface for `bloqr-validator-core`.
 //!
 //! Exposes [`Validator`] over an opaque-handle + JSON-string boundary, so
 //! callers (.NET P/Invoke, or any other FFI consumer) only need to marshal

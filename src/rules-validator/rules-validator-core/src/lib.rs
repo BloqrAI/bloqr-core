@@ -84,6 +84,6 @@ mod tests {
 
     #[test]
     fn test_name() {
-        assert_eq!(NAME, "rules-validator-core");
+        assert_eq!(NAME, "bloqr-validator-core");
     }
 }

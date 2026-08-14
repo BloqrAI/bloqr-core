@@ -86,7 +86,7 @@ strip = true
 panic = "abort"
 opt-level = 3
 
-[profile.release.package.rules-validator-core]
+[profile.release.package.bloqr-validator-core]
 # Extra optimization for the core validation library
 opt-level = 3
 codegen-units = 1

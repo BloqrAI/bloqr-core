@@ -6,6 +6,13 @@ Centralized Rust-based validation library for AdGuard filter compilation with co
 
 This library provides a unified, high-performance validation layer that can be used across all four rules compilers (TypeScript, .NET, Python, Rust) through native bindings, FFI, or WebAssembly.
 
+Published to crates.io as [`bloqr-validator-core`](https://crates.io/crates/bloqr-validator-core) (#365) — the directory and internal Rust crate name (`rules_validator`) stay as-is; only the published package name changes:
+
+```toml
+[dependencies]
+bloqr-validator-core = "1"
+```
+
 ## Features
 
 - **At-Rest Hash Verification**: SHA-384 hashing for local files with automatic database management
@@ -54,7 +61,7 @@ This library provides a unified, high-performance validation layer that can be u
 cargo build --release
 
 # Build only the core library
-cargo build --release -p rules-validator-core
+cargo build --release -p bloqr-validator-core
 
 # Build CLI tool
 cargo build --release -p rules-validator-cli
@@ -64,7 +71,7 @@ cargo test --all
 
 # Build with WebAssembly target
 rustup target add wasm32-unknown-unknown
-cargo build --release --target wasm32-unknown-unknown -p rules-validator-core
+cargo build --release --target wasm32-unknown-unknown -p bloqr-validator-core
 ```
 
 ### Build Outputs
@@ -166,7 +173,7 @@ async function validateFile(path: string): Promise<void> {
 
 #### Option 1: P/Invoke to Native Library
 
-`rules-validator-core` ships a real `extern "C"` FFI surface (`src/ffi.rs`), not just this illustrative pattern — see `rules_validator.h` (generated via `cbindgen`) for the authoritative signatures. The API uses an opaque handle plus JSON-encoded results, so there's no per-field struct marshaling to keep in sync:
+`bloqr-validator-core` ships a real `extern "C"` FFI surface (`src/ffi.rs`), not just this illustrative pattern — see `rules_validator.h` (generated via `cbindgen`) for the authoritative signatures. The API uses an opaque handle plus JSON-encoded results, so there's no per-field struct marshaling to keep in sync:
 
 ```csharp
 using System;

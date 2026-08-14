@@ -10,8 +10,14 @@ This document defines the standard practices for all BloqrAI repositories that i
 
 All public packages must be published under the `@bloqr` scope. Examples:
 - `@bloqr/compiler-core` - TypeScript/Deno core compiler (published from bloqr-core)
-- `@bloqr/rules-validator-core` - Rust validation library (published from bloqr-core)
-- Future packages follow same pattern
+- Future JSR packages follow the same pattern
+
+Note: not every BloqrAI package is a JSR package. The Rust validation library
+(`bloqr-validator-core`) is published to crates.io instead, since JSR only
+covers JavaScript/TypeScript - see `docs/RUST_WORKSPACE.md`. The two
+ecosystems share the same `brand -> short-name -> core` naming convention
+(`@bloqr/compiler-core` vs `bloqr-validator-core`), just expressed differently
+since crates.io has no scope syntax.
 
 ## Token Management
 

@@ -198,7 +198,7 @@ rules-validator>=1.0.0
 **Rust (Cargo.toml)**:
 ```toml
 [dependencies]
-rules-validator = { path = "../rules-validator/rules-validator-core" }
+rules_validator = { path = "../rules-validator/rules-validator-core", package = "bloqr-validator-core" }
 ```
 
 ### 7. Pre-commit Hooks

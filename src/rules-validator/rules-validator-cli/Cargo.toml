@@ -13,7 +13,7 @@ name = "rules-validate"
 path = "src/main.rs"
 
 [dependencies]
-rules-validator-core = { path = "../rules-validator-core" }
+rules_validator = { path = "../rules-validator-core", package = "bloqr-validator-core" }
 clap = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }
