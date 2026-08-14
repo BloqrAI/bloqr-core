@@ -4,14 +4,16 @@ This guide explains how to create a new release of the ad-blocking repository wi
 
 ## Overview
 
-The repository uses GitHub Actions to automatically build and attach binaries to releases when a new version tag is pushed. The release workflow builds:
+The repository uses GitHub Actions to automatically build and attach binaries to releases when a new version tag is pushed. The release workflow (`release.yml`) builds the coordinated, multi-language binary bundle:
 
 - **RulesCompiler.Console** - .NET rules compiler console app (Windows, Linux, macOS)
+- **Bloqr.Dashboard.Console** - .NET Dashboard app (Windows, Linux, macOS)
 - **rules-compiler** - Rust rules compiler (Windows, Linux, macOS)
-- **rules-compiler** - Python wheel package (cross-platform)
-- **Bloqr.Compiler.Abstractions** / **Bloqr.Compiler.Core** - the common .NET library, published as NuGet packages to GitHub Packages (see [`docs/architecture/nuget-distribution-strategy.md`](architecture/nuget-distribution-strategy.md))
+- **rules-validator** - native validation library and its `rules-validate` CLI (Windows, Linux, macOS)
 
 > AdGuard.ConsoleUI (the API client console UI) moved to [`BloqrAI/bloqr-apiclients`](https://github.com/BloqrAI/bloqr-apiclients) — see that repo's own releases for it.
+
+**NuGet and crates.io publish independently, not as part of this release.** `Bloqr.Compiler.Abstractions`/`Bloqr.Compiler.Core` (NuGet, via `publish-nuget.yml`) and `bloqr-validator-core` (crates.io, via `publish-crates.yml`) each have their own path-filtered workflow that publishes on every push to `main` touching that package's directory, or on demand via `workflow_dispatch` — the same pattern `publish-jsr.yml` already uses for `@bloqr/compiler-core`. See [`docs/architecture/nuget-distribution-strategy.md`](architecture/nuget-distribution-strategy.md) and [`docs/architecture/versioning-strategy.md`](architecture/versioning-strategy.md). This keeps a library-only change from having to wait for (or force) a full binary release, and vice versa.
 
 ## Creating a Release
 
@@ -102,7 +104,11 @@ The Python wheel package is built as a **universal wheel** compatible with Pytho
 
 ### NuGet Packages
 
-`Bloqr.Compiler.Abstractions` and `Bloqr.Compiler.Core` are packed with `dotnet pack` and pushed to GitHub Packages' NuGet feed (`https://nuget.pkg.github.com/BloqrAI/index.json`), authenticated with the workflow's own `GITHUB_TOKEN` — no separate secret to manage. The push is idempotent (`--skip-duplicate`), so re-running the workflow for an already-published version is a no-op. See [`docs/architecture/nuget-distribution-strategy.md`](architecture/nuget-distribution-strategy.md) for why these two libraries are published while everything else in the .NET solution stays on in-repo project references.
+`Bloqr.Compiler.Abstractions` and `Bloqr.Compiler.Core` are packed with `dotnet pack` and pushed to GitHub Packages' NuGet feed (`https://nuget.pkg.github.com/BloqrAI/index.json`) by `publish-nuget.yml` — **not** by `release.yml` — triggered on every push to `main` touching `src/compiler-common-dotnet/**`, or manually via `workflow_dispatch`. Authenticated with the workflow's own `GITHUB_TOKEN` — no separate secret to manage. The push is idempotent (`--skip-duplicate`), so re-running the workflow for an already-published version is a no-op. See [`docs/architecture/nuget-distribution-strategy.md`](architecture/nuget-distribution-strategy.md) for why these two libraries are published while everything else in the .NET solution stays on in-repo project references.
+
+### crates.io Package
+
+`bloqr-validator-core` is published to [crates.io](https://crates.io/crates/bloqr-validator-core) by `publish-crates.yml` — also independent of `release.yml` — triggered on every push to `main` touching `src/rules-validator/rules-validator-core/**`, or manually via `workflow_dispatch`. Authenticated with the `CARGO_REGISTRY_TOKEN` org-level Action secret. `cargo publish` has no native `--skip-duplicate`, so the workflow checks the crates.io API for the current version before publishing to stay idempotent. `bloqr-validator-core-cli` and `rules-compiler` are not published — they stay workspace-internal. See [`docs/architecture/versioning-strategy.md`](architecture/versioning-strategy.md).
 
 ## Troubleshooting
 
@@ -184,11 +190,14 @@ python -m build
 
 ## Related Files
 
-- `.github/workflows/release.yml` - Release workflow definition
+- `.github/workflows/release.yml` - Coordinated multi-language binary release workflow
+- `.github/workflows/publish-nuget.yml` - Independent, path-filtered NuGet publish for the common .NET library
+- `.github/workflows/publish-crates.yml` - Independent, path-filtered crates.io publish for `bloqr-validator-core`
 - `src/rules-compiler-dotnet/src/RulesCompiler.Console/RulesCompiler.Console.csproj` - .NET Rules Compiler project
 - `src/rules-compiler-rust/Cargo.toml` - Rust project configuration
 - `src/rules-compiler-python/pyproject.toml` - Python project configuration
 - `docs/architecture/nuget-distribution-strategy.md` - NuGet publishing decision record for the common .NET library
+- `docs/architecture/versioning-strategy.md` - Per-package versioning standard (JSR, crates.io, NuGet)
 
 ## Support
 

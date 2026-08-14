@@ -1,5 +1,14 @@
 name: Release Binaries
 
+# Builds and bundles the coordinated multi-language binary release: .NET
+# (RulesCompiler.Console, Bloqr.Dashboard.Console), Rust (rules-compiler,
+# bloqr-validator-core-cli's rules-validate binary + native library) - all
+# attached to one GitHub Release under one tag. This is the one thing that
+# genuinely needs to stay a single coordinated event; independently
+# publishable packages (NuGet, crates.io) have their own path-filtered
+# workflows (publish-nuget.yml, publish-crates.yml) and are NOT triggered
+# by this workflow - see docs/architecture/versioning-strategy.md.
+
 on:
   push:
     tags:
@@ -208,118 +217,6 @@ jobs:
             *.tar.gz
           if-no-files-found: error
 
-  publish-nuget:
-    name: Publish NuGet Packages
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      packages: write
-
-    steps:
-      - uses: actions/checkout@v7
-
-      - name: Setup .NET
-        uses: actions/setup-dotnet@v6
-        with:
-          dotnet-version: '10.0.x'
-
-      - name: Cache NuGet packages
-        uses: actions/cache@v6
-        with:
-          path: ~/.nuget/packages
-          key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj', '**/*.slnx') }}
-          restore-keys: ${{ runner.os }}-nuget-
-
-      - name: Restore Compiler Common dependencies
-        shell: bash
-        run: |
-          dotnet restore src/compiler-common-dotnet/CompilerCommon.slnx
-
-      # Bloqr.Compiler.Abstractions/Core are "the common .NET library" the epic asks about
-      # (#261), reorganized into its own solution under src/compiler-common-dotnet/ so it
-      # lives independent of the rules-compiler-dotnet solution. RulesCompiler,
-      # RulesCompiler.Console, and Bloqr.Dashboard.* stay on <ProjectReference> as in-repo
-      # consumers - this is only for out-of-repo consumers (a future WPF host, or this
-      # library becoming its own repo). See docs/architecture/nuget-distribution-strategy.md
-      # for the full decision record.
-      - name: Pack common library packages
-        shell: bash
-        run: |
-          dotnet pack src/compiler-common-dotnet/src/Bloqr.Compiler.Abstractions/Bloqr.Compiler.Abstractions.csproj \
-            --configuration Release \
-            --no-restore \
-            --output ./nuget-packages
-          dotnet pack src/compiler-common-dotnet/src/Bloqr.Compiler.Core/Bloqr.Compiler.Core.csproj \
-            --configuration Release \
-            --no-restore \
-            --output ./nuget-packages
-
-      - name: Push to GitHub Packages
-        shell: bash
-        run: |
-          dotnet nuget push "./nuget-packages/*.nupkg" \
-            --source "https://nuget.pkg.github.com/BloqrAI/index.json" \
-            --api-key "${{ secrets.GITHUB_TOKEN }}" \
-            --skip-duplicate
-
-      - name: Upload nupkg artifacts
-        uses: actions/upload-artifact@v7
-        with:
-          name: nuget-packages
-          path: ./nuget-packages/*.nupkg
-          if-no-files-found: error
-
-  publish-crates:
-    name: Publish Crates
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-
-    steps:
-      - uses: actions/checkout@v7
-
-      - name: Install Rust toolchain
-        uses: actions-rust-lang/setup-rust-toolchain@v1
-        with:
-          toolchain: stable
-
-      - name: Cache Cargo
-        uses: actions/cache@v6
-        with:
-          path: |
-            ~/.cargo/registry
-            ~/.cargo/git
-            target
-          key: ${{ runner.os }}-cargo-publish-${{ hashFiles('**/Cargo.lock') }}
-          restore-keys: ${{ runner.os }}-cargo-publish-
-
-      # bloqr-validator-core (#365) is the only crate published today - it's the native
-      # validation library linked into every wrapper (directly via Cargo for
-      # rules-compiler-rust, via P/Invoke for .NET, via CLI shellout for everything
-      # else). The value is supply-chain provenance for that shared native library, not
-      # "Rust developers depend on our crate" - the wrapper crates (rules-compiler,
-      # rules-validator-cli) have no external consumer and stay workspace-internal,
-      # unpublished. AUTHENTICATION: CARGO_REGISTRY_TOKEN (org-level Action secret).
-      - name: Check if this version is already published
-        id: check
-        run: |
-          pkgid=$(cargo pkgid -p bloqr-validator-core)
-          version="${pkgid##*@}"
-          echo "version=${version}" >> "$GITHUB_OUTPUT"
-          status=$(curl -s -o /dev/null -w "%{http_code}" "https://crates.io/api/v1/crates/bloqr-validator-core/${version}")
-          if [ "$status" = "200" ]; then
-            echo "Version ${version} is already published - skipping (idempotent re-run)."
-            echo "already_published=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "already_published=false" >> "$GITHUB_OUTPUT"
-          fi
-
-      - name: Publish bloqr-validator-core to crates.io
-        if: steps.check.outputs.already_published == 'false'
-        env:
-          CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
-        run: cargo publish -p bloqr-validator-core --locked
-
   build-rust:
     name: Build Rust Executable
     runs-on: ${{ matrix.os }}
@@ -370,13 +267,18 @@ jobs:
         if: runner.os == 'Windows'
         shell: pwsh
         run: |
-          Compress-Archive -Path ./src/rules-compiler-rust/target/${{ matrix.target }}/release/rules-compiler${{ matrix.ext }} -DestinationPath rules-compiler-rust-${{ matrix.artifact }}.zip
+          # cargo build was run with working-directory: ./src/rules-compiler-rust, but
+          # rules-compiler is a member of the workspace rooted at the repo root (see
+          # Cargo.toml's [workspace] members), so Cargo places build output under the
+          # repo-root target/ dir, not a per-member one - there's no target-dir override
+          # in .cargo/config.toml to make it otherwise.
+          Compress-Archive -Path ./target/${{ matrix.target }}/release/rules-compiler${{ matrix.ext }} -DestinationPath rules-compiler-rust-${{ matrix.artifact }}.zip
 
       - name: Package binary (Unix)
         if: runner.os != 'Windows'
         shell: bash
         run: |
-          tar -czf rules-compiler-rust-${{ matrix.artifact }}.tar.gz -C ./src/rules-compiler-rust/target/${{ matrix.target }}/release rules-compiler${{ matrix.ext }}
+          tar -czf rules-compiler-rust-${{ matrix.artifact }}.tar.gz -C ./target/${{ matrix.target }}/release rules-compiler${{ matrix.ext }}
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v7
@@ -389,7 +291,11 @@ jobs:
 
   create-release:
     name: Create Release
-    needs: [build-dotnet, build-rust, build-rules-validator, publish-nuget, publish-crates]
+    # Scoped to the coordinated multi-language binary bundle only.
+    # NuGet (publish-nuget.yml) and crates.io (publish-crates.yml) publish
+    # independently on their own path-filtered triggers now, matching
+    # publish-jsr.yml's pattern - see docs/architecture/versioning-strategy.md.
+    needs: [build-dotnet, build-rust, build-rules-validator]
     runs-on: ubuntu-latest
 
     steps:
@@ -456,7 +362,7 @@ jobs:
             - **rules-compiler** (Rust) - Rust rules compiler (Windows, Linux, macOS)
             - **rules-validator** - native validation library (`rules_validator`) and its `rules-validate` CLI (Windows, Linux, macOS)
 
-            `Bloqr.Compiler.Abstractions` and `Bloqr.Compiler.Core` (the common .NET library) are also published to this release's tag as NuGet packages on [GitHub Packages](https://github.com/orgs/BloqrAI/packages?repo_name=bloqr-core) — see [`docs/architecture/nuget-distribution-strategy.md`](https://github.com/BloqrAI/bloqr-core/blob/main/docs/architecture/nuget-distribution-strategy.md) for why and how to consume them.
+            `Bloqr.Compiler.Abstractions` and `Bloqr.Compiler.Core` (the common .NET library) are published independently to [GitHub Packages](https://github.com/orgs/BloqrAI/packages?repo_name=bloqr-core) as they change, not gated behind this release — see [`docs/architecture/nuget-distribution-strategy.md`](https://github.com/BloqrAI/bloqr-core/blob/main/docs/architecture/nuget-distribution-strategy.md). Likewise, `bloqr-validator-core` publishes independently to [crates.io](https://crates.io/crates/bloqr-validator-core) — see [`docs/architecture/versioning-strategy.md`](https://github.com/BloqrAI/bloqr-core/blob/main/docs/architecture/versioning-strategy.md).
 
             AdGuard.ConsoleUI has moved to [BloqrAI/bloqr-apiclients](https://github.com/BloqrAI/bloqr-apiclients) along with the other API clients — see that repo's own releases for it.
 
