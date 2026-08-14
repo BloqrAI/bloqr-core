@@ -1,4 +1,4 @@
-//! CLI tool for AdGuard filter validation.
+//! Bloqr CLI for validating adblock/hosts filter lists.
 
 use clap::{Parser, Subcommand};
 use rules_validator::{HashDatabase, ValidationConfig, Validator, VerificationMode};
@@ -7,7 +7,7 @@ use std::path::PathBuf;
 
 #[derive(Parser)]
 #[command(name = "rules-validate")]
-#[command(about = "CLI tool for validating AdGuard filter lists")]
+#[command(about = "Bloqr CLI for validating adblock/hosts filter lists")]
 #[command(version)]
 struct Cli {
     #[command(subcommand)]

@@ -10,14 +10,20 @@ authors.workspace = true
 license.workspace = true
 repository.workspace = true
 rust-version.workspace = true
-description = "CLI tool for AdGuard filter validation"
+description = "Bloqr's CLI for validating adblock/hosts filter lists (hash verification, URL security, syntax checks). Part of the bloqr-core toolkit (github.com/BloqrAI/bloqr-core)."
+readme = "README.md"
+keywords = ["bloqr", "adblock", "cli", "validation", "filter"]
+categories = ["command-line-utilities"]
 
 [[bin]]
 name = "rules-validate"
 path = "src/main.rs"
 
 [dependencies]
-rules_validator = { path = "../rules-validator-core", package = "bloqr-validator-core" }
+# `version` is required alongside `path` so `cargo publish` can rewrite this
+# into a registry dependency (path deps aren't resolvable outside this
+# checkout) - see docs/architecture/versioning-strategy.md.
+rules_validator = { path = "../rules-validator-core", package = "bloqr-validator-core", version = "1" }
 clap = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }

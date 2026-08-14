@@ -1,9 +1,12 @@
-//! # AdGuard Validation Core Library
+//! # Bloqr Validator Core
 //!
-//! Centralized validation library for AdGuard filter compilation with comprehensive
-//! security features including hash verification, URL security validation, and syntax checking.
+//! Part of the [Bloqr](https://github.com/BloqrAI) open-source ad-blocking toolkit
+//! ([`bloqr-core`](https://github.com/BloqrAI/bloqr-core)). Centralized validation library for
+//! adblock- and hosts-format filter list compilation, with comprehensive security features
+//! including hash verification, URL security validation, and syntax checking.
 //!
-//! This library is designed to be used across multiple compilers (TypeScript, .NET, Python, Rust)
+//! This library is designed to be used across multiple language wrappers in `bloqr-core`
+//! (TypeScript/[`@bloqr/compiler-core`](https://jsr.io/@bloqr/compiler-core), .NET, Python, Rust)
 //! through native bindings, FFI, or WebAssembly. See the [`ffi`] module for the C-compatible
 //! FFI surface (`extern "C"` functions over an opaque-handle + JSON-string boundary), suitable
 //! for .NET P/Invoke or any other FFI consumer.
