@@ -68,7 +68,7 @@ updates:
 
   # npm: Gatsby documentation site, separate package.json/lockfile.
   - package-ecosystem: "npm"
-    directory: "/src/website"
+    directory: "/website"
     schedule:
       interval: weekly
       day: monday

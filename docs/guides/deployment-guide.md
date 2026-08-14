@@ -403,7 +403,7 @@ jobs:
       - name: Compile rules
         run: |
           cd src/adblock-compiler-core
-          deno task compile -- -c ../../Config/compiler-config.yaml -r
+          deno task compile -- -c ../../Config/compiler-config.json -r
       
       - name: Upload artifact
         uses: actions/upload-artifact@v3

@@ -22,14 +22,17 @@ This repository is a comprehensive multi-language toolkit for ad-blocking, netwo
 ### Common .NET Library
 - **`Bloqr.Compiler.Abstractions`/`Bloqr.Compiler.Core`** (`src/compiler-common-dotnet/`) - Shared .NET library (own solution, `CompilerCommon.slnx`) consumed by the .NET rules compiler and Dashboard via `<ProjectReference>`; not part of either consumer's solution
 
+### Dashboard
+- **Bloqr Dashboard** (`src/bloqr-dashboard/`) - flagship .NET console app (own solution, `BloqrDashboard.slnx`) for generating/editing/round-tripping compiler configs, running compilations with rich progress UI, and validation/diagnostics — menu-driven interactively, or automatable via CLI switches or as an embedded library (`IDashboardService`)
+
 ### Rules Validator
-- **Rules Validator** (`src/rules-validator/`) - Rust validation library (`rules-validator-core`) and CLI (`rules-validator-cli`) for filter/config validation
+- **Rules Validator** (`src/rules-validator/`) - Rust validation library (published to crates.io as [`bloqr-validator-core`](https://crates.io/crates/bloqr-validator-core)) and CLI (published as [`bloqr-validator-core-cli`](https://crates.io/crates/bloqr-validator-core-cli), installable via `cargo install`) for filter/config validation
 
 ### Documentation Site
-- **Website** (`src/website/`) - Gatsby 5 documentation site covering guides, API reference, and security docs
+- **Website** (`website/`) - Gatsby 5 documentation site covering guides, API reference, and security docs; lives at the repo root (not under `src/`) since it's slated for eventual extraction into its own repository
 
 ### Configuration Support
-All compilers support JSON, YAML, and TOML configuration formats with full @bloqr/compiler-core compatibility.
+All compilers read the same JSON/JSONC configuration schema (`schemas/compiler-config.schema.json`), documented and IDE-autocompletable via first-party JSON Schemas. YAML/TOML remain functionally supported by the underlying config readers for backward compatibility but are undocumented — see `docs/configuration-reference.md`.
 
 ### API Clients (moved)
 The AdGuard DNS API clients (.NET, TypeScript, Rust, PowerShell) and the Linear import tool moved to **[`BloqrAI/bloqr-apiclients`](https://github.com/BloqrAI/bloqr-apiclients)** (internal repo) — they're no longer part of this repository.
@@ -318,11 +321,12 @@ cargo test config::                       # Tests in module
 - Each module ships its own `.psd1` manifest and `Tests/` Pester suite
 
 ### Rules Validator (`src/rules-validator/`)
-- `rules-validator-core` - Rust library for validating filter/config files
-- `rules-validator-cli` - CLI frontend for the validation library
+- `bloqr-validator-core` - Rust library for validating filter/config files (crates.io)
+- `bloqr-validator-core-cli` - CLI frontend for the validation library (crates.io, `cargo install`)
 
-### Documentation Website (`src/website/`)
+### Documentation Website (`website/`)
 - Gatsby 5 static site with guides, API reference, and security documentation pages
+- Lives at the repo root, not under `src/`, since it's slated for eventual extraction into its own repository
 - `npm install && npm run develop` to preview locally; `npm run build` to build for deploy
 
 ## Configuration Schema
@@ -374,7 +378,7 @@ GitHub Actions workflows validate:
 - `.github/workflows/python.yml` - Builds and tests the Python rules compiler across supported Python versions
 - `.github/workflows/powershell.yml` - Pester tests and PSScriptAnalyzer for both PowerShell trees
 - `.github/workflows/build-scripts-tests.yml` - Exercises the root `build.sh`/`build.ps1` launcher scripts
-- `.github/workflows/gatsby.yml` - Builds the `src/website` documentation site
+- `.github/workflows/gatsby.yml` - Builds the `website` documentation site
 - `.github/workflows/security.yml` - Consolidated security scanning (CodeQL, DevSkim, PSScriptAnalyzer)
 - `.github/workflows/docker-image.yml` - Builds the `Dockerfile.warp` development image
 - `.github/workflows/validation-compliance.yml` - Runs the Rust validation CLI against filter/config fixtures
@@ -459,7 +463,7 @@ GitHub Actions workflows validate:
   5. **Cloudflare Workers is this org's cloud-native deploy target** for
      anything that needs to run as a service — see `bloqr-compiler` for
      the reference implementation (Workers, Hyperdrive, D1, Durable
-     Objects). Gatsby-based `src/website` is a deliberate exception (no
+     Objects). Gatsby-based `website` is a deliberate exception (no
      meaningful Deno-native static-site-generator option exists) and is
      expected to eventually move to Starlight in `bloqr-compiler`, not stay
      on Gatsby indefinitely.

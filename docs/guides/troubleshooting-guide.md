@@ -872,7 +872,7 @@ cargo build --verbose
 4. **Configuration files:**
 ```bash
 # Sanitize and include your config
-cat compiler-config.yaml
+cat compiler-config.json
 ```
 
 5. **Steps to reproduce:**

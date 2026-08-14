@@ -7,13 +7,13 @@
   - `src/rules-compiler-*` (TypeScript/Deno, .NET, Python, Rust, shell) compilers that use `@bloqr/compiler-core`.
   - `src/rules-compiler-powershell/` class-based PowerShell modules and Pester tests.
   - `src/rules-validator/` Rust validation library and CLI.
-  - `src/website/` Gatsby documentation site.
+  - `website/` Gatsby documentation site.
 - `docs/` holds guides and reference documentation.
 - The AdGuard DNS API clients (.NET, TypeScript, Rust, PowerShell) and the Linear import tool moved to [`BloqrAI/bloqr-apiclients`](https://github.com/BloqrAI/bloqr-apiclients) and are no longer part of this repo.
 
 ## Build, Test, and Development Commands
 
-- Compile rules (any platform): `./src/rules-compiler-shell/bash/compile-rules.sh -c config.yaml -r` (see `src/rules-compiler-shell/`).
+- Compile rules (any platform): `./src/rules-compiler-shell/bash/compile-rules.sh -c config.json -r` (see `src/rules-compiler-shell/`).
 - TypeScript compiler (`src/adblock-compiler-core/`):
   - `deno cache src/mod.ts` — cache dependencies
   - `deno task compile` — compile rules

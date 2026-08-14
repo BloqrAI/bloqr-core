@@ -507,6 +507,6 @@ src/linear/dist/
 *.whl
 
 # Gatsby
-src/website/public/
-src/website/.cache/
+website/public/
+website/.cache/
 

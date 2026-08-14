@@ -61,7 +61,7 @@ deno task compile -- --enable-chunking --chunk-size 100000 --max-parallel 4
 ```csharp
 var options = new CompilerOptions
 {
-    ConfigPath = "config.yaml",
+    ConfigPath = "config.json",
     Chunking = new ChunkingOptions
     {
         Enabled = true,
@@ -114,13 +114,13 @@ chunking_options = ChunkingOptions.for_large_lists()
 
 # Compile with chunking
 compiler = RulesCompiler(chunking=chunking_options)
-result = await compiler.compile_async("config.yaml")
+result = await compiler.compile_async("config.json")
 ```
 
 #### CLI Usage
 
 ```bash
-rules-compiler -c config.yaml --chunking --max-parallel 4
+rules-compiler -c config.json --chunking --max-parallel 4
 ```
 
 ### Rust
@@ -154,7 +154,7 @@ if should_enable_chunking(&config, Some(&options)) {
 #### CLI Usage
 
 ```bash
-rules-compiler -c config.yaml --chunking --max-parallel 4
+rules-compiler -c config.json --chunking --max-parallel 4
 ```
 
 ## Configuration Options

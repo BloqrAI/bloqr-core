@@ -421,7 +421,7 @@ deno run --allow-read https://deno.land/std/json/parse.ts config.json
 - name: Compile Rules
   run: |
     cd src/adblock-compiler-core
-    deno task compile -- -c config.yaml -r
+    deno task compile -- -c config.json -r
 ```
 
 ### Docker

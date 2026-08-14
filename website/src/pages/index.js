@@ -85,7 +85,7 @@ const IndexPage = () => {
           </div>
           <div className="feature">
             <h3>
-              <Link to="/docs">Bloqr Dashboard</Link>
+              <Link to="/dashboard">Bloqr Dashboard</Link>
             </h3>
             <p>
               The console app that ties everything together — config
