@@ -1,7 +1,7 @@
 {
   "extends": "../../deno.base.json",
   "name": "@bloqr/compiler-core",
-  "version": "1.1.2",
+  "version": "1.2.0",
   "exports": {
     ".": "./src/index.ts",
     "./lib": "./src/lib/index.ts",
