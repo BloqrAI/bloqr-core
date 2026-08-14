@@ -5,8 +5,22 @@ name: Publish adblock-compiler-core to JSR
 # it no-ops if the current deno.json version is already published — so this
 # is safe to run on every push that touches the package.
 #
-# AUTHENTICATION: Uses JSR_WORKFLOW_TOKEN (org-level Action secret, scoped to
-# @bloqr namespace). See docs/jsr-token-authentication.md for setup and usage.
+# AUTHENTICATION: JSR OIDC ("trusted publishing") - deno publish auto-detects
+# it's running in GitHub Actions with `id-token: write` permission and
+# authenticates via GitHub's OIDC token, no secret needed. Requires
+# @bloqr/compiler-core to be linked to this GitHub repository in JSR's
+# package settings (already done - see issue #291).
+#
+# HISTORY: this previously failed with "InvalidIssuer" (see #291,
+# jsr-io/jsr#1485) and this workflow fell back to the JSR_WORKFLOW_TOKEN
+# secret (docs/jsr-token-authentication.md). Root cause was later found to
+# be this org's GitHub Enterprise "Use enterprise-specific issuer URL" OIDC
+# setting (same failure mode independently confirmed via crates.io's more
+# descriptive rejection message) - not a JSR-side bug. That Enterprise
+# setting has since been disabled, so OIDC is back in use. If this starts
+# failing with InvalidIssuer again, check whether that setting got
+# re-enabled before assuming JSR or this workflow is broken; the token
+# fallback is still documented in docs/jsr-token-authentication.md.
 #
 # VERSIONING: deno.json's version is bumped automatically by
 # compiler-core-version-bump.yml (Conventional Commits) and tagged by
@@ -32,6 +46,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
+      id-token: write
 
     defaults:
       run:
@@ -68,10 +83,10 @@ jobs:
 
       - name: Publish to JSR
         id: publish
-        run: deno publish --token ${{ secrets.JSR_WORKFLOW_TOKEN }}
+        run: deno publish
 
       - name: Report publish failure
         if: failure() && steps.publish.outcome == 'failure'
         run: |
-          echo "::error::deno publish failed. Check JSR_WORKFLOW_TOKEN is configured as an org-level action secret with @bloqr scope access, and that @bloqr/compiler-core is linked to this GitHub repository."
+          echo "::error::deno publish failed. Check @bloqr/compiler-core is linked to this GitHub repository in JSR's package settings, and that the enterprise custom-OIDC-issuer setting is still disabled. Token-based fallback is documented in docs/jsr-token-authentication.md."
           exit 1
