@@ -56,7 +56,7 @@ cargo fmt --all -- --check
 
 ```bash
 # Build only rules-validator
-cargo build -p rules-validator-core
+cargo build -p bloqr-validator-core
 cargo build -p rules-validator-cli
 
 # Build only rules-compiler

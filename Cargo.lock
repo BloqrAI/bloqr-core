@@ -110,6 +110,26 @@ dependencies = [
 ]
 
 [[package]]
+name = "bloqr-validator-core"
+version = "1.0.0"
+dependencies = [
+ "chrono",
+ "hex",
+ "js-sys",
+ "regex",
+ "reqwest",
+ "serde",
+ "serde_json",
+ "sha2",
+ "tempfile",
+ "thiserror",
+ "url",
+ "walkdir",
+ "wasm-bindgen",
+ "web-sys",
+]
+
+[[package]]
 name = "bumpalo"
 version = "3.20.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1062,6 +1082,7 @@ dependencies = [
 name = "rules-compiler"
 version = "1.0.0"
 dependencies = [
+ "bloqr-validator-core",
  "chrono",
  "clap",
  "dialoguer",
@@ -1069,7 +1090,6 @@ dependencies = [
  "hex",
  "libc",
  "rand",
- "rules-validator-core",
  "rustc_version_runtime",
  "serde",
  "serde_json",
@@ -1089,30 +1109,10 @@ name = "rules-validator-cli"
 version = "1.0.0"
 dependencies = [
  "anyhow",
+ "bloqr-validator-core",
  "clap",
- "rules-validator-core",
  "serde",
  "serde_json",
-]
-
-[[package]]
-name = "rules-validator-core"
-version = "1.0.0"
-dependencies = [
- "chrono",
- "hex",
- "js-sys",
- "regex",
- "reqwest",
- "serde",
- "serde_json",
- "sha2",
- "tempfile",
- "thiserror",
- "url",
- "walkdir",
- "wasm-bindgen",
- "web-sys",
 ]
 
 [[package]]
