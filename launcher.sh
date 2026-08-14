@@ -326,7 +326,7 @@ validation_menu() {
         
         case $choice in
             1)
-                cargo test -p bloqr-validator-core -p rules-validator-cli
+                cargo test -p bloqr-validator-core -p bloqr-validator-core-cli
                 pause
                 ;;
             2)

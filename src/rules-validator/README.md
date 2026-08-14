@@ -64,7 +64,7 @@ cargo build --release
 cargo build --release -p bloqr-validator-core
 
 # Build CLI tool
-cargo build --release -p rules-validator-cli
+cargo build --release -p bloqr-validator-core-cli
 
 # Run tests
 cargo test --all

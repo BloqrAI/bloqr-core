@@ -190,7 +190,7 @@ check_validation_library_builds() {
     
     cd "$REPO_ROOT"
 
-    if cargo build --release -p bloqr-validator-core -p rules-validator-cli >/dev/null 2>&1; then
+    if cargo build --release -p bloqr-validator-core -p bloqr-validator-core-cli >/dev/null 2>&1; then
         echo -e "${GREEN}✓ Validation library builds successfully${NC}"
     else
         echo -e "${RED}✗ Validation library build failed${NC}"
@@ -205,7 +205,7 @@ check_validation_library_tests() {
     
     cd "$REPO_ROOT"
 
-    if cargo test -p bloqr-validator-core -p rules-validator-cli >/dev/null 2>&1; then
+    if cargo test -p bloqr-validator-core -p bloqr-validator-core-cli >/dev/null 2>&1; then
         echo -e "${GREEN}✓ Validation library tests pass (29 tests)${NC}"
     else
         echo -e "${RED}✗ Validation library tests failed${NC}"

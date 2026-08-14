@@ -57,15 +57,15 @@ jobs:
         run: cargo build --release -p bloqr-validator-core
 
       - name: Run validation library tests
-        run: cargo test -p bloqr-validator-core -p rules-validator-cli
+        run: cargo test -p bloqr-validator-core -p bloqr-validator-core-cli
 
       - name: Check clippy
         run: |
-          cargo clippy -p bloqr-validator-core -p rules-validator-cli \
+          cargo clippy -p bloqr-validator-core -p bloqr-validator-core-cli \
             --all-targets --all-features -- -W clippy::all -W clippy::correctness -W clippy::suspicious
 
       - name: Build CLI tool
-        run: cargo build --release -p rules-validator-cli
+        run: cargo build --release -p bloqr-validator-core-cli
 
       - name: Upload validation library artifacts
         uses: actions/upload-artifact@v7
