@@ -436,7 +436,20 @@ GitHub Actions workflows validate:
   PR) shipped past every individual PR's CI and was only caught this way.
 - Full narrative, including the OIDC investigation timeline and the
   `bloqr-compiler` dependency-swap decisions, is in
-  `docs/RESTRUCTURING_RETROSPECTIVE.md`.
+  `docs/RESTRUCTURING_RETROSPECTIVE.md`. Its sequel, `docs/EPIC_256_RETROSPECTIVE.md`,
+  covers the Dashboard/common-library/rules-validator/crates.io-publishing
+  epic that followed it — read both before picking up #331/#372.
+- **After a squash-merged PR, reset the branch onto fresh `origin/main`
+  before adding more commits to it — don't assume it's still equivalent to
+  `main`.** A squash merge creates a *new* commit object on `main` with the
+  same content as (but a different SHA from) the branch's pre-merge commit.
+  Continuing to build on the stale local branch makes the next PR show a
+  real merge conflict even though nothing actually conflicts, because
+  GitHub sees two independently-authored versions of the same change. Hit
+  this twice during epic #256 (PRs #374 and #375) before it was fully
+  internalized — see `docs/EPIC_256_RETROSPECTIVE.md`'s "Obstacles
+  overcome" for the exact recovery sequence
+  (`git rebase --onto origin/main <stale-commit> <branch>`).
 - **TypeScript/JavaScript runtime and package-manager order of preference,
   for every project in this repo:**
   1. **Deno-native first.** Design new TypeScript code, and structure new
@@ -490,5 +503,5 @@ GitHub Actions workflows validate:
 - **Deno configs**: `src/*/deno.json`
 - **OpenAPI spec**: `api/openapi.yaml` in [`BloqrAI/bloqr-apiclients`](https://github.com/BloqrAI/bloqr-apiclients)
 - **Docker config**: `Dockerfile.warp`, `docker-compose.yml`, `.dockerignore`
-- **Documentation**: `docs/` — see especially `docs/architecture/versioning-strategy.md` and `docs/RESTRUCTURING_RETROSPECTIVE.md`
+- **Documentation**: `docs/` — see especially `docs/architecture/versioning-strategy.md`, `docs/RESTRUCTURING_RETROSPECTIVE.md`, and `docs/EPIC_256_RETROSPECTIVE.md`
 - **Environment template**: `.env.example`
