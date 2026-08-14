@@ -44,6 +44,8 @@ Modern OOP-based rules compiler module.
 
 **Features:**
 - CompilerConfiguration class
+- `Invoke-RulesCompiler`: shells out to `hostlist-compiler` (or `npx @adguard/hostlist-compiler`), computes a SHA-384 hash, and runs `Invoke-RulesValidator`'s syntax check (informational findings only)
+- `Invoke-RulesValidator`: shells out to the `rules-validate` CLI ([src/rules-validator/](../rules-validator/)) for standalone syntax validation
 - Type-safe configuration
 - Comprehensive error handling
 - Environment variable support
