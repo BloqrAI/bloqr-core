@@ -1,0 +1,89 @@
+name: Publish Common .NET Library to NuGet
+
+# Publishes src/compiler-common-dotnet (Bloqr.Compiler.Abstractions and
+# Bloqr.Compiler.Core) to GitHub Packages' NuGet feed whenever either
+# project changes on main, or on demand. Mirrors publish-jsr.yml's and
+# publish-crates.yml's pattern: path-filtered push trigger, independent of
+# the repo-wide binary release in release.yml. See
+# docs/architecture/nuget-distribution-strategy.md and
+# docs/architecture/versioning-strategy.md.
+#
+# AUTHENTICATION: the workflow's own GITHUB_TOKEN (packages: write) - no
+# separate secret to manage.
+#
+# VERSIONING: each csproj's <Version> is the source of truth, bumped by
+# hand today (no automated Conventional-Commits bump workflow yet - see
+# docs/architecture/nuget-distribution-strategy.md). `dotnet nuget push
+# --skip-duplicate` makes re-running this workflow for an already-published
+# version a no-op.
+
+on:
+  push:
+    branches: ["main"]
+    paths:
+      - "src/compiler-common-dotnet/**"
+      - ".github/workflows/publish-nuget.yml"
+  workflow_dispatch: {}
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  publish:
+    name: Publish to GitHub Packages
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Cache NuGet packages
+        uses: actions/cache@v6
+        with:
+          path: ~/.nuget/packages
+          key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj', '**/*.slnx') }}
+          restore-keys: ${{ runner.os }}-nuget-
+
+      - name: Restore Compiler Common dependencies
+        run: dotnet restore src/compiler-common-dotnet/CompilerCommon.slnx
+
+      - name: Test
+        run: dotnet test src/compiler-common-dotnet/CompilerCommon.slnx --configuration Release --no-restore
+
+      # Bloqr.Compiler.Abstractions/Core are "the common .NET library" - see
+      # docs/architecture/nuget-distribution-strategy.md for why these two
+      # are published while in-repo consumers (RulesCompiler,
+      # Bloqr.Dashboard.*) stay on <ProjectReference>.
+      - name: Pack common library packages
+        run: |
+          dotnet pack src/compiler-common-dotnet/src/Bloqr.Compiler.Abstractions/Bloqr.Compiler.Abstractions.csproj \
+            --configuration Release \
+            --no-restore \
+            --output ./nuget-packages
+          dotnet pack src/compiler-common-dotnet/src/Bloqr.Compiler.Core/Bloqr.Compiler.Core.csproj \
+            --configuration Release \
+            --no-restore \
+            --output ./nuget-packages
+
+      - name: Push to GitHub Packages
+        run: |
+          dotnet nuget push "./nuget-packages/*.nupkg" \
+            --source "https://nuget.pkg.github.com/BloqrAI/index.json" \
+            --api-key "${{ secrets.GITHUB_TOKEN }}" \
+            --skip-duplicate
+
+      - name: Upload nupkg artifacts
+        uses: actions/upload-artifact@v7
+        with:
+          name: nuget-packages
+          path: ./nuget-packages/*.nupkg
+          if-no-files-found: error

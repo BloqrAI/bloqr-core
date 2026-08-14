@@ -1,0 +1,87 @@
+name: Publish bloqr-validator-core to crates.io
+
+# Publishes src/rules-validator/rules-validator-core (the bloqr-validator-core
+# crate) to crates.io whenever it changes on main, or on demand. Mirrors
+# publish-jsr.yml's pattern: path-filtered push trigger, independent of the
+# repo-wide binary release in release.yml, so a validation-logic change
+# doesn't have to wait for (or force) a full multi-language binary release
+# to reach crates.io. See docs/architecture/versioning-strategy.md.
+#
+# AUTHENTICATION: CARGO_REGISTRY_TOKEN (org-level Action secret).
+#
+# VERSIONING: Cargo.toml's own `version` field is the source of truth,
+# bumped by hand today (no automated Conventional-Commits bump workflow yet
+# for Rust - see docs/architecture/versioning-strategy.md's "what's still
+# manual" note). This workflow doesn't bump anything, it just publishes
+# whatever version is currently checked in, when it isn't already
+# published - `cargo publish` has no native --skip-duplicate, so the
+# idempotency check below does that job instead.
+
+on:
+  push:
+    branches: ["main"]
+    paths:
+      - "src/rules-validator/rules-validator-core/**"
+      - "Cargo.toml"
+      - "Cargo.lock"
+      - ".github/workflows/publish-crates.yml"
+  workflow_dispatch: {}
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    name: Publish to crates.io
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Install Rust toolchain
+        uses: actions-rust-lang/setup-rust-toolchain@v1
+        with:
+          toolchain: stable
+
+      - name: Cache Cargo
+        uses: actions/cache@v6
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: ${{ runner.os }}-cargo-publish-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: ${{ runner.os }}-cargo-publish-
+
+      - name: Dry-run publish (validates the package before the real push)
+        run: cargo publish -p bloqr-validator-core --dry-run --locked
+
+      - name: Check if this version is already published
+        id: check
+        run: |
+          pkgid=$(cargo pkgid -p bloqr-validator-core)
+          version="${pkgid##*@}"
+          echo "version=${version}" >> "$GITHUB_OUTPUT"
+          status=$(curl -s -o /dev/null -w "%{http_code}" "https://crates.io/api/v1/crates/bloqr-validator-core/${version}")
+          if [ "$status" = "200" ]; then
+            echo "Version ${version} is already published - skipping (idempotent re-run)."
+            echo "already_published=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "already_published=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Publish bloqr-validator-core to crates.io
+        id: publish
+        if: steps.check.outputs.already_published == 'false'
+        env:
+          CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
+        run: cargo publish -p bloqr-validator-core --locked
+
+      - name: Report publish failure
+        if: failure() && steps.publish.outcome == 'failure'
+        run: |
+          echo "::error::crates.io publish failed. Check CARGO_REGISTRY_TOKEN is configured as an org-level action secret with publish-new/publish-update/yank scopes for bloqr-validator-core."
+          exit 1
