@@ -4,7 +4,7 @@ name = "bloqr-validator-core-cli"
 # (flag/UX changes) is decoupled from the library's (validation-logic
 # changes) even though it's not yet independently published - see
 # docs/architecture/versioning-strategy.md.
-version = "1.0.0"
+version = "1.0.1"
 edition.workspace = true
 authors.workspace = true
 license.workspace = true
