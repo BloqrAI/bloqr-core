@@ -376,7 +376,7 @@ function Show-ValidationMenu {
         )
         
         switch ($choice) {
-            "1" { Invoke-SafeCommand { cargo test -p rules-validator-core -p rules-validator-cli } "Running validation tests"; Pause }
+            "1" { Invoke-SafeCommand { cargo test -p bloqr-validator-core -p bloqr-validator-core-cli } "Running validation tests"; Pause }
             "2" { Invoke-SafeCommand { cargo test --workspace } "Running all Rust tests"; Pause }
             "3" {
                 Write-Host "Testing .NET Rules Compiler..." -ForegroundColor Cyan

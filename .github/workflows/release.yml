@@ -61,7 +61,7 @@ jobs:
 
       - name: Build rules-validator-core (cdylib) and rules-validator-cli
         shell: bash
-        run: cargo build --release --target ${{ matrix.target }} -p bloqr-validator-core -p rules-validator-cli
+        run: cargo build --release --target ${{ matrix.target }} -p bloqr-validator-core -p bloqr-validator-core-cli
 
       - name: Stage artifacts
         shell: bash

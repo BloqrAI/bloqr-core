@@ -57,7 +57,7 @@ cargo fmt --all -- --check
 ```bash
 # Build only rules-validator
 cargo build -p bloqr-validator-core
-cargo build -p rules-validator-cli
+cargo build -p bloqr-validator-core-cli
 
 # Build only rules-compiler
 cargo build -p rules-compiler
@@ -67,7 +67,7 @@ cargo build -p rules-compiler
 
 ```bash
 # Run rules-validate CLI
-cargo run -p rules-validator-cli -- --help
+cargo run -p bloqr-validator-core-cli -- --help
 
 # Run rules-compiler
 cargo run -p rules-compiler -- --help
@@ -168,7 +168,7 @@ cargo upgrade
 cargo doc --workspace --no-deps --open
 
 # Generate docs for a specific package
-cargo doc -p rules-validator-core --open
+cargo doc -p bloqr-validator-core --open
 ```
 
 ### Benchmarking

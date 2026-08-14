@@ -130,6 +130,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "bloqr-validator-core-cli"
+version = "1.0.0"
+dependencies = [
+ "anyhow",
+ "bloqr-validator-core",
+ "clap",
+ "serde",
+ "serde_json",
+]
+
+[[package]]
 name = "bumpalo"
 version = "3.20.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1102,17 +1113,6 @@ dependencies = [
  "tracing",
  "uuid",
  "which",
-]
-
-[[package]]
-name = "rules-validator-cli"
-version = "1.0.0"
-dependencies = [
- "anyhow",
- "bloqr-validator-core",
- "clap",
- "serde",
- "serde_json",
 ]
 
 [[package]]
