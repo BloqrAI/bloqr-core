@@ -239,7 +239,7 @@ The Diagnostics menu provides:
 
 ## Embedding as a Library
 
-The Dashboard can be embedded in other applications (e.g., a future WPF UI) by depending on:
+The Dashboard can be embedded in other applications (e.g., a future .NET MAUI UI) by depending on:
 - `Bloqr.Dashboard.Abstractions` (interfaces, no dependencies)
 - `Bloqr.Dashboard.Core` (implementation)
 

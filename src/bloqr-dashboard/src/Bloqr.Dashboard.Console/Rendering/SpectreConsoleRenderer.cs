@@ -4,7 +4,7 @@ namespace Bloqr.Dashboard.Console.Rendering;
 /// <see cref="IConsoleRenderer"/> implementation backed by Spectre.Console. This is the only
 /// class in the Dashboard permitted to reference <c>Spectre.Console</c> directly for rendering,
 /// alongside <see cref="SpectreConsolePrompter"/> — everything else consumes the interface, so a
-/// future WPF host can supply a different implementation without touching menu logic.
+/// future .NET MAUI host can supply a different implementation without touching menu logic.
 /// </summary>
 public sealed class SpectreConsoleRenderer : IConsoleRenderer
 {
