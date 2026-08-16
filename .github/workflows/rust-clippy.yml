@@ -137,7 +137,8 @@ jobs:
             ~/.cargo/registry
             ~/.cargo/git
             src/rules-validator/rules-validator-core/fuzz/target
-          key: ${{ runner.os }}-cargo-fuzz-${{ hashFiles('src/rules-validator/rules-validator-core/fuzz/Cargo.lock') }}
+            src/rules-compiler-rust/fuzz/target
+          key: ${{ runner.os }}-cargo-fuzz-${{ hashFiles('src/rules-validator/rules-validator-core/fuzz/Cargo.lock', 'src/rules-compiler-rust/fuzz/Cargo.lock') }}
           restore-keys: ${{ runner.os }}-cargo-fuzz-
 
       - name: Install cargo-fuzz
@@ -160,10 +161,20 @@ jobs:
         working-directory: src/rules-validator/rules-validator-core
         run: cargo +nightly fuzz run fuzz_hash_database_json -- -max_total_time=60
 
+      - name: Fuzz fuzz_compiler_config (60s)
+        working-directory: src/rules-compiler-rust
+        run: cargo +nightly fuzz run fuzz_compiler_config -- -max_total_time=60
+
+      - name: Fuzz fuzz_merge_chunks (60s)
+        working-directory: src/rules-compiler-rust
+        run: cargo +nightly fuzz run fuzz_merge_chunks -- -max_total_time=60
+
       - name: Upload crash artifacts (if any)
         if: failure()
         uses: actions/upload-artifact@v4
         with:
           name: fuzz-crash-artifacts
-          path: src/rules-validator/rules-validator-core/fuzz/artifacts/
+          path: |
+            src/rules-validator/rules-validator-core/fuzz/artifacts/
+            src/rules-compiler-rust/fuzz/artifacts/
           if-no-files-found: ignore

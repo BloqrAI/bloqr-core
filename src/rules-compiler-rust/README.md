@@ -291,6 +291,18 @@ The Rust implementation offers:
 - Single binary distribution (no runtime dependencies)
 - Native performance for file operations
 
+## Security & hardening
+
+CI enforces, on every PR touching this crate:
+
+- `cargo clippy -D clippy::all -D clippy::correctness -D clippy::suspicious` (a hard gate, not just warnings)
+- `cargo deny check` (`deny.toml` at the repo root) — dependency license compliance, `RUSTSEC` advisory/yanked-crate checks, and source-registry pinning; covers this crate's dependency tree alongside `bloqr-validator-core`/`bloqr-validator-core-cli`
+- A 60-second smoke-fuzz run (via `cargo-fuzz`/libFuzzer) of each target in `fuzz/fuzz_targets/` — `fuzz_compiler_config` (all three supported `CompilerConfig` formats: JSON/YAML/TOML) and `fuzz_merge_chunks` (chunk-merge/dedup logic), the untrusted-input surfaces this crate exposes
+
+Filter-list URL fetching itself is delegated to the external `hostlist-compiler` process (invoked via `std::process::Command` with argument vectors, not a shell, so it isn't subject to shell injection); SSRF-class hardening for URL validation lives in `bloqr-validator-core`'s `url_security.rs`, which this crate uses for local-file syntax/hash validation.
+
+To fuzz locally for longer than the CI smoke test: `cd fuzz && cargo +nightly fuzz run fuzz_compiler_config -- -max_total_time=600` (swap the target name for `fuzz_merge_chunks`).
+
 ## Cross-Compilation
 
 Build for other platforms:
