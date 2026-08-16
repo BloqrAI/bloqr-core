@@ -896,23 +896,24 @@ mod tests {
 
     #[test]
     fn test_bare_single_label_hostname_rejected_as_unknown_suffix() {
-        // A bare single-label hostname like "localhost" has no registrable-domain part -
-        // the whole string trivially "is" its own suffix, and it's not a suffix the PSL
+        // Any bare single-label hostname (no dots at all, e.g. an unqualified LAN device
+        // name like this test's arbitrary example) has no registrable-domain part - the
+        // whole string trivially "is" its own suffix, and it's not a suffix the PSL
         // actually recognizes (not ICANN, not private). HostlistCompiler's validHostname()
         // rejects this by default for the same reason it rejects "||co.uk^": blocking (or
         // in this case, defining) an unrecognized whole-suffix entry is the overly-broad
         // case the public-suffix guard exists to catch. ValidateAllowPublicSuffix does NOT
         // rescue it either, since is_known() is false - mirrors validHostname()'s
         // `!result.isIcann && !result.isPrivate` guard applying even when allowPublicSuffix
-        // is set. ("localhost" below is /etc/hosts-format test input, not a network call.)
+        // is set.
         let strict = validate_syntax_content_with_mode(
-            "0.0.0.0 localhost\n",
+            "0.0.0.0 my-lan-router\n",
             HostlistValidationMode::Validate,
         );
         assert_eq!(strict.invalid_rules, 1);
 
         let permissive = validate_syntax_content_with_mode(
-            "0.0.0.0 localhost\n",
+            "0.0.0.0 my-lan-router\n",
             HostlistValidationMode::ValidateAllowPublicSuffix,
         );
         assert_eq!(permissive.invalid_rules, 1);
