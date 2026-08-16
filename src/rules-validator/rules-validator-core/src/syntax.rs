@@ -42,10 +42,18 @@ pub struct SyntaxValidationResult {
 pub fn validate_syntax<P: AsRef<Path>>(path: P) -> Result<SyntaxValidationResult> {
     let path = path.as_ref();
     let content = fs::read_to_string(path)?;
+    Ok(validate_syntax_content(&content))
+}
 
+/// Validate filter list syntax from in-memory content.
+///
+/// Pure logic split out from [`validate_syntax`] so it can be exercised
+/// directly by unit tests and fuzz targets without touching the filesystem.
+#[must_use]
+pub fn validate_syntax_content(content: &str) -> SyntaxValidationResult {
     let mut result = SyntaxValidationResult {
         is_valid: true,
-        format: detect_format(&content),
+        format: detect_format(content),
         valid_rules: 0,
         invalid_rules: 0,
         messages: Vec::new(),
@@ -78,7 +86,7 @@ pub fn validate_syntax<P: AsRef<Path>>(path: P) -> Result<SyntaxValidationResult
         result.messages.push("No valid rules found".to_string());
     }
 
-    Ok(result)
+    result
 }
 
 /// Detect filter format from content.

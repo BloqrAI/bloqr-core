@@ -4,7 +4,7 @@ name = "bloqr-validator-core"
 # own published crates.io artifact (#365) and must be bumpable on its own
 # cadence, decoupled from bloqr-validator-core-cli and rules-compiler - see
 # docs/architecture/versioning-strategy.md.
-version = "1.0.2"
+version = "1.0.3"
 edition.workspace = true
 authors.workspace = true
 license.workspace = true

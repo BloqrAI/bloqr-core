@@ -68,7 +68,13 @@ jobs:
       - name: Run clippy
         run: |
           cargo clippy --no-deps -p rules-compiler -p bloqr-validator-core -p bloqr-validator-core-cli \
-            --all-features -- -W clippy::all -W clippy::correctness -W clippy::suspicious
+            --all-features -- -D clippy::all -D clippy::correctness -D clippy::suspicious
+
+      - name: Install cargo-deny
+        uses: taiki-e/install-action@cargo-deny
+
+      - name: Run cargo-deny (advisories, bans, licenses, sources)
+        run: cargo deny check
 
   security-analysis:
     name: Security Analysis
@@ -112,3 +118,52 @@ jobs:
         with:
           sarif_file: rust-clippy-results.sarif
           wait-for-processing: true
+
+  fuzz-smoke-test:
+    name: Fuzz Smoke Test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Install nightly Rust toolchain
+        uses: actions-rust-lang/setup-rust-toolchain@v1
+        with:
+          toolchain: nightly
+
+      - name: Cache Cargo
+        uses: actions/cache@v6
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            src/rules-validator/rules-validator-core/fuzz/target
+          key: ${{ runner.os }}-cargo-fuzz-${{ hashFiles('src/rules-validator/rules-validator-core/fuzz/Cargo.lock') }}
+          restore-keys: ${{ runner.os }}-cargo-fuzz-
+
+      - name: Install cargo-fuzz
+        run: cargo +nightly install cargo-fuzz --locked
+
+      # Short, bounded runs (not continuous fuzzing) - enough to catch build
+      # breaks and any trivially-reachable panic/crash on every PR, without
+      # turning ordinary CI into a fuzzing farm. Corpus/crash artifacts
+      # aren't persisted between runs; a real fuzzing campaign against an
+      # accumulated corpus is a separate, opt-in exercise.
+      - name: Fuzz fuzz_syntax_content (60s)
+        working-directory: src/rules-validator/rules-validator-core
+        run: cargo +nightly fuzz run fuzz_syntax_content -- -max_total_time=60
+
+      - name: Fuzz fuzz_config_json (60s)
+        working-directory: src/rules-validator/rules-validator-core
+        run: cargo +nightly fuzz run fuzz_config_json -- -max_total_time=60
+
+      - name: Fuzz fuzz_hash_database_json (60s)
+        working-directory: src/rules-validator/rules-validator-core
+        run: cargo +nightly fuzz run fuzz_hash_database_json -- -max_total_time=60
+
+      - name: Upload crash artifacts (if any)
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: fuzz-crash-artifacts
+          path: src/rules-validator/rules-validator-core/fuzz/artifacts/
+          if-no-files-found: ignore
