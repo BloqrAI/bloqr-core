@@ -195,9 +195,9 @@ fn test_syntax_validation_hosts_format() {
     writeln!(file, "# Comment").unwrap();
     writeln!(file, "0.0.0.0 example.com").unwrap();
     writeln!(file, "0.0.0.0 ads.example.com").unwrap();
-    // Not "127.0.0.1 localhost": a bare single-label hostname has no registrable-domain
-    // part, so it's rejected by the public-suffix-list check (unknown, unrecognized suffix)
-    // in the default Validate mode this test exercises - see syntax.rs's
+    // Not a bare single-label hostname: those have no registrable-domain part, so they're
+    // rejected by the public-suffix-list check (unknown, unrecognized suffix) in the
+    // default Validate mode this test exercises - see syntax.rs's
     // test_bare_single_label_hostname_rejected_as_unknown_suffix for that dedicated case.
     writeln!(file, "127.0.0.1 loopback.example.com").unwrap();
     file.flush().unwrap();
