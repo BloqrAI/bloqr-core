@@ -227,7 +227,7 @@ fn is_etc_hosts_rule(line: &str) -> bool {
 /// (it does not trust a whole-file format guess for this decision, and neither do we).
 fn is_valid_rule(line: &str, mode: HostlistValidationMode) -> bool {
     if is_etc_hosts_rule(line) {
-        valid_etc_hosts_rule(line, mode.allow_ip())
+        valid_etc_hosts_rule(line, mode.allow_ip(), mode.allow_public_suffix())
     } else {
         valid_adblock_rule(line, mode.allow_ip(), mode.allow_public_suffix())
     }
@@ -235,7 +235,7 @@ fn is_valid_rule(line: &str, mode: HostlistValidationMode) -> bool {
 
 /// Validates an `/etc/hosts` rule: every hostname on the line (there may be more than
 /// one) must pass [`valid_hostname`]. Mirrors `validEtcHostsRule()`.
-fn valid_etc_hosts_rule(line: &str, allow_ip: bool) -> bool {
+fn valid_etc_hosts_rule(line: &str, allow_ip: bool, allow_public_suffix: bool) -> bool {
     let without_comment = line.split('#').next().unwrap_or(line).trim();
     let mut tokens = without_comment.split_whitespace();
     // First token is the IP address itself, not a hostname to validate.
@@ -248,7 +248,7 @@ fn valid_etc_hosts_rule(line: &str, allow_ip: bool) -> bool {
     }
     hostnames
         .iter()
-        .all(|h| valid_hostname(h, allow_ip, false, false))
+        .all(|h| valid_hostname(h, allow_ip, false, allow_public_suffix))
 }
 
 /// The list of modifiers that limit a rule to specific domains/clients (`ANY_PATTERN_MODIFIER`
@@ -515,19 +515,16 @@ fn extract_domain_pattern(pattern: &str) -> Option<String> {
     Some(hostname.strip_suffix('.').unwrap_or(hostname).to_string())
 }
 
-/// Checks whether `hostname` is acceptable in a blocklist. Mirrors `validHostname()` **except**
-/// for its public-suffix-list lookup (`tldts.parse(...).publicSuffix`/`isIcann`/`isPrivate`):
-/// without embedding a real PSL, this crate cannot yet tell "co.uk" (a public suffix, normally
-/// rejected) apart from "example.com" (an ordinary registrable domain, always fine). See
-/// `docs/adr/0003-adguard-hostlist-compatibility.md` Phase 2. Until that lands, whole-public-suffix
-/// rules are never rejected here even when `allow_public_suffix` is `false` — a known, deliberately
-/// narrower-than-upstream gap (permissive, not silently wrong: we never *reject* a rule upstream
-/// would accept because of this, only fail to reject some upstream would).
+/// Checks whether `hostname` is acceptable in a blocklist. Mirrors `validHostname()`, including
+/// its public-suffix-list check (`tldts.parse(...).publicSuffix`/`isIcann`/`isPrivate` there;
+/// the [`psl`] crate's compiled-in Public Suffix List here — see
+/// `docs/adr/0003-adguard-hostlist-compatibility.md` Phase 2 for why `psl` specifically, over
+/// `publicsuffix`, was chosen).
 fn valid_hostname(
     hostname: &str,
     allow_ip: bool,
-    _has_limit_modifier: bool,
-    _allow_public_suffix: bool,
+    has_limit_modifier: bool,
+    allow_public_suffix: bool,
 ) -> bool {
     if !hostname.chars().any(|c| c.is_ascii_alphanumeric()) {
         return false;
@@ -535,6 +532,24 @@ fn valid_hostname(
     if !allow_ip && hostname.parse::<IpAddr>().is_ok() {
         return false;
     }
+
+    if !has_limit_modifier {
+        if let Some(suffix) = psl::suffix(hostname.as_bytes()) {
+            if suffix.as_bytes().eq_ignore_ascii_case(hostname.as_bytes()) {
+                if !allow_public_suffix {
+                    return false;
+                }
+                // Even with allow_public_suffix, reject hostnames the PSL doesn't actually
+                // recognize (single-label garbage like "a", "aa" trivially "equals its own
+                // suffix" under a naive check) - mirrors validHostname()'s
+                // `!result.isIcann && !result.isPrivate` guard.
+                if !suffix.is_known() {
+                    return false;
+                }
+            }
+        }
+    }
+
     true
 }
 
@@ -777,6 +792,49 @@ mod tests {
         assert!(valid_adblock_rule("*.example.com^", false, false));
     }
 
+    // --- Public-suffix rejection (Phase 2 of #380, tracked as #385) ---
+
+    #[test]
+    fn test_public_suffix_rule_rejected_by_default() {
+        // "co.uk" is a recognized ICANN public suffix - blocking it entirely is the
+        // overly-broad-rule case HostlistCompiler's validate() guards against.
+        assert!(!valid_adblock_rule("||co.uk^", false, false));
+        assert!(!valid_adblock_rule("||co.uk^", true, false));
+    }
+
+    #[test]
+    fn test_public_suffix_rule_allowed_with_allow_public_suffix() {
+        assert!(valid_adblock_rule("||co.uk^", false, true));
+    }
+
+    #[test]
+    fn test_public_suffix_rule_allowed_with_limit_modifier() {
+        // A limit modifier (denyallow/badfilter/client) narrows the rule enough that
+        // blocking a whole public suffix is no longer considered overly broad.
+        assert!(valid_adblock_rule("||co.uk^$badfilter", false, false));
+    }
+
+    #[test]
+    fn test_ordinary_registrable_domain_never_rejected_as_public_suffix() {
+        // "example.com" is a registrable domain *under* the "com" public suffix, not a
+        // suffix itself - must never be caught by the public-suffix check regardless of mode.
+        assert!(valid_adblock_rule("||example.com^", false, false));
+        assert!(valid_adblock_rule("||example.com^", false, true));
+    }
+
+    #[test]
+    fn test_etc_hosts_rule_respects_public_suffix_mode() {
+        let strict =
+            validate_syntax_content_with_mode("0.0.0.0 co.uk\n", HostlistValidationMode::Validate);
+        assert_eq!(strict.invalid_rules, 1);
+
+        let permissive = validate_syntax_content_with_mode(
+            "0.0.0.0 co.uk\n",
+            HostlistValidationMode::ValidateAllowPublicSuffix,
+        );
+        assert_eq!(permissive.invalid_rules, 0);
+    }
+
     #[test]
     fn test_pattern_too_short_rejected() {
         // "a.b^" is 4 chars, below MAX_PATTERN_LENGTH, and not an exact-domain match
@@ -824,12 +882,40 @@ mod tests {
 
     #[test]
     fn test_validate_syntax_content_hosts_multi_hostname_line() {
-        // "127.0.0.1 localhost" here is /etc/hosts-format test *input* fed to the parser -
-        // no network call is made. False-positive bait for localhost/debug-code scanners.
-        let result =
-            validate_syntax_content("0.0.0.0 example.com ads.example.com\n127.0.0.1 localhost\n");
+        // "127.0.0.1 loopback.example.com" here is /etc/hosts-format test *input* fed to
+        // the parser - no network call is made. False-positive bait for localhost/debug-code
+        // scanners. (Deliberately not a bare "localhost" - see
+        // test_bare_single_label_hostname_rejected_as_unknown_suffix for why that's a
+        // different, separately-tested case now that the public-suffix check is real.)
+        let result = validate_syntax_content(
+            "0.0.0.0 example.com ads.example.com\n127.0.0.1 loopback.example.com\n",
+        );
         assert_eq!(result.invalid_rules, 0);
         assert_eq!(result.valid_rules, 2);
+    }
+
+    #[test]
+    fn test_bare_single_label_hostname_rejected_as_unknown_suffix() {
+        // A bare single-label hostname like "localhost" has no registrable-domain part -
+        // the whole string trivially "is" its own suffix, and it's not a suffix the PSL
+        // actually recognizes (not ICANN, not private). HostlistCompiler's validHostname()
+        // rejects this by default for the same reason it rejects "||co.uk^": blocking (or
+        // in this case, defining) an unrecognized whole-suffix entry is the overly-broad
+        // case the public-suffix guard exists to catch. ValidateAllowPublicSuffix does NOT
+        // rescue it either, since is_known() is false - mirrors validHostname()'s
+        // `!result.isIcann && !result.isPrivate` guard applying even when allowPublicSuffix
+        // is set. ("localhost" below is /etc/hosts-format test input, not a network call.)
+        let strict = validate_syntax_content_with_mode(
+            "0.0.0.0 localhost\n",
+            HostlistValidationMode::Validate,
+        );
+        assert_eq!(strict.invalid_rules, 1);
+
+        let permissive = validate_syntax_content_with_mode(
+            "0.0.0.0 localhost\n",
+            HostlistValidationMode::ValidateAllowPublicSuffix,
+        );
+        assert_eq!(permissive.invalid_rules, 1);
     }
 
     #[test]
