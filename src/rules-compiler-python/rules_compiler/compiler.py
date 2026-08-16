@@ -150,7 +150,7 @@ def find_command(command: str) -> str | None:
 
 def find_rules_validate_binary() -> str | None:
     """
-    Locate the `rules-validate` CLI (from `src/rules-validator/rules-validator-cli`).
+    Locate the `bloqr-validate` CLI (from `src/validation/cli`).
 
     Checks, in order: the `RULES_VALIDATE_PATH` environment variable, PATH, then a
     couple of dev-convenience fallback locations relative to this repo's Cargo
@@ -162,11 +162,11 @@ def find_rules_validate_binary() -> str | None:
     if env_override and Path(env_override).is_file():
         return env_override
 
-    on_path = shutil.which("rules-validate")
+    on_path = shutil.which("bloqr-validate")
     if on_path:
         return on_path
 
-    binary_name = "rules-validate.exe" if platform.system() == "Windows" else "rules-validate"
+    binary_name = "bloqr-validate.exe" if platform.system() == "Windows" else "bloqr-validate"
     # compiler.py -> rules_compiler/ -> rules-compiler-python/ -> src/ -> repo root
     repo_root = Path(__file__).resolve().parents[3]
     for profile in ("release", "debug"):
@@ -440,12 +440,12 @@ async def _run_rules_validator(
     event_dispatcher: EventDispatcher | None,
 ) -> tuple[bool, str | None]:
     """
-    Shell out to the native `rules-validate` CLI to run its syntax check against the
+    Shell out to the native `bloqr-validate` CLI to run its syntax check against the
     compiled output, and raise a `Validation` event with its findings. Findings are
     informational by default - a registered handler must explicitly set `abort` to fail
     compilation over them, matching this pipeline's other zero-trust checkpoints.
 
-    Silently continues (returns `(True, None)`) if `rules-validate` isn't found or
+    Silently continues (returns `(True, None)`) if `bloqr-validate` isn't found or
     fails to run at all, matching the .NET integration's graceful degradation when the
     native library is unavailable.
 
@@ -465,19 +465,19 @@ async def _run_rules_validator(
             timeout=60,
         )
     except (OSError, subprocess.TimeoutExpired) as e:
-        logger.warning(f"rules-validate failed to run: {e}")
+        logger.warning(f"bloqr-validate failed to run: {e}")
         return True, None
 
     try:
         payload = json.loads(proc.stdout)
     except (json.JSONDecodeError, ValueError):
-        logger.warning(f"rules-validate produced unparseable output: {proc.stdout!r}")
+        logger.warning(f"bloqr-validate produced unparseable output: {proc.stdout!r}")
         return True, None
 
-    validation_args = ValidationEventArgs(stage_name="rules-validator")
+    validation_args = ValidationEventArgs(stage_name="bloqr-validator")
 
     if "error" in payload:
-        # rules-validate itself failed (e.g. unreadable file) - informational only,
+        # bloqr-validate itself failed (e.g. unreadable file) - informational only,
         # doesn't block compilation unless a handler explicitly aborts.
         validation_args.add_warning("RV001", payload["error"])
     else:
@@ -491,7 +491,7 @@ async def _run_rules_validator(
             if not is_valid:
                 validation_args.add_error(
                     "RV001",
-                    "Output file failed rules-validator syntax validation "
+                    "Output file failed bloqr-validator syntax validation "
                     f"({payload.get('invalid_rules', 0)} invalid rule(s) of "
                     f"{validation_args.items_validated}).",
                 )
@@ -506,7 +506,7 @@ async def _run_rules_validator(
         await event_dispatcher.raise_validation(validation_args)
 
     if validation_args.abort:
-        return False, validation_args.abort_reason or f"rules-validator validation failed for {output_path}"
+        return False, validation_args.abort_reason or f"bloqr-validator validation failed for {output_path}"
 
     return True, None
 

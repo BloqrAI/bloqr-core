@@ -22,7 +22,7 @@ jobs:
         run: |
           cd src/adblock-compiler-core
           # Verify WASM module is imported
-          grep -q "rules_validator" package.json || exit 1
+          grep -q "bloqr_validator" package.json || exit 1
           grep -q "validate_local_file\|validate_remote_url" src/**/*.ts || exit 1
   
   dotnet-compliance:
@@ -32,7 +32,7 @@ jobs:
         run: |
           cd src/rules-compiler-dotnet
           # Verify native library is referenced
-          grep -q "rules_validator" src/**/*.csproj || exit 1
+          grep -q "bloqr_validator" src/**/*.csproj || exit 1
           grep -rq "ValidationLibrary\|P/Invoke" src/ || exit 1
   
   # Similar checks for Python and Rust compilers
@@ -178,7 +178,7 @@ Each compiler's dependency file **must** declare the validation library:
 ```json
 {
   "dependencies": {
-    "@adguard/validation": "file:../rules-validator/pkg"
+    "@adguard/validation": "file:../validation/pkg"
   }
 }
 ```
@@ -186,19 +186,19 @@ Each compiler's dependency file **must** declare the validation library:
 **\.NET (csproj)**:
 ```xml
 <ItemGroup>
-  <NativeLibraryReference Include="rules_validator" />
+  <NativeLibraryReference Include="bloqr_validator" />
 </ItemGroup>
 ```
 
 **Python (requirements.txt)**:
 ```
-rules-validator>=1.0.0
+bloqr-validator>=1.0.0
 ```
 
 **Rust (Cargo.toml)**:
 ```toml
 [dependencies]
-rules_validator = { path = "../rules-validator/rules-validator-core", package = "bloqr-validator-core" }
+bloqr_validator = { path = "../validation/core", package = "bloqr-validator-core" }
 ```
 
 ### 7. Pre-commit Hooks
@@ -212,13 +212,13 @@ A pre-commit hook verifies validation library integration:
 echo "Checking validation library integration..."
 
 # Check TypeScript
-if ! grep -q "rules_validator" src/adblock-compiler-core/package.json; then
+if ! grep -q "bloqr_validator" src/adblock-compiler-core/package.json; then
   echo "ERROR: TypeScript compiler missing validation library dependency"
   exit 1
 fi
 
 # Check .NET
-if ! grep -q "rules_validator" src/rules-compiler-dotnet/src/**/*.csproj; then
+if ! grep -q "bloqr_validator" src/rules-compiler-dotnet/src/**/*.csproj; then
   echo "ERROR: .NET compiler missing validation library reference"
   exit 1
 fi
@@ -289,8 +289,8 @@ Maintainers can verify compliance with:
 
 - **Phase 1**: Validation library created, documented.
 - **Phase 2**: Integrate into .NET compiler. **Done** (#264) — `Bloqr.Compiler.Core.Services.RulesValidatorService`
-  P/Invokes `rules_validator_{new,validate_local_file,validate_remote_url,free,free_string}`
-  (see `src/rules-validator/README.md`'s ".NET / C#" section for the P/Invoke reference this
+  P/Invokes `bloqr_validator_{new,validate_local_file,validate_remote_url,free,free_string}`
+  (see `src/validation/core/README.md`'s ".NET / C#" section for the P/Invoke reference this
   implementation follows). `RulesCompilerService` runs syntax validation on the compiled output
   and raises `ValidationEventArgs` (code `RV001`) through the existing zero-trust event pipeline
   (see `docs/event-pipeline.md`); handlers may set `Abort = true` to fail the compilation. The
@@ -306,6 +306,6 @@ Maintainers can verify compliance with:
 ## Support
 
 Questions about integration? See:
-- `src/rules-validator/README.md` - Full integration guide
+- `src/validation/README.md` - Full integration guide
 - `docs/validation-integration-guide.md` - Step-by-step tutorial
 - GitHub Discussions - Ask the community

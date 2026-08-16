@@ -12,7 +12,7 @@ on:
     branches: ["main"]
     paths:
       - 'src/rules-compiler-rust/**'
-      - 'src/rules-validator/**'
+      - 'src/validation/**'
       - 'Cargo.toml'
       - 'Cargo.lock'
       - '.github/workflows/rust-clippy.yml'
@@ -20,7 +20,7 @@ on:
     branches: ["main"]
     paths:
       - 'src/rules-compiler-rust/**'
-      - 'src/rules-validator/**'
+      - 'src/validation/**'
       - 'Cargo.toml'
       - 'Cargo.lock'
       - '.github/workflows/rust-clippy.yml'
@@ -139,7 +139,7 @@ jobs:
         with:
           filters: |
             validator:
-              - 'src/rules-validator/**'
+              - 'src/validation/**'
               - 'Cargo.toml'
               - 'Cargo.lock'
               - '.github/workflows/rust-clippy.yml'
@@ -160,9 +160,9 @@ jobs:
           path: |
             ~/.cargo/registry
             ~/.cargo/git
-            src/rules-validator/rules-validator-core/fuzz/target
+            src/validation/core/fuzz/target
             src/rules-compiler-rust/fuzz/target
-          key: ${{ runner.os }}-cargo-fuzz-${{ hashFiles('src/rules-validator/rules-validator-core/fuzz/Cargo.lock', 'src/rules-compiler-rust/fuzz/Cargo.lock') }}
+          key: ${{ runner.os }}-cargo-fuzz-${{ hashFiles('src/validation/core/fuzz/Cargo.lock', 'src/rules-compiler-rust/fuzz/Cargo.lock') }}
           restore-keys: ${{ runner.os }}-cargo-fuzz-
 
       - name: Install cargo-fuzz
@@ -176,17 +176,17 @@ jobs:
       # 60s) for the same reason - this is a smoke test, not a campaign.
       - name: Fuzz fuzz_syntax_content (20s)
         if: github.event_name == 'schedule' || steps.filter.outputs.validator == 'true'
-        working-directory: src/rules-validator/rules-validator-core
+        working-directory: src/validation/core
         run: cargo +nightly fuzz run fuzz_syntax_content -- -max_total_time=20
 
       - name: Fuzz fuzz_config_json (20s)
         if: github.event_name == 'schedule' || steps.filter.outputs.validator == 'true'
-        working-directory: src/rules-validator/rules-validator-core
+        working-directory: src/validation/core
         run: cargo +nightly fuzz run fuzz_config_json -- -max_total_time=20
 
       - name: Fuzz fuzz_hash_database_json (20s)
         if: github.event_name == 'schedule' || steps.filter.outputs.validator == 'true'
-        working-directory: src/rules-validator/rules-validator-core
+        working-directory: src/validation/core
         run: cargo +nightly fuzz run fuzz_hash_database_json -- -max_total_time=20
 
       - name: Fuzz fuzz_compiler_config (20s)
@@ -205,6 +205,6 @@ jobs:
         with:
           name: fuzz-crash-artifacts
           path: |
-            src/rules-validator/rules-validator-core/fuzz/artifacts/
+            src/validation/core/fuzz/artifacts/
             src/rules-compiler-rust/fuzz/artifacts/
           if-no-files-found: ignore

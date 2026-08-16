@@ -2,8 +2,8 @@ namespace Bloqr.Compiler.Abstractions;
 
 /// <summary>
 /// Result of validating a local filter file's syntax (and, as a side effect inside
-/// <c>rules-validator-core</c>, its at-rest hash) via <see cref="IRulesValidatorService"/>.
-/// Mirrors <c>rules-validator-core</c>'s <c>SyntaxValidationResult</c> JSON shape exactly.
+/// <c>bloqr-validator-core</c>, its at-rest hash) via <see cref="IRulesValidatorService"/>.
+/// Mirrors <c>bloqr-validator-core</c>'s <c>SyntaxValidationResult</c> JSON shape exactly.
 /// </summary>
 public sealed class SyntaxValidationResult
 {

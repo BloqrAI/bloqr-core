@@ -23,7 +23,7 @@
 //! ## Quick Start
 //!
 //! ```no_run
-//! use rules_validator::{Validator, ValidationConfig, VerificationMode};
+//! use bloqr_validator::{Validator, ValidationConfig, VerificationMode};
 //!
 //! # fn main() -> Result<(), Box<dyn std::error::Error>> {
 //! let config = ValidationConfig::default()

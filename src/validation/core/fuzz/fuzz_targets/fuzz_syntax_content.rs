@@ -2,7 +2,7 @@
 //! same parsing path a local file or remote-download body goes through.
 #![no_main]
 
-use rules_validator::syntax::validate_syntax_content;
+use bloqr_validator::syntax::validate_syntax_content;
 use libfuzzer_sys::fuzz_target;
 
 fuzz_target!(|content: &str| {

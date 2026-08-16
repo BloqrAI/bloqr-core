@@ -19,7 +19,7 @@ The AdGuard DNS API clients (.NET, TypeScript, Rust, PowerShell) and the Linear 
 ## Architecture Principles
 
 ### Centralized Validation Layer
-**NEW**: Rust-based validation library (`src/rules-validator/`) provides unified security across all compilers:
+Rust-based validation library (`src/validation/`) provides unified security across all compilers:
 - **At-rest hash verification**: SHA-384 for local files (`../bloqr-blocklists/input/.hashes.json` database)
 - **In-flight hash verification**: SHA-384 for downloads (prevents MITM)
 - **URL security**: HTTPS enforcement, domain validation, content verification
@@ -27,16 +27,14 @@ The AdGuard DNS API clients (.NET, TypeScript, Rust, PowerShell) and the Linear 
 - **File conflict handling**: Rename, overwrite, or error strategies
 - **Archiving**: Timestamped with manifest tracking
 
-**Integration Options**:
-- **Rust compiler**: Direct native library usage (zero overhead)
-- **.NET compiler**: P/Invoke to native library or WASM via Wasmtime
-- **Python compiler**: PyO3 bindings for native Rust integration
-- **TypeScript compiler**: WebAssembly module (no Node.js runtime required)
+**Integration Options** (actual, as implemented):
+- **Rust compiler**: Cargo workspace path dependency on `bloqr-validator-core` (zero overhead, same-language, no FFI/shellout)
+- **.NET compiler**: P/Invoke to the native `bloqr_validator` library via a real `extern "C"` FFI surface (`src/validation/core/src/ffi.rs`)
+- **Python, TypeScript, PowerShell, bash/zsh**: shell out to the `bloqr-validate` CLI (`src/validation/cli/`) as a subprocess
 
 **Build outputs**:
-- `librules_validator.so/.dll/.dylib` (native libraries)
-- `rules_validator.wasm` (WebAssembly module)
-- `rules-validate` (CLI tool)
+- `libbloqr_validator.so/.dll/.dylib` (native libraries, .NET P/Invoke target)
+- `bloqr-validate` (CLI tool, shelled out to by the non-Rust/non-.NET wrappers)
 
 ### Compiler Equivalence
 All four compilers (TypeScript, .NET, Python, Rust) use **[@bloqr/compiler-core](../src/adblock-compiler-core/)** and **must**:
@@ -62,7 +60,7 @@ bloqr-core/
 │   ├── rules-compiler-rust/        # Rust rules compiler
 │   ├── rules-compiler-shell/       # Shell scripts (bash, zsh)
 │   ├── rules-compiler-powershell/  # Canonical PowerShell compiler toolkit
-│   ├── rules-validator/            # Rust validation library + CLI
+│   ├── validation/                 # Rust validation library (core/) + CLI (cli/)
 │   └── website/                    # Gatsby website
 └── README.md
 ```

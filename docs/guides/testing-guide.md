@@ -12,7 +12,7 @@ This project uses different testing frameworks for each language implementation:
 | .NET (Rules Compiler) | xUnit | `src/rules-compiler-dotnet/src/RulesCompiler.Tests/` | `dotnet test` |
 | Python | pytest | `src/rules-compiler-python/tests/` | `pytest` |
 | Rust (Rules Compiler) | cargo test | `src/rules-compiler-rust/src/` | `cargo test` |
-| Rust (Validator) | cargo test | `src/rules-validator/` | `cargo test` |
+| Rust (Validator) | cargo test | `src/validation/` | `cargo test` |
 | PowerShell | Pester | `src/rules-compiler-powershell/` | `Invoke-Pester -Recurse` |
 
 The AdGuard DNS API client test suites (TypeScript, .NET, Rust, PowerShell) moved with the clients to [`BloqrAI/bloqr-apiclients`](https://github.com/BloqrAI/bloqr-apiclients).

@@ -367,7 +367,7 @@ public class RulesCompiler {
 ### Python
 
 ```python
-from rules_validator import (
+from bloqr_validator import (
     compile_with_validation,
     CompilationInput,
     CompilationOptions,
@@ -402,7 +402,7 @@ def compile_rules(sources: list[Source]) -> EnforcedCompilationResult:
 ### Rust
 
 ```rust
-use rules_validator::{
+use bloqr_validator::{
     compile_with_validation,
     CompilationInput,
     CompilationOptions,

@@ -6,11 +6,11 @@ This directory contains a unified Rust workspace for all Rust projects in the ad
 
 The workspace includes the following crates:
 
-### 1. **rules-validator** (`src/rules-validator/`)
+### 1. **validation** (`src/validation/`)
 Centralized validation library for AdGuard filter compilation with comprehensive security features.
 
-- **rules-validator-core** (published to crates.io as `bloqr-validator-core`): Core library with validation, hashing, URL security
-- **rules-validator-cli** (published to crates.io as `bloqr-validator-core-cli`): CLI tool (`rules-validate`)
+- **core** (published to crates.io as `bloqr-validator-core`): Core library with validation, hashing, URL security
+- **cli** (published to crates.io as `bloqr-validator-core-cli`): CLI tool (`bloqr-validate`)
 
 > The Rust AdGuard DNS API client (`adguard-api-rust`) that used to live in this workspace moved to [`BloqrAI/bloqr-apiclients`](https://github.com/BloqrAI/bloqr-apiclients) and is no longer a member of this Cargo workspace.
 
@@ -55,7 +55,7 @@ cargo fmt --all -- --check
 ## Building Individual Projects
 
 ```bash
-# Build only rules-validator
+# Build only the validation library/CLI
 cargo build -p bloqr-validator-core
 cargo build -p bloqr-validator-core-cli
 
@@ -66,7 +66,7 @@ cargo build -p rules-compiler
 ## Running Binaries
 
 ```bash
-# Run rules-validate CLI
+# Run bloqr-validate CLI
 cargo run -p bloqr-validator-core-cli -- --help
 
 # Run rules-compiler
@@ -112,11 +112,11 @@ bloqr-core/
 ├── .rustfmt.toml                   # Formatting configuration
 ├── clippy.toml                     # Clippy configuration
 └── src/
-    ├── rules-validator/
-    │   ├── rules-validator-core/
+    ├── validation/
+    │   ├── core/
     │   │   ├── Cargo.toml
     │   │   └── src/
-    │   └── rules-validator-cli/
+    │   └── cli/
     │       ├── Cargo.toml
     │       └── src/
     └── rules-compiler-rust/

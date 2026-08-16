@@ -79,9 +79,9 @@ public sealed class DiagnosticsMenuService : MenuServiceBase
         }
 
         table.AddRow(
-            "rules-validator",
+            "bloqr-validator",
             _rulesValidatorService.IsAvailable ? "found" : "not found",
-            "native library (rules_validator)");
+            "native library (bloqr_validator)");
 
         Renderer.RenderTable(table);
 
@@ -89,9 +89,9 @@ public sealed class DiagnosticsMenuService : MenuServiceBase
         {
             Renderer.WriteLine();
             Renderer.WriteStyled(
-                "rules-validator native library not found - syntax/URL validation checks will be skipped "
-                + "during compilation and here. Build it with 'cargo build --release -p rules-validator-core' "
-                + "and deploy librules_validator.so (or the platform equivalent) alongside this app (#276).",
+                "bloqr-validator native library not found - syntax/URL validation checks will be skipped "
+                + "during compilation and here. Build it with 'cargo build --release -p bloqr-validator-core' "
+                + "and deploy libbloqr_validator.so (or the platform equivalent) alongside this app (#276).",
                 TextStyle.Warning);
         }
 
@@ -150,7 +150,7 @@ public sealed class DiagnosticsMenuService : MenuServiceBase
         if (!_rulesValidatorService.IsAvailable)
         {
             Renderer.WriteStyled(
-                "rules-validator native library is unavailable; see 'Check external tools' for remediation.",
+                "bloqr-validator native library is unavailable; see 'Check external tools' for remediation.",
                 TextStyle.Warning);
             return;
         }

@@ -26,7 +26,7 @@ public class RulesCompilerService : IRulesCompilerService
     /// <param name="outputWriter">The output writer.</param>
     /// <param name="outputPublisher">Publishes compiled output to its configured durable destination.</param>
     /// <param name="hashDatabaseService">Reads and writes the <c>.hashes.json</c> sidecar database.</param>
-    /// <param name="rulesValidatorService">Runs the native rules-validator syntax check on the compiled output (#264).</param>
+    /// <param name="rulesValidatorService">Runs the native bloqr-validator syntax check on the compiled output (#264).</param>
     /// <param name="eventDispatcher">Raises hash-verification and lifecycle events.</param>
     public RulesCompilerService(
         ILogger<RulesCompilerService> logger,
@@ -304,7 +304,7 @@ public class RulesCompilerService : IRulesCompilerService
     }
 
     /// <summary>
-    /// Runs the native rules-validator syntax check (#264) against the compiled output file
+    /// Runs the native bloqr-validator syntax check (#264) against the compiled output file
     /// and raises a <c>Validation</c> event with its findings. Silently skipped (returns
     /// <c>CanContinue: true</c> with no event) when the native library is unavailable -
     /// see <see cref="IRulesValidatorService"/>'s remarks. Findings are informational by
@@ -330,7 +330,7 @@ public class RulesCompilerService : IRulesCompilerService
             return (true, null);
         }
 
-        var validationArgs = new ValidationEventArgs(options, "rules-validator", new List<ValidationFinding>());
+        var validationArgs = new ValidationEventArgs(options, "bloqr-validator", new List<ValidationFinding>());
         var severity = syntaxResult.IsValid ? ValidationSeverity.Warning : ValidationSeverity.Error;
         foreach (var message in syntaxResult.Messages)
         {
@@ -341,7 +341,7 @@ public class RulesCompilerService : IRulesCompilerService
         {
             validationArgs.AddError(
                 "RV001",
-                $"Output file failed rules-validator syntax validation ({syntaxResult.InvalidRules} invalid rule(s) of {syntaxResult.ValidRules + syntaxResult.InvalidRules}).",
+                $"Output file failed bloqr-validator syntax validation ({syntaxResult.InvalidRules} invalid rule(s) of {syntaxResult.ValidRules + syntaxResult.InvalidRules}).",
                 outputPath);
         }
 
@@ -349,7 +349,7 @@ public class RulesCompilerService : IRulesCompilerService
 
         if (validationArgs.Abort)
         {
-            return (false, validationArgs.AbortReason ?? $"rules-validator validation failed for {outputPath}");
+            return (false, validationArgs.AbortReason ?? $"bloqr-validator validation failed for {outputPath}");
         }
 
         return (true, null);

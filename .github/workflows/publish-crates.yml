@@ -1,7 +1,7 @@
 name: Publish Rust Validator Crates to crates.io
 
-# Publishes src/rules-validator's two crates - bloqr-validator-core (library)
-# and bloqr-validator-core-cli (the rules-validate binary, installable via
+# Publishes src/validation's two crates - bloqr-validator-core (library)
+# and bloqr-validator-core-cli (the bloqr-validate binary, installable via
 # `cargo install`) - to crates.io whenever either changes on main, or on
 # demand. Mirrors publish-jsr.yml's pattern: path-filtered push trigger,
 # independent of the repo-wide binary release in release.yml, so a
@@ -48,8 +48,8 @@ on:
   push:
     branches: ["main"]
     paths:
-      - "src/rules-validator/rules-validator-core/**"
-      - "src/rules-validator/rules-validator-cli/**"
+      - "src/validation/core/**"
+      - "src/validation/cli/**"
       - "Cargo.toml"
       - "Cargo.lock"
       - ".github/workflows/publish-crates.yml"

@@ -48,7 +48,7 @@ Out-of-repo consumers (a future .NET MAUI host, or this library becoming its own
 | `IFileLockService` | File-locking around compilation output |
 | `IPluginManager` | Plugin discovery and validation |
 | `IHashDatabaseService` | Hash verification sidecar (`.hashes.json`) reads/writes |
-| `IRulesValidatorService` | Syntax/URL validation via the native `rules-validator` library |
+| `IRulesValidatorService` | Syntax/URL validation via the native `bloqr-validator` library |
 | `ICompilationEventDispatcher` / `ICompilationEventHandler` | The compilation event pipeline |
 | `ICompilationPipeline` / `ICompilationPipelineBuilder` / `ICompilationMiddleware` | Middleware-based compilation pipeline |
 | `IConfigurationFormatPlugin` / `IOutputDestinationPlugin` / `IRuleTransformationPlugin` / `IRuleValidationPlugin` / `IPlugin` | Plugin system extension points |
@@ -67,7 +67,7 @@ Out-of-repo consumers (a future .NET MAUI host, or this library becoming its own
 | `PlatformInfo` | Platform-specific information |
 | `ConfigurationFormat` | Enum for JSON/YAML/TOML formats (JSON/JSONC documented; YAML/TOML supported for backward compatibility only) |
 | `ValidationResult` / `ValidationError` | Shared validation-result shape |
-| `SyntaxValidationResult` / `UrlValidationResult` | `rules-validator` result shapes |
+| `SyntaxValidationResult` / `UrlValidationResult` | `bloqr-validator` result shapes |
 | `OutputSettings` / `HashVerificationSettings` / `ArchivingSettings` | Output-publishing and hash-verification configuration |
 | `HashDatabaseEntry` / `OutputPublishResult` | Hash-verification and output-publishing results |
 | `ChunkingOptions` / `ChunkMetadata` | Chunked-compilation configuration and metadata |
@@ -86,7 +86,7 @@ Out-of-repo consumers (a future .NET MAUI host, or this library becoming its own
 | `CompilationEventDispatcher` / `QueuedCompilationEventDispatcher` | Compilation event pipeline, with an opt-in background-queueing decorator and Polly retry policy |
 | `HashDatabaseService` | Reads/writes the `.hashes.json` hash-verification sidecar |
 | `OutputPublisher` | Output-publishing with conflict strategy and archiving |
-| `RulesValidatorService` (+ `RulesValidatorNativeMethods`) | P/Invoke wrapper around the native `rules-validator` library |
+| `RulesValidatorService` (+ `RulesValidatorNativeMethods`) | P/Invoke wrapper around the native `bloqr-validator` library |
 | `CommandHelper` / `PlatformHelper` | Generic process-execution and platform-detection utilities |
 | `StructuredJsonLogFormatter` | Structured JSON log formatting shared by the console apps |
 
@@ -128,7 +128,7 @@ src/compiler-common-dotnet/
 │   │   ├── Configuration/           # ConfigurationReader, ConfigurationValidator, schema validation
 │   │   ├── Helpers/                 # CommandHelper, PlatformHelper
 │   │   ├── Logging/                 # StructuredJsonLogFormatter, logging DI extensions
-│   │   └── Services/                # Chunking, file locking, plugins, events, hash verification, output publishing, rules-validator
+│   │   └── Services/                # Chunking, file locking, plugins, events, hash verification, output publishing, bloqr-validator
 │   └── Bloqr.Compiler.Core.Tests/   # xUnit tests for Abstractions models and Core services
 └── CompilerCommon.slnx              # Solution file
 ```
@@ -137,7 +137,7 @@ src/compiler-common-dotnet/
 
 - [Rules Compiler (.NET)](../rules-compiler-dotnet/) - the compiler-specific consumer: `FilterCompiler`, `OutputWriter`, `RulesCompilerService`
 - [Bloqr Dashboard](../bloqr-dashboard/) - the other in-repo consumer
-- [Rules Validator](../rules-validator/) - the native Rust library `RulesValidatorService` wraps
+- [Validation Library](../validation/) - the native Rust library `RulesValidatorService` wraps
 
 ## License
 

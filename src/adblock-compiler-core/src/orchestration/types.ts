@@ -298,13 +298,13 @@ export interface HashVerificationCallbacks {
 }
 
 /**
- * Event callback types for rules-validator syntax validation
+ * Event callback types for bloqr-validator syntax validation
  */
 
-/** Severity of a single rules-validator finding */
+/** Severity of a single bloqr-validator finding */
 export type ValidationSeverity = 'info' | 'warning' | 'error' | 'critical';
 
-/** A single finding reported by the rules-validator */
+/** A single finding reported by the bloqr-validator */
 export interface ValidationFinding {
   /** Severity of the finding */
   severity: ValidationSeverity;
@@ -312,9 +312,9 @@ export interface ValidationFinding {
   message: string;
 }
 
-/** Event arguments for a rules-validator syntax-validation run */
+/** Event arguments for a bloqr-validator syntax-validation run */
 export interface ValidationEvent {
-  /** Name of the validation stage (always "rules-validator") */
+  /** Name of the validation stage (always "bloqr-validator") */
   stageName: string;
   /** Number of rules that were checked */
   itemsValidated: number;
@@ -332,9 +332,9 @@ export interface ValidationEvent {
 }
 
 /**
- * Rules-validator event callbacks
+ * Bloqr-validator event callbacks
  */
 export interface ValidationCallbacks {
-  /** Called after a rules-validator syntax-validation run completes */
+  /** Called after a bloqr-validator syntax-validation run completes */
   onValidation?: (event: ValidationEvent) => void | Promise<void>;
 }

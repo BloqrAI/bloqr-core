@@ -10,7 +10,7 @@
     module-private resolver) with a small fake script that writes canned output
     to whatever --output path it's given - keeping the tests deterministic and
     independent of whether hostlist-compiler is actually installed, mirroring the
-    approach used for Invoke-RulesValidator.Tests.ps1's rules-validate mocking.
+    approach used for Invoke-RulesValidator.Tests.ps1's bloqr-validate mocking.
 #>
 
 BeforeAll {

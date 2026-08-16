@@ -9,7 +9,7 @@ A multi-language toolkit for compiling and validating AdGuard-syntax ad-blocking
 - **Rules compilers** for TypeScript/Deno, C#/.NET, Python, and Rust, plus bash/zsh shell scripts — all reading the same JSON/JSONC configuration schema and producing identical output.
 - **`@bloqr/compiler-core`** (`src/adblock-compiler-core/`) — the canonical, dependency-free compilation engine, published on [JSR](https://jsr.io/@bloqr/compiler-core). The .NET, Python, and Rust compilers shell out to it via Deno rather than reimplementing compilation logic.
 - **RulesCompiler PowerShell toolkit** (`src/rules-compiler-powershell/`) — class-based modules (`Common`, `RulesCompiler`, `AdGuardWebhook`) with Pester test suites.
-- **`rules-validator`** (`src/rules-validator/`) — a Rust validation library and CLI for filter/config validation (hash verification, URL security, syntax linting).
+- **Validation library** (`src/validation/`) — a Rust validation library (`bloqr-validator-core`) and CLI (`bloqr-validator-core-cli`) for filter/config validation (hash verification, URL security, syntax linting).
 - **Documentation website** (`website/`) — a Gatsby 5 site that builds guides, API reference, and security docs from `docs/` and this README.
 
 **What moved out:** the compiled filter lists (and their input/archive files) now live in [`BloqrAI/bloqr-blocklists`](https://github.com/BloqrAI/bloqr-blocklists), and the AdGuard DNS API clients (.NET, TypeScript, Rust, PowerShell) plus the Linear import tool now live in [`BloqrAI/bloqr-apiclients`](https://github.com/BloqrAI/bloqr-apiclients). Neither is part of this repo anymore — see [Related repositories](#related-repositories) below.
@@ -21,7 +21,7 @@ A multi-language toolkit for compiling and validating AdGuard-syntax ad-blocking
 | Deno | 2.0+ | TypeScript compiler; also shelled out to by .NET/Python/Rust |
 | .NET SDK | 10.0+ | .NET compiler |
 | Python | 3.9+ | Python compiler |
-| Rust | 1.85+ | Rust compiler, `rules-validator` |
+| Rust | 1.85+ | Rust compiler, validation library |
 | PowerShell | 7+ | PowerShell toolkit |
 | Docker | 24.0+ | Containerized dev environment (optional) |
 
@@ -120,14 +120,14 @@ bloqr-core/
 │   ├── rules-compiler-rust/      # Rust — single-binary CLI, zero runtime deps
 │   ├── rules-compiler-shell/     # bash + zsh scripts
 │   ├── rules-compiler-powershell/# PowerShell modules + Pester tests
-│   ├── rules-validator/          # Rust validation library + CLI
+│   ├── validation/                # Rust validation library (core/) + CLI (cli/)
 │   ├── bloqr-dashboard/          # C#/.NET 10 — Dashboard console app
 │   └── website/                  # Gatsby 5 documentation site
 ├── docs/                         # Guides, reference docs, security docs
 └── schemas/                      # Shared configuration schema
 ```
 
-The TypeScript compiler is the only one that implements compilation logic directly — it *is* `@bloqr/compiler-core`. The .NET, Python, and Rust compilers are thin wrappers that shell out to it via Deno, so behavior and output stay identical across languages; the shell scripts and PowerShell toolkit call whichever compiler is available. `rules-validator` provides the shared hash-verification and syntax-validation layer that all of them rely on for security.
+The TypeScript compiler is the only one that implements compilation logic directly — it *is* `@bloqr/compiler-core`. The .NET, Python, and Rust compilers are thin wrappers that shell out to it via Deno, so behavior and output stay identical across languages; the shell scripts and PowerShell toolkit call whichever compiler is available. `src/validation/` provides the shared hash-verification and syntax-validation layer that all of them rely on for security.
 
 `@bloqr/compiler-core` is deliberately separate from Bloqr's commercial `@bloqr/compiler` product ([`BloqrAI/bloqr-compiler`](https://github.com/BloqrAI/bloqr-compiler)), which layers AST tooling, linting, plugins, and Cloudflare Workers deployment on top of this open-source engine — see [`src/adblock-compiler-core/README.md`](src/adblock-compiler-core/README.md#architecture) for the full relationship.
 
@@ -158,7 +158,7 @@ cd src/adblock-compiler-core && deno task test
 cd src/rules-compiler-dotnet && dotnet test RulesCompiler.slnx
 cd src/rules-compiler-python && pytest
 cd src/rules-compiler-rust && cargo test
-cargo test --workspace   # rules-compiler-rust + rules-validator
+cargo test --workspace   # rules-compiler-rust + validation
 Invoke-Pester -Path ./src/rules-compiler-powershell -Recurse
 ```
 

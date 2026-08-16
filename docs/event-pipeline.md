@@ -186,7 +186,7 @@ The event pipeline implements zero-trust principles at each stage boundary:
 | `CFG001` | Error | Missing required field |
 | `CFG002` | Error | Invalid transformation |
 | `CFG003` | Warning | Deprecated configuration option |
-| `RV001` | Warning/Error | `rules-validator` (native `rules_validator` library, #264) flagged the compiled output during syntax validation. Warning when the file is still syntactically valid but carries messages, Error when it isn't. Raised by `RulesCompilerService` via `IRulesValidatorService.ValidateLocalFileAsync`; skipped entirely when the native library isn't available (`IRulesValidatorService.IsAvailable == false`). |
+| `RV001` | Warning/Error | `bloqr-validator` (native `bloqr_validator` library, #264) flagged the compiled output during syntax validation. Warning when the file is still syntactically valid but carries messages, Error when it isn't. Raised by `RulesCompilerService` via `IRulesValidatorService.ValidateLocalFileAsync`; skipped entirely when the native library isn't available (`IRulesValidatorService.IsAvailable == false`). |
 
 ## File Locking
 

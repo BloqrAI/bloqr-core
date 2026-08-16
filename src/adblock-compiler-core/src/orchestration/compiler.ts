@@ -221,7 +221,7 @@ function getEnvVar(key: string): string | undefined {
 }
 
 /**
- * Locates the `rules-validate` CLI binary (from `src/rules-validator/`).
+ * Locates the `bloqr-validate` CLI binary (from `src/validation/`).
  *
  * Resolution order: `RULES_VALIDATE_PATH` env override, then `PATH`, then a
  * dev-convenience fallback to the Cargo workspace's `target/{release,debug}`
@@ -237,7 +237,7 @@ function findRulesValidateBinary(): string | undefined {
   }
 
   const isWindows = process.platform === 'win32';
-  const binaryName = isWindows ? 'rules-validate.exe' : 'rules-validate';
+  const binaryName = isWindows ? 'bloqr-validate.exe' : 'bloqr-validate';
 
   const pathEnv = getEnvVar('PATH') ?? '';
   const pathSeparator = isWindows ? ';' : ':';
@@ -261,7 +261,7 @@ function findRulesValidateBinary(): string | undefined {
   return undefined;
 }
 
-/** Parsed `--json file` output from the `rules-validate` CLI */
+/** Parsed `--json file` output from the `bloqr-validate` CLI */
 interface RulesValidateFileResult {
   is_valid: boolean;
   valid_rules: number;
@@ -270,10 +270,10 @@ interface RulesValidateFileResult {
 }
 
 /**
- * Shells out to the `rules-validate` CLI to syntax-check compiled output and
+ * Shells out to the `bloqr-validate` CLI to syntax-check compiled output and
  * fires `callbacks.onValidation` with the result. Findings are informational
  * by default; only a handler that explicitly sets `event.abort = true` stops
- * compilation (mirroring the Rust/.NET/Python rules-validator wiring).
+ * compilation (mirroring the Rust/.NET/Python bloqr-validator wiring).
  *
  * A missing/unusable binary or malformed output is treated as a skip, not a
  * failure, so this check degrades gracefully wherever the CLI hasn't been
@@ -290,7 +290,7 @@ export async function runRulesValidator(
 ): Promise<void> {
   const binary = findRulesValidateBinary();
   if (!binary) {
-    logger.debug('rules-validate binary not found; skipping syntax validation');
+    logger.debug('bloqr-validate binary not found; skipping syntax validation');
     return;
   }
 
@@ -309,7 +309,7 @@ export async function runRulesValidator(
     stdout = spawnResult.stdout ?? '';
   } catch (error) {
     logger.debug(
-      `rules-validate invocation failed, skipping syntax validation: ${
+      `bloqr-validate invocation failed, skipping syntax validation: ${
         error instanceof Error ? error.message : String(error)
       }`,
     );
@@ -320,7 +320,7 @@ export async function runRulesValidator(
   try {
     parsed = JSON.parse(stdout);
   } catch {
-    logger.debug('rules-validate produced non-JSON output; skipping syntax validation');
+    logger.debug('bloqr-validate produced non-JSON output; skipping syntax validation');
     return;
   }
 
@@ -338,7 +338,7 @@ export async function runRulesValidator(
   }
 
   const event: ValidationEvent = {
-    stageName: 'rules-validator',
+    stageName: 'bloqr-validator',
     itemsValidated: parsed.valid_rules + parsed.invalid_rules,
     passed: parsed.is_valid,
     findings,
@@ -573,7 +573,7 @@ export async function runCompiler(options: ExtendedCompileOptions): Promise<Comp
 
     logger.debug(`Hash: ${result.outputHash}`);
 
-    // Run the rules-validator syntax check; findings are informational unless a handler aborts
+    // Run the bloqr-validator syntax check; findings are informational unless a handler aborts
     await runRulesValidator(result.outputPath, options.validationCallbacks, logger);
 
     // Copy to rules directory if requested

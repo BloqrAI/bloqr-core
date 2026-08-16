@@ -1,7 +1,7 @@
 function Find-RulesValidateBinary {
     <#
     .SYNOPSIS
-        Locates the `rules-validate` CLI binary (from src/rules-validator/).
+        Locates the `bloqr-validate` CLI binary (from src/validation/).
 
     .DESCRIPTION
         Resolution order: the `RULES_VALIDATE_PATH` environment variable, then `PATH`
@@ -21,12 +21,12 @@ function Find-RulesValidateBinary {
         return $env:RULES_VALIDATE_PATH
     }
 
-    $onPath = Get-Command -Name 'rules-validate' -ErrorAction SilentlyContinue
+    $onPath = Get-Command -Name 'bloqr-validate' -ErrorAction SilentlyContinue
     if ($onPath) {
         return $onPath.Source
     }
 
-    $binaryName = if ($IsWindows) { 'rules-validate.exe' } else { 'rules-validate' }
+    $binaryName = if ($IsWindows) { 'bloqr-validate.exe' } else { 'bloqr-validate' }
 
     # Dev-convenience fallback: Private/ -> RulesCompiler/ -> rules-compiler-powershell/ -> src/ -> repo root
     $repoRoot = $PSScriptRoot

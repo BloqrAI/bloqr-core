@@ -11,7 +11,7 @@ on:
   push:
     branches: [main, develop]
     paths:
-      - 'src/rules-validator/**'
+      - 'src/validation/**'
       - 'src/rules-compiler-*/**'
       - 'src/compiler-common-dotnet/**'
       - 'tools/check-validation-compliance.sh'
@@ -19,7 +19,7 @@ on:
   pull_request:
     branches: [main, develop]
     paths:
-      - 'src/rules-validator/**'
+      - 'src/validation/**'
       - 'src/rules-compiler-*/**'
       - 'src/compiler-common-dotnet/**'
       - 'tools/check-validation-compliance.sh'
@@ -72,8 +72,8 @@ jobs:
         with:
           name: validation-library
           path: |
-            target/release/librules_validator.*
-            target/release/rules-validate
+            target/release/libbloqr_validator.*
+            target/release/bloqr-validate
           retention-days: 7
 
   integration-status:
@@ -98,21 +98,21 @@ jobs:
           fi
 
           # .NET
-          if grep -rq "rules_validator" src/rules-compiler-dotnet src/compiler-common-dotnet 2>/dev/null; then
+          if grep -rq "bloqr_validator" src/rules-compiler-dotnet src/compiler-common-dotnet 2>/dev/null; then
             echo "| .NET | integrated |" >> $GITHUB_STEP_SUMMARY
           else
             echo "| .NET | pending |" >> $GITHUB_STEP_SUMMARY
           fi
 
           # Python
-          if [ -f src/rules-compiler-python/requirements.txt ] && grep -q "rules-validator" src/rules-compiler-python/requirements.txt 2>/dev/null; then
+          if [ -f src/rules-compiler-python/requirements.txt ] && grep -q "bloqr-validator" src/rules-compiler-python/requirements.txt 2>/dev/null; then
             echo "| Python | integrated |" >> $GITHUB_STEP_SUMMARY
           else
             echo "| Python | pending |" >> $GITHUB_STEP_SUMMARY
           fi
 
           # Rust
-          if grep -q "rules-validator" src/rules-compiler-rust/Cargo.toml 2>/dev/null; then
+          if grep -q "bloqr-validator" src/rules-compiler-rust/Cargo.toml 2>/dev/null; then
             echo "| Rust | integrated |" >> $GITHUB_STEP_SUMMARY
           else
             echo "| Rust | pending |" >> $GITHUB_STEP_SUMMARY

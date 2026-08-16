@@ -20,7 +20,7 @@ path = "src/main.rs"
 
 [dependencies]
 # Rules validation (workspace sibling - no registry involved)
-rules_validator = { path = "../rules-validator/rules-validator-core", package = "bloqr-validator-core", version = "1" }
+bloqr_validator = { path = "../validation/core", package = "bloqr-validator-core", version = "1" }
 
 # Async runtime
 tokio = { workspace = true, features = ["fs", "process", "io-util"] }

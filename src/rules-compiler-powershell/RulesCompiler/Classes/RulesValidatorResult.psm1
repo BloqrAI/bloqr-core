@@ -2,12 +2,12 @@
 
 <#
 .SYNOPSIS
-    PowerShell class for representing rules-validator syntax-validation results.
+    PowerShell class for representing bloqr-validator syntax-validation results.
 
 .DESCRIPTION
     The RulesValidatorResult class encapsulates the parsed `--json file` output of the
-    `rules-validate` CLI (from src/rules-validator/), mirroring the same fields returned
-    by the Rust/Python/TypeScript wrappers' rules-validator wiring for #361.
+    `bloqr-validate` CLI (from src/validation/), mirroring the same fields returned
+    by the Rust/Python/TypeScript wrappers' bloqr-validator wiring for #361.
 
 .NOTES
     Author: Jayson Knight

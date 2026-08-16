@@ -60,7 +60,7 @@ bloqr-core/
 │   ├── rules-compiler-python/       # Python rules compiler
 │   ├── rules-compiler-powershell/   # PowerShell rules compiler toolkit
 │   ├── rules-compiler-shell/        # Shell script utilities (bash/zsh)
-│   ├── rules-validator/             # Rust validation library
+│   ├── validation/                  # Rust validation library + CLI
 │   └── website/                     # Gatsby documentation site
 └── .github/                     # GitHub workflows and configuration
 ```

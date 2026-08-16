@@ -37,7 +37,7 @@ public sealed class RulesCompilerServiceTests : IDisposable
 
         // Unavailable by default (as it would be wherever the native library isn't deployed
         // alongside the test binaries) so existing tests exercise the pipeline's graceful
-        // degradation path rather than needing real rules-validator behavior.
+        // degradation path rather than needing real bloqr-validator behavior.
         _rulesValidatorService.Setup(v => v.IsAvailable).Returns(false);
 
         _service = new RulesCompilerService(
@@ -284,7 +284,7 @@ public sealed class RulesCompilerServiceTests : IDisposable
         Assert.True(result.Success);
         _eventDispatcher.Verify(
             d => d.RaiseValidationAsync(
-                It.Is<ValidationEventArgs>(a => a.StageName == "rules-validator"), It.IsAny<CancellationToken>()),
+                It.Is<ValidationEventArgs>(a => a.StageName == "bloqr-validator"), It.IsAny<CancellationToken>()),
             Times.Once);
     }
 

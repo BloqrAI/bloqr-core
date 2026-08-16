@@ -16,7 +16,7 @@ keywords = ["bloqr", "adblock", "validation", "security", "filter"]
 categories = ["web-programming", "cryptography", "parser-implementations"]
 
 [lib]
-name = "rules_validator"
+name = "bloqr_validator"
 path = "src/lib.rs"
 crate-type = ["lib", "cdylib", "staticlib"]  # Support both native and FFI
 

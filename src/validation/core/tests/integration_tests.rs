@@ -2,7 +2,7 @@
 //!
 //! These tests verify end-to-end functionality across all modules.
 
-use rules_validator::{
+use bloqr_validator::{
     compile_with_validation, create_archive, resolve_conflict, validate_syntax,
     verify_compilation_was_validated, CompilationInput, CompilationOptions, ConflictStrategy,
     HashDatabase, ValidationConfig, Validator, VerificationMode,
@@ -144,7 +144,7 @@ fn test_hash_database_persistence() {
     let mut db = HashDatabase::new();
     db.insert(
         "test.txt".to_string(),
-        rules_validator::HashEntry::new("hash123".to_string(), 1024),
+        bloqr_validator::HashEntry::new("hash123".to_string(), 1024),
     );
 
     // Save
@@ -167,7 +167,7 @@ fn test_syntax_validation_adblock_format() {
     let result = validate_syntax(file.path()).unwrap();
 
     assert!(result.is_valid);
-    assert_eq!(result.format, rules_validator::FilterFormat::Adblock);
+    assert_eq!(result.format, bloqr_validator::FilterFormat::Adblock);
     assert!(result.valid_rules >= 2); // At least ||example.com^ and @@||allowed.com^
     assert_eq!(result.invalid_rules, 0);
 }
@@ -205,7 +205,7 @@ fn test_syntax_validation_hosts_format() {
     let result = validate_syntax(file.path()).unwrap();
 
     assert!(result.is_valid);
-    assert_eq!(result.format, rules_validator::FilterFormat::Hosts);
+    assert_eq!(result.format, bloqr_validator::FilterFormat::Hosts);
     assert!(result.valid_rules >= 3);
 }
 
@@ -290,7 +290,7 @@ fn test_archive_creation_with_manifest() {
 
 #[test]
 fn test_validation_metadata_signature_uniqueness() {
-    let meta1 = rules_validator::ValidationMetadata {
+    let meta1 = bloqr_validator::ValidationMetadata {
         validation_timestamp: "2024-12-27T10:00:00Z".to_string(),
         local_files_validated: 5,
         remote_urls_validated: 3,
@@ -300,7 +300,7 @@ fn test_validation_metadata_signature_uniqueness() {
         archive_created: None,
     };
 
-    let meta2 = rules_validator::ValidationMetadata {
+    let meta2 = bloqr_validator::ValidationMetadata {
         validation_timestamp: "2024-12-27T11:00:00Z".to_string(), // Different timestamp
         local_files_validated: 5,
         remote_urls_validated: 3,
@@ -336,7 +336,7 @@ fn test_compilation_with_archiving() {
 
 #[test]
 fn test_url_validation_rejects_http() {
-    use rules_validator::validate_url;
+    use bloqr_validator::validate_url;
 
     let result = validate_url("http://insecure.example.com/list.txt", None).unwrap();
 
@@ -349,13 +349,13 @@ fn test_verification_rejects_forged_metadata() {
     let temp_dir = TempDir::new().unwrap();
 
     // Create a result with fake metadata (0 validations)
-    let fake_result = rules_validator::EnforcedCompilationResult {
+    let fake_result = bloqr_validator::EnforcedCompilationResult {
         success: true,
         rule_count: 100,
         output_hash: "abc123".to_string(),
         elapsed_ms: 1000,
         output_path: temp_dir.path().join("output.txt"),
-        validation_metadata: rules_validator::ValidationMetadata {
+        validation_metadata: bloqr_validator::ValidationMetadata {
             validation_timestamp: chrono::Utc::now().to_rfc3339(),
             local_files_validated: 0, // Fake - no validation
             remote_urls_validated: 0, // Fake - no validation
@@ -409,7 +409,7 @@ fn test_multiple_local_files_validation() {
 
 #[test]
 fn test_config_serialization_roundtrip() {
-    use rules_validator::ValidationConfig;
+    use bloqr_validator::ValidationConfig;
 
     let original = ValidationConfig::default()
         .with_verification_mode(VerificationMode::Strict)
