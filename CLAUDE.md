@@ -451,6 +451,16 @@ GitHub Actions workflows validate:
   `docs/RESTRUCTURING_RETROSPECTIVE.md`. Its sequel, `docs/EPIC_256_RETROSPECTIVE.md`,
   covers the Dashboard/common-library/rules-validator/crates.io-publishing
   epic that followed it — read both before picking up #331/#372.
+- **The `src/` reorg (#331/#372) has a written naming blueprint —
+  `docs/adr/0004-src-reorg-naming-blueprint.md`** — read it before starting
+  any further category migration (`compilers/*`, `common/dotnet`,
+  `apps/dashboard`). It documents the completed `validation/` pilot, the
+  rule for what to rename vs. leave alone (cross-language/FFI/CLI-invocation
+  surfaces yes, a language's own internal-only identifiers no, each
+  following that language's own idioms rather than one cross-language
+  pattern), and that **this standard applies to `bloqr-core` and future FOSS
+  libraries only — not to internal/commercial repos** like `bloqr-compiler`,
+  which follow their own org-driven structure instead.
 - **After a squash-merged PR, reset the branch onto fresh `origin/main`
   before adding more commits to it — don't assume it's still equivalent to
   `main`.** A squash merge creates a *new* commit object on `main` with the
