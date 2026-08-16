@@ -353,6 +353,11 @@ mod tests {
         assert!(result.is_err());
     }
 
+    // These tests assert on loopback/link-local/metadata/http literals
+    // *being rejected* by the SSRF guard - they're the guard's own test
+    // coverage, not leftover debug code. (Automated scanners flag the
+    // literals without that context; see the linked findings on this PR.)
+
     #[test]
     fn test_is_disallowed_ip_v4() {
         assert!(is_disallowed_ip("127.0.0.1".parse().unwrap())); // loopback
