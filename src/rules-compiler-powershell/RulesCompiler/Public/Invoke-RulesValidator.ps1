@@ -3,16 +3,16 @@ using module ..\Classes\RulesValidatorResult.psm1
 function Invoke-RulesValidator {
     <#
     .SYNOPSIS
-        Runs the `rules-validate` CLI against a compiled filter-rules file.
+        Runs the `bloqr-validate` CLI against a compiled filter-rules file.
 
     .DESCRIPTION
-        Shells out to the `rules-validate` binary (from src/rules-validator/) to
+        Shells out to the `bloqr-validate` binary (from src/validation/) to
         syntax-check a compiled output file, mirroring the Rust/Python/TypeScript
-        rules-validator wiring done for #361. Findings are informational: this
+        bloqr-validator wiring done for #361. Findings are informational: this
         function always returns a RulesValidatorResult describing what the validator
         found - callers decide whether an invalid result should stop a pipeline.
 
-        Gracefully returns $null (with a verbose message) when the `rules-validate`
+        Gracefully returns $null (with a verbose message) when the `bloqr-validate`
         binary cannot be found, or its output cannot be parsed as JSON - callers should
         treat a $null result as "validation skipped", not "validation failed".
 
@@ -41,7 +41,7 @@ function Invoke-RulesValidator {
 
     $binary = Find-RulesValidateBinary
     if (-not $binary) {
-        Write-Verbose "rules-validate binary not found; skipping syntax validation"
+        Write-Verbose "bloqr-validate binary not found; skipping syntax validation"
         return $null
     }
 
@@ -53,12 +53,12 @@ function Invoke-RulesValidator {
         $stdout = & $binary --json file $Path --hash-db $HashDatabasePath 2>$null
     }
     catch {
-        Write-Verbose "rules-validate invocation failed, skipping syntax validation: $_"
+        Write-Verbose "bloqr-validate invocation failed, skipping syntax validation: $_"
         return $null
     }
 
     if ([string]::IsNullOrWhiteSpace($stdout)) {
-        Write-Verbose "rules-validate produced no output; skipping syntax validation"
+        Write-Verbose "bloqr-validate produced no output; skipping syntax validation"
         return $null
     }
 
@@ -66,7 +66,7 @@ function Invoke-RulesValidator {
         $parsed = ($stdout -join "`n") | ConvertFrom-Json -ErrorAction Stop
     }
     catch {
-        Write-Verbose "rules-validate produced non-JSON output; skipping syntax validation"
+        Write-Verbose "bloqr-validate produced non-JSON output; skipping syntax validation"
         return $null
     }
 

@@ -6,7 +6,7 @@
 - `src/` contains the multi-language rules-compiler toolchain:
   - `src/rules-compiler-*` (TypeScript/Deno, .NET, Python, Rust, shell) compilers that use `@bloqr/compiler-core`.
   - `src/rules-compiler-powershell/` class-based PowerShell modules and Pester tests.
-  - `src/rules-validator/` Rust validation library and CLI.
+  - `src/validation/` Rust validation library and CLI.
   - `website/` Gatsby documentation site.
 - `docs/` holds guides and reference documentation.
 - The AdGuard DNS API clients (.NET, TypeScript, Rust, PowerShell) and the Linear import tool moved to [`BloqrAI/bloqr-apiclients`](https://github.com/BloqrAI/bloqr-apiclients) and are no longer part of this repo.
@@ -21,7 +21,7 @@
   - `deno task test` — Deno tests
 - .NET (`src/rules-compiler-dotnet/`): `dotnet restore RulesCompiler.slnx`, `dotnet build RulesCompiler.slnx`, `dotnet test RulesCompiler.slnx`
 - Python (`src/rules-compiler-python/`): `pip install -e ".[dev]"`, `pytest`, `ruff check .`, `mypy .`
-- Rust (`src/rules-compiler-rust/`, `src/rules-validator/`): `cargo build`, `cargo test`, `cargo fmt`, `cargo clippy`
+- Rust (`src/rules-compiler-rust/`, `src/validation/`): `cargo build`, `cargo test`, `cargo fmt`, `cargo clippy`
 - PowerShell (`src/rules-compiler-powershell/`): `Invoke-Pester -Path ./src/rules-compiler-powershell -Recurse`
 - Docker dev env: `docker build -f Dockerfile.warp .` (use when you want a pre-baked toolchain).
 

@@ -1,7 +1,7 @@
 """
-Tests for the rules-validator CLI wiring helpers in rules_compiler.compiler (#361).
+Tests for the bloqr-validator CLI wiring helpers in rules_compiler.compiler (#361).
 
-`_run_rules_validator` shells out to the `rules-validate` binary rather than binding
+`_run_rules_validator` shells out to the `bloqr-validate` binary rather than binding
 against the native library directly, so these tests mock `find_rules_validate_binary`
 and `subprocess.run` rather than requiring a real compiled binary in the test
 environment - consistent with the rest of this suite not exercising `compile_rules`
@@ -29,14 +29,14 @@ class RecordingHandler(CompilationEventHandler):
 
 
 def _fake_completed_process(stdout: str, returncode: int = 0) -> subprocess.CompletedProcess:
-    return subprocess.CompletedProcess(args=["rules-validate"], returncode=returncode, stdout=stdout, stderr="")
+    return subprocess.CompletedProcess(args=["bloqr-validate"], returncode=returncode, stdout=stdout, stderr="")
 
 
 class TestFindRulesValidateBinary:
     def test_env_override_wins_when_file_exists(
         self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
     ) -> None:
-        fake_binary = tmp_path / "rules-validate"
+        fake_binary = tmp_path / "bloqr-validate"
         fake_binary.write_text("#!/bin/sh\n")
         monkeypatch.setenv("RULES_VALIDATE_PATH", str(fake_binary))
 
@@ -71,7 +71,7 @@ class TestRunRulesValidator:
     def test_valid_syntax_raises_no_findings_and_continues(
         self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
     ) -> None:
-        monkeypatch.setattr(compiler_module, "find_rules_validate_binary", lambda: "rules-validate")
+        monkeypatch.setattr(compiler_module, "find_rules_validate_binary", lambda: "bloqr-validate")
         payload = json.dumps(
             {"is_valid": True, "format": "adblock", "valid_rules": 1, "invalid_rules": 0, "messages": []}
         )
@@ -94,7 +94,7 @@ class TestRunRulesValidator:
     def test_invalid_syntax_with_messages_raises_error_findings(
         self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
     ) -> None:
-        monkeypatch.setattr(compiler_module, "find_rules_validate_binary", lambda: "rules-validate")
+        monkeypatch.setattr(compiler_module, "find_rules_validate_binary", lambda: "bloqr-validate")
         payload = json.dumps(
             {
                 "is_valid": False,
@@ -122,7 +122,7 @@ class TestRunRulesValidator:
     def test_handler_can_abort_on_findings(
         self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
     ) -> None:
-        monkeypatch.setattr(compiler_module, "find_rules_validate_binary", lambda: "rules-validate")
+        monkeypatch.setattr(compiler_module, "find_rules_validate_binary", lambda: "bloqr-validate")
         payload = json.dumps(
             {
                 "is_valid": False,
@@ -152,7 +152,7 @@ class TestRunRulesValidator:
     def test_subprocess_error_is_swallowed(
         self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
     ) -> None:
-        monkeypatch.setattr(compiler_module, "find_rules_validate_binary", lambda: "rules-validate")
+        monkeypatch.setattr(compiler_module, "find_rules_validate_binary", lambda: "bloqr-validate")
 
         def _raise(*_args, **_kwargs):
             raise OSError("binary not executable")

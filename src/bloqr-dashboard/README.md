@@ -13,7 +13,7 @@ sibling console app this one's architecture is modeled after.
 Part of [epic #256](https://github.com/BloqrAI/bloqr-core/issues/256): the app shell (#266),
 structured JSON logging with rollover (#275), the Dashboard's own `.jsonc` configuration with
 profiles and corruption recovery (#267), the compiler-config generation wizard (#268),
-round-trip config editing and git-based versioning (#269), rules-validator integration (#264),
+round-trip config editing and git-based versioning (#269), bloqr-validator integration (#264),
 a rich live compilation-progress display (#270), CLI-switch parity plus an embeddable
 library API boundary (#271), and lightweight AdGuard API client / benchmarks stubs (#272)
 are all implemented. Full `adguard-api-dotnet` integration remains a separate, later issue —

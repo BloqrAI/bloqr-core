@@ -26,7 +26,7 @@ This repository is a comprehensive multi-language toolkit for ad-blocking, netwo
 - **Bloqr Dashboard** (`src/bloqr-dashboard/`) - flagship .NET console app (own solution, `BloqrDashboard.slnx`) for generating/editing/round-tripping compiler configs, running compilations with rich progress UI, and validation/diagnostics — menu-driven interactively, or automatable via CLI switches or as an embedded library (`IDashboardService`)
 
 ### Rules Validator
-- **Rules Validator** (`src/rules-validator/`) - Rust validation library (published to crates.io as [`bloqr-validator-core`](https://crates.io/crates/bloqr-validator-core)) and CLI (published as [`bloqr-validator-core-cli`](https://crates.io/crates/bloqr-validator-core-cli), installable via `cargo install`) for filter/config validation
+- **Validation Library** (`src/validation/`) - Rust validation library (`core/`, published to crates.io as [`bloqr-validator-core`](https://crates.io/crates/bloqr-validator-core)) and CLI (`cli/`, published as [`bloqr-validator-core-cli`](https://crates.io/crates/bloqr-validator-core-cli), installable via `cargo install`) for filter/config validation
 
 ### Documentation Site
 - **Website** (`website/`) - Gatsby 5 documentation site covering guides, API reference, and security docs; lives at the repo root (not under `src/`) since it's slated for eventual extraction into its own repository
@@ -320,9 +320,9 @@ cargo test config::                       # Tests in module
 - **AdGuardWebhook** (`AdGuardWebhook/`) - Class-based webhook invocation module (`WebhookConfiguration`, `WebhookInvoker`, `WebhookStatistics`)
 - Each module ships its own `.psd1` manifest and `Tests/` Pester suite
 
-### Rules Validator (`src/rules-validator/`)
-- `bloqr-validator-core` - Rust library for validating filter/config files (crates.io)
-- `bloqr-validator-core-cli` - CLI frontend for the validation library (crates.io, `cargo install`)
+### Validation Library (`src/validation/`)
+- `core/` (`bloqr-validator-core`) - Rust library for validating filter/config files (crates.io)
+- `cli/` (`bloqr-validator-core-cli`) - CLI frontend (`bloqr-validate`) for the validation library (crates.io, `cargo install`)
 
 ### Documentation Website (`website/`)
 - Gatsby 5 static site with guides, API reference, and security documentation pages

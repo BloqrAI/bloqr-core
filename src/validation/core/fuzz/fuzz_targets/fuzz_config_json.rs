@@ -1,10 +1,10 @@
 //! Fuzzes `ValidationConfig` JSON parsing - the exact path
-//! `rules_validator_new`'s `config_json` argument takes across the FFI
+//! `bloqr_validator_new`'s `config_json` argument takes across the FFI
 //! boundary from .NET/other-language callers, so it must never panic on
 //! malformed input.
 #![no_main]
 
-use rules_validator::config::ValidationConfig;
+use bloqr_validator::config::ValidationConfig;
 use libfuzzer_sys::fuzz_target;
 
 fuzz_target!(|data: &[u8]| {

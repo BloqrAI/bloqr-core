@@ -1,8 +1,8 @@
 [workspace]
 resolver = "2"
 members = [
-    "src/rules-validator/rules-validator-core",
-    "src/rules-validator/rules-validator-cli",
+    "src/validation/core",
+    "src/validation/cli",
     "src/rules-compiler-rust",
 ]
 

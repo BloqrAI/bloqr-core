@@ -2,16 +2,16 @@
 
 <#
 .SYNOPSIS
-    Tests for the Invoke-RulesValidator rules-validator CLI wiring (#361).
+    Tests for the Invoke-RulesValidator bloqr-validator CLI wiring (#361).
 
 .DESCRIPTION
-    Invoke-RulesValidator shells out to the `rules-validate` binary rather than
+    Invoke-RulesValidator shells out to the `bloqr-validate` binary rather than
     binding against a native library directly, so these tests mock
     Find-RulesValidateBinary (the module-private binary-discovery helper) with a
     small fake shell script that emits canned `--json file` output - keeping the
     tests deterministic and independent of whether the Rust workspace has been
     built locally, mirroring the approach used for the Rust/Python/TypeScript
-    rules-validator wiring.
+    bloqr-validator wiring.
 #>
 
 BeforeAll {
@@ -27,7 +27,7 @@ BeforeAll {
             [int]$ExitCode = 0
         )
 
-        $scriptPath = Join-Path $Directory 'rules-validate'
+        $scriptPath = Join-Path $Directory 'bloqr-validate'
         $body = "#!/bin/sh`ncat <<'RVEOF'`n$Stdout`nRVEOF`nexit $ExitCode`n"
         Set-Content -Path $scriptPath -Value $body -NoNewline
         if (-not $IsWindows) {

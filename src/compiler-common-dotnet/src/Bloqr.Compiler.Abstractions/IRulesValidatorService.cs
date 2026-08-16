@@ -1,9 +1,9 @@
 namespace Bloqr.Compiler.Abstractions;
 
 /// <summary>
-/// Wraps <c>rules-validator-core</c>'s native FFI surface (<c>rules_validator.h</c>) for
+/// Wraps <c>bloqr-validator-core</c>'s native FFI surface (<c>bloqr_validator.h</c>) for
 /// filter-list syntax and remote-source URL validation. See #264 and
-/// <c>src/rules-validator/README.md</c>'s ".NET / C#" section for the P/Invoke pattern this
+/// <c>src/validation/core/README.md</c>'s ".NET / C#" section for the P/Invoke pattern this
 /// implements.
 /// </summary>
 /// <remarks>
@@ -16,7 +16,7 @@ namespace Bloqr.Compiler.Abstractions;
 public interface IRulesValidatorService
 {
     /// <summary>
-    /// Gets whether the native <c>rules_validator</c> library could be loaded. Checking this
+    /// Gets whether the native <c>bloqr_validator</c> library could be loaded. Checking this
     /// before calling the validation methods is optional - they degrade to returning
     /// <c>null</c> on their own if the library is unavailable - but it lets a caller skip the
     /// attempt (and any related logging) entirely.

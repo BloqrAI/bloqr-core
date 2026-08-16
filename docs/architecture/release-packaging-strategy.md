@@ -22,7 +22,7 @@ This doc answers three things: whether the current publish approach satisfies th
 dotnet publish ... --self-contained true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true
 ```
 
-This bundles the entire .NET runtime (not just the app) into a single executable per platform — no separate .NET runtime install is required on the target machine, and the `rules_validator` native library is copied alongside it (#276). This is **binary-only, zero-build-tooling deployment already**, for the runtime itself.
+This bundles the entire .NET runtime (not just the app) into a single executable per platform — no separate .NET runtime install is required on the target machine, and the `bloqr_validator` native library is copied alongside it (#276). This is **binary-only, zero-build-tooling deployment already**, for the runtime itself.
 
 ### The CRT question specifically
 
@@ -56,16 +56,16 @@ Already correctly shaped by #276's `release.yml` changes — this section docume
 ```
 RulesCompiler.Console-<platform>.{zip,tar.gz}
 ├── RulesCompiler.Console[.exe]      # single self-contained executable
-├── librules_validator.{so,dll,dylib}  # native validation library, copied in alongside
+├── libbloqr_validator.{so,dll,dylib}  # native validation library, copied in alongside
 └── appsettings.json
 
 Bloqr.Dashboard.Console-<platform>.{zip,tar.gz}
 ├── Bloqr.Dashboard.Console[.exe]
-├── librules_validator.{so,dll,dylib}
+├── libbloqr_validator.{so,dll,dylib}
 └── appsettings.json
 ```
 
-Each archive is self-contained: no `build.sh`/`build.ps1`, no launcher script, no separately-installed .NET runtime, no separately-installed `rules-validator` binary. Extract and run — this already satisfies "binaries-only, no launcher, no build scripts, Dashboard as the sole entrypoint" for the .NET apps. The Rust `rules-compiler` and `rules-validator` CLI get the equivalent treatment via their own release-mode static binaries.
+Each archive is self-contained: no `build.sh`/`build.ps1`, no launcher script, no separately-installed .NET runtime, no separately-installed `bloqr-validator` binary. Extract and run — this already satisfies "binaries-only, no launcher, no build scripts, Dashboard as the sole entrypoint" for the .NET apps. The Rust `rules-compiler` and `bloqr-validator` CLI get the equivalent treatment via their own release-mode static binaries.
 
 The **source release** shape (option 1 — bootstrapped by the launcher/build scripts) is simply this same repository checked out and run via `./build.sh`/`./launcher.sh` (or the `.ps1` equivalents) as documented in the root README — no new packaging work was needed for that side; it already exists and is exercised by `.github/workflows/build-scripts-tests.yml`.
 

@@ -1,6 +1,6 @@
 # bloqr-validator-core
 
-Part of the [Bloqr](https://github.com/BloqrAI) open-source ad-blocking toolkit — the core validation library for adblock- and hosts-format filter list compilation, published from [`BloqrAI/bloqr-core`](https://github.com/BloqrAI/bloqr-core/tree/main/src/rules-validator).
+Part of the [Bloqr](https://github.com/BloqrAI) open-source ad-blocking toolkit — the core validation library for adblock- and hosts-format filter list compilation, published from [`BloqrAI/bloqr-core`](https://github.com/BloqrAI/bloqr-core/tree/main/src/validation).
 
 Provides a unified, high-performance validation layer used across every language wrapper in `bloqr-core`:
 
@@ -27,7 +27,7 @@ bloqr-validator-core = "1"
 ```
 
 ```rust
-use rules_validator::{Validator, ValidationConfig, VerificationMode};
+use bloqr_validator::{Validator, ValidationConfig, VerificationMode};
 
 let config = ValidationConfig::default()
     .with_verification_mode(VerificationMode::Strict);
@@ -38,11 +38,11 @@ let result = validator.validate_local_file("path/to/filter-list.txt")?;
 println!("Valid rules: {}", result.valid_rules);
 ```
 
-The crate name is `bloqr-validator-core`; the Rust import path is `rules_validator` (the `[lib] name` in `Cargo.toml` — decoupled from the published package name so internal code and the crates.io identity can evolve independently).
+The crate name is `bloqr-validator-core`; the Rust import path is `bloqr_validator` (the `[lib] name` in `Cargo.toml` — decoupled from the published package name so internal code and the crates.io identity can evolve independently).
 
 ## FFI
 
-This crate ships a real `extern "C"` FFI surface (`src/ffi.rs`) — an opaque-handle-plus-JSON-string boundary designed for .NET P/Invoke or any other FFI consumer — not just a Rust-only API. See the generated `rules_validator.h` (via `cbindgen`) for the authoritative signatures.
+This crate ships a real `extern "C"` FFI surface (`src/ffi.rs`) — an opaque-handle-plus-JSON-string boundary designed for .NET P/Invoke or any other FFI consumer — not just a Rust-only API. See the generated `bloqr_validator.h` (via `cbindgen`) for the authoritative signatures.
 
 ## AdGuard compatibility
 
@@ -64,7 +64,7 @@ To fuzz locally for longer than the CI smoke test: `cd fuzz && cargo +nightly fu
 
 ## More context
 
-- Full source, the companion `bloqr-validator-core-cli` binary, and integration examples for every language wrapper: [`bloqr-core/src/rules-validator`](https://github.com/BloqrAI/bloqr-core/tree/main/src/rules-validator)
+- Full source, the companion `bloqr-validator-core-cli` binary, and integration examples for every language wrapper: [`bloqr-core/src/validation`](https://github.com/BloqrAI/bloqr-core/tree/main/src/validation)
 - Naming/versioning conventions this crate follows: [`docs/architecture/versioning-strategy.md`](https://github.com/BloqrAI/bloqr-core/blob/main/docs/architecture/versioning-strategy.md)
 
 ## License

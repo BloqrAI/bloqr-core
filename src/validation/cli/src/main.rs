@@ -1,12 +1,12 @@
 //! Bloqr CLI for validating adblock/hosts filter lists.
 
+use bloqr_validator::{HashDatabase, ValidationConfig, Validator, VerificationMode};
 use clap::{Parser, Subcommand};
-use rules_validator::{HashDatabase, ValidationConfig, Validator, VerificationMode};
 use serde::Serialize;
 use std::path::PathBuf;
 
 #[derive(Parser)]
-#[command(name = "rules-validate")]
+#[command(name = "bloqr-validate")]
 #[command(about = "Bloqr CLI for validating adblock/hosts filter lists")]
 #[command(version)]
 struct Cli {

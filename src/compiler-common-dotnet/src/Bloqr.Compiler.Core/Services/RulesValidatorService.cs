@@ -2,7 +2,7 @@ namespace Bloqr.Compiler.Core.Services;
 
 /// <summary>
 /// Default implementation of <see cref="IRulesValidatorService"/>, P/Invoking into
-/// <c>rules-validator-core</c>'s native <c>rules_validator</c> library.
+/// <c>bloqr-validator-core</c>'s native <c>bloqr_validator</c> library.
 /// </summary>
 public sealed class RulesValidatorService : IRulesValidatorService, IDisposable
 {
@@ -48,7 +48,7 @@ public sealed class RulesValidatorService : IRulesValidatorService, IDisposable
             return Task.FromResult<SyntaxValidationResult?>(null);
         }
 
-        var status = RulesValidatorNativeMethods.rules_validator_validate_local_file(
+        var status = RulesValidatorNativeMethods.bloqr_validator_validate_local_file(
             _handle, path, out var resultPtr);
 
         var result = ReadResultJson(resultPtr, status, "validate_local_file",
@@ -68,7 +68,7 @@ public sealed class RulesValidatorService : IRulesValidatorService, IDisposable
             return Task.FromResult<UrlValidationResult?>(null);
         }
 
-        var status = RulesValidatorNativeMethods.rules_validator_validate_remote_url(
+        var status = RulesValidatorNativeMethods.bloqr_validator_validate_remote_url(
             _handle, url, expectedHash, out var resultPtr);
 
         var result = ReadResultJson(resultPtr, status, "validate_remote_url",
@@ -91,7 +91,7 @@ public sealed class RulesValidatorService : IRulesValidatorService, IDisposable
             if (status != 0)
             {
                 _logger.LogWarning(
-                    "rules-validator {Operation} returned status {Status} with no result", operation, status);
+                    "bloqr-validator {Operation} returned status {Status} with no result", operation, status);
             }
 
             return null;
@@ -107,7 +107,7 @@ public sealed class RulesValidatorService : IRulesValidatorService, IDisposable
 
             if (status != 0)
             {
-                _logger.LogWarning("rules-validator {Operation} failed: {Error}", operation, json);
+                _logger.LogWarning("bloqr-validator {Operation} failed: {Error}", operation, json);
                 return null;
             }
 
@@ -115,18 +115,18 @@ public sealed class RulesValidatorService : IRulesValidatorService, IDisposable
         }
         catch (JsonException ex)
         {
-            _logger.LogWarning(ex, "Failed to parse rules-validator {Operation} result", operation);
+            _logger.LogWarning(ex, "Failed to parse bloqr-validator {Operation} result", operation);
             return null;
         }
         finally
         {
-            RulesValidatorNativeMethods.rules_validator_free_string(resultPtr);
+            RulesValidatorNativeMethods.bloqr_validator_free_string(resultPtr);
         }
     }
 
     /// <summary>
-    /// Builds the native <c>ValidationConfig</c> JSON passed to <c>rules_validator_new</c>.
-    /// rules-validator-core's internal hash tracking (a separate, redundant mechanism from
+    /// Builds the native <c>ValidationConfig</c> JSON passed to <c>bloqr_validator_new</c>.
+    /// bloqr-validator-core's internal hash tracking (a separate, redundant mechanism from
     /// .NET's own <see cref="IHashDatabaseService"/> sidecar, #273) always writes its database
     /// on every call regardless of verification mode, using a relative
     /// <c>"data/input/.hashes.json"</c> default that isn't guaranteed to exist or be writable
@@ -135,7 +135,7 @@ public sealed class RulesValidatorService : IRulesValidatorService, IDisposable
     /// </summary>
     private static string BuildConfigJson()
     {
-        var directory = Path.Combine(Path.GetTempPath(), "bloqr-rules-validator");
+        var directory = Path.Combine(Path.GetTempPath(), "bloqr-validator");
         Directory.CreateDirectory(directory);
         var hashDatabasePath = Path.Combine(directory, ".hashes.json");
 
@@ -167,12 +167,12 @@ public sealed class RulesValidatorService : IRulesValidatorService, IDisposable
 
             try
             {
-                _handle = RulesValidatorNativeMethods.rules_validator_new(BuildConfigJson());
+                _handle = RulesValidatorNativeMethods.bloqr_validator_new(BuildConfigJson());
                 _available = _handle != IntPtr.Zero;
 
                 if (!_available)
                 {
-                    _logger.LogWarning("rules_validator_new returned a null handle; rules-validator is unavailable");
+                    _logger.LogWarning("bloqr_validator_new returned a null handle; bloqr-validator is unavailable");
                 }
             }
             catch (Exception ex) when (ex is DllNotFoundException or EntryPointNotFoundException or BadImageFormatException)
@@ -180,7 +180,7 @@ public sealed class RulesValidatorService : IRulesValidatorService, IDisposable
                 // The native library isn't built/deployed alongside this assembly yet (#276
                 // owns packaging it). Treat as gracefully unavailable rather than crashing the
                 // whole compilation pipeline over an optional integrity check.
-                _logger.LogWarning(ex, "rules_validator native library is unavailable; skipping rules-validator checks");
+                _logger.LogWarning(ex, "bloqr_validator native library is unavailable; skipping bloqr-validator checks");
                 _available = false;
             }
             finally
@@ -195,7 +195,7 @@ public sealed class RulesValidatorService : IRulesValidatorService, IDisposable
     {
         if (_handle != IntPtr.Zero)
         {
-            RulesValidatorNativeMethods.rules_validator_free(_handle);
+            RulesValidatorNativeMethods.bloqr_validator_free(_handle);
             _handle = IntPtr.Zero;
         }
     }

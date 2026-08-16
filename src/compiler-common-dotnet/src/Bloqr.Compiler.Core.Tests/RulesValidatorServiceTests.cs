@@ -1,9 +1,9 @@
 namespace Bloqr.Compiler.Core.Tests;
 
 /// <summary>
-/// Exercises <see cref="RulesValidatorService"/> against the real native <c>rules_validator</c>
-/// library. Requires <c>librules_validator.so</c> (or the platform equivalent) alongside the
-/// test binaries - build it with `cargo build --release -p rules-validator-core` and copy the
+/// Exercises <see cref="RulesValidatorService"/> against the real native <c>bloqr_validator</c>
+/// library. Requires <c>libbloqr_validator.so</c> (or the platform equivalent) alongside the
+/// test binaries - build it with `cargo build --release -p bloqr-validator-core` and copy the
 /// artifact from `target/release/` into this project's output directory. #276 owns automating
 /// that; until then, these tests no-op (pass trivially, not fail) when the library isn't
 /// present, since <see cref="RulesValidatorService"/> is explicitly designed to degrade
@@ -16,7 +16,7 @@ public sealed class RulesValidatorServiceTests : IDisposable
 
     public RulesValidatorServiceTests()
     {
-        _tempDirectory = Directory.CreateTempSubdirectory("rules-validator-service-tests-").FullName;
+        _tempDirectory = Directory.CreateTempSubdirectory("bloqr-validator-service-tests-").FullName;
         _service = new RulesValidatorService(new Mock<ILogger<RulesValidatorService>>().Object);
     }
 

@@ -254,7 +254,7 @@ compute_hash() {
     fi
 }
 
-# Locate the rules-validate CLI binary (from src/rules-validator/).
+# Locate the bloqr-validate CLI binary (from src/validation/).
 # Resolution order: RULES_VALIDATE_PATH env override, then PATH, then a
 # dev-convenience fallback to the Cargo workspace's target/{release,debug}
 # output. Prints nothing and returns non-zero when not found, so callers can
@@ -265,14 +265,14 @@ find_rules_validate_binary() {
         return 0
     fi
 
-    if (( $+commands[rules-validate] )); then
-        print "${commands[rules-validate]}"
+    if (( $+commands[bloqr-validate] )); then
+        print "${commands[bloqr-validate]}"
         return 0
     fi
 
     local candidate profile
     for profile in release debug; do
-        candidate="${PROJECT_ROOT}/target/${profile}/rules-validate"
+        candidate="${PROJECT_ROOT}/target/${profile}/bloqr-validate"
         if [[ -f "${candidate}" ]]; then
             print "${candidate}"
             return 0
@@ -282,7 +282,7 @@ find_rules_validate_binary() {
     return 1
 }
 
-# Runs the rules-validate CLI's syntax check against a compiled output file.
+# Runs the bloqr-validate CLI's syntax check against a compiled output file.
 # Findings are informational: this never fails compilation, it only logs
 # what the validator found. A missing binary, empty output, or output that
 # can't be parsed as JSON is treated as a skip, not a failure.
@@ -291,7 +291,7 @@ run_rules_validator() {
     local binary hash_db json_output report
 
     if ! binary=$(find_rules_validate_binary); then
-        log_debug "rules-validate binary not found; skipping syntax validation"
+        log_debug "bloqr-validate binary not found; skipping syntax validation"
         return 0
     fi
 
@@ -299,12 +299,12 @@ run_rules_validator() {
     json_output=$("${binary}" --json file "${output_path}" --hash-db "${hash_db}" 2>/dev/null) || true
 
     if [[ -z "${json_output:-}" ]]; then
-        log_debug "rules-validate produced no output; skipping syntax validation"
+        log_debug "bloqr-validate produced no output; skipping syntax validation"
         return 0
     fi
 
     if (( ! $+commands[python3] )); then
-        log_debug "python3 not found; cannot parse rules-validate output"
+        log_debug "python3 not found; cannot parse bloqr-validate output"
         return 0
     fi
 
@@ -324,13 +324,13 @@ if not messages and not is_valid:
     messages = [f"RV001: syntax validation failed ({valid_rules} valid, {invalid_rules} invalid rules)"]
 
 severity = "INFO" if is_valid else "WARN"
-print(f"{severity}|rules-validator: {valid_rules} valid, {invalid_rules} invalid rule(s)")
+print(f"{severity}|bloqr-validator: {valid_rules} valid, {invalid_rules} invalid rule(s)")
 for m in messages:
     print(f"{severity}|{m}")
 ') || true
 
     if [[ -z "${report:-}" ]]; then
-        log_debug "rules-validate produced output that could not be parsed as JSON; skipping"
+        log_debug "bloqr-validate produced output that could not be parsed as JSON; skipping"
         return 0
     fi
 

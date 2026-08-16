@@ -18,7 +18,7 @@ use crate::events::{
     EventDispatcher, EventTimestamp, HashComputedEventArgs, HashMismatchEventArgs,
     HashVerifiedEventArgs, ValidationEventArgs,
 };
-use rules_validator::{ValidationConfig, Validator};
+use bloqr_validator::{ValidationConfig, Validator};
 
 /// JSR package specifier for the compiler CLI, run via `deno run`.
 const JSR_PACKAGE_SPECIFIER: &str = "jsr:@bloqr/compiler-core/cli";

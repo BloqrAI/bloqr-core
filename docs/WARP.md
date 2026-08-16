@@ -3,7 +3,7 @@
 This file provides guidance to WARP (warp.dev) when working with code in this repository.
 
 Project scope
-- This repo houses the multi-language rules-compiler toolkit: TypeScript/Deno, C#/.NET 10, Python, and Rust compilers, bash/zsh shell scripts, a PowerShell toolkit, the Rust `rules-validator`, and the Gatsby documentation site (`website/`, at the repo root).
+- This repo houses the multi-language rules-compiler toolkit: TypeScript/Deno, C#/.NET 10, Python, and Rust compilers, bash/zsh shell scripts, a PowerShell toolkit, the Rust validation library (`src/validation/`), and the Gatsby documentation site (`website/`, at the repo root).
 - The AdGuard DNS API clients (.NET, TypeScript, Rust, PowerShell) and the Linear import tool moved to [`BloqrAI/bloqr-apiclients`](https://github.com/BloqrAI/bloqr-apiclients) and are no longer part of this repo.
 - CI pipelines (GitHub Actions) validate the .NET, TypeScript/Deno, Python, Rust, and PowerShell compilers, plus the Gatsby site. Keep local commands aligned with the workflows below.
 
@@ -56,7 +56,7 @@ High-level architecture and structure
   - `src/rules-compiler-shell/` — bash and zsh scripts for compiling rules without a language runtime.
   - `src/rules-compiler-powershell/` — class-based PowerShell modules with Pester tests.
 - Validation
-  - `src/rules-validator/` — Rust library (published to crates.io as `bloqr-validator-core`) and CLI (published as `bloqr-validator-core-cli`) for filter/config validation.
+  - `src/validation/` — Rust library (published to crates.io as `bloqr-validator-core`) and CLI (published as `bloqr-validator-core-cli`) for filter/config validation.
 - Documentation site
   - `website/` — Gatsby 5 site (repo root, not under `src/`) sourcing content from `docs/` and repo root.
 

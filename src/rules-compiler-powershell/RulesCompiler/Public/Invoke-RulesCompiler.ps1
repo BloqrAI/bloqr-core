@@ -10,7 +10,7 @@ function Invoke-RulesCompiler {
         Loads and validates a compiler configuration via the CompilerConfiguration
         class, shells out to hostlist-compiler (native binary or `npx
         @adguard/hostlist-compiler`) to produce the compiled rules file, counts
-        rules and computes a SHA-384 hash of the output, runs the rules-validate
+        rules and computes a SHA-384 hash of the output, runs the bloqr-validate
         syntax check via Invoke-RulesValidator (informational findings only - see
         that function's help for details), and optionally copies the result into
         a rules directory.
@@ -116,11 +116,11 @@ function Invoke-RulesCompiler {
     $validation = Invoke-RulesValidator -Path $OutputPath
     if ($validation) {
         if ($validation.IsValid) {
-            Write-Verbose "rules-validator: $($validation.ValidRules) valid, $($validation.InvalidRules) invalid rule(s)"
+            Write-Verbose "bloqr-validator: $($validation.ValidRules) valid, $($validation.InvalidRules) invalid rule(s)"
         }
         else {
             foreach ($message in $validation.Messages) {
-                Write-Warning "rules-validator: $message"
+                Write-Warning "bloqr-validator: $message"
             }
         }
     }
