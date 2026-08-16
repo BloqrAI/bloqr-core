@@ -125,12 +125,13 @@ jobs:
     steps:
       - uses: actions/checkout@v7
 
-      # Only fuzz a crate whose own files (or a workspace-level manifest)
-      # actually changed - most PRs touch one of the two fuzzed crates, not
-      # both, and there's no value in re-fuzzing the untouched one on every
-      # push. Always treated as "everything changed" on the weekly scheduled
-      # run below (no base ref to diff against, and that run is the one
-      # place a full sweep is actually wanted).
+      # Only fuzz a crate whose own files (or a workspace-level manifest, or
+      # this workflow file itself - a workflow change should self-validate
+      # against both) actually changed - most PRs touch one of the two
+      # fuzzed crates, not both, and there's no value in re-fuzzing the
+      # untouched one on every push. Always treated as "everything changed"
+      # on the weekly scheduled run below (no base ref to diff against, and
+      # that run is the one place a full sweep is actually wanted).
       - name: Detect changed crates
         if: github.event_name != 'schedule'
         id: filter
@@ -141,10 +142,12 @@ jobs:
               - 'src/rules-validator/**'
               - 'Cargo.toml'
               - 'Cargo.lock'
+              - '.github/workflows/rust-clippy.yml'
             compiler:
               - 'src/rules-compiler-rust/**'
               - 'Cargo.toml'
               - 'Cargo.lock'
+              - '.github/workflows/rust-clippy.yml'
 
       - name: Install nightly Rust toolchain
         uses: actions-rust-lang/setup-rust-toolchain@v1
