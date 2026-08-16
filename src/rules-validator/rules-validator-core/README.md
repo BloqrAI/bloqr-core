@@ -15,7 +15,7 @@ Provides a unified, high-performance validation layer used across every language
 - **At-Rest Hash Verification**: SHA-384 hashing for local files with automatic database management
 - **In-Flight Hash Verification**: SHA-384 verification for downloaded files (prevents MITM attacks)
 - **URL Security Validation**: HTTPS enforcement, domain validation, content verification
-- **Syntax Validation**: Automatic linting for adblock and hosts file formats
+- **Syntax Validation**: AdGuard `HostlistCompiler`-compatible linting for adblock and hosts file formats — see "AdGuard compatibility" below
 - **File Conflict Handling**: Automatic renaming, overwrite, or error strategies
 - **Archiving**: Timestamped archiving with manifest tracking and retention policies
 
@@ -43,6 +43,12 @@ The crate name is `bloqr-validator-core`; the Rust import path is `rules_validat
 ## FFI
 
 This crate ships a real `extern "C"` FFI surface (`src/ffi.rs`) — an opaque-handle-plus-JSON-string boundary designed for .NET P/Invoke or any other FFI consumer — not just a Rust-only API. See the generated `rules_validator.h` (via `cbindgen`) for the authoritative signatures.
+
+## AdGuard compatibility
+
+`syntax::validate_syntax` (and friends) is a deliberate, source-read port of [AdGuard `HostlistCompiler`](https://github.com/AdguardTeam/HostlistCompiler)'s `Validate`/`ValidateAllowIp`/`ValidateAllowPublicSuffix`/`ValidateAllowIpAndPublicSuffix` transformations — the same tool this toolkit's own compilers shell out to for the real compile step (see `rules-compiler-rust`'s README). The goal is for this crate's pre-compile validation to actually predict what `HostlistCompiler` will accept, rather than diverging from it. Four modes are available via `HostlistValidationMode`, named to match the transformation names already used in `schemas/compiler-config.schema.json`; `validate_syntax`/`validate_syntax_content` default to the strictest (`Validate`, upstream's own default).
+
+Full rationale, exact ported semantics, and the one deliberate gap (public-suffix-list-aware hostname rejection, tracked as a Phase 2 follow-up) are in [`docs/adr/0003-adguard-hostlist-compatibility.md`](https://github.com/BloqrAI/bloqr-core/blob/main/docs/adr/0003-adguard-hostlist-compatibility.md). `FiltersCompiler` (AdGuard's browser-extension-format compiler) is explicitly out of scope — no consumer in this repo, which targets AdGuard DNS/Home filtering only.
 
 ## Security & hardening
 

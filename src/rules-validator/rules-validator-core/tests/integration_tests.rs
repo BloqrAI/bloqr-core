@@ -162,7 +162,6 @@ fn test_syntax_validation_adblock_format() {
     writeln!(file, "! Title: Test Filter").unwrap();
     writeln!(file, "||example.com^").unwrap();
     writeln!(file, "@@||allowed.com^").unwrap();
-    writeln!(file, "##.ad-banner").unwrap();
     file.flush().unwrap();
 
     let result = validate_syntax(file.path()).unwrap();
@@ -171,6 +170,23 @@ fn test_syntax_validation_adblock_format() {
     assert_eq!(result.format, rules_validator::FilterFormat::Adblock);
     assert!(result.valid_rules >= 2); // At least ||example.com^ and @@||allowed.com^
     assert_eq!(result.invalid_rules, 0);
+}
+
+#[test]
+fn test_syntax_validation_rejects_cosmetic_rule() {
+    // Element-hiding/cosmetic rules are meaningless at the DNS level - HostlistCompiler
+    // itself rejects them (see docs/adr/0003-adguard-hostlist-compatibility.md), and this
+    // validator now agrees rather than silently accepting rules the real compile step drops.
+    let mut file = NamedTempFile::new().unwrap();
+    writeln!(file, "||example.com^").unwrap();
+    writeln!(file, "##.ad-banner").unwrap();
+    file.flush().unwrap();
+
+    let result = validate_syntax(file.path()).unwrap();
+
+    assert!(!result.is_valid);
+    assert_eq!(result.valid_rules, 1);
+    assert_eq!(result.invalid_rules, 1);
 }
 
 #[test]
