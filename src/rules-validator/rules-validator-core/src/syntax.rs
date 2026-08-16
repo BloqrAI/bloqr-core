@@ -824,6 +824,8 @@ mod tests {
 
     #[test]
     fn test_validate_syntax_content_hosts_multi_hostname_line() {
+        // "127.0.0.1 localhost" here is /etc/hosts-format test *input* fed to the parser -
+        // no network call is made. False-positive bait for localhost/debug-code scanners.
         let result =
             validate_syntax_content("0.0.0.0 example.com ads.example.com\n127.0.0.1 localhost\n");
         assert_eq!(result.invalid_rules, 0);
