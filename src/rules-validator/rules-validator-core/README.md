@@ -44,6 +44,18 @@ The crate name is `bloqr-validator-core`; the Rust import path is `rules_validat
 
 This crate ships a real `extern "C"` FFI surface (`src/ffi.rs`) — an opaque-handle-plus-JSON-string boundary designed for .NET P/Invoke or any other FFI consumer — not just a Rust-only API. See the generated `rules_validator.h` (via `cbindgen`) for the authoritative signatures.
 
+## Security & hardening
+
+This crate fetches URLs supplied via untrusted filter-list configuration, so `url_security.rs` guards against SSRF: HTTPS is enforced, and both the initial URL and every redirect hop are checked (via a custom `reqwest` redirect policy, capped at 5 hops) against loopback/private/link-local/metadata address ranges before a connection is made. Downloaded content is capped at 50MB via a streaming read limit (not after buffering the full response), since a lying or absent `Content-Length` header can't be trusted.
+
+CI enforces, on every PR touching this crate:
+
+- `cargo clippy -D clippy::all -D clippy::correctness -D clippy::suspicious` (a hard gate, not just warnings)
+- `cargo deny check` (`deny.toml` at the repo root) — dependency license compliance, `RUSTSEC` advisory/yanked-crate checks, and source-registry pinning
+- A 60-second smoke-fuzz run (via `cargo-fuzz`/libFuzzer) of each target in `fuzz/fuzz_targets/` against the syntax-validation, `ValidationConfig` JSON, and `HashDatabase` JSON parsing paths — the untrusted-input surfaces this crate exposes (including across the FFI boundary from other-language callers)
+
+To fuzz locally for longer than the CI smoke test: `cd fuzz && cargo +nightly fuzz run fuzz_syntax_content -- -max_total_time=600` (swap the target name for `fuzz_config_json` or `fuzz_hash_database_json`).
+
 ## More context
 
 - Full source, the companion `bloqr-validator-core-cli` binary, and integration examples for every language wrapper: [`bloqr-core/src/rules-validator`](https://github.com/BloqrAI/bloqr-core/tree/main/src/rules-validator)

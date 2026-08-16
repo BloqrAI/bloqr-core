@@ -1,0 +1,43 @@
+[package]
+name = "bloqr-validator-core-fuzz"
+version = "0.0.0"
+publish = false
+edition = "2021"
+
+# This crate is intentionally NOT a member of the parent workspace
+# (Cargo won't build it as part of `cargo build --workspace`, and it needs
+# its own nightly-only, sanitizer-instrumented build). This empty table
+# marks it as its own workspace root so Cargo doesn't try to fold it into
+# the repo-root workspace.
+[workspace]
+
+[package.metadata]
+cargo-fuzz = true
+
+[dependencies]
+libfuzzer-sys = "0.4"
+serde_json = "1.0"
+
+[dependencies.bloqr-validator-core]
+path = ".."
+
+[[bin]]
+name = "fuzz_syntax_content"
+path = "fuzz_targets/fuzz_syntax_content.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "fuzz_config_json"
+path = "fuzz_targets/fuzz_config_json.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "fuzz_hash_database_json"
+path = "fuzz_targets/fuzz_hash_database_json.rs"
+test = false
+doc = false
+bench = false
