@@ -32,7 +32,7 @@ In-repo consumers reference the projects directly rather than through a package 
 
 `RulesCompiler` (`src/rules-compiler-dotnet/`) references both. `Bloqr.Dashboard.Abstractions` references `Bloqr.Compiler.Abstractions`; `Bloqr.Dashboard.Core` references `Bloqr.Compiler.Core`. There's no reason to make an in-repo build round-trip through a package feed — `<ProjectReference>` gives identical `dotnet publish --self-contained` output at zero extra latency. See [`docs/architecture/nuget-distribution-strategy.md`](../../docs/architecture/nuget-distribution-strategy.md) for the full decision record.
 
-Out-of-repo consumers (a future WPF host, or this library becoming its own repo) can instead take it as a NuGet package — see [Publishing](#publishing) below.
+Out-of-repo consumers (a future .NET MAUI host, or this library becoming its own repo) can instead take it as a NuGet package — see [Publishing](#publishing) below.
 
 ## API Reference
 

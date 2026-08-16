@@ -5,7 +5,7 @@ namespace Bloqr.Dashboard.Abstractions;
 /// the CLI surface expose, available as plain async calls with no dependency on Spectre.Console
 /// or terminal rendering. Per the epic: "the WPF application will have the Dashboard console
 /// application embedded as a library... Dashboard should expose all inner operations via CLI
-/// switches, APIs, etc." (#271). A future WPF host depends on this interface (and the rest of
+/// switches, APIs, etc." (#271). A future .NET MAUI host depends on this interface (and the rest of
 /// <c>Bloqr.Dashboard.Abstractions</c>/<c>Bloqr.Dashboard.Core</c>) instead of anything in
 /// <c>Bloqr.Dashboard.Console</c>.
 /// </summary>

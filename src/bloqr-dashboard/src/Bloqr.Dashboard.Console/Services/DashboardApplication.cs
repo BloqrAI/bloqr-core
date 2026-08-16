@@ -41,7 +41,7 @@ public sealed class DashboardApplication
     /// <c>--activate-profile</c>, <c>--non-interactive</c>) or the interactive main menu loop -
     /// full CLI-switch parity with the interactive menu's compile/validate/profile-management
     /// operations, per #271. Every CLI branch below calls <see cref="IDashboardService"/>, the
-    /// same embeddable-library API boundary a future WPF host would depend on - the CLI is
+    /// same embeddable-library API boundary a future .NET MAUI host would depend on - the CLI is
     /// itself just one more consumer of that boundary, not a separate code path. Config
     /// generation (the wizard) remains interactive-only: mirroring its entire prompt tree as CLI
     /// flags is a materially larger, separate effort - CLI users hand-edit or generate a

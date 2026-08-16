@@ -4,14 +4,14 @@ This app's structure mirrors
 [`AdGuard.ConsoleUI`](https://github.com/BloqrAI/bloqr-apiclients/tree/main/adguard-api-dotnet/src/AdGuard.ConsoleUI)
 (the console app in the private `BloqrAI/bloqr-apiclients` repo, described locally in
 [`docs/guides/consoleui-architecture.md`](../../docs/guides/consoleui-architecture.md)) —
-the two apps will eventually share a WPF host, so keeping their shapes consistent now avoids a
+the two apps will eventually share a .NET MAUI host, so keeping their shapes consistent now avoids a
 later reconciliation. One deliberate departure is called out below.
 
 ## Project layout
 
 | Project | Depends on | Purpose |
 |---|---|---|
-| `Bloqr.Dashboard.Abstractions` | nothing | Rendering/prompting/menu interfaces (`IConsoleRenderer`, `IConsolePrompter`, `IMenuService`, `IDisplayStrategy<T>`, `ILiveProgressContext`/`ILiveProgressTask`), configuration/profile/log models, and `IDashboardService` - the embeddable-library API boundary (#271) a future WPF host depends on instead of Spectre.Console. |
+| `Bloqr.Dashboard.Abstractions` | nothing | Rendering/prompting/menu interfaces (`IConsoleRenderer`, `IConsolePrompter`, `IMenuService`, `IDisplayStrategy<T>`, `ILiveProgressContext`/`ILiveProgressTask`), configuration/profile/log models, and `IDashboardService` - the embeddable-library API boundary (#271) a future .NET MAUI host depends on instead of Spectre.Console. |
 | `Bloqr.Dashboard.Core` | Abstractions | Terminal-agnostic implementations: `DashboardConfigurationStore` (JSONC read/write, schema validation, backup, corruption recovery), `ProfileManager`, `DashboardPaths`, structured JSON logging (`AddDashboardLogging`, `DashboardJsonLogFormatter`, `LogEntryReader`), and `DashboardService : IDashboardService` (compile/validate/profile-management operations, wrapping `IRulesCompilerService` and the pieces above). No Spectre.Console reference. |
 | `Bloqr.Dashboard.Console` | Abstractions, Core, `RulesCompiler` | The executable: `Program.cs`, the Spectre.Console-backed `IConsoleRenderer`/`IConsolePrompter` implementations, `DashboardApplication`'s main loop, and the menu services. |
 | `Bloqr.Dashboard.Tests` | Abstractions, Core | xunit tests for the Core layer. |
@@ -51,7 +51,7 @@ over every menu type — adding a new top-level menu is a one-line change in `Pr
 
 All console I/O goes through these two interfaces. `SpectreConsoleRenderer` and
 `SpectreConsolePrompter` are the only classes referencing Spectre.Console directly; a future
-WPF host supplies different implementations without touching any menu service.
+.NET MAUI host supplies different implementations without touching any menu service.
 
 ## The application loop
 

@@ -28,8 +28,8 @@ const DashboardPage = () => {
           is a console app comfortable for non-technical users, while still
           exposing every operation as a CLI switch for automation and as an
           embeddable library (<code>IDashboardService</code>) for anything
-          that wants to drive it programmatically. A full WPF UI is planned
-          on top of the same library boundary.
+          that wants to drive it programmatically. A full .NET MAUI UI is
+          planned on top of the same library boundary.
         </p>
         <p>
           Dashboard shares its compiler configuration, hash-verification,

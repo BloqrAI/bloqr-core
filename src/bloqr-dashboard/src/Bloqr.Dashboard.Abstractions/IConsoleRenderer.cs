@@ -2,7 +2,7 @@ namespace Bloqr.Dashboard.Abstractions;
 
 /// <summary>
 /// Interface for console rendering operations. Enables decoupling menu/service logic from
-/// any specific console rendering library (Spectre.Console today, a future WPF host later).
+/// any specific console rendering library (Spectre.Console today, a future .NET MAUI host later).
 /// </summary>
 public interface IConsoleRenderer
 {

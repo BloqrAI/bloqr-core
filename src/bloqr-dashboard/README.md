@@ -79,7 +79,7 @@ hand-writing or generating a compiler-config JSON/JSONC file some other way and 
 
 Every CLI command above (and every interactive menu action) is backed by `IDashboardService`
 (`Bloqr.Dashboard.Abstractions`) — a single, Spectre.Console-free facade over compile, validate,
-and profile-management operations. A future WPF host embeds the Dashboard by depending on
+and profile-management operations. A future .NET MAUI host embeds the Dashboard by depending on
 `Bloqr.Dashboard.Abstractions`/`Bloqr.Dashboard.Core` and resolving `IDashboardService` (backed
 by `DashboardService` in `Bloqr.Dashboard.Core`) from DI, without pulling in anything from
 `Bloqr.Dashboard.Console` (the only project that references Spectre.Console for terminal
