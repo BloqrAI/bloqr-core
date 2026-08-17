@@ -59,9 +59,9 @@ dotnet test CompilerDotnet.slnx
 ### Python
 
 ```bash
-cd src/rules-compiler-python
+cd src/compilers/python
 pip install -e ".[dev]"
-rules-compiler -c config.json
+bloqr-compiler -c config.json
 pytest
 ```
 
@@ -116,7 +116,7 @@ bloqr-core/
 │   ├── compilers/typescript/    # TypeScript/Deno — canonical @bloqr/compiler-core (JSR)
 │   ├── common/dotnet/            # C#/.NET 10 — shared library (own solution), consumed by the two below
 │   ├── compilers/dotnet/    # C#/.NET 10 — library + Spectre.Console CLI
-│   ├── rules-compiler-python/    # Python 3.9+ — pip-installable package + CLI
+│   ├── compilers/python/         # Python 3.9+ — pip-installable package + CLI
 │   ├── rules-compiler-rust/      # Rust — single-binary CLI, zero runtime deps
 │   ├── rules-compiler-shell/     # bash + zsh scripts
 │   ├── rules-compiler-powershell/# PowerShell modules + Pester tests
@@ -156,7 +156,7 @@ The TypeScript compiler is the only one that implements compilation logic direct
 ```bash
 cd src/compilers/typescript && deno task test
 cd src/compilers/dotnet && dotnet test CompilerDotnet.slnx
-cd src/rules-compiler-python && pytest
+cd src/compilers/python && pytest
 cd src/rules-compiler-rust && cargo test
 cargo test --workspace   # rules-compiler-rust + validation
 Invoke-Pester -Path ./src/rules-compiler-powershell -Recurse

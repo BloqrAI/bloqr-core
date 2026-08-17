@@ -55,7 +55,7 @@ cd src/compilers/dotnet
 dotnet restore CompilerDotnet.slnx
 
 # Python
-cd src/rules-compiler-python
+cd src/compilers/python
 pip install -e .
 
 # Rust
@@ -77,7 +77,7 @@ deno task compile -- -c config.json -o output-ts.txt
 dotnet run --project src/Bloqr.Compiler.Dotnet.Console -- -c config.json -o output-dotnet.txt
 
 # Python
-rules-compiler -c config.json -o output-python.txt
+bloqr-compiler -c config.json -o output-python.txt
 
 # Rust
 cargo run -- -c config.json -o output-rust.txt

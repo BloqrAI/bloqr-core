@@ -7,16 +7,16 @@ using the @adguard/hostlist-compiler CLI tool.
 Supports both synchronous and asynchronous APIs for flexible integration.
 
 Synchronous Example:
-    >>> from rules_compiler import RulesCompiler
-    >>> compiler = RulesCompiler()
+    >>> from bloqr_compiler import BloqrCompiler
+    >>> compiler = BloqrCompiler()
     >>> result = compiler.compile("compiler-config.yaml", copy_to_rules=True)
     >>> print(f"Compiled {result.rule_count} rules in {result.elapsed_formatted()}")
 
 Asynchronous Example:
     >>> import asyncio
-    >>> from rules_compiler import RulesCompiler
+    >>> from bloqr_compiler import BloqrCompiler
     >>> async def main():
-    ...     compiler = RulesCompiler()
+    ...     compiler = BloqrCompiler()
     ...     result = await compiler.compile_async("compiler-config.yaml")
     ...     print(f"Compiled {result.rule_count} rules")
     >>> asyncio.run(main())
@@ -33,7 +33,7 @@ Features:
 # Define __version__ early to avoid circular imports (cli.py imports __version__)
 __version__ = "2.0.0"
 
-from rules_compiler.config import (
+from bloqr_compiler.config import (
     ArchivingSettings,
     ConfigurationFormat,
     CompilerConfiguration,
@@ -48,13 +48,13 @@ from rules_compiler.config import (
     to_yaml,
     to_toml,
 )
-from rules_compiler.hash_database import HashDatabaseEntry, load_hash_database, record_hash
-from rules_compiler.output_publisher import OutputPublishResult, publish_output
-from rules_compiler.compiler import (
+from bloqr_compiler.hash_database import HashDatabaseEntry, load_hash_database, record_hash
+from bloqr_compiler.output_publisher import OutputPublishResult, publish_output
+from bloqr_compiler.compiler import (
     CompilerResult,
     VersionInfo,
     PlatformInfo,
-    RulesCompiler,
+    BloqrCompiler,
     compile_rules,
     compile_rules_async,
     validate_configuration,
@@ -68,7 +68,7 @@ from rules_compiler.compiler import (
     format_elapsed,
     find_command,
 )
-from rules_compiler.errors import (
+from bloqr_compiler.errors import (
     CompilerError,
     ConfigNotFoundError,
     UnknownExtensionError,
@@ -82,7 +82,7 @@ from rules_compiler.errors import (
     ValidationResult,
     ErrorCode,
 )
-from rules_compiler.chunking import (
+from bloqr_compiler.chunking import (
     ChunkingOptions,
     ChunkingStrategy,
     ChunkMetadata,
@@ -93,7 +93,7 @@ from rules_compiler.chunking import (
     compile_chunks_async,
     estimate_speedup,
 )
-from rules_compiler.events import (
+from bloqr_compiler.events import (
     # Enums
     ValidationSeverity,
     FileLockType,
@@ -125,7 +125,7 @@ from rules_compiler.events import (
     FileLockHandle,
     FileLockService,
 )
-from rules_compiler.cli import main
+from bloqr_compiler.cli import main
 
 __all__ = [
     # Version
@@ -156,7 +156,7 @@ __all__ = [
     "CompilerResult",
     "VersionInfo",
     "PlatformInfo",
-    "RulesCompiler",
+    "BloqrCompiler",
     # Compiler functions (sync and async)
     "compile_rules",
     "compile_rules_async",

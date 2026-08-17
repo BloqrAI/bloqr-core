@@ -1,5 +1,5 @@
 """
-Tests for the hash-verification wiring helpers in rules_compiler.compiler (#273).
+Tests for the hash-verification wiring helpers in bloqr_compiler.compiler (#273).
 
 These exercise `_verify_and_record_hash` and `_raise_hash_computed` directly rather than a
 full `compile_rules` run, since that requires a real `deno`/`@bloqr/compiler-core` toolchain
@@ -10,16 +10,16 @@ which does not exercise `compile_rules` end-to-end either).
 import asyncio
 from pathlib import Path
 
-from rules_compiler.compiler import _raise_hash_computed, _verify_and_record_hash
-from rules_compiler.config import HashVerificationSettings
-from rules_compiler.events import (
+from bloqr_compiler.compiler import _raise_hash_computed, _verify_and_record_hash
+from bloqr_compiler.config import HashVerificationSettings
+from bloqr_compiler.events import (
     CompilationEventHandler,
     EventDispatcher,
     HashComputedEventArgs,
     HashMismatchEventArgs,
     HashVerifiedEventArgs,
 )
-from rules_compiler.hash_database import load_hash_database
+from bloqr_compiler.hash_database import load_hash_database
 
 
 class RecordingHandler(CompilationEventHandler):

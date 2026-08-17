@@ -4,7 +4,8 @@
 
 - The tracked filter list and compiler configuration files live in [`BloqrAI/bloqr-blocklists`](https://github.com/BloqrAI/bloqr-blocklists) (formerly `data/` in this repo).
 - `src/` contains the multi-language rules-compiler toolchain:
-  - `src/rules-compiler-*` (TypeScript/Deno, .NET, Python, Rust, shell) compilers that use `@bloqr/compiler-core`.
+  - `src/compilers/typescript/`, `src/compilers/dotnet/`, `src/compilers/python/` — TypeScript/Deno, .NET, and Python compilers that use `@bloqr/compiler-core`.
+  - `src/rules-compiler-rust/`, `src/rules-compiler-shell/` — Rust and shell compilers, not yet migrated to `src/compilers/`.
   - `src/rules-compiler-powershell/` class-based PowerShell modules and Pester tests.
   - `src/validation/` Rust validation library and CLI.
   - `website/` Gatsby documentation site.
@@ -20,7 +21,7 @@
   - `deno task lint` — Deno lint
   - `deno task test` — Deno tests
 - .NET (`src/compilers/dotnet/`): `dotnet restore CompilerDotnet.slnx`, `dotnet build CompilerDotnet.slnx`, `dotnet test CompilerDotnet.slnx`
-- Python (`src/rules-compiler-python/`): `pip install -e ".[dev]"`, `pytest`, `ruff check .`, `mypy .`
+- Python (`src/compilers/python/`): `pip install -e ".[dev]"`, `pytest`, `ruff check .`, `mypy .`
 - Rust (`src/rules-compiler-rust/`, `src/validation/`): `cargo build`, `cargo test`, `cargo fmt`, `cargo clippy`
 - PowerShell (`src/rules-compiler-powershell/`): `Invoke-Pester -Path ./src/rules-compiler-powershell -Recurse`
 - Docker dev env: `docker build -f Dockerfile.warp .` (use when you want a pre-baked toolchain).
@@ -40,7 +41,7 @@
 
 ## Commit & Pull Request Guidelines
 
-- Prefer Conventional Commit style when practical (examples: `feat(rules-compiler-python): ...`, `docs(readme): ...`); short imperative messages like `Refactor: ...` are also used.
+- Prefer Conventional Commit style when practical (examples: `feat(python): ...`, `docs(readme): ...`); short imperative messages like `Refactor: ...` are also used.
 - PRs should include: a clear description, linked issue(s) when applicable, and test evidence (paste output or CI link). Include screenshots for website/UI changes.
 
 ## Security & Configuration Notes

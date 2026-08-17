@@ -172,7 +172,7 @@ cd /workspace/src/compilers/dotnet
 dotnet restore CompilerDotnet.slnx
 
 # Python compiler
-cd /workspace/src/rules-compiler-python
+cd /workspace/src/compilers/python
 pip install -e ".[dev]"
 
 # Rust compiler
@@ -192,8 +192,8 @@ cd /workspace/src/compilers/dotnet
 dotnet run --project src/Bloqr.Compiler.Dotnet.Console
 
 # Python
-cd /workspace/src/rules-compiler-python
-rules-compiler
+cd /workspace/src/compilers/python
+bloqr-compiler
 
 # Rust
 cd /workspace/src/rules-compiler-rust
@@ -219,7 +219,7 @@ cd /workspace/src/compilers/dotnet
 dotnet test CompilerDotnet.slnx
 
 # Python tests
-cd /workspace/src/rules-compiler-python
+cd /workspace/src/compilers/python
 pytest
 
 # Rust tests
@@ -291,7 +291,7 @@ jobs:
           docker run --rm \
             -v ${{ github.workspace }}:/workspace \
             ad-blocking-dev \
-            bash -c "cd /workspace/src/rules-compiler-python && pip install -e '.[dev]' && pytest"
+            bash -c "cd /workspace/src/compilers/python && pip install -e '.[dev]' && pytest"
 
       - name: Run Rust tests
         run: |

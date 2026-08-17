@@ -260,7 +260,7 @@ source venv/bin/activate  # Linux/macOS
 
 ### Module Import Errors
 
-**Symptom:** `ModuleNotFoundError: No module named 'rules_compiler'`
+**Symptom:** `ModuleNotFoundError: No module named 'bloqr_compiler'`
 
 **Solution:**
 
@@ -272,7 +272,7 @@ pip install -e .
 pip install -e ".[dev]"
 
 # Check installation
-pip list | grep rules-compiler
+pip list | grep bloqr-compiler
 
 # Verify PYTHONPATH includes current directory
 export PYTHONPATH=$PWD:$PYTHONPATH

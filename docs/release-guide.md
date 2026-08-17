@@ -26,7 +26,7 @@ Before creating a release, ensure:
 - Version numbers are updated in project files if needed:
   - `src/compilers/dotnet/src/Bloqr.Compiler.Dotnet.Console/Bloqr.Compiler.Dotnet.Console.csproj`
   - `src/rules-compiler-rust/Cargo.toml`
-  - `src/rules-compiler-python/pyproject.toml`
+  - `src/compilers/python/pyproject.toml`
 
 ### 2. Create and Push a Tag
 
@@ -67,7 +67,7 @@ After the workflow completes:
    - `rules-compiler-rust-windows.zip`
    - `rules-compiler-rust-linux.tar.gz`
    - `rules-compiler-rust-macos.tar.gz`
-   - `rules_compiler-*.whl` (Python wheel)
+   - `bloqr_compiler-*.whl` (Python wheel)
 
 ### 5. Edit Release Notes (Optional)
 
@@ -165,7 +165,7 @@ cargo build --release --target x86_64-apple-darwin
 ### Build Python Wheel
 
 ```bash
-cd src/rules-compiler-python
+cd src/compilers/python
 python -m build
 ```
 
@@ -195,7 +195,7 @@ python -m build
 - `.github/workflows/publish-crates.yml` - Independent, path-filtered crates.io publish for `bloqr-validator-core`
 - `src/compilers/dotnet/src/Bloqr.Compiler.Dotnet.Console/Bloqr.Compiler.Dotnet.Console.csproj` - .NET Compiler project
 - `src/rules-compiler-rust/Cargo.toml` - Rust project configuration
-- `src/rules-compiler-python/pyproject.toml` - Python project configuration
+- `src/compilers/python/pyproject.toml` - Python project configuration
 - `docs/architecture/nuget-distribution-strategy.md` - NuGet publishing decision record for the common .NET library
 - `docs/architecture/versioning-strategy.md` - Per-package versioning standard (JSR, crates.io, NuGet)
 

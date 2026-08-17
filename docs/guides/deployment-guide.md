@@ -85,11 +85,11 @@ ENTRYPOINT ["dotnet", "Bloqr.Compiler.Dotnet.Console.dll"]
 FROM python:3.12-slim
 
 WORKDIR /app
-COPY src/rules-compiler-python/ .
+COPY src/compilers/python/ .
 
 RUN pip install --no-cache-dir -e .
 
-CMD ["rules-compiler"]
+CMD ["bloqr-compiler"]
 ```
 
 **Rust:**
@@ -324,7 +324,7 @@ jobs:
       - name: Test Python
         if: matrix.component == 'python'
         run: |
-          cd src/rules-compiler-python
+          cd src/compilers/python
           pip install -e ".[dev]"
           pytest
       
@@ -450,7 +450,7 @@ test:python:
   stage: test
   image: python:3.12
   script:
-    - cd src/rules-compiler-python
+    - cd src/compilers/python
     - pip install -e ".[dev]"
     - pytest
 
@@ -510,7 +510,7 @@ pipeline {
                 stage('Python') {
                     steps {
                         sh '''
-                            cd src/rules-compiler-python
+                            cd src/compilers/python
                             pip install -e ".[dev]"
                             pytest
                         '''

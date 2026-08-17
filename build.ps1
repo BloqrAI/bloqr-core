@@ -222,21 +222,21 @@ function Build-PythonProjects {
     
     $pythonCmd = if (Get-Command python3 -ErrorAction SilentlyContinue) { "python3" } else { "python" }
     
-    # Build Rules Compiler Python
-    Write-Host "→ Building Rules Compiler (Python)..."
+    # Build Bloqr Compiler Python
+    Write-Host "→ Building Compiler (Python)..."
     try {
-        Push-Location src/rules-compiler-python
+        Push-Location src/compilers/python
         try {
             & $pythonCmd -m pip install --quiet -e ".[dev]"
-            & $pythonCmd -m mypy rules_compiler/
-            Write-Host "✓ Rules Compiler (Python) built successfully" -ForegroundColor Green
+            & $pythonCmd -m mypy bloqr_compiler/
+            Write-Host "✓ Compiler (Python) built successfully" -ForegroundColor Green
         }
         finally {
             Pop-Location
         }
     }
     catch {
-        Write-Host "✗ Rules Compiler (Python) build failed" -ForegroundColor Red
+        Write-Host "✗ Compiler (Python) build failed" -ForegroundColor Red
         $script:BuildFailed = $true
     }
     

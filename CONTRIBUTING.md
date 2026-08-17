@@ -57,7 +57,7 @@ bloqr-core/
 │   ├── compilers/dotnet/            # .NET compiler
 │   ├── rules-compiler-rust/         # Rust rules compiler
 │   ├── compilers/typescript/       # TypeScript rules compiler (@bloqr/compiler-core)
-│   ├── rules-compiler-python/       # Python rules compiler
+│   ├── compilers/python/            # Python compiler
 │   ├── rules-compiler-powershell/   # PowerShell rules compiler toolkit
 │   ├── rules-compiler-shell/        # Shell script utilities (bash/zsh)
 │   ├── validation/                  # Rust validation library + CLI
@@ -96,7 +96,7 @@ Follow the coding standards for your language (see below).
 
 # Or use language-specific commands
 cd src/compilers/typescript && deno task test
-cd src/rules-compiler-python && pytest
+cd src/compilers/python && pytest
 ```
 
 ### 4. Lint Your Code
@@ -109,7 +109,7 @@ deno lint
 dotnet format
 
 # Python
-ruff check rules_compiler/
+ruff check bloqr_compiler/
 
 # Rust
 cargo clippy --workspace
@@ -213,7 +213,7 @@ All new features and bug fixes must include appropriate tests:
 # Language-specific tests
 cd src/compilers/typescript && deno task test
 cd src/compilers/dotnet && dotnet test
-cd src/rules-compiler-python && pytest
+cd src/compilers/python && pytest
 cd src/rules-compiler-rust && cargo test
 cd src/rules-compiler-powershell && Invoke-Pester
 ```

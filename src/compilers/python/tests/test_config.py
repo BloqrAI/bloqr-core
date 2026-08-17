@@ -5,7 +5,7 @@ from pathlib import Path
 
 import pytest
 
-from rules_compiler.config import (
+from bloqr_compiler.config import (
     CompilerConfiguration,
     ConfigurationFormat,
     FilterSource,
@@ -16,7 +16,7 @@ from rules_compiler.config import (
     to_json,
     to_yaml,
 )
-from rules_compiler.errors import ParseError, UnknownExtensionError
+from bloqr_compiler.errors import ParseError, UnknownExtensionError
 
 
 class TestDetectFormat:

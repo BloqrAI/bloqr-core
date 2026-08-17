@@ -2,8 +2,8 @@
 
 from pathlib import Path
 
-from rules_compiler.config import ArchivingSettings, OutputSettings
-from rules_compiler.output_publisher import publish_output
+from bloqr_compiler.config import ArchivingSettings, OutputSettings
+from bloqr_compiler.output_publisher import publish_output
 
 
 class TestPublishOutput:

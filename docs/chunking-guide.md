@@ -98,8 +98,8 @@ var chunkingService = serviceProvider.GetRequiredService<IChunkingService>();
 #### Programmatic Usage
 
 ```python
-from rules_compiler import RulesCompiler
-from rules_compiler.chunking import ChunkingOptions, ChunkingStrategy
+from bloqr_compiler import BloqrCompiler
+from bloqr_compiler.chunking import ChunkingOptions, ChunkingStrategy
 
 # Create chunking options
 chunking_options = ChunkingOptions(
@@ -113,14 +113,14 @@ chunking_options = ChunkingOptions(
 chunking_options = ChunkingOptions.for_large_lists()
 
 # Compile with chunking
-compiler = RulesCompiler(chunking=chunking_options)
+compiler = BloqrCompiler(chunking=chunking_options)
 result = await compiler.compile_async("config.json")
 ```
 
 #### CLI Usage
 
 ```bash
-rules-compiler -c config.json --chunking --max-parallel 4
+bloqr-compiler -c config.json --chunking --max-parallel 4
 ```
 
 ### Rust

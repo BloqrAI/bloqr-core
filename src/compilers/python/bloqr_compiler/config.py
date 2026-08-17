@@ -12,7 +12,7 @@ from enum import Enum
 from pathlib import Path
 from typing import Any
 
-from rules_compiler.errors import (
+from bloqr_compiler.errors import (
     ParseError,
     UnknownExtensionError,
     ValidationResult,

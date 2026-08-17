@@ -3,7 +3,7 @@
 import os
 import pytest
 
-from rules_compiler.chunking import (
+from bloqr_compiler.chunking import (
     ChunkingOptions,
     ChunkingStrategy,
     ChunkMetadata,
@@ -13,7 +13,7 @@ from rules_compiler.chunking import (
     merge_chunks,
     estimate_speedup,
 )
-from rules_compiler.config import CompilerConfiguration, FilterSource
+from bloqr_compiler.config import CompilerConfiguration, FilterSource
 
 
 class TestChunkingOptions:

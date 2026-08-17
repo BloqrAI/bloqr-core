@@ -12,6 +12,7 @@ on:
     branches: [main, develop]
     paths:
       - 'src/validation/**'
+      - 'src/compilers/python/**'
       - 'src/rules-compiler-*/**'
       - 'src/common/dotnet/**'
       - 'tools/check-validation-compliance.sh'
@@ -20,6 +21,7 @@ on:
     branches: [main, develop]
     paths:
       - 'src/validation/**'
+      - 'src/compilers/python/**'
       - 'src/rules-compiler-*/**'
       - 'src/common/dotnet/**'
       - 'tools/check-validation-compliance.sh'
@@ -105,7 +107,7 @@ jobs:
           fi
 
           # Python
-          if [ -f src/rules-compiler-python/requirements.txt ] && grep -q "bloqr-validator" src/rules-compiler-python/requirements.txt 2>/dev/null; then
+          if [ -f src/compilers/python/requirements.txt ] && grep -q "bloqr-validator" src/compilers/python/requirements.txt 2>/dev/null; then
             echo "| Python | integrated |" >> $GITHUB_STEP_SUMMARY
           else
             echo "| Python | pending |" >> $GITHUB_STEP_SUMMARY

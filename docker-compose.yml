@@ -75,7 +75,7 @@ services:
       - ad-blocking-net
 
   # ---------------------------------------------------------------------------
-  # Python Rules Compiler service
+  # Python Compiler service
   # ---------------------------------------------------------------------------
   python-compiler:
     build:
@@ -85,8 +85,8 @@ services:
     container_name: ad-blocking-python
     volumes:
       - .:/workspace
-    working_dir: /workspace/src/rules-compiler-python
-    command: python -m rules_compiler
+    working_dir: /workspace/src/compilers/python
+    command: python -m bloqr_compiler
     depends_on:
       - dev
     profiles:
@@ -139,7 +139,7 @@ services:
         echo '=== Running .NET Tests ===' &&
         cd /workspace/src/compilers/dotnet && dotnet test CompilerDotnet.slnx &&
         echo '=== Running Python Tests ===' &&
-        cd /workspace/src/rules-compiler-python && pytest &&
+        cd /workspace/src/compilers/python && pytest &&
         echo '=== Running Rust Tests ===' &&
         cd /workspace/src/rules-compiler-rust && cargo test &&
         echo '=== Running PowerShell Tests ===' &&

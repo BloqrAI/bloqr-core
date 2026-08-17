@@ -3,7 +3,7 @@
 import json
 from pathlib import Path
 
-from rules_compiler.hash_database import (
+from bloqr_compiler.hash_database import (
     HashDatabaseEntry,
     load_hash_database,
     record_hash,

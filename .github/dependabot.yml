@@ -129,7 +129,7 @@ updates:
           - "patch"
 
   - package-ecosystem: "pip"
-    directory: "/src/rules-compiler-python"
+    directory: "/src/compilers/python"
     schedule:
       interval: weekly
       day: monday

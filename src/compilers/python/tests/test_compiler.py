@@ -4,7 +4,7 @@ from pathlib import Path
 
 import pytest
 
-from rules_compiler.compiler import (
+from bloqr_compiler.compiler import (
     CompilerResult,
     PlatformInfo,
     VersionInfo,

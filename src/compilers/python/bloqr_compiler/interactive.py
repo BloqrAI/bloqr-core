@@ -9,7 +9,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from rules_compiler.compiler import VersionInfo
+    from bloqr_compiler.compiler import VersionInfo
 
 try:
     import questionary
@@ -49,12 +49,12 @@ def run_interactive_menu(initial_config: Path | None = None) -> int:
     """
     require_interactive()
     
-    from rules_compiler.compiler import (
-        RulesCompiler,
+    from bloqr_compiler.compiler import (
+        BloqrCompiler,
         get_version_info,
         validate_configuration,
     )
-    from rules_compiler.config import ConfigurationFormat, read_configuration, to_json
+    from bloqr_compiler.config import ConfigurationFormat, read_configuration, to_json
     
     # Try to find a default config if none provided
     if initial_config is None:
@@ -145,7 +145,7 @@ def run_interactive_menu(initial_config: Path | None = None) -> int:
             print(f"  Config: {config_path}")
             print()
             
-            compiler = RulesCompiler(debug=False)
+            compiler = BloqrCompiler(debug=False)
             result = compiler.compile(
                 config_path=config_path,
                 copy_to_rules=copy_to_rules,

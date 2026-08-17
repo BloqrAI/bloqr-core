@@ -213,12 +213,12 @@ build_python() {
         return 1
     fi
     
-    # Build Rules Compiler Python
-    echo "→ Building Rules Compiler (Python)..."
-    if (cd src/rules-compiler-python && python3 -m pip install --quiet -e ".[dev]" && python3 -m mypy rules_compiler/); then
-        echo -e "${GREEN}✓ Rules Compiler (Python) built successfully${NC}"
+    # Build Bloqr Compiler Python
+    echo "→ Building Compiler (Python)..."
+    if (cd src/compilers/python && python3 -m pip install --quiet -e ".[dev]" && python3 -m mypy bloqr_compiler/); then
+        echo -e "${GREEN}✓ Compiler (Python) built successfully${NC}"
     else
-        echo -e "${RED}✗ Rules Compiler (Python) build failed${NC}"
+        echo -e "${RED}✗ Compiler (Python) build failed${NC}"
         BUILD_FAILED=true
     fi
     

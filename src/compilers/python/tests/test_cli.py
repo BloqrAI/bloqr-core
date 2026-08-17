@@ -5,7 +5,7 @@ from pathlib import Path
 
 import pytest
 
-from rules_compiler.cli import create_parser, main
+from bloqr_compiler.cli import create_parser, main
 
 
 class TestParser:

@@ -46,7 +46,7 @@ Each compiler must implement a `--validate-integration` flag that verifies the v
 # All compilers must support this
 npm run compile -- --validate-integration
 dotnet run --project Bloqr.Compiler.Dotnet.Console -- --validate-integration
-rules-compiler --validate-integration
+bloqr-compiler --validate-integration
 cargo run --release -- --validate-integration
 ```
 

@@ -129,7 +129,7 @@ const GettingStartedPage = () => {
               <br />
               # Python
               <br />
-              cd src/rules-compiler-python && rules-compiler
+              cd src/compilers/python && bloqr-compiler
               <br />
               <br />
               # Rust

@@ -8,8 +8,8 @@ from pathlib import Path
 
 import pytest
 
-from rules_compiler import (
-    RulesCompiler,
+from bloqr_compiler import (
+    BloqrCompiler,
     compile_rules_async,
     count_rules_async,
     compute_hash_async,
@@ -52,8 +52,8 @@ async def test_compute_hash_async() -> None:
 
 @pytest.mark.asyncio
 async def test_compiler_async_method() -> None:
-    """Test RulesCompiler.compile_async method exists and is callable."""
-    compiler = RulesCompiler()
+    """Test BloqrCompiler.compile_async method exists and is callable."""
+    compiler = BloqrCompiler()
     
     # Just verify the method exists and is a coroutine function
     assert hasattr(compiler, "compile_async")
@@ -68,9 +68,9 @@ async def test_compile_rules_async_function() -> None:
 
 def test_backwards_compatibility() -> None:
     """Test that synchronous API still works."""
-    from rules_compiler import RulesCompiler, compile_rules
+    from bloqr_compiler import BloqrCompiler, compile_rules
     
-    compiler = RulesCompiler()
+    compiler = BloqrCompiler()
     
     # Verify sync methods exist
     assert hasattr(compiler, "compile")
