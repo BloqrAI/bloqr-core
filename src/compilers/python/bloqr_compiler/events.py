@@ -35,7 +35,7 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Optional, Protocol, TYPE_CHECKING
+from typing import Any, Callable, Dict, List, Optional, Protocol
 import asyncio
 import logging
 import sys
@@ -47,10 +47,6 @@ if sys.platform == "win32":
 else:
     import fcntl
     _HAS_FCNTL = True
-
-if TYPE_CHECKING:
-    from bloqr_compiler.config import FilterSource, CompilerConfiguration
-    from bloqr_compiler.chunking import ChunkMetadata
 
 logger = logging.getLogger(__name__)
 
