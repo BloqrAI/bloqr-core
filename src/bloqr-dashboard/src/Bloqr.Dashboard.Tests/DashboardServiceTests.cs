@@ -4,7 +4,7 @@ namespace Bloqr.Dashboard.Tests;
 
 public sealed class DashboardServiceTests
 {
-    private readonly FakeRulesCompilerService _compilerService = new();
+    private readonly FakeBloqrCompilerService _compilerService = new();
     private readonly FakeDashboardConfigurationStore _configStore = new();
     private readonly ProfileManager _profileManager = new();
     private readonly DashboardService _service;
@@ -15,7 +15,7 @@ public sealed class DashboardServiceTests
     }
 
     [Fact]
-    public async Task CompileAsync_DelegatesToRulesCompilerService()
+    public async Task CompileAsync_DelegatesToBloqrCompilerService()
     {
         _compilerService.RunResult = new CompilerResult { Success = true, RuleCount = 42 };
 
@@ -27,7 +27,7 @@ public sealed class DashboardServiceTests
     }
 
     [Fact]
-    public async Task ValidateCompilerConfigAsync_DelegatesToRulesCompilerService()
+    public async Task ValidateCompilerConfigAsync_DelegatesToBloqrCompilerService()
     {
         var invalid = new ValidationResult();
         invalid.AddError("sources", "must not be empty");
@@ -97,7 +97,7 @@ public sealed class DashboardServiceTests
         Assert.Equal(["a.json", "b.json"], configs);
     }
 
-    private sealed class FakeRulesCompilerService : IRulesCompilerService
+    private sealed class FakeBloqrCompilerService : IBloqrCompilerService
     {
         public CompilerResult RunResult { get; set; } = new();
         public ValidationResult ValidateResult { get; set; } = new();

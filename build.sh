@@ -158,12 +158,12 @@ build_dotnet() {
         BUILD_FAILED=true
     fi
 
-    # Build Rules Compiler .NET
-    echo "→ Building Rules Compiler (.NET)..."
-    if (cd src/rules-compiler-dotnet && dotnet restore RulesCompiler.slnx && dotnet build RulesCompiler.slnx --no-restore --configuration $configuration); then
-        echo -e "${GREEN}✓ Rules Compiler (.NET) built successfully${NC}"
+    # Build Compiler Dotnet
+    echo "→ Building Compiler Dotnet..."
+    if (cd src/compilers/dotnet && dotnet restore CompilerDotnet.slnx && dotnet build CompilerDotnet.slnx --no-restore --configuration $configuration); then
+        echo -e "${GREEN}✓ Compiler Dotnet built successfully${NC}"
     else
-        echo -e "${RED}✗ Rules Compiler (.NET) build failed${NC}"
+        echo -e "${RED}✗ Compiler Dotnet build failed${NC}"
         BUILD_FAILED=true
     fi
 

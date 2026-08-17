@@ -2,7 +2,7 @@ namespace Bloqr.Dashboard.Core.Services;
 
 /// <summary>
 /// Default implementation of <see cref="IDashboardService"/>, the Dashboard's embeddable-library
-/// API boundary (#271). Wraps <see cref="IRulesCompilerService"/>,
+/// API boundary (#271). Wraps <see cref="IBloqrCompilerService"/>,
 /// <see cref="IDashboardConfigurationStore"/>, and <see cref="IProfileManager"/> - all of which
 /// are already free of any Spectre.Console dependency - behind one cohesive facade, so a future
 /// .NET MAUI host (or any other embedder) has a single entry point instead of needing to know about
@@ -10,7 +10,7 @@ namespace Bloqr.Dashboard.Core.Services;
 /// </summary>
 public sealed class DashboardService : IDashboardService
 {
-    private readonly IRulesCompilerService _compilerService;
+    private readonly IBloqrCompilerService _compilerService;
     private readonly IDashboardConfigurationStore _configStore;
     private readonly IProfileManager _profileManager;
 
@@ -18,7 +18,7 @@ public sealed class DashboardService : IDashboardService
     /// Initializes a new instance of the <see cref="DashboardService"/> class.
     /// </summary>
     public DashboardService(
-        IRulesCompilerService compilerService,
+        IBloqrCompilerService compilerService,
         IDashboardConfigurationStore configStore,
         IProfileManager profileManager)
     {

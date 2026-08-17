@@ -12,7 +12,7 @@ Environment variables give the shell/PowerShell wrappers and .NET apps configura
 
 **There is no single unified naming scheme across languages.** Each surface uses its own prefix, for historical reasons:
 - The bash/zsh/PowerShell rules-compiler wrappers use `ADGUARD_COMPILER_*` — a naming holdover from before the Bloqr rebrand. It's accurate to what's in code today, but is a real, known inconsistency with the rest of the `Bloqr.*`/`BLOQR_*` naming this repo otherwise uses (flagging for the repo owner rather than unilaterally renaming vars real scripts/CI depend on).
-- The .NET rules compiler and Dashboard each bind a whole environment-variable prefix into `IConfiguration` (`RULESCOMPILER_` and `BLOQR_DASHBOARD_` respectively), following ASP.NET Core's standard double-underscore-for-nesting convention, rather than documenting one variable per setting.
+- The .NET compiler and Dashboard each bind a whole environment-variable prefix into `IConfiguration` (`BLOQR_COMPILER_` and `BLOQR_DASHBOARD_` respectively), following ASP.NET Core's standard double-underscore-for-nesting convention, rather than documenting one variable per setting.
 
 ## Rules Compiler (Shell/PowerShell wrappers)
 
@@ -61,24 +61,24 @@ export ADGUARD_COMPILER_VERBOSE=true
 export ADGUARD_COMPILER_COPY_TO_RULES=true
 ```
 
-## .NET Rules Compiler
+## .NET Compiler
 
-`RulesCompiler.Console` binds the entire `RULESCOMPILER_` prefix into its `IConfiguration` (`.AddEnvironmentVariables("RULESCOMPILER_")` in `Program.cs`), so **any** setting reachable via `appsettings.json` can be overridden this way — not just a fixed list. Nested keys use the standard .NET double-underscore convention.
+`Bloqr.Compiler.Dotnet.Console` binds the entire `BLOQR_COMPILER_` prefix into its `IConfiguration` (`.AddEnvironmentVariables("BLOQR_COMPILER_")` in `Program.cs`), so **any** setting reachable via `appsettings.json` can be overridden this way — not just a fixed list. Nested keys use the standard .NET double-underscore convention.
 
-### RULESCOMPILER_config
+### BLOQR_COMPILER_config
 **Description**: Default configuration file path
 **Type**: String (file path)
 **Example**:
 ```bash
-export RULESCOMPILER_config="/etc/bloqr/compiler-config.json"
+export BLOQR_COMPILER_config="/etc/bloqr/compiler-config.json"
 ```
 
-### RULESCOMPILER_Logging__LogLevel__Default
+### BLOQR_COMPILER_Logging__LogLevel__Default
 **Description**: Default log level (maps to `Logging:LogLevel:Default` in configuration)
 **Type**: String (`Trace`, `Debug`, `Information`, `Warning`, `Error`, `Critical`, `None`)
 **Example**:
 ```bash
-export RULESCOMPILER_Logging__LogLevel__Default="Warning"
+export BLOQR_COMPILER_Logging__LogLevel__Default="Warning"
 ```
 
 ## Bloqr Dashboard

@@ -30,7 +30,7 @@ jobs:
     steps:
       - name: Check .NET uses validation library
         run: |
-          cd src/rules-compiler-dotnet
+          cd src/compilers/dotnet
           # Verify native library is referenced
           grep -q "bloqr_validator" src/**/*.csproj || exit 1
           grep -rq "ValidationLibrary\|P/Invoke" src/ || exit 1
@@ -45,7 +45,7 @@ Each compiler must implement a `--validate-integration` flag that verifies the v
 ```bash
 # All compilers must support this
 npm run compile -- --validate-integration
-dotnet run --project RulesCompiler.Console -- --validate-integration
+dotnet run --project Bloqr.Compiler.Dotnet.Console -- --validate-integration
 rules-compiler --validate-integration
 cargo run --release -- --validate-integration
 ```
@@ -218,7 +218,7 @@ if ! grep -q "bloqr_validator" src/adblock-compiler-core/package.json; then
 fi
 
 # Check .NET
-if ! grep -q "bloqr_validator" src/rules-compiler-dotnet/src/**/*.csproj; then
+if ! grep -q "bloqr_validator" src/compilers/dotnet/src/**/*.csproj; then
   echo "ERROR: .NET compiler missing validation library reference"
   exit 1
 fi
@@ -288,15 +288,15 @@ Maintainers can verify compliance with:
 ## Migration Timeline
 
 - **Phase 1**: Validation library created, documented.
-- **Phase 2**: Integrate into .NET compiler. **Done** (#264) — `Bloqr.Compiler.Core.Services.RulesValidatorService`
+- **Phase 2**: Integrate into .NET compiler. **Done** (#264) — `Bloqr.Compiler.Core.Services.BloqrValidatorService`
   P/Invokes `bloqr_validator_{new,validate_local_file,validate_remote_url,free,free_string}`
   (see `src/validation/core/README.md`'s ".NET / C#" section for the P/Invoke reference this
-  implementation follows). `RulesCompilerService` runs syntax validation on the compiled output
+  implementation follows). `BloqrCompilerService` runs syntax validation on the compiled output
   and raises `ValidationEventArgs` (code `RV001`) through the existing zero-trust event pipeline
   (see `docs/event-pipeline.md`); handlers may set `Abort = true` to fail the compilation. The
   Dashboard's Diagnostics menu reports native-library availability and offers a standalone
   "Validate a filter file" action. The native library is not yet packaged/deployed alongside the
-  .NET output automatically — that's #276 — so `IRulesValidatorService.IsAvailable` degrades to
+  .NET output automatically — that's #276 — so `IBloqrValidatorService.IsAvailable` degrades to
   `false` gracefully wherever the library isn't found rather than failing compilation.
 - **Phase 3**: Integrate into TypeScript, Python, Rust compilers.
 - **Phase 4**: Enable CI enforcement (warnings only).

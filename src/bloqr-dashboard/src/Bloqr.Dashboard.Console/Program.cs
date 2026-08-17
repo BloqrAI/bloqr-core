@@ -123,7 +123,7 @@ public static class Program
         services.AddSingleton(paths);
         services.AddDashboardLogging(paths, bootstrapLogLevel);
 
-        services.AddRulesCompiler();
+        services.AddBloqrCompiler();
 
         // Fire-and-forget events (source loaded, file locks, chunk/hash completion, etc.) are
         // processed on a background queue so a slow handler never blocks the compilation

@@ -61,7 +61,7 @@ jobs:
 
       # Bloqr.Compiler.Abstractions/Core are "the common .NET library" - see
       # docs/architecture/nuget-distribution-strategy.md for why these two
-      # are published while in-repo consumers (RulesCompiler,
+      # are published while in-repo consumers (Bloqr.Compiler.Dotnet,
       # Bloqr.Dashboard.*) stay on <ProjectReference>.
       - name: Pack common library packages
         run: |

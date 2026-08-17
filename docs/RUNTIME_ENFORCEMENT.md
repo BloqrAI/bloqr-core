@@ -2,8 +2,8 @@
 
 > **Implementation status note:** this document describes the aspirational design
 > (a mandatory `compile_with_validation()` wrapper with signed metadata). The .NET
-> compiler's actual current integration (#264) is lighter-weight: `RulesCompilerService`
-> calls `IRulesValidatorService.ValidateLocalFileAsync` on the compiled output and raises
+> compiler's actual current integration (#264) is lighter-weight: `BloqrCompilerService`
+> calls `IBloqrValidatorService.ValidateLocalFileAsync` on the compiled output and raises
 > the existing `ValidationEventArgs` (code `RV001`) through `ICompilationEventDispatcher`,
 > the same zero-trust event pipeline documented in `docs/event-pipeline.md` — there is no
 > separate `compile_with_validation()` entry point, signature, or audit-log format. A
@@ -341,7 +341,7 @@ export async function compileRules(
 ```csharp
 using AdGuard.Validation;
 
-public class RulesCompiler {
+public class BloqrCompiler {
     public async Task<EnforcedCompilationResult> CompileAsync(
         IEnumerable<Source> sources) {
         

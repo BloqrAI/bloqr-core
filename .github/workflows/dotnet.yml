@@ -12,14 +12,14 @@ on:
     branches: ["main"]
     paths:
       - 'src/common/dotnet/**'
-      - 'src/rules-compiler-dotnet/**'
+      - 'src/compilers/dotnet/**'
       - 'src/bloqr-dashboard/**'
       - '.github/workflows/dotnet.yml'
   pull_request:
     branches: ["main"]
     paths:
       - 'src/common/dotnet/**'
-      - 'src/rules-compiler-dotnet/**'
+      - 'src/compilers/dotnet/**'
       - 'src/bloqr-dashboard/**'
       - '.github/workflows/dotnet.yml'
 
@@ -40,9 +40,9 @@ jobs:
             path: src/common/dotnet
             solution: CompilerCommon.slnx
             filter: ""
-          - name: Build Rules Compiler
-            path: src/rules-compiler-dotnet
-            solution: RulesCompiler.slnx
+          - name: Build Compiler Dotnet
+            path: src/compilers/dotnet
+            solution: CompilerDotnet.slnx
             filter: ""
           - name: Build Dashboard
             path: src/bloqr-dashboard

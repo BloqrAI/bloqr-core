@@ -9,7 +9,7 @@ This project uses different testing frameworks for each language implementation:
 | Component | Framework | Test Location | Test Command |
 |-----------|-----------|---------------|--------------|
 | TypeScript (Rules Compiler) | Deno Test | `src/adblock-compiler-core/tests/` | `deno task test` |
-| .NET (Rules Compiler) | xUnit | `src/rules-compiler-dotnet/src/RulesCompiler.Tests/` | `dotnet test` |
+| .NET (Compiler) | xUnit | `src/compilers/dotnet/src/Bloqr.Compiler.Dotnet.Tests/` | `dotnet test` |
 | Python | pytest | `src/rules-compiler-python/tests/` | `pytest` |
 | Rust (Rules Compiler) | cargo test | `src/rules-compiler-rust/src/` | `cargo test` |
 | Rust (Validator) | cargo test | `src/validation/` | `cargo test` |
@@ -94,16 +94,16 @@ describe('MyModule', () => {
 ### Rules Compiler Tests
 
 ```bash
-cd src/rules-compiler-dotnet
+cd src/compilers/dotnet
 
 # Run all tests
-dotnet test RulesCompiler.slnx
+dotnet test CompilerDotnet.slnx
 
 # Run with verbose output
-dotnet test RulesCompiler.slnx --verbosity detailed
+dotnet test CompilerDotnet.slnx --verbosity detailed
 
 # Run specific test class
-dotnet test --filter "FullyQualifiedName~RulesCompilerServiceTests"
+dotnet test --filter "FullyQualifiedName~BloqrCompilerServiceTests"
 
 # Run specific test method
 dotnet test --filter "Name~ShouldValidateConfiguration"
@@ -453,8 +453,8 @@ jobs:
           dotnet-version: '10.0.x'
       - name: Run .NET tests
         run: |
-          cd src/rules-compiler-dotnet
-          dotnet test RulesCompiler.slnx
+          cd src/compilers/dotnet
+          dotnet test CompilerDotnet.slnx
 
   test-python:
     runs-on: ubuntu-latest
@@ -505,7 +505,7 @@ deno task test:coverage
 
 #### .NET (with coverlet)
 ```bash
-cd src/rules-compiler-dotnet
+cd src/compilers/dotnet
 dotnet test /p:CollectCoverage=true /p:CoverletOutputFormat=opencover
 dotnet tool install -g dotnet-reportgenerator-globaltool
 reportgenerator -reports:coverage.opencover.xml -targetdir:coverage
@@ -651,7 +651,7 @@ echo "Running TypeScript tests..."
 cd src/adblock-compiler-core && deno task test && cd ../..
 
 echo "Running .NET tests..."
-cd src/rules-compiler-dotnet && dotnet test RulesCompiler.slnx && cd ../..
+cd src/compilers/dotnet && dotnet test CompilerDotnet.slnx && cd ../..
 
 echo "Running Python tests..."
 cd src/rules-compiler-python && pytest && cd ../..
@@ -668,7 +668,7 @@ echo "All tests passed!"
 ## Related Documentation
 
 - [TypeScript Rules Compiler Guide](./typescript-rules-compiler.md)
-- [.NET Compiler README](../../src/rules-compiler-dotnet/README.md)
+- [.NET Compiler README](../../src/compilers/dotnet/README.md)
 - [Python Compiler README](../../src/rules-compiler-python/README.md)
 - [Rust Compiler README](../../src/rules-compiler-rust/README.md)
 

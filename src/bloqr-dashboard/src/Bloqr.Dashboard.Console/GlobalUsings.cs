@@ -18,5 +18,5 @@ global using Bloqr.Dashboard.Core.Services;
 global using Microsoft.Extensions.Configuration;
 global using Microsoft.Extensions.DependencyInjection;
 global using Microsoft.Extensions.Logging;
-global using RulesCompiler.Extensions;
+global using Bloqr.Compiler.Dotnet.Extensions;
 global using Spectre.Console;

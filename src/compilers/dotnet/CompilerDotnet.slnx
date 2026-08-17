@@ -1,0 +1,6 @@
+<Solution>
+  <Project Path="src/Bloqr.Compiler.Dotnet/Bloqr.Compiler.Dotnet.csproj" />
+  <Project Path="BenchmarkSuite1/BenchmarkSuite1.csproj" />
+  <Project Path="src/Bloqr.Compiler.Dotnet.Console/Bloqr.Compiler.Dotnet.Console.csproj" />
+  <Project Path="src/Bloqr.Compiler.Dotnet.Tests/Bloqr.Compiler.Dotnet.Tests.csproj" />
+</Solution>

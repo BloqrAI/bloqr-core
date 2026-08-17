@@ -6,7 +6,7 @@ This guide explains how to create a new release of the ad-blocking repository wi
 
 The repository uses GitHub Actions to automatically build and attach binaries to releases when a new version tag is pushed. The release workflow (`release.yml`) builds the coordinated, multi-language binary bundle:
 
-- **RulesCompiler.Console** - .NET rules compiler console app (Windows, Linux, macOS)
+- **Bloqr.Compiler.Dotnet.Console** - .NET rules compiler console app (Windows, Linux, macOS)
 - **Bloqr.Dashboard.Console** - .NET Dashboard app (Windows, Linux, macOS)
 - **rules-compiler** - Rust rules compiler (Windows, Linux, macOS)
 - **bloqr-validator** - native validation library and its `bloqr-validate` CLI (Windows, Linux, macOS)
@@ -24,7 +24,7 @@ Before creating a release, ensure:
 - All changes are merged to the `main` branch
 - All tests pass in CI/CD
 - Version numbers are updated in project files if needed:
-  - `src/rules-compiler-dotnet/src/RulesCompiler.Console/RulesCompiler.Console.csproj`
+  - `src/compilers/dotnet/src/Bloqr.Compiler.Dotnet.Console/Bloqr.Compiler.Dotnet.Console.csproj`
   - `src/rules-compiler-rust/Cargo.toml`
   - `src/rules-compiler-python/pyproject.toml`
 
@@ -61,9 +61,9 @@ After the workflow completes:
 1. Go to the [Releases page](https://github.com/BloqrAI/bloqr-core/releases)
 2. Find your new release (e.g., `v1.0.0`)
 3. Verify that all binaries are attached:
-   - `RulesCompiler.Console-windows.zip`
-   - `RulesCompiler.Console-linux.tar.gz`
-   - `RulesCompiler.Console-macos.tar.gz`
+   - `Bloqr.Compiler.Dotnet.Console-windows.zip`
+   - `Bloqr.Compiler.Dotnet.Console-linux.tar.gz`
+   - `Bloqr.Compiler.Dotnet.Console-macos.tar.gz`
    - `rules-compiler-rust-windows.zip`
    - `rules-compiler-rust-linux.tar.gz`
    - `rules-compiler-rust-macos.tar.gz`
@@ -146,8 +146,8 @@ If the automated workflow is not working, you can manually build and release:
 ### Build .NET Executables
 
 ```bash
-# Rules Compiler Console
-cd src/rules-compiler-dotnet/src/RulesCompiler.Console
+# Bloqr Compiler Console
+cd src/compilers/dotnet/src/Bloqr.Compiler.Dotnet.Console
 dotnet publish -c Release -r win-x64 --self-contained -p:PublishSingleFile=true -o ./publish/win-x64
 dotnet publish -c Release -r linux-x64 --self-contained -p:PublishSingleFile=true -o ./publish/linux-x64
 dotnet publish -c Release -r osx-x64 --self-contained -p:PublishSingleFile=true -o ./publish/osx-x64
@@ -193,7 +193,7 @@ python -m build
 - `.github/workflows/release.yml` - Coordinated multi-language binary release workflow
 - `.github/workflows/publish-nuget.yml` - Independent, path-filtered NuGet publish for the common .NET library
 - `.github/workflows/publish-crates.yml` - Independent, path-filtered crates.io publish for `bloqr-validator-core`
-- `src/rules-compiler-dotnet/src/RulesCompiler.Console/RulesCompiler.Console.csproj` - .NET Rules Compiler project
+- `src/compilers/dotnet/src/Bloqr.Compiler.Dotnet.Console/Bloqr.Compiler.Dotnet.Console.csproj` - .NET Compiler project
 - `src/rules-compiler-rust/Cargo.toml` - Rust project configuration
 - `src/rules-compiler-python/pyproject.toml` - Python project configuration
 - `docs/architecture/nuget-distribution-strategy.md` - NuGet publishing decision record for the common .NET library

@@ -216,13 +216,13 @@ public class MyHashHandler : CompilationEventHandlerBase
 **Usage:**
 
 Handlers are registered via `AddCompilationEventHandler<T>()` on the same `IServiceCollection`
-that `AddRulesCompiler()` populates. `RulesCompilerService.RunAsync` raises the three hash
+that `AddBloqrCompiler()` populates. `BloqrCompilerService.RunAsync` raises the three hash
 events at each stage from the diagram above (config file, output file, and - if `--copy` /
 `CopyToRules` is used - the copied rules file), driven by the `hashVerification` block of
 the compiler configuration:
 
 ```csharp
-services.AddRulesCompiler();
+services.AddBloqrCompiler();
 services.AddCompilationEventHandler<MyHashHandler>();
 ```
 
@@ -255,7 +255,7 @@ this way today. Per-source verification of local and remote inputs (`requireHash
 is not yet wired up: those files are fetched by the external `@bloqr/compiler-core` Deno CLI
 process that `FilterCompiler` shells out to, not read directly by .NET, so verifying them
 would require either re-implementing source fetching in .NET or having that CLI report
-per-source hashes back over stdout/JSON for `RulesCompilerService` to parse. Tracked as
+per-source hashes back over stdout/JSON for `BloqrCompilerService` to parse. Tracked as
 follow-up work.
 
 ### `.hashes.json` sidecar format
@@ -280,7 +280,7 @@ sidecar records what the file looked like the last time the compiler verified it
 
 ### Output conflict strategy and archiving
 
-`RulesCompilerService.RunAsync` also applies the config's `output` and `archiving` blocks (via
+`BloqrCompilerService.RunAsync` also applies the config's `output` and `archiving` blocks (via
 `IOutputPublisher`) immediately after a successful compile and before the output-file hash
 stage, so the recorded/verified hash always describes the file at its durable, published path:
 

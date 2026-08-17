@@ -50,10 +50,10 @@ deno task test                 # run tests
 ### .NET
 
 ```bash
-cd src/rules-compiler-dotnet
-dotnet restore RulesCompiler.slnx
-dotnet run --project src/RulesCompiler.Console -- --config config.json
-dotnet test RulesCompiler.slnx
+cd src/compilers/dotnet
+dotnet restore CompilerDotnet.slnx
+dotnet run --project src/Bloqr.Compiler.Dotnet.Console -- --config config.json
+dotnet test CompilerDotnet.slnx
 ```
 
 ### Python
@@ -115,7 +115,7 @@ bloqr-core/
 ├── src/
 │   ├── adblock-compiler-core/    # TypeScript/Deno — canonical @bloqr/compiler-core (JSR)
 │   ├── common/dotnet/            # C#/.NET 10 — shared library (own solution), consumed by the two below
-│   ├── rules-compiler-dotnet/    # C#/.NET 10 — library + Spectre.Console CLI
+│   ├── compilers/dotnet/    # C#/.NET 10 — library + Spectre.Console CLI
 │   ├── rules-compiler-python/    # Python 3.9+ — pip-installable package + CLI
 │   ├── rules-compiler-rust/      # Rust — single-binary CLI, zero runtime deps
 │   ├── rules-compiler-shell/     # bash + zsh scripts
@@ -155,7 +155,7 @@ The TypeScript compiler is the only one that implements compilation logic direct
 
 ```bash
 cd src/adblock-compiler-core && deno task test
-cd src/rules-compiler-dotnet && dotnet test RulesCompiler.slnx
+cd src/compilers/dotnet && dotnet test CompilerDotnet.slnx
 cd src/rules-compiler-python && pytest
 cd src/rules-compiler-rust && cargo test
 cargo test --workspace   # rules-compiler-rust + validation

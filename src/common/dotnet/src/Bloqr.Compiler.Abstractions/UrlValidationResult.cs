@@ -2,7 +2,7 @@ namespace Bloqr.Compiler.Abstractions;
 
 /// <summary>
 /// Result of validating a remote filter source URL (security checks, HTTPS enforcement, optional
-/// in-flight hash verification) via <see cref="IRulesValidatorService"/>. Mirrors
+/// in-flight hash verification) via <see cref="IBloqrValidatorService"/>. Mirrors
 /// <c>bloqr-validator-core</c>'s <c>UrlValidationResult</c> JSON shape exactly.
 /// </summary>
 public sealed class UrlValidationResult

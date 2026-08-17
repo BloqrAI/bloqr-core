@@ -17,7 +17,7 @@ The repository uses **Central Package Management (CPM)** to manage all NuGet pac
 ├── Directory.Build.props           # Global MSBuild properties
 ├── Directory.Packages.props        # ⭐ CENTRALIZED PACKAGE VERSIONS
 └── src/
-    └── rules-compiler-dotnet/
+    └── compilers/dotnet/
         └── src/
             └── ... (all reference packages without versions)
 ```
@@ -212,7 +212,7 @@ dotnet list package
 **Before**: Three separate `Directory.Packages.props` files:
 - `src/adguard-api-dotnet/src/Directory.Packages.props`
 - `src/adguard-api-dotnet/src/api-client/Directory.Packages.props`
-- `src/rules-compiler-dotnet/Directory.Packages.props`
+- `src/compilers/dotnet/Directory.Packages.props`
 
 **Issues**:
 - Duplicate definitions

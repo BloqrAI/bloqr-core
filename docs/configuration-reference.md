@@ -568,7 +568,7 @@ Global `transformations`/`exclusions` apply to all sources; each source's own `t
 The .NET compiler supports configuration validation before compilation:
 
 ```bash
-dotnet run --project src/RulesCompiler.Console -- -c config.json --validate
+dotnet run --project src/Bloqr.Compiler.Dotnet.Console -- -c config.json --validate
 ```
 
 This checks:

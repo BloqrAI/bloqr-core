@@ -246,8 +246,8 @@ rules_menu() {
                 if require_tool dotnet ".NET SDK" \
                     "Required to build/run the .NET rules compiler (installs to ~/.dotnet; add to PATH if it isn't already)." \
                     'curl -sSL https://dot.net/v1/dotnet-install.sh | bash -s -- --channel 10.0 --install-dir "$HOME/.dotnet" && export PATH="$PATH:$HOME/.dotnet"'; then
-                    cd src/rules-compiler-dotnet
-                    dotnet run --project src/RulesCompiler.Console
+                    cd src/compilers/dotnet
+                    dotnet run --project src/Bloqr.Compiler.Dotnet.Console
                     cd "$SCRIPT_DIR"
                 fi
                 pause
@@ -279,7 +279,7 @@ rules_menu() {
                 case $test_choice in
                     1) cd src/adblock-compiler-core && deno task test && cd "$SCRIPT_DIR" ;;
                     2) cargo test -p rules-compiler ;;
-                    3) cd src/rules-compiler-dotnet && dotnet test RulesCompiler.slnx && cd "$SCRIPT_DIR" ;;
+                    3) cd src/compilers/dotnet && dotnet test CompilerDotnet.slnx && cd "$SCRIPT_DIR" ;;
                     4) cd src/rules-compiler-python && python3 -m pytest && cd "$SCRIPT_DIR" ;;
                 esac
                 pause
@@ -334,8 +334,8 @@ validation_menu() {
                 pause
                 ;;
             3)
-                echo "Testing .NET Rules Compiler..."
-                cd src/rules-compiler-dotnet && dotnet test RulesCompiler.slnx && cd "$SCRIPT_DIR"
+                echo "Testing .NET Compiler..."
+                cd src/compilers/dotnet && dotnet test CompilerDotnet.slnx && cd "$SCRIPT_DIR"
                 pause
                 ;;
             4)

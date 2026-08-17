@@ -111,10 +111,10 @@ The compilation pipeline consists of these stages:
 ### What actually raises these (.NET)
 
 Every event above is declared on `ICompilationEventDispatcher`/`ICompilationEventHandler`, but
-until #270, most of them were pure infrastructure - nothing in `RulesCompilerService` or
+until #270, most of them were pure infrastructure - nothing in `BloqrCompilerService` or
 `ChunkingService` ever called the corresponding `Raise*Async` method. As of #270:
 
-- **`RulesCompilerService.RunAsync`** raises `CompilationStarting` (honoring a handler setting
+- **`BloqrCompilerService.RunAsync`** raises `CompilationStarting` (honoring a handler setting
   `Cancel = true` by failing the run before compiling), `ConfigurationLoaded` (right after the
   config file is read), and exactly one of `CompilationCompleted` or `CompilationError` at the
   end, regardless of which of `RunAsync`'s several internal early-return branches produced the
@@ -186,7 +186,7 @@ The event pipeline implements zero-trust principles at each stage boundary:
 | `CFG001` | Error | Missing required field |
 | `CFG002` | Error | Invalid transformation |
 | `CFG003` | Warning | Deprecated configuration option |
-| `RV001` | Warning/Error | `bloqr-validator` (native `bloqr_validator` library, #264) flagged the compiled output during syntax validation. Warning when the file is still syntactically valid but carries messages, Error when it isn't. Raised by `RulesCompilerService` via `IRulesValidatorService.ValidateLocalFileAsync`; skipped entirely when the native library isn't available (`IRulesValidatorService.IsAvailable == false`). |
+| `RV001` | Warning/Error | `bloqr-validator` (native `bloqr_validator` library, #264) flagged the compiled output during syntax validation. Warning when the file is still syntactically valid but carries messages, Error when it isn't. Raised by `BloqrCompilerService` via `IBloqrValidatorService.ValidateLocalFileAsync`; skipped entirely when the native library isn't available (`IBloqrValidatorService.IsAvailable == false`). |
 
 ## File Locking
 
@@ -245,8 +245,8 @@ events into two groups:
   never blocks the compilation pipeline that raised the event.
 
 This is opt-in, not the default, via `services.AddQueuedCompilationEventDispatching()` (call it
-*after* `AddRulesCompiler()` - the last registration of `ICompilationEventDispatcher` wins).
-Both `RulesCompiler.Console` and `Bloqr.Dashboard.Console` register it. Because the queue is
+*after* `AddBloqrCompiler()` - the last registration of `ICompilationEventDispatcher` wins).
+Both `Bloqr.Compiler.Dotnet.Console` and `Bloqr.Dashboard.Console` register it. Because the queue is
 drained by a background task, callers that build their own `ServiceProvider` should dispose it
 with `await using` (not a plain `using`) so `QueuedCompilationEventDispatcher.DisposeAsync()`
 completes the channel and awaits any still-pending queued events before the process exits.
@@ -506,7 +506,7 @@ Enable debug logging to trace event flow:
 
 ```bash
 # .NET
-RULESCOMPILER_Logging__LogLevel__Default=Debug
+BLOQR_COMPILER_Logging__LogLevel__Default=Debug
 
 # Python
 LOG_LEVEL=DEBUG
@@ -519,6 +519,6 @@ RUST_LOG=debug
 
 See the language-specific API documentation:
 
-- [.NET API Reference](../src/rules-compiler-dotnet/README.md)
+- [.NET API Reference](../src/compilers/dotnet/README.md)
 - [Python API Reference](../src/rules-compiler-python/README.md)
 - [Rust API Reference](../src/rules-compiler-rust/README.md)

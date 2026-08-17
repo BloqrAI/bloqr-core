@@ -6,7 +6,7 @@ namespace Bloqr.Compiler.Core.Configuration;
 /// <remarks>
 /// <see cref="ValidationError"/> and <see cref="ValidationResult"/> live in
 /// <c>Bloqr.Compiler.Abstractions</c> (not nested here) so that interfaces
-/// like <c>IRulesCompilerService</c> can reference them without depending
+/// like <c>IBloqrCompilerService</c> can reference them without depending
 /// on this concrete implementation.
 /// </remarks>
 public static class ConfigurationValidator

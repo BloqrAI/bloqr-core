@@ -1,7 +1,7 @@
 namespace Bloqr.Compiler.Abstractions;
 
 /// <summary>
-/// Base interface for RulesCompiler plugins.
+/// Base interface for BloqrCompiler plugins.
 /// Plugins extend the compiler with custom functionality.
 /// </summary>
 public interface IPlugin

@@ -25,7 +25,7 @@ public sealed class DiagnosticsMenuService : MenuServiceBase
     private readonly CommandHelper _commandHelper;
     private readonly IDashboardPaths _paths;
     private readonly IDashboardConfigurationStore _configStore;
-    private readonly IRulesValidatorService _rulesValidatorService;
+    private readonly IBloqrValidatorService _rulesValidatorService;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="DiagnosticsMenuService"/> class.
@@ -36,7 +36,7 @@ public sealed class DiagnosticsMenuService : MenuServiceBase
         CommandHelper commandHelper,
         IDashboardPaths paths,
         IDashboardConfigurationStore configStore,
-        IRulesValidatorService rulesValidatorService,
+        IBloqrValidatorService rulesValidatorService,
         ILogger<DiagnosticsMenuService> logger)
         : base(renderer, prompter, logger)
     {

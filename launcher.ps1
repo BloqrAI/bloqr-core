@@ -246,13 +246,13 @@ function Show-RulesMenu {
             }
             "2" {
                 $ready = Request-Tool -Command dotnet -Label ".NET SDK" `
-                    -Description "Required to build/run the .NET rules compiler." `
+                    -Description "Required to build/run the .NET compiler." `
                     -InstallAction { winget install --id Microsoft.DotNet.SDK.10 -e }
                 if ($ready) {
                     Invoke-SafeCommand {
-                        Push-Location "$Script:RootDir\src\rules-compiler-dotnet"
+                        Push-Location "$Script:RootDir\src\compilers\dotnet"
                         try {
-                            dotnet run --project src\RulesCompiler.Console
+                            dotnet run --project src\Bloqr.Compiler.Dotnet.Console
                         }
                         finally {
                             Pop-Location
@@ -311,8 +311,8 @@ function Show-RulesMenu {
                     }
                     "2" { cargo test -p rules-compiler }
                     "3" {
-                        Push-Location "$Script:RootDir\src\rules-compiler-dotnet"
-                        try { dotnet test RulesCompiler.slnx } finally { Pop-Location }
+                        Push-Location "$Script:RootDir\src\compilers\dotnet"
+                        try { dotnet test CompilerDotnet.slnx } finally { Pop-Location }
                     }
                     "4" {
                         Push-Location "$Script:RootDir\src\rules-compiler-python"
@@ -379,10 +379,10 @@ function Show-ValidationMenu {
             "1" { Invoke-SafeCommand { cargo test -p bloqr-validator-core -p bloqr-validator-core-cli } "Running validation tests"; Pause }
             "2" { Invoke-SafeCommand { cargo test --workspace } "Running all Rust tests"; Pause }
             "3" {
-                Write-Host "Testing .NET Rules Compiler..." -ForegroundColor Cyan
-                Push-Location "$Script:RootDir\src\rules-compiler-dotnet"
+                Write-Host "Testing .NET Compiler..." -ForegroundColor Cyan
+                Push-Location "$Script:RootDir\src\compilers\dotnet"
                 try {
-                    dotnet test RulesCompiler.slnx
+                    dotnet test CompilerDotnet.slnx
                 }
                 finally {
                     Pop-Location

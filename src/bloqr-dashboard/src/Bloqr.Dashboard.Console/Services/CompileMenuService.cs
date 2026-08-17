@@ -2,12 +2,12 @@ namespace Bloqr.Dashboard.Console.Services;
 
 /// <summary>
 /// Menu for running and validating compilations. Delegates all actual compilation work to
-/// <see cref="IRulesCompilerService"/> (registered by <c>RulesCompiler</c>'s
-/// <c>AddRulesCompiler()</c>) — this menu is presentation only.
+/// <see cref="IBloqrCompilerService"/> (registered by <c>BloqrCompiler</c>'s
+/// <c>AddBloqrCompiler()</c>) — this menu is presentation only.
 /// </summary>
 public sealed class CompileMenuService : MenuServiceBase
 {
-    private readonly IRulesCompilerService _compilerService;
+    private readonly IBloqrCompilerService _compilerService;
     private readonly IDashboardConfigurationStore _configStore;
     private readonly ICompilerConfigGuard _configGuard;
     private readonly LiveProgressSession _liveProgressSession;
@@ -18,7 +18,7 @@ public sealed class CompileMenuService : MenuServiceBase
     public CompileMenuService(
         IConsoleRenderer renderer,
         IConsolePrompter prompter,
-        IRulesCompilerService compilerService,
+        IBloqrCompilerService compilerService,
         IDashboardConfigurationStore configStore,
         ICompilerConfigGuard configGuard,
         LiveProgressSession liveProgressSession,

@@ -55,7 +55,7 @@ bloqr-core/
 ├── schemas/                        # First-party JSON schemas
 ├── src/
 │   ├── adblock-compiler-core/      # TypeScript rules compiler (@bloqr/compiler-core)
-│   ├── rules-compiler-dotnet/      # .NET rules compiler
+│   ├── compilers/dotnet/      # .NET rules compiler
 │   ├── rules-compiler-python/      # Python rules compiler
 │   ├── rules-compiler-rust/        # Rust rules compiler
 │   ├── rules-compiler-shell/       # Shell scripts (bash, zsh)
@@ -119,7 +119,7 @@ cd src/adblock-compiler-core && npm run compile
    cd src/adblock-compiler-core && npm run compile
    
    # .NET
-   cd src/rules-compiler-dotnet && dotnet run --project src/RulesCompiler.Console
+   cd src/compilers/dotnet && dotnet run --project src/Bloqr.Compiler.Dotnet.Console
    
    # Python
    cd src/rules-compiler-python && rules-compiler
@@ -140,7 +140,7 @@ cd src/adblock-compiler-core && npm run compile
 
 **Test file patterns** that verify this:
 - TypeScript: `src/adblock-compiler-core/src/__tests__/compiler.test.ts`
-- .NET: `src/rules-compiler-dotnet/src/RulesCompiler.Tests/OutputWriterTests.cs`
+- .NET: `src/compilers/dotnet/src/Bloqr.Compiler.Dotnet.Tests/OutputWriterTests.cs`
 - Python: `src/rules-compiler-python/tests/test_compiler.py`
 - Rust: `src/rules-compiler-rust/src/compiler.rs` (integration tests)
 
@@ -370,7 +370,7 @@ See `src/adblock-compiler-core/compiler-config.json` for reference.
 ### GitHub Actions Workflows
 | Workflow | File | Triggers | Purpose |
 |----------|------|----------|---------|
-| .NET | `dotnet.yml` | Push to main, PRs | Build/test the .NET rules compiler (`dotnet test RulesCompiler.slnx`) |
+| .NET | `dotnet.yml` | Push to main, PRs | Build/test the .NET rules compiler (`dotnet test CompilerDotnet.slnx`) |
 | TypeScript | `typescript.yml` | Push to main, PRs | Type-check, lint, test (`deno task check/lint/test`) |
 | PowerShell | `powershell.yml` | On-demand | PSScriptAnalyzer on `src/rules-compiler-powershell/` |
 | Gatsby | `gatsby.yml` | Push to main | Build and deploy to GitHub Pages |
@@ -422,7 +422,7 @@ npm install <package-name>
 ### Running the Full Test Suite
 ```bash
 # Run all .NET tests
-cd src/rules-compiler-dotnet && dotnet test RulesCompiler.slnx
+cd src/compilers/dotnet && dotnet test CompilerDotnet.slnx
 
 # Run all TypeScript tests
 cd src/adblock-compiler-core && npm test
@@ -485,7 +485,7 @@ cd src/rules-compiler-rust && cargo test
 ### Creating a Release
 
 1. **Update version numbers** in project files:
-   - `src/rules-compiler-dotnet/src/RulesCompiler.Console/RulesCompiler.Console.csproj`
+   - `src/compilers/dotnet/src/Bloqr.Compiler.Dotnet.Console/Bloqr.Compiler.Dotnet.Console.csproj`
    - `src/rules-compiler-rust/Cargo.toml`
    - `src/rules-compiler-python/pyproject.toml`
 
@@ -503,7 +503,7 @@ cd src/rules-compiler-rust && cargo test
    - Takes ~15-20 minutes
 
 4. **Verify release** at `https://github.com/BloqrAI/bloqr-core/releases`:
-   - `RulesCompiler.Console-{windows,linux,macos}.{zip,tar.gz}`
+   - `Bloqr.Compiler.Dotnet.Console-{windows,linux,macos}.{zip,tar.gz}`
    - `rules-compiler-rust-{windows,linux,macos}.{zip,tar.gz}`
    - `rules_compiler-*.whl` (Python wheel)
 
