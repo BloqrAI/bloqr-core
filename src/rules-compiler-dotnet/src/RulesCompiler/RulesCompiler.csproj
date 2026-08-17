@@ -24,8 +24,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\..\compiler-common-dotnet\src\Bloqr.Compiler.Abstractions\Bloqr.Compiler.Abstractions.csproj" />
-    <ProjectReference Include="..\..\..\compiler-common-dotnet\src\Bloqr.Compiler.Core\Bloqr.Compiler.Core.csproj" />
+    <ProjectReference Include="..\..\..\common\dotnet\src\Bloqr.Compiler.Abstractions\Bloqr.Compiler.Abstractions.csproj" />
+    <ProjectReference Include="..\..\..\common\dotnet\src\Bloqr.Compiler.Core\Bloqr.Compiler.Core.csproj" />
   </ItemGroup>
 
 </Project>

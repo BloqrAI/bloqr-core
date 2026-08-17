@@ -181,9 +181,9 @@ var invalid = TransformationHelper.GetInvalidTransformations(["Valid", "Invalid"
 
 ## Library Architecture
 
-This project is a thin, compiler-specific layer over the shared `Bloqr.Compiler.Abstractions`/`Bloqr.Compiler.Core` library, which now lives in its own solution at [`src/compiler-common-dotnet/`](../compiler-common-dotnet/) — see that project's README for the full API reference (interfaces, models, services) of the shared library.
+This project is a thin, compiler-specific layer over the shared `Bloqr.Compiler.Abstractions`/`Bloqr.Compiler.Core` library, which now lives in its own solution at [`src/common/dotnet/`](../common/dotnet/) — see that project's README for the full API reference (interfaces, models, services) of the shared library.
 
-- **`Bloqr.Compiler.Abstractions`/`Bloqr.Compiler.Core`** (`src/compiler-common-dotnet/`) — interfaces, event-args, models, and the common implementation (config reading/validation, chunking, file locking, hash verification, the compilation event pipeline, and the plugin system). Consumed via `<ProjectReference>`, not part of this project's solution.
+- **`Bloqr.Compiler.Abstractions`/`Bloqr.Compiler.Core`** (`src/common/dotnet/`) — interfaces, event-args, models, and the common implementation (config reading/validation, chunking, file locking, hash verification, the compilation event pipeline, and the plugin system). Consumed via `<ProjectReference>`, not part of this project's solution.
 - **`RulesCompiler`** (this project) — the compiler-specific pieces: `FilterCompiler` (shells out to `@bloqr/compiler-core` via Deno), `OutputWriter`, `RulesCompilerService` (top-level orchestration). References `Bloqr.Compiler.Core`.
 
 ### Services (`RulesCompiler`)
@@ -223,7 +223,7 @@ dotnet test --filter "FullyQualifiedName~RulesCompilerServiceTests"
 dotnet test --filter "FullyQualifiedName~OutputWriterTests"
 ```
 
-Tests for the shared library (`ConfigurationValidator`, `TransformationHelper`, etc.) live in `Bloqr.Compiler.Core.Tests` — see [`src/compiler-common-dotnet/README.md`](../compiler-common-dotnet/README.md#running-tests).
+Tests for the shared library (`ConfigurationValidator`, `TransformationHelper`, etc.) live in `Bloqr.Compiler.Core.Tests` — see [`src/common/dotnet/README.md`](../common/dotnet/README.md#running-tests).
 
 ## Environment Variables
 
@@ -259,7 +259,7 @@ src/rules-compiler-dotnet/
 
 ## Related Projects
 
-- [Compiler Common (.NET)](../compiler-common-dotnet/) - `Bloqr.Compiler.Abstractions`/`Bloqr.Compiler.Core`, the shared library this project builds on
+- [Compiler Common (.NET)](../common/dotnet/) - `Bloqr.Compiler.Abstractions`/`Bloqr.Compiler.Core`, the shared library this project builds on
 - [Rules Compiler (TypeScript)](../adblock-compiler-core/) - `@bloqr/compiler-core`, the canonical compilation engine this project shells out to
 - [Rules Compiler (Python)](../rules-compiler-python/) - Python implementation
 - [Rules Compiler (Rust)](../rules-compiler-rust/) - Rust implementation

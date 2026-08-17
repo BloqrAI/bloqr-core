@@ -104,7 +104,7 @@ The Python wheel package is built as a **universal wheel** compatible with Pytho
 
 ### NuGet Packages
 
-`Bloqr.Compiler.Abstractions` and `Bloqr.Compiler.Core` are packed with `dotnet pack` and pushed to GitHub Packages' NuGet feed (`https://nuget.pkg.github.com/BloqrAI/index.json`) by `publish-nuget.yml` — **not** by `release.yml` — triggered on every push to `main` touching `src/compiler-common-dotnet/**`, or manually via `workflow_dispatch`. Authenticated with the workflow's own `GITHUB_TOKEN` — no separate secret to manage. The push is idempotent (`--skip-duplicate`), so re-running the workflow for an already-published version is a no-op. See [`docs/architecture/nuget-distribution-strategy.md`](architecture/nuget-distribution-strategy.md) for why these two libraries are published while everything else in the .NET solution stays on in-repo project references.
+`Bloqr.Compiler.Abstractions` and `Bloqr.Compiler.Core` are packed with `dotnet pack` and pushed to GitHub Packages' NuGet feed (`https://nuget.pkg.github.com/BloqrAI/index.json`) by `publish-nuget.yml` — **not** by `release.yml` — triggered on every push to `main` touching `src/common/dotnet/**`, or manually via `workflow_dispatch`. Authenticated with the workflow's own `GITHUB_TOKEN` — no separate secret to manage. The push is idempotent (`--skip-duplicate`), so re-running the workflow for an already-published version is a no-op. See [`docs/architecture/nuget-distribution-strategy.md`](architecture/nuget-distribution-strategy.md) for why these two libraries are published while everything else in the .NET solution stays on in-repo project references.
 
 ### crates.io Package
 

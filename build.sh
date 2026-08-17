@@ -151,7 +151,7 @@ build_dotnet() {
 
     # Build Compiler Common (.NET) - shared library, standalone solution
     echo "→ Building Compiler Common (.NET)..."
-    if (cd src/compiler-common-dotnet && dotnet restore CompilerCommon.slnx && dotnet build CompilerCommon.slnx --no-restore --configuration $configuration); then
+    if (cd src/common/dotnet && dotnet restore CompilerCommon.slnx && dotnet build CompilerCommon.slnx --no-restore --configuration $configuration); then
         echo -e "${GREEN}✓ Compiler Common (.NET) built successfully${NC}"
     else
         echo -e "${RED}✗ Compiler Common (.NET) build failed${NC}"

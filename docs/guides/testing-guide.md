@@ -115,7 +115,7 @@ dotnet test /p:CollectCoverage=true /p:CoverletOutputFormat=opencover
 Tests for the shared `Bloqr.Compiler.Core`/`Bloqr.Compiler.Abstractions` library (`ConfigurationValidator`, `ChunkingService`, `TransformationHelper`, etc.) live in a separate solution:
 
 ```bash
-cd src/compiler-common-dotnet
+cd src/common/dotnet
 dotnet test CompilerCommon.slnx
 dotnet test --filter "FullyQualifiedName~ConfigurationValidatorTests"
 ```
