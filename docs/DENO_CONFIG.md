@@ -21,7 +21,7 @@ Located at the repository root (`/deno.base.json`), this file contains shared se
 
 Each Deno project has its own `deno.json` file that extends the base configuration:
 
-1. **`src/adblock-compiler-core/deno.json`** - Rules compiler
+1. **`src/compilers/typescript/deno.json`** - Rules compiler
 
 (The AdGuard API TypeScript SDK and the Linear import tool, formerly `src/adguard-api-typescript/` and `src/linear/`, moved to [`BloqrAI/bloqr-apiclients`](https://github.com/BloqrAI/bloqr-apiclients) and maintain their own Deno configuration there.)
 

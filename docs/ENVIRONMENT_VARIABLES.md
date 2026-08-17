@@ -108,7 +108,7 @@ export DEBUG=1
 ```
 
 ### LOG_LEVEL
-**Description**: Structured-logging level. Read by `@bloqr/compiler-core` (`src/adblock-compiler-core/src/orchestration/logger.ts`) and `Bloqr.Dashboard.Console`
+**Description**: Structured-logging level. Read by `@bloqr/compiler-core` (`src/compilers/typescript/src/orchestration/logger.ts`) and `Bloqr.Dashboard.Console`
 **Type**: String (`DEBUG`, `INFO`, `WARN`, `ERROR`, `SILENT`)
 
 ### LOG_FORMAT

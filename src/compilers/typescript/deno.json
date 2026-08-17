@@ -1,5 +1,5 @@
 {
-  "extends": "../../deno.base.json",
+  "extends": "../../../deno.base.json",
   "name": "@bloqr/compiler-core",
   "version": "1.2.1",
   "exports": {

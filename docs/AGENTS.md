@@ -14,7 +14,7 @@
 ## Build, Test, and Development Commands
 
 - Compile rules (any platform): `./src/rules-compiler-shell/bash/compile-rules.sh -c config.json -r` (see `src/rules-compiler-shell/`).
-- TypeScript compiler (`src/adblock-compiler-core/`):
+- TypeScript compiler (`src/compilers/typescript/`):
   - `deno cache src/mod.ts` — cache dependencies
   - `deno task compile` — compile rules
   - `deno task lint` — Deno lint

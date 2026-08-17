@@ -1,5 +1,5 @@
 /**
- * @module adblock-compiler-core
+ * @module compiler-core
  * Main entry point for the `@bloqr/compiler-core` library.
  *
  * This is a minimal, dependency-free filter-list compilation engine —

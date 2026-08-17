@@ -27,7 +27,7 @@ Deno.test('TransformationRegistry - should have all default transformations regi
   assertEquals(registry.has(TransformationType.ValidateAllowIp), true);
   assertEquals(registry.has(TransformationType.Compress), true);
   // NOTE: ConflictDetection and RuleOptimizer are commercial-only
-  // transformations, not part of adblock-compiler-core.
+  // transformations, not part of compiler-core.
 });
 
 Deno.test('TransformationRegistry - should get transformation by type', () => {
@@ -55,7 +55,7 @@ Deno.test('TransformationRegistry - should get all registered types', () => {
 
 // NOTE: bloqr-compiler's "should execute ConflictDetection and RuleOptimizer
 // when requested" test doesn't apply here — those are commercial-only
-// transformations, not part of adblock-compiler-core.
+// transformations, not part of compiler-core.
 
 Deno.test('TransformationPipeline - should create pipeline with default registry', () => {
   const pipeline = new TransformationPipeline();

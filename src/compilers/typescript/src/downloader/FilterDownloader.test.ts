@@ -298,7 +298,7 @@ Deno.test('FilterDownloader - custom downloaders', async (t) => {
   });
 
   // NOTE: bloqr-compiler's "consult the plugin global registry by default"
-  // test doesn't apply here — adblock-compiler-core has no plugin registry.
+  // test doesn't apply here — compiler-core has no plugin registry.
   // Callers needing custom schemes pass `resolveCustomDownloader` directly
   // (see "should use a custom downloader resolved for the source scheme" above).
 

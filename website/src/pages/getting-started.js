@@ -76,7 +76,7 @@ const GettingStartedPage = () => {
         </ul>
         <p>
           All compilers dogfood{" "}
-          <Link to="/adblock-compiler">@bloqr/compiler-core</Link>, this
+          <Link to="/compiler-core">@bloqr/compiler-core</Link>, this
           repository's own open-source, dependency-free compilation engine
           published to JSR.
         </p>
@@ -118,7 +118,7 @@ const GettingStartedPage = () => {
             <pre style={{ marginTop: "0.5rem" }}>
               # TypeScript
               <br />
-              cd src/adblock-compiler-core && deno task compile
+              cd src/compilers/typescript && deno task compile
               <br />
               <br />
               # .NET
@@ -172,7 +172,7 @@ const GettingStartedPage = () => {
           </div>
           <div className="feature">
             <h3>
-              <Link to="/adblock-compiler">@bloqr/compiler-core</Link>
+              <Link to="/compiler-core">@bloqr/compiler-core</Link>
             </h3>
             <p>
               Learn about the open-source compilation engine that powers every

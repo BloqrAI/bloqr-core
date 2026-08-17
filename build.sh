@@ -192,7 +192,7 @@ build_typescript() {
     
     # Build Rules Compiler TypeScript
     echo "→ Building Rules Compiler (TypeScript)..."
-    if (cd src/adblock-compiler-core && deno task generate:types && deno task check); then
+    if (cd src/compilers/typescript && deno task generate:types && deno task check); then
         echo -e "${GREEN}✓ Rules Compiler (TypeScript) built successfully${NC}"
     else
         echo -e "${RED}✗ Rules Compiler (TypeScript) build failed${NC}"

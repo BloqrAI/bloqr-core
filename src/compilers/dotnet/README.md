@@ -260,7 +260,7 @@ src/compilers/dotnet/
 ## Related Projects
 
 - [Compiler Common (.NET)](../common/dotnet/) - `Bloqr.Compiler.Abstractions`/`Bloqr.Compiler.Core`, the shared library this project builds on
-- [Rules Compiler (TypeScript)](../adblock-compiler-core/) - `@bloqr/compiler-core`, the canonical compilation engine this project shells out to
+- [Rules Compiler (TypeScript)](../compilers/typescript/) - `@bloqr/compiler-core`, the canonical compilation engine this project shells out to
 - [Rules Compiler (Python)](../rules-compiler-python/) - Python implementation
 - [Rules Compiler (Rust)](../rules-compiler-rust/) - Rust implementation
 - [@adguard/hostlist-compiler](https://github.com/AdguardTeam/HostlistCompiler) - the compiler `@bloqr/compiler-core` is loosely based on

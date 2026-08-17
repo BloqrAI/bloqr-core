@@ -5,7 +5,7 @@
 # https://containers.dev/guide/dependabot
 #
 # Coverage note: Dependabot has no native `jsr:` ecosystem, so pure
-# JSR-native imports in src/adblock-compiler-core/deno.json (jsr:@std/*,
+# JSR-native imports in src/compilers/typescript/deno.json (jsr:@std/*,
 # jsr:@bloqr/*, etc.) are NOT covered by anything below — Dependabot's npm
 # ecosystem can pick up Deno's npm: shorthand specifiers from a deno.lock,
 # but not jsr: ones. That gap is covered separately by the scheduled
@@ -46,7 +46,7 @@ updates:
           - "*"
 
   # npm: root package.json (Claude Agent SDK) and Deno's npm: shorthand
-  # imports in src/adblock-compiler-core/deno.json / deno.lock. Does NOT
+  # imports in src/compilers/typescript/deno.json / deno.lock. Does NOT
   # cover jsr: imports in that same file -- see deno-dependency-check.yml.
   - package-ecosystem: "npm"
     directory: "/"

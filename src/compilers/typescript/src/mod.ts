@@ -1,5 +1,5 @@
 /**
- * adblock-compiler-core — Deno Entry Point
+ * compiler-core — Deno Entry Point
  *
  * Re-exports the core compilation engine (the `@bloqr/compiler-core`
  * public API) and provides the CLI entry point. For the CLI/config/console

@@ -91,7 +91,7 @@ jobs:
           echo "|----------|--------|" >> $GITHUB_STEP_SUMMARY
 
           # TypeScript
-          if grep -rq "rules.*validator" src/adblock-compiler-core/deno.json 2>/dev/null; then
+          if grep -rq "rules.*validator" src/compilers/typescript/deno.json 2>/dev/null; then
             echo "| TypeScript | integrated |" >> $GITHUB_STEP_SUMMARY
           else
             echo "| TypeScript | pending |" >> $GITHUB_STEP_SUMMARY

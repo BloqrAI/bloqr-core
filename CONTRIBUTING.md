@@ -56,7 +56,7 @@ bloqr-core/
 ├── src/                         # Source code organized by language
 │   ├── compilers/dotnet/            # .NET compiler
 │   ├── rules-compiler-rust/         # Rust rules compiler
-│   ├── adblock-compiler-core/       # TypeScript rules compiler (@bloqr/compiler-core)
+│   ├── compilers/typescript/       # TypeScript rules compiler (@bloqr/compiler-core)
 │   ├── rules-compiler-python/       # Python rules compiler
 │   ├── rules-compiler-powershell/   # PowerShell rules compiler toolkit
 │   ├── rules-compiler-shell/        # Shell script utilities (bash/zsh)
@@ -95,7 +95,7 @@ Follow the coding standards for your language (see below).
 ./build.sh --dotnet && dotnet test
 
 # Or use language-specific commands
-cd src/adblock-compiler-core && deno task test
+cd src/compilers/typescript && deno task test
 cd src/rules-compiler-python && pytest
 ```
 
@@ -211,7 +211,7 @@ All new features and bug fixes must include appropriate tests:
 ./tools/test-build-scripts.sh     # Build script tests
 
 # Language-specific tests
-cd src/adblock-compiler-core && deno task test
+cd src/compilers/typescript && deno task test
 cd src/compilers/dotnet && dotnet test
 cd src/rules-compiler-python && pytest
 cd src/rules-compiler-rust && cargo test

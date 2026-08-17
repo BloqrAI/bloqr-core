@@ -22,7 +22,7 @@ This guide helps you choose the right rules compiler for your use case. All comp
 **Best for**: TypeScript/JavaScript developers, CI/CD pipelines
 
 ```bash
-cd src/adblock-compiler-core
+cd src/compilers/typescript
 deno task compile
 ```
 

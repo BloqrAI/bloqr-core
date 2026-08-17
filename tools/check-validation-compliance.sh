@@ -48,7 +48,7 @@ check_typescript_integration() {
     echo ""
     echo "→ Checking TypeScript compiler integration..."
     
-    local ts_dir="$REPO_ROOT/src/adblock-compiler-core"
+    local ts_dir="$REPO_ROOT/src/compilers/typescript"
     
     if [ ! -d "$ts_dir" ]; then
         echo -e "${YELLOW}⚠ TypeScript compiler not found${NC}"

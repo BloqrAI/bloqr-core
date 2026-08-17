@@ -1,5 +1,5 @@
 /**
- * Minimal diagnostics/tracing seam for the adblock-compiler-core engine.
+ * Minimal diagnostics/tracing seam for the compiler-core engine.
  *
  * Provides just the types, the in-memory DiagnosticsCollector, and a no-op
  * default (NoOpDiagnosticsCollector / createNoOpContext) so FilterCompiler

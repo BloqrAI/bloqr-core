@@ -1,5 +1,5 @@
 {
-  "$schema": "../../schemas/compiler-config.schema.json",
+  "$schema": "../../../schemas/compiler-config.schema.json",
   "name": "AdGuard User Filter",
   "version": "1.0.0",
   "description": "Custom filter rules for AdGuard DNS",

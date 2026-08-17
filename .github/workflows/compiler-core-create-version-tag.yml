@@ -2,7 +2,7 @@ name: compiler-core Create Version Tag
 
 # Tags a compiler-core release once its version-bump PR merges. Triggers
 # publish-jsr.yml indirectly: that workflow already runs on any push to
-# src/adblock-compiler-core/** on main, and deno publish is idempotent, so
+# src/compilers/typescript/** on main, and deno publish is idempotent, so
 # the merged version-bump commit itself is what actually triggers the
 # publish — this workflow's job is purely to record the release point as a
 # git tag for traceability (compiler-core-v1.2.3), matching the tag-per-
@@ -34,7 +34,7 @@ jobs:
       )
     defaults:
       run:
-        working-directory: src/adblock-compiler-core
+        working-directory: src/compilers/typescript
     steps:
       - name: Checkout
         uses: actions/checkout@v7
@@ -116,6 +116,6 @@ jobs:
           - **Version**: $VERSION
           - **Tag**: $TAG
 
-          publish-jsr.yml publishes this version to JSR on the next push to \`src/adblock-compiler-core/**\` on main (already satisfied by the version-bump merge itself).
+          publish-jsr.yml publishes this version to JSR on the next push to \`src/compilers/typescript/**\` on main (already satisfied by the version-bump merge itself).
           EOF
           fi

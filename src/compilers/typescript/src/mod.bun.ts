@@ -1,6 +1,6 @@
 #!/usr/bin/env bun
 /**
- * adblock-compiler-core — Bun Entry Point
+ * compiler-core — Bun Entry Point
  *
  * Bun implements Node's `fs`/`process` APIs natively, and `orchestration/cli.ts`'s
  * `main()` already detects the runtime itself, so no Bun-specific wiring is
