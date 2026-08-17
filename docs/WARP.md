@@ -18,9 +18,9 @@ TypeScript/Deno – rules compiler (src/adblock-compiler-core)
   Notes
   - Reads compiler configuration and writes compiled rules. The canonical filter list lives in [`BloqrAI/bloqr-blocklists`](https://github.com/BloqrAI/bloqr-blocklists) (`output/adguard_dns_filter.txt`), not this repo.
 
-.NET – rules compiler (src/rules-compiler-dotnet)
-- Restore/build/test: cd src/rules-compiler-dotnet; dotnet restore RulesCompiler.slnx; dotnet build RulesCompiler.slnx; dotnet test RulesCompiler.slnx
-- Run the console UI: dotnet run --project src/RulesCompiler.Console/RulesCompiler.Console.csproj
+.NET – rules compiler (src/compilers/dotnet)
+- Restore/build/test: cd src/compilers/dotnet; dotnet restore CompilerDotnet.slnx; dotnet build CompilerDotnet.slnx; dotnet test CompilerDotnet.slnx
+- Run the console UI: dotnet run --project src/Bloqr.Compiler.Dotnet.Console/Bloqr.Compiler.Dotnet.Console.csproj
 
 Python – rules compiler (src/rules-compiler-python)
 - Install: cd src/rules-compiler-python && pip install -e ".[dev]"
@@ -40,7 +40,7 @@ Running a single test
   - By file: cd src/adblock-compiler-core && deno test src/cli.test.ts
   - All tests: deno task test
 - .NET (xUnit)
-  - By class pattern (rules compiler): cd src/rules-compiler-dotnet && dotnet test RulesCompiler.slnx --filter "FullyQualifiedName~RulesCompilerServiceTests"
+  - By class pattern (rules compiler): cd src/compilers/dotnet && dotnet test CompilerDotnet.slnx --filter "FullyQualifiedName~BloqrCompilerServiceTests"
   - By class pattern (shared library): cd src/common/dotnet && dotnet test CompilerCommon.slnx --filter "FullyQualifiedName~ConfigurationValidatorTests"
 - Python: pytest -k "test_read_yaml"
 - Rust: cargo test test_count_rules
@@ -50,7 +50,7 @@ High-level architecture and structure
   - `output/adguard_dns_filter.txt` is the compiled, tracked filter list consumed by AdGuard DNS. It is no longer part of this repo.
 - Rules compilers (`src/`)
   - `src/adblock-compiler-core/` — Deno/TypeScript wrapper around `@bloqr/compiler-core`, published on JSR.
-  - `src/rules-compiler-dotnet/` — .NET 10 library + Spectre.Console CLI.
+  - `src/compilers/dotnet/` — .NET 10 library + Spectre.Console CLI.
   - `src/rules-compiler-python/` — pip-installable package with CLI and API.
   - `src/rules-compiler-rust/` — single-binary CLI with zero runtime deps.
   - `src/rules-compiler-shell/` — bash and zsh scripts for compiling rules without a language runtime.
@@ -65,7 +65,7 @@ Notes pulled from existing docs
 - AdGuard DNS API client usage now lives in the [`BloqrAI/bloqr-apiclients`](https://github.com/BloqrAI/bloqr-apiclients) READMEs.
 
 Alignment with CI
-- .github/workflows/dotnet.yml builds and tests `RulesCompiler.slnx` with .NET 10.
+- .github/workflows/dotnet.yml builds and tests `CompilerDotnet.slnx` with .NET 10.
 - .github/workflows/typescript.yml validates the TypeScript/Deno compiler with `deno check`, `deno lint`, and `deno test`.
 - .github/workflows/python.yml, .github/workflows/rust-clippy.yml, and .github/workflows/powershell.yml cover the remaining compilers.
 - .github/workflows/gatsby.yml builds the documentation site.

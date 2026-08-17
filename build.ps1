@@ -138,21 +138,21 @@ function Build-DotNetProjects {
         $script:BuildFailed = $true
     }
 
-    # Build Rules Compiler .NET
-    Write-Host "→ Building Rules Compiler (.NET)..."
+    # Build Compiler Dotnet
+    Write-Host "→ Building Compiler Dotnet..."
     try {
-        Push-Location src/rules-compiler-dotnet
+        Push-Location src/compilers/dotnet
         try {
-            dotnet restore RulesCompiler.slnx
-            dotnet build RulesCompiler.slnx --no-restore --configuration $configuration
-            Write-Host "✓ Rules Compiler (.NET) built successfully" -ForegroundColor Green
+            dotnet restore CompilerDotnet.slnx
+            dotnet build CompilerDotnet.slnx --no-restore --configuration $configuration
+            Write-Host "✓ Compiler Dotnet built successfully" -ForegroundColor Green
         }
         finally {
             Pop-Location
         }
     }
     catch {
-        Write-Host "✗ Rules Compiler (.NET) build failed" -ForegroundColor Red
+        Write-Host "✗ Compiler Dotnet build failed" -ForegroundColor Red
         $script:BuildFailed = $true
     }
 

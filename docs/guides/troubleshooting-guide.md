@@ -157,7 +157,7 @@ dotnet --list-sdks
 dotnet nuget locals all --clear
 
 # Restore with verbose logging
-dotnet restore RulesCompiler.slnx --verbosity detailed
+dotnet restore CompilerDotnet.slnx --verbosity detailed
 
 # Check NuGet sources
 dotnet nuget list source
@@ -166,7 +166,7 @@ dotnet nuget list source
 dotnet nuget add source https://api.nuget.org/v3/index.json -n nuget.org
 
 # Try restoring specific project
-dotnet restore src/RulesCompiler/RulesCompiler.csproj
+dotnet restore src/Bloqr.Compiler.Dotnet/Bloqr.Compiler.Dotnet.csproj
 ```
 
 ### Build Errors
@@ -177,18 +177,18 @@ dotnet restore src/RulesCompiler/RulesCompiler.csproj
 
 ```bash
 # Clean and rebuild
-dotnet clean RulesCompiler.slnx
-dotnet restore RulesCompiler.slnx
-dotnet build RulesCompiler.slnx
+dotnet clean CompilerDotnet.slnx
+dotnet restore CompilerDotnet.slnx
+dotnet build CompilerDotnet.slnx
 
 # Check target framework matches installed SDK
 # In .csproj, should be <TargetFramework>net10.0</TargetFramework>
 
 # Verify all project references are correct
-dotnet list RulesCompiler.slnx reference
+dotnet list CompilerDotnet.slnx reference
 
 # Build specific project
-dotnet build src/RulesCompiler/RulesCompiler.csproj
+dotnet build src/Bloqr.Compiler.Dotnet/Bloqr.Compiler.Dotnet.csproj
 ```
 
 ### Test Discovery Issues
@@ -199,13 +199,13 @@ dotnet build src/RulesCompiler/RulesCompiler.csproj
 
 ```bash
 # Rebuild test project
-dotnet build src/RulesCompiler.Tests/
+dotnet build src/Bloqr.Compiler.Dotnet.Tests/
 
 # Run tests with verbose output
-dotnet test RulesCompiler.slnx --verbosity detailed
+dotnet test CompilerDotnet.slnx --verbosity detailed
 
 # Ensure test project references xUnit
-# Check RulesCompiler.Tests.csproj for:
+# Check Bloqr.Compiler.Dotnet.Tests.csproj for:
 <PackageReference Include="xunit" Version="..." />
 <PackageReference Include="xunit.runner.visualstudio" Version="..." />
 
@@ -221,18 +221,18 @@ dotnet test --filter "FullyQualifiedName~YourTestName"
 
 ```bash
 # Check file path (use absolute paths or ensure working directory is correct)
-dotnet run --project src/RulesCompiler.Console -- -c "$(pwd)/Config/compiler-config.json"
+dotnet run --project src/Bloqr.Compiler.Dotnet.Console -- -c "$(pwd)/Config/compiler-config.json"
 
 # Verify file format
 # JSON files must use .json extension
 # JSONC (JSON with comments) files must use .jsonc extension
 
 # Test configuration validity
-dotnet run --project src/RulesCompiler.Console -- -c config.json --validate
+dotnet run --project src/Bloqr.Compiler.Dotnet.Console -- -c config.json --validate
 
 # Enable debug logging
-export RULESCOMPILER_Logging__LogLevel__Default=Debug
-dotnet run --project src/RulesCompiler.Console -- -c config.json --verbose
+export BLOQR_COMPILER_Logging__LogLevel__Default=Debug
+dotnet run --project src/Bloqr.Compiler.Dotnet.Console -- -c config.json --verbose
 ```
 
 ## Python Issues

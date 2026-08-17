@@ -36,10 +36,10 @@ Follows the pattern `docs/architecture/versioning-strategy.md` already establish
 
 - `.github/workflows/publish-nuget.yml`: standalone workflow, triggered by push to `main` on `src/common/dotnet/**` (or `workflow_dispatch`), running `dotnet pack` + `dotnet nuget push --source github` against `Bloqr.Compiler.Abstractions.csproj` and `Bloqr.Compiler.Core.csproj`. Runs at `permissions: packages: write` (plus `contents: read`) scoped to itself, separate from `release.yml`'s `contents: write`. `release.yml` no longer has a `publish-nuget` job — see `docs/release-guide.md`.
 - Package metadata (`PackageId`, `Authors`, `Description`, `RepositoryUrl`) already exists on both csprojs from an earlier pass; this issue adds `PackageLicenseFile`/`PackageProjectUrl` so the packages render correctly wherever they're browsed.
-- No change to `RulesCompiler`, `RulesCompiler.Console`, or `Bloqr.Dashboard.*` — they keep their existing `<ProjectReference>`s per the decision above.
+- No change to `Bloqr.Compiler.Dotnet`, `Bloqr.Compiler.Dotnet.Console`, or `Bloqr.Dashboard.*` — they keep their existing `<ProjectReference>`s per the decision above.
 
 ## What this doc does not cover
 
-- `RulesCompiler` itself is compiler-specific (shells out to `@bloqr/compiler-core`), not part of "the common library" the epic asks about, and is not published to NuGet by this decision.
+- `Bloqr.Compiler.Dotnet` itself is compiler-specific (shells out to `@bloqr/compiler-core`), not part of "the common library" the epic asks about, and is not published to NuGet by this decision.
 - An automated per-package version-bump/tag workflow for `Bloqr.Compiler.Abstractions`/`Core` (the JSR-pattern graduation mentioned above) — tracked as future work if/when warranted, not part of this issue's scope.
 - PyPI/crates.io/PowerShell Gallery publishing for the other language compilers — tracked separately in #253.

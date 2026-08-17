@@ -19,7 +19,7 @@
   - `deno task compile` — compile rules
   - `deno task lint` — Deno lint
   - `deno task test` — Deno tests
-- .NET (`src/rules-compiler-dotnet/`): `dotnet restore RulesCompiler.slnx`, `dotnet build RulesCompiler.slnx`, `dotnet test RulesCompiler.slnx`
+- .NET (`src/compilers/dotnet/`): `dotnet restore CompilerDotnet.slnx`, `dotnet build CompilerDotnet.slnx`, `dotnet test CompilerDotnet.slnx`
 - Python (`src/rules-compiler-python/`): `pip install -e ".[dev]"`, `pytest`, `ruff check .`, `mypy .`
 - Rust (`src/rules-compiler-rust/`, `src/validation/`): `cargo build`, `cargo test`, `cargo fmt`, `cargo clippy`
 - PowerShell (`src/rules-compiler-powershell/`): `Invoke-Pester -Path ./src/rules-compiler-powershell -Recurse`

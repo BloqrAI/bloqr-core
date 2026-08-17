@@ -37,13 +37,13 @@ COPY src/ ./src/
 # BloqrAI/bloqr-blocklists) — it's no longer bundled in this repo's src/ tree.
 
 # Build specific component
-RUN cd src/rules-compiler-dotnet && dotnet publish -c Release -o /app/out
+RUN cd src/compilers/dotnet && dotnet publish -c Release -o /app/out
 
 FROM mcr.microsoft.com/dotnet/runtime:10.0-alpine
 WORKDIR /app
 COPY --from=build /app/out .
 
-ENTRYPOINT ["dotnet", "RulesCompiler.Console.dll"]
+ENTRYPOINT ["dotnet", "Bloqr.Compiler.Dotnet.Console.dll"]
 ```
 
 Build and run:
@@ -71,13 +71,13 @@ CMD ["deno", "task", "compile"]
 ```dockerfile
 FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 WORKDIR /src
-COPY src/rules-compiler-dotnet/ .
+COPY src/compilers/dotnet/ .
 RUN dotnet publish -c Release -o /app
 
 FROM mcr.microsoft.com/dotnet/runtime:10.0
 WORKDIR /app
 COPY --from=build /app .
-ENTRYPOINT ["dotnet", "RulesCompiler.Console.dll"]
+ENTRYPOINT ["dotnet", "Bloqr.Compiler.Dotnet.Console.dll"]
 ```
 
 **Python:**
@@ -318,8 +318,8 @@ jobs:
       - name: Test .NET
         if: matrix.component == 'dotnet'
         run: |
-          cd src/rules-compiler-dotnet
-          dotnet test RulesCompiler.slnx
+          cd src/compilers/dotnet
+          dotnet test CompilerDotnet.slnx
       
       - name: Test Python
         if: matrix.component == 'python'
@@ -443,8 +443,8 @@ test:dotnet:
   stage: test
   image: mcr.microsoft.com/dotnet/sdk:10.0
   script:
-    - cd src/rules-compiler-dotnet
-    - dotnet test RulesCompiler.slnx
+    - cd src/compilers/dotnet
+    - dotnet test CompilerDotnet.slnx
 
 test:python:
   stage: test
@@ -502,8 +502,8 @@ pipeline {
                 stage('.NET') {
                     steps {
                         sh '''
-                            cd src/rules-compiler-dotnet
-                            dotnet test RulesCompiler.slnx
+                            cd src/compilers/dotnet
+                            dotnet test CompilerDotnet.slnx
                         '''
                     }
                 }
@@ -559,7 +559,7 @@ pipeline {
 | `CONFIG_PATH` | Path to configuration file | `compiler-config.json` | No |
 | `DEBUG` | Enable debug logging | `false` | No |
 | `RULES_DIR` | Output directory for rules | `./rules` | No |
-| `RULESCOMPILER_Logging__LogLevel__Default` | .NET log level | `Information` | No |
+| `BLOQR_COMPILER_Logging__LogLevel__Default` | .NET log level | `Information` | No |
 
 #### API Clients
 

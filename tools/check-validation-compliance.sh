@@ -71,7 +71,7 @@ check_dotnet_integration() {
     echo ""
     echo "→ Checking .NET compiler integration..."
     
-    local dotnet_dir="$REPO_ROOT/src/rules-compiler-dotnet"
+    local dotnet_dir="$REPO_ROOT/src/compilers/dotnet"
     
     if [ ! -d "$dotnet_dir" ]; then
         echo -e "${YELLOW}⚠ .NET compiler not found${NC}"
@@ -79,10 +79,10 @@ check_dotnet_integration() {
         return 0
     fi
     
-    # Check for the P/Invoke wrapper (RulesValidatorService, #264) and its wiring
-    # into the compilation pipeline (RulesCompilerService raising the RV001
+    # Check for the P/Invoke wrapper (BloqrValidatorService, #264) and its wiring
+    # into the compilation pipeline (BloqrCompilerService raising the RV001
     # validation code documented in docs/event-pipeline.md).
-    if grep -rq "bloqr_validator_new\|IRulesValidatorService" "$dotnet_dir/src" 2>/dev/null \
+    if grep -rq "bloqr_validator_new\|IBloqrValidatorService" "$dotnet_dir/src" 2>/dev/null \
         && grep -rq "RV001" "$dotnet_dir/src" 2>/dev/null; then
         echo -e "${GREEN}✓ .NET: Validation library integrated (#264)${NC}"
     else

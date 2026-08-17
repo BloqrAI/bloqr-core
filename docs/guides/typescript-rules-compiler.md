@@ -473,7 +473,7 @@ If you're in a Node.js project, you can add to `package.json`:
 
 - [Configuration Reference](../configuration-reference.md)
 - [Compiler Comparison](../compiler-comparison.md)
-- [.NET Compiler](../../src/rules-compiler-dotnet/README.md)
+- [.NET Compiler](../../src/compilers/dotnet/README.md)
 - [Python Compiler](../../src/rules-compiler-python/README.md)
 - [Rust Compiler](../../src/rules-compiler-rust/README.md)
 

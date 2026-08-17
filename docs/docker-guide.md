@@ -116,7 +116,7 @@ The repository includes a `docker-compose.yml` for multi-service orchestration.
 |---------|-------------|---------|
 | `dev` | Main development environment | default |
 | `typescript-compiler` | TypeScript rules compiler | compile |
-| `dotnet-compiler` | .NET rules compiler | compile |
+| `dotnet-compiler` | .NET compiler | compile |
 | `python-compiler` | Python rules compiler | compile |
 | `rust-compiler` | Rust rules compiler | compile |
 | `test` | Run all tests | test |
@@ -168,8 +168,8 @@ cd /workspace/src/adblock-compiler-core
 deno cache src/mod.ts
 
 # .NET projects
-cd /workspace/src/rules-compiler-dotnet
-dotnet restore RulesCompiler.slnx
+cd /workspace/src/compilers/dotnet
+dotnet restore CompilerDotnet.slnx
 
 # Python compiler
 cd /workspace/src/rules-compiler-python
@@ -188,8 +188,8 @@ cd /workspace/src/adblock-compiler-core
 deno task compile
 
 # .NET
-cd /workspace/src/rules-compiler-dotnet
-dotnet run --project src/RulesCompiler.Console
+cd /workspace/src/compilers/dotnet
+dotnet run --project src/Bloqr.Compiler.Dotnet.Console
 
 # Python
 cd /workspace/src/rules-compiler-python
@@ -215,8 +215,8 @@ cd /workspace/src/adblock-compiler-core
 deno task test
 
 # .NET tests
-cd /workspace/src/rules-compiler-dotnet
-dotnet test RulesCompiler.slnx
+cd /workspace/src/compilers/dotnet
+dotnet test CompilerDotnet.slnx
 
 # Python tests
 cd /workspace/src/rules-compiler-python
@@ -250,7 +250,7 @@ For [Warp](https://www.warp.dev/) terminal users, a pre-built environment is ava
 ```bash
 # The environment automatically runs these setup commands:
 cd bloqr-core/src/adblock-compiler-core && deno cache src/mod.ts
-cd bloqr-core/src/rules-compiler-dotnet && dotnet restore RulesCompiler.slnx
+cd bloqr-core/src/compilers/dotnet && dotnet restore CompilerDotnet.slnx
 ```
 
 ## CI/CD with Docker
@@ -284,7 +284,7 @@ jobs:
           docker run --rm \
             -v ${{ github.workspace }}:/workspace \
             ad-blocking-dev \
-            bash -c "cd /workspace/src/rules-compiler-dotnet && dotnet restore && dotnet test"
+            bash -c "cd /workspace/src/compilers/dotnet && dotnet restore && dotnet test"
 
       - name: Run Python tests
         run: |
@@ -331,9 +331,9 @@ If .NET restore fails:
 
 ```bash
 docker run -it -v $(pwd):/workspace ad-blocking-dev bash -c "
-  cd /workspace/src/rules-compiler-dotnet
+  cd /workspace/src/compilers/dotnet
   dotnet nuget locals all --clear
-  dotnet restore RulesCompiler.slnx
+  dotnet restore CompilerDotnet.slnx
 "
 ```
 

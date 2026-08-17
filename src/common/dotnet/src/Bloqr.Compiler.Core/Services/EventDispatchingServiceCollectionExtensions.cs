@@ -13,7 +13,7 @@ public static class EventDispatchingServiceCollectionExtensions
     /// blocking the compilation pipeline that raised them.
     /// </summary>
     /// <remarks>
-    /// Call this <em>after</em> <c>AddRulesCompiler()</c> (or any other registration of
+    /// Call this <em>after</em> <c>AddBloqrCompiler()</c> (or any other registration of
     /// <see cref="ICompilationEventDispatcher"/>) - it registers a new
     /// <see cref="ICompilationEventDispatcher"/> that resolution returns instead of the plain
     /// <see cref="CompilationEventDispatcher"/>, and the last registration wins for resolution.

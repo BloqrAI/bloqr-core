@@ -1,7 +1,7 @@
 # Release Packaging Strategy: Source vs. Binary-Only, CRT/AOT, and Dependency Preflight
 
 **Status**: Active standard.
-**Scope**: Distribution of `RulesCompiler.Console` and `Bloqr.Dashboard.Console` (the .NET apps this epic's release pipeline builds), plus the interactive launcher scripts.
+**Scope**: Distribution of `Bloqr.Compiler.Dotnet.Console` and `Bloqr.Dashboard.Console` (the .NET apps this epic's release pipeline builds), plus the interactive launcher scripts.
 
 ## The question (#277)
 
@@ -32,13 +32,13 @@ Self-contained deployment (what's above) is *not* the same claim as "the CRT is 
 
 ### Evaluated empirically: is Native AOT viable here today?
 
-Rather than guess, this was tested directly against `RulesCompiler.Console` (`dotnet publish -r linux-x64 -p:PublishAot=true`):
+Rather than guess, this was tested directly against `Bloqr.Compiler.Dotnet.Console` (`dotnet publish -r linux-x64 -p:PublishAot=true`):
 
 - **It builds.** `PublishAot=true` compiles successfully and produces a working native ELF/PE executable — this is not a hard blocker.
 - **It runs for simple paths.** A smoke test (`--config compiler-config.json --validate`) executed without throwing and exited 0.
 - **But it emits 65 trim/AOT analysis warnings**, concentrated in three places that matter:
   1. **`ConfigurationReader`'s YAML/TOML support is flatly unsupported.** `YamlDotNet.Serialization.DeserializerBuilder`/`SerializerBuilder` are reflection-based and explicitly documented by YamlDotNet itself as incompatible with AOT (`IL3050`/`IL3053` — "You need to use the code generator/analyzer to generate static code and use the `StaticDeserializerBuilder` object instead"). `Tomlyn` likewise produces trim warnings (`IL2104`). Since YAML/TOML remain functionally supported (just undocumented, per #259), an AOT build would need to either drop that support or adopt each library's static/source-generated variant — real, non-trivial work.
-  2. **JSON (de)serialization throughout `Bloqr.Compiler.Core` uses reflection-based `JsonSerializer` calls with no `JsonSerializerContext`** (`ConfigurationReader`, `HashDatabaseService`, `CompilerConfigJsonSchemaValidator`, `RulesValidatorService`, `StructuredJsonLogFormatter` — 19 `IL2026`/`IL3050` warning pairs across these files). This is `System.Text.Json`'s standard AOT guidance: switch to source-generated serialization contexts. Doable, but it's a real refactor across every model type these paths touch, not a flag flip.
+  2. **JSON (de)serialization throughout `Bloqr.Compiler.Core` uses reflection-based `JsonSerializer` calls with no `JsonSerializerContext`** (`ConfigurationReader`, `HashDatabaseService`, `CompilerConfigJsonSchemaValidator`, `BloqrValidatorService`, `StructuredJsonLogFormatter` — 19 `IL2026`/`IL3050` warning pairs across these files). This is `System.Text.Json`'s standard AOT guidance: switch to source-generated serialization contexts. Doable, but it's a real refactor across every model type these paths touch, not a flag flip.
   3. **`Spectre.Console`'s exception rendering is explicitly unsupported under AOT** (`AnsiConsole.WriteException` — "ExceptionFormatter is currently not supported for AOT"), hit in `ConsoleApplication`'s three top-level error-handling paths. Since "never crash, always render the error and return to the menu" is this app's core design contract (#266), this is a correctness-relevant gap, not cosmetic.
 
 None of these are fatal to a *future* AOT migration — they're exactly the reflection/trimming constraints the issue itself anticipated. But they represent real engineering work (source-generated JSON contexts across ~7 files, a YAML/TOML decision, and an AOT-safe exception-rendering path) that shouldn't be done as a drive-by inside a packaging-strategy issue.
@@ -54,8 +54,8 @@ None of these are fatal to a *future* AOT migration — they're exactly the refl
 Already correctly shaped by #276's `release.yml` changes — this section documents and confirms it rather than changing it:
 
 ```
-RulesCompiler.Console-<platform>.{zip,tar.gz}
-├── RulesCompiler.Console[.exe]      # single self-contained executable
+Bloqr.Compiler.Dotnet.Console-<platform>.{zip,tar.gz}
+├── Bloqr.Compiler.Dotnet.Console[.exe]      # single self-contained executable
 ├── libbloqr_validator.{so,dll,dylib}  # native validation library, copied in alongside
 └── appsettings.json
 

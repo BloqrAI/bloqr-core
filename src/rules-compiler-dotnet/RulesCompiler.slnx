@@ -1,6 +1,0 @@
-<Solution>
-  <Project Path="src/RulesCompiler/RulesCompiler.csproj" />
-  <Project Path="BenchmarkSuite1/BenchmarkSuite1.csproj" />
-  <Project Path="src/RulesCompiler.Console/RulesCompiler.Console.csproj" />
-  <Project Path="src/RulesCompiler.Tests/RulesCompiler.Tests.csproj" />
-</Solution>

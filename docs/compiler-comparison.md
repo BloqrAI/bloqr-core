@@ -61,8 +61,8 @@ console.log(`Compiled ${rules.length} rules`);
 **Best for**: C# developers, enterprise environments, interactive use
 
 ```bash
-cd src/rules-compiler-dotnet
-dotnet run --project src/RulesCompiler.Console
+cd src/compilers/dotnet
+dotnet run --project src/Bloqr.Compiler.Dotnet.Console
 ```
 
 **Pros**:
@@ -86,16 +86,16 @@ dotnet run --project src/RulesCompiler.Console
 **Library Usage**:
 
 ```csharp
-using RulesCompiler.Extensions;
+using Bloqr.Compiler.Dotnet.Extensions;
 using Bloqr.Compiler.Abstractions;
 using Microsoft.Extensions.DependencyInjection;
 
 var services = new ServiceCollection();
 services.AddLogging();
-services.AddRulesCompiler();
+services.AddBloqrCompiler();
 var provider = services.BuildServiceProvider();
 
-var compiler = provider.GetRequiredService<IRulesCompilerService>();
+var compiler = provider.GetRequiredService<IBloqrCompilerService>();
 var result = await compiler.RunAsync(new CompilerOptions
 {
     ConfigPath = "config.json",

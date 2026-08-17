@@ -51,8 +51,8 @@ cd src/adblock-compiler-core
 deno cache src/mod.ts
 
 # .NET
-cd src/rules-compiler-dotnet
-dotnet restore RulesCompiler.slnx
+cd src/compilers/dotnet
+dotnet restore CompilerDotnet.slnx
 
 # Python
 cd src/rules-compiler-python
@@ -74,7 +74,7 @@ cargo build --release
 deno task compile -- -c config.json -o output-ts.txt
 
 # .NET
-dotnet run --project src/RulesCompiler.Console -- -c config.json -o output-dotnet.txt
+dotnet run --project src/Bloqr.Compiler.Dotnet.Console -- -c config.json -o output-dotnet.txt
 
 # Python
 rules-compiler -c config.json -o output-python.txt
@@ -93,7 +93,7 @@ diff output-ts.txt output-dotnet.txt
 deno task compile
 
 # After (.NET)
-dotnet run --project src/RulesCompiler.Console
+dotnet run --project src/Bloqr.Compiler.Dotnet.Console
 ```
 
 #### Migration Decision Matrix

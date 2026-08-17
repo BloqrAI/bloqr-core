@@ -12,8 +12,8 @@ later reconciliation. One deliberate departure is called out below.
 | Project | Depends on | Purpose |
 |---|---|---|
 | `Bloqr.Dashboard.Abstractions` | nothing | Rendering/prompting/menu interfaces (`IConsoleRenderer`, `IConsolePrompter`, `IMenuService`, `IDisplayStrategy<T>`, `ILiveProgressContext`/`ILiveProgressTask`), configuration/profile/log models, and `IDashboardService` - the embeddable-library API boundary (#271) a future .NET MAUI host depends on instead of Spectre.Console. |
-| `Bloqr.Dashboard.Core` | Abstractions | Terminal-agnostic implementations: `DashboardConfigurationStore` (JSONC read/write, schema validation, backup, corruption recovery), `ProfileManager`, `DashboardPaths`, structured JSON logging (`AddDashboardLogging`, `DashboardJsonLogFormatter`, `LogEntryReader`), and `DashboardService : IDashboardService` (compile/validate/profile-management operations, wrapping `IRulesCompilerService` and the pieces above). No Spectre.Console reference. |
-| `Bloqr.Dashboard.Console` | Abstractions, Core, `RulesCompiler` | The executable: `Program.cs`, the Spectre.Console-backed `IConsoleRenderer`/`IConsolePrompter` implementations, `DashboardApplication`'s main loop, and the menu services. |
+| `Bloqr.Dashboard.Core` | Abstractions | Terminal-agnostic implementations: `DashboardConfigurationStore` (JSONC read/write, schema validation, backup, corruption recovery), `ProfileManager`, `DashboardPaths`, structured JSON logging (`AddDashboardLogging`, `DashboardJsonLogFormatter`, `LogEntryReader`), and `DashboardService : IDashboardService` (compile/validate/profile-management operations, wrapping `IBloqrCompilerService` and the pieces above). No Spectre.Console reference. |
+| `Bloqr.Dashboard.Console` | Abstractions, Core, `Bloqr.Compiler.Dotnet` | The executable: `Program.cs`, the Spectre.Console-backed `IConsoleRenderer`/`IConsolePrompter` implementations, `DashboardApplication`'s main loop, and the menu services. |
 | `Bloqr.Dashboard.Tests` | Abstractions, Core | xunit tests for the Core layer. |
 
 ## Design patterns
@@ -21,7 +21,7 @@ later reconciliation. One deliberate departure is called out below.
 ### Dependency Injection
 
 Every service is registered in `Program.cs` and resolved through the DI container — same
-pattern as `RulesCompiler.Console` and `AdGuard.ConsoleUI`.
+pattern as `Bloqr.Compiler.Dotnet.Console` and `AdGuard.ConsoleUI`.
 
 ### Template Method — `MenuServiceBase`
 
@@ -75,8 +75,8 @@ log format — those are implementation details of `Bloqr.Dashboard.Core`, not a
 
 ## Compilation
 
-`Bloqr.Dashboard.Console` references `RulesCompiler` (from `src/rules-compiler-dotnet`)
-directly and calls its `AddRulesCompiler()` DI extension — it does not duplicate or wrap the
+`Bloqr.Dashboard.Console` references `Bloqr.Compiler.Dotnet` (from `src/compilers/dotnet`)
+directly and calls its `AddBloqrCompiler()` DI extension — it does not duplicate or wrap the
 compilation pipeline. `CompilationLoggingEventHandler` subscribes to the pipeline's compilation
 events (from `Bloqr.Compiler.Abstractions`) purely to mirror them into the Dashboard's
 structured JSON log; issue #270's live progress UI is a separate event subscriber layered on

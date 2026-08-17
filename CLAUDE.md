@@ -8,7 +8,7 @@ This repository is a comprehensive multi-language toolkit for ad-blocking, netwo
 
 ### Rules Compilers (4 languages)
 - **TypeScript** (`src/adblock-compiler-core/`) - Deno 2.0+ with npm compatibility
-- **C#/.NET 10** (`src/rules-compiler-dotnet/`) - Library and Spectre.Console CLI with DI support
+- **C#/.NET 10** (`src/compilers/dotnet/`) - Library and Spectre.Console CLI with DI support
 - **Python 3.9+** (`src/rules-compiler-python/`) - pip-installable package with CLI and API
 - **Rust** (`src/rules-compiler-rust/`) - High-performance single binary with zero runtime deps
 
@@ -114,20 +114,20 @@ dotnet pack src/Bloqr.Compiler.Abstractions/Bloqr.Compiler.Abstractions.csproj -
 dotnet pack src/Bloqr.Compiler.Core/Bloqr.Compiler.Core.csproj -c Release -o ./nuget-packages
 ```
 
-### .NET Rules Compiler (`src/rules-compiler-dotnet/`)
+### .NET Compiler (`src/compilers/dotnet/`)
 ```bash
-cd src/rules-compiler-dotnet
-dotnet restore RulesCompiler.slnx
-dotnet build RulesCompiler.slnx
-dotnet test RulesCompiler.slnx
-dotnet run --project src/RulesCompiler.Console/RulesCompiler.Console.csproj
+cd src/compilers/dotnet
+dotnet restore CompilerDotnet.slnx
+dotnet build CompilerDotnet.slnx
+dotnet test CompilerDotnet.slnx
+dotnet run --project src/Bloqr.Compiler.Dotnet.Console/Bloqr.Compiler.Dotnet.Console.csproj
 
 # Command-line options
-dotnet run --project src/RulesCompiler.Console -- --config path/to/config.yaml
-dotnet run --project src/RulesCompiler.Console -- --config config.json --copy
-dotnet run --project src/RulesCompiler.Console -- --config config.yaml --verbose
-dotnet run --project src/RulesCompiler.Console -- --config config.yaml --validate
-dotnet run --project src/RulesCompiler.Console -- --version
+dotnet run --project src/Bloqr.Compiler.Dotnet.Console -- --config path/to/config.yaml
+dotnet run --project src/Bloqr.Compiler.Dotnet.Console -- --config config.json --copy
+dotnet run --project src/Bloqr.Compiler.Dotnet.Console -- --config config.yaml --verbose
+dotnet run --project src/Bloqr.Compiler.Dotnet.Console -- --config config.yaml --validate
+dotnet run --project src/Bloqr.Compiler.Dotnet.Console -- --version
 ```
 
 ### Python Rules Compiler (`src/rules-compiler-python/`)
@@ -208,8 +208,8 @@ deno task test:coverage                    # With coverage
 
 ### .NET (xUnit)
 ```bash
-cd src/rules-compiler-dotnet
-dotnet test RulesCompiler.slnx --filter "FullyQualifiedName~RulesCompilerServiceTests"
+cd src/compilers/dotnet
+dotnet test CompilerDotnet.slnx --filter "FullyQualifiedName~BloqrCompilerServiceTests"
 
 cd ../common/dotnet
 dotnet test CompilerCommon.slnx --filter "FullyQualifiedName~ConfigurationValidatorTests"
@@ -278,19 +278,19 @@ cargo test config::                       # Tests in module
 - Supports JSON, YAML, TOML via external tools (yq, Python)
 
 ### Common .NET Library (`src/common/dotnet/`)
-- Its own independent .NET solution (`CompilerCommon.slnx`), isolated from `RulesCompiler.slnx` and `BloqrDashboard.slnx` — every in-repo .NET consumer reaches it via `<ProjectReference>` across directories, not via shared solution membership
+- Its own independent .NET solution (`CompilerCommon.slnx`), isolated from `CompilerDotnet.slnx` and `BloqrDashboard.slnx` — every in-repo .NET consumer reaches it via `<ProjectReference>` across directories, not via shared solution membership
 - `Bloqr.Compiler.Abstractions` - Interfaces, event-args, and model/DTO types shared across the compiler stack
 - `Bloqr.Compiler.Core` - Configuration reading/validation, chunking, file-locking, plugin management, and the compilation pipeline, built on `Bloqr.Compiler.Abstractions`
-- Consumed by `RulesCompiler` (`src/rules-compiler-dotnet/`) and `Bloqr.Dashboard.Abstractions`/`Bloqr.Dashboard.Core` (`src/bloqr-dashboard/`)
+- Consumed by `Bloqr.Compiler.Dotnet` (`src/compilers/dotnet/`) and `Bloqr.Dashboard.Abstractions`/`Bloqr.Dashboard.Core` (`src/bloqr-dashboard/`)
 - Published as NuGet packages to GitHub Packages — see `docs/architecture/nuget-distribution-strategy.md`
 
-### Rules Compiler - .NET (`src/rules-compiler-dotnet/`)
+### Bloqr Compiler - .NET (`src/compilers/dotnet/`)
 - .NET 10 library for filter compilation
 - Supports JSON, YAML, and TOML configuration formats
-- `RulesCompiler` - Thin library referencing `Bloqr.Compiler.Abstractions`/`Bloqr.Compiler.Core` (from `src/common/dotnet/`), plus compiler-specific services (e.g. `FilterCompiler`)
-- `RulesCompiler.Console` - Spectre.Console interactive and CLI frontend
-- `RulesCompiler.Tests` - xUnit tests
-- Key interfaces: `IRulesCompilerService`, `IConfigurationReader`, `IFilterCompiler`
+- `Bloqr.Compiler.Dotnet` - Thin library referencing `Bloqr.Compiler.Abstractions`/`Bloqr.Compiler.Core` (from `src/common/dotnet/`), plus compiler-specific services (e.g. `FilterCompiler`)
+- `Bloqr.Compiler.Dotnet.Console` - Spectre.Console interactive and CLI frontend
+- `Bloqr.Compiler.Dotnet.Tests` - xUnit tests
+- Key interfaces: `IBloqrCompilerService`, `IConfigurationReader`, `IFilterCompiler`
 - Features: Configuration validation, verbose mode, dependency injection
 
 ### Rules Compiler - Python (`src/rules-compiler-python/`)
@@ -366,13 +366,13 @@ RemoveComments, Compress, RemoveModifiers, Validate, ValidateAllowIp, Deduplicat
 | `DEBUG` | Set to any value to enable debug logging |
 | `LOG_LEVEL` | Log level (DEBUG, INFO, WARN, ERROR, SILENT) |
 | `LOG_FORMAT` | Set to `json` for structured logging |
-| `RULESCOMPILER_config` | Default configuration file path (.NET compiler) |
-| `RULESCOMPILER_Logging__LogLevel__Default` | Log level for .NET compiler |
+| `BLOQR_COMPILER_config` | Default configuration file path (.NET compiler) |
+| `BLOQR_COMPILER_Logging__LogLevel__Default` | Log level for .NET compiler |
 
 ## CI/CD Alignment
 
 GitHub Actions workflows validate:
-- `.github/workflows/dotnet.yml` - Builds/tests the common .NET library, rules compiler, and Dashboard (three matrix entries, one per `.slnx`) with .NET 10
+- `.github/workflows/dotnet.yml` - Builds/tests the common .NET library, compiler, and Dashboard (three matrix entries, one per `.slnx`) with .NET 10
 - `.github/workflows/typescript.yml` - Deno 2.x for the TypeScript rules compiler
 - `.github/workflows/rust-clippy.yml` - Builds, tests, formats, and lints the Rust workspace (rules compiler, validation library)
 - `.github/workflows/python.yml` - Builds and tests the Python rules compiler across supported Python versions

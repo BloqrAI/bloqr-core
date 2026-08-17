@@ -64,7 +64,7 @@ public static class LoggingServiceCollectionExtensions
     /// app's primary UI is a rendering library (e.g. Spectre.Console) rather than console log
     /// output, so <c>ILogger</c> calls don't fight with the UI for the terminal — this is
     /// how the Dashboard uses it. For an app that already relies on console log output for
-    /// user-visible information (like <c>RulesCompiler.Console</c>), use
+    /// user-visible information (like <c>Bloqr.Compiler.Dotnet.Console</c>), use
     /// <see cref="AddStructuredFileLogging(ILoggingBuilder, string, string, LogEventLevel?)"/>
     /// instead to add file logging alongside the existing console provider rather than replacing it.
     /// </summary>

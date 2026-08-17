@@ -135,9 +135,9 @@ src/common/dotnet/
 
 ## Related Projects
 
-- [Rules Compiler (.NET)](../../rules-compiler-dotnet/) - the compiler-specific consumer: `FilterCompiler`, `OutputWriter`, `RulesCompilerService`
+- [Bloqr Compiler (.NET)](../../compilers/dotnet/) - the compiler-specific consumer: `FilterCompiler`, `OutputWriter`, `BloqrCompilerService`
 - [Bloqr Dashboard](../../bloqr-dashboard/) - the other in-repo consumer
-- [Validation Library](../../validation/) - the native Rust library `RulesValidatorService` wraps
+- [Validation Library](../../validation/) - the native Rust library `BloqrValidatorService` wraps
 
 ## License
 

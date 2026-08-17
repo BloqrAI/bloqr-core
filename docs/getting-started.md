@@ -64,10 +64,10 @@ deno task compile
 #### .NET
 
 ```bash
-cd src/rules-compiler-dotnet
-dotnet restore RulesCompiler.slnx
-dotnet build RulesCompiler.slnx
-dotnet run --project src/RulesCompiler.Console
+cd src/compilers/dotnet
+dotnet restore CompilerDotnet.slnx
+dotnet build CompilerDotnet.slnx
+dotnet run --project src/Bloqr.Compiler.Dotnet.Console
 ```
 
 #### Python
@@ -135,7 +135,7 @@ See [Configuration Reference](configuration-reference.md#supported-formats) for 
 deno task compile -- -c my-config.json -o my-filter.txt
 
 # .NET
-dotnet run --project src/RulesCompiler.Console -- -c my-config.json -o my-filter.txt
+dotnet run --project src/Bloqr.Compiler.Dotnet.Console -- -c my-config.json -o my-filter.txt
 
 # Python
 rules-compiler -c my-config.json -o my-filter.txt

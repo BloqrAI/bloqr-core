@@ -1,7 +1,7 @@
 name: Release Binaries
 
 # Builds and bundles the coordinated multi-language binary release: .NET
-# (RulesCompiler.Console, Bloqr.Dashboard.Console), Rust (rules-compiler,
+# (Bloqr.Compiler.Dotnet.Console, Bloqr.Dashboard.Console), Rust (rules-compiler,
 # bloqr-validator-core-cli's bloqr-validate binary + native library) - all
 # attached to one GitHub Release under one tag. This is the one thing that
 # genuinely needs to stay a single coordinated event; independently
@@ -153,21 +153,21 @@ jobs:
           name: bloqr-validator-native-${{ matrix.artifact }}
           path: ./native-lib
 
-      - name: Restore Rules Compiler dependencies
+      - name: Restore Compiler Dotnet dependencies
         shell: bash
         run: |
-          dotnet restore src/rules-compiler-dotnet/RulesCompiler.slnx
+          dotnet restore src/compilers/dotnet/CompilerDotnet.slnx
 
-      - name: Publish RulesCompiler.Console
+      - name: Publish Bloqr.Compiler.Dotnet.Console
         shell: bash
         run: |
-          dotnet publish src/rules-compiler-dotnet/src/RulesCompiler.Console/RulesCompiler.Console.csproj \
+          dotnet publish src/compilers/dotnet/src/Bloqr.Compiler.Dotnet.Console/Bloqr.Compiler.Dotnet.Console.csproj \
             --configuration Release \
             --runtime ${{ matrix.runtime }} \
             --self-contained true \
             -p:PublishSingleFile=true \
             -p:IncludeNativeLibrariesForSelfExtract=true \
-            --output ./artifacts/rules-compiler-dotnet
+            --output ./artifacts/compiler-dotnet
 
       - name: Restore Dashboard dependencies
         shell: bash
@@ -189,23 +189,23 @@ jobs:
         shell: bash
         run: |
           # Each self-contained publish output is its own xcopy-deployable unit, so the
-          # bloqr-validator native library (P/Invoked by IRulesValidatorService, #264) is
+          # bloqr-validator native library (P/Invoked by IBloqrValidatorService, #264) is
           # copied into both rather than shared via a relative path between them.
-          cp ./native-lib/* ./artifacts/rules-compiler-dotnet/
+          cp ./native-lib/* ./artifacts/compiler-dotnet/
           cp ./native-lib/* ./artifacts/bloqr-dashboard/
 
       - name: Package binaries (Windows)
         if: runner.os == 'Windows'
         shell: pwsh
         run: |
-          Compress-Archive -Path ./artifacts/rules-compiler-dotnet/* -DestinationPath RulesCompiler.Console-${{ matrix.artifact }}.zip
+          Compress-Archive -Path ./artifacts/compiler-dotnet/* -DestinationPath Bloqr.Compiler.Dotnet.Console-${{ matrix.artifact }}.zip
           Compress-Archive -Path ./artifacts/bloqr-dashboard/* -DestinationPath Bloqr.Dashboard.Console-${{ matrix.artifact }}.zip
 
       - name: Package binaries (Unix)
         if: runner.os != 'Windows'
         shell: bash
         run: |
-          cd ./artifacts/rules-compiler-dotnet && tar -czf ../../RulesCompiler.Console-${{ matrix.artifact }}.tar.gz * && cd ../..
+          cd ./artifacts/compiler-dotnet && tar -czf ../../Bloqr.Compiler.Dotnet.Console-${{ matrix.artifact }}.tar.gz * && cd ../..
           cd ./artifacts/bloqr-dashboard && tar -czf ../../Bloqr.Dashboard.Console-${{ matrix.artifact }}.tar.gz * && cd ../..
 
       - name: Upload artifacts
@@ -357,7 +357,7 @@ jobs:
             ## Release ${{ steps.version.outputs.version }}
 
             This release includes pre-built binaries for:
-            - **RulesCompiler.Console** - .NET rules compiler (Windows, Linux, macOS)
+            - **Bloqr.Compiler.Dotnet.Console** - .NET compiler (Windows, Linux, macOS)
             - **Bloqr.Dashboard.Console** - .NET Dashboard app (Windows, Linux, macOS)
             - **rules-compiler** (Rust) - Rust rules compiler (Windows, Linux, macOS)
             - **bloqr-validator** - native validation library (`bloqr_validator`) and its `bloqr-validate` CLI (Windows, Linux, macOS)
@@ -368,11 +368,11 @@ jobs:
 
             ### Installation
 
-            #### Rules Compiler (.NET)
+            #### Bloqr Compiler (.NET)
             Download and extract (already bundles the `bloqr_validator` native library alongside the executable):
-            - Windows: `RulesCompiler.Console-windows.zip`
-            - Linux: `RulesCompiler.Console-linux.tar.gz`
-            - macOS: `RulesCompiler.Console-macos.tar.gz`
+            - Windows: `Bloqr.Compiler.Dotnet.Console-windows.zip`
+            - Linux: `Bloqr.Compiler.Dotnet.Console-linux.tar.gz`
+            - macOS: `Bloqr.Compiler.Dotnet.Console-macos.tar.gz`
 
             #### Bloqr Dashboard (.NET)
             Download and extract (also bundles the `bloqr_validator` native library):
@@ -386,7 +386,7 @@ jobs:
             - Linux: `rules-compiler-rust-linux.tar.gz`
             - macOS: `rules-compiler-rust-macos.tar.gz`
 
-            #### Rules Validator (native library + CLI)
+            #### Bloqr Validator (native library + CLI)
             Download and extract:
             - Windows: `bloqr-validator-windows.zip`
             - Linux: `bloqr-validator-linux.tar.gz`
@@ -395,8 +395,8 @@ jobs:
             ### Usage
 
             After extraction, run the executables:
-            - Windows: `.\RulesCompiler.Console.exe`, `.\Bloqr.Dashboard.Console.exe`, `.\rules-compiler.exe`, or `.\bloqr-validate.exe`
-            - Linux/macOS: `./RulesCompiler.Console`, `./Bloqr.Dashboard.Console`, `./rules-compiler`, or `./bloqr-validate`
+            - Windows: `.\Bloqr.Compiler.Dotnet.Console.exe`, `.\Bloqr.Dashboard.Console.exe`, `.\rules-compiler.exe`, or `.\bloqr-validate.exe`
+            - Linux/macOS: `./Bloqr.Compiler.Dotnet.Console`, `./Bloqr.Dashboard.Console`, `./rules-compiler`, or `./bloqr-validate`
 
             For detailed documentation, see the [README](https://github.com/BloqrAI/bloqr-core/blob/main/README.md).
           draft: false
