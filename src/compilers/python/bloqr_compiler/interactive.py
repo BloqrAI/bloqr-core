@@ -6,10 +6,6 @@ from __future__ import annotations
 
 import sys
 from pathlib import Path
-from typing import TYPE_CHECKING
-
-if TYPE_CHECKING:
-    from bloqr_compiler.compiler import VersionInfo
 
 try:
     import questionary
