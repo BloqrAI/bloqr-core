@@ -192,7 +192,7 @@ Deno.test('runRulesValidator - malformed JSON output is swallowed, not thrown', 
 // (e.g. via `cargo build -p bloqr-validator-core-cli` or the Docker dev image).
 // Skipped otherwise so this suite doesn't require a Rust toolchain in CI.
 const realBinaryPath = fileURLToPath(
-  new URL('../../../../target/release/bloqr-validate', import.meta.url),
+  new URL('../../../../../target/release/bloqr-validate', import.meta.url),
 );
 
 Deno.test({

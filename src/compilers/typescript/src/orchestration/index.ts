@@ -1,6 +1,6 @@
 /**
  * Orchestration Layer — CLI/config/chunking wrapper around the core
- * adblock-compiler-core engine (see `../index.ts`).
+ * compiler-core engine (see `../index.ts`).
  *
  * Provides everything the old `rules-compiler-typescript` PoC contributed
  * on top of the compilation engine: multi-format config reading, chunking,

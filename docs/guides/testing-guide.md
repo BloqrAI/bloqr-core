@@ -8,7 +8,7 @@ This project uses different testing frameworks for each language implementation:
 
 | Component | Framework | Test Location | Test Command |
 |-----------|-----------|---------------|--------------|
-| TypeScript (Rules Compiler) | Deno Test | `src/adblock-compiler-core/tests/` | `deno task test` |
+| TypeScript (Rules Compiler) | Deno Test | `src/compilers/typescript/tests/` | `deno task test` |
 | .NET (Compiler) | xUnit | `src/compilers/dotnet/src/Bloqr.Compiler.Dotnet.Tests/` | `dotnet test` |
 | Python | pytest | `src/rules-compiler-python/tests/` | `pytest` |
 | Rust (Rules Compiler) | cargo test | `src/rules-compiler-rust/src/` | `cargo test` |
@@ -22,7 +22,7 @@ The AdGuard DNS API client test suites (TypeScript, .NET, Rust, PowerShell) move
 ### Rules Compiler Tests
 
 ```bash
-cd src/adblock-compiler-core
+cd src/compilers/typescript
 
 # Run all tests
 deno task test
@@ -441,7 +441,7 @@ jobs:
           deno-version: v2.x
       - name: Run TypeScript tests
         run: |
-          cd src/adblock-compiler-core
+          cd src/compilers/typescript
           deno task test
 
   test-dotnet:
@@ -498,7 +498,7 @@ jobs:
 
 #### Deno
 ```bash
-cd src/adblock-compiler-core
+cd src/compilers/typescript
 deno task test:coverage
 # View coverage report at coverage/html/index.html
 ```
@@ -648,7 +648,7 @@ Create this script to automate testing:
 set -e
 
 echo "Running TypeScript tests..."
-cd src/adblock-compiler-core && deno task test && cd ../..
+cd src/compilers/typescript && deno task test && cd ../..
 
 echo "Running .NET tests..."
 cd src/compilers/dotnet && dotnet test CompilerDotnet.slnx && cd ../..

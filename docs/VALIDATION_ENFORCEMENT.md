@@ -20,7 +20,7 @@ jobs:
     steps:
       - name: Check TypeScript uses validation library
         run: |
-          cd src/adblock-compiler-core
+          cd src/compilers/typescript
           # Verify WASM module is imported
           grep -q "bloqr_validator" package.json || exit 1
           grep -q "validate_local_file\|validate_remote_url" src/**/*.ts || exit 1
@@ -212,7 +212,7 @@ A pre-commit hook verifies validation library integration:
 echo "Checking validation library integration..."
 
 # Check TypeScript
-if ! grep -q "bloqr_validator" src/adblock-compiler-core/package.json; then
+if ! grep -q "bloqr_validator" src/compilers/typescript/package.json; then
   echo "ERROR: TypeScript compiler missing validation library dependency"
   exit 1
 fi

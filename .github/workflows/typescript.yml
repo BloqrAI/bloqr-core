@@ -11,12 +11,12 @@ on:
   push:
     branches: ["main"]
     paths:
-      - 'src/adblock-compiler-core/**'
+      - 'src/compilers/typescript/**'
       - '.github/workflows/typescript.yml'
   pull_request:
     branches: ["main"]
     paths:
-      - 'src/adblock-compiler-core/**'
+      - 'src/compilers/typescript/**'
       - '.github/workflows/typescript.yml'
 
 jobs:
@@ -28,7 +28,7 @@ jobs:
       matrix:
         include:
           - name: Rules Compiler (Deno)
-            path: src/adblock-compiler-core
+            path: src/compilers/typescript
             has_tests: true
 
     defaults:
@@ -73,7 +73,7 @@ jobs:
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: src/adblock-compiler-core
+        working-directory: src/compilers/typescript
     steps:
       - uses: actions/checkout@v7
 

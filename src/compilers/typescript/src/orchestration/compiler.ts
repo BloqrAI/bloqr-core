@@ -249,8 +249,8 @@ function findRulesValidateBinary(): string | undefined {
     }
   }
 
-  // Dev-convenience fallback: compiler.ts -> orchestration/ -> src/ -> adblock-compiler-core/ -> src/ -> repo root
-  const repoRoot = fileURLToPath(new URL('../../../../', import.meta.url));
+  // Dev-convenience fallback: compiler.ts -> orchestration/ -> src/ -> typescript/ -> compilers/ -> src/ -> repo root
+  const repoRoot = fileURLToPath(new URL('../../../../../', import.meta.url));
   for (const profile of ['release', 'debug']) {
     const candidate = join(repoRoot, 'target', profile, binaryName);
     if (existsSync(candidate)) {

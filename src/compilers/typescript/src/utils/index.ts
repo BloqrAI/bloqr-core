@@ -1,6 +1,6 @@
 /**
  * @module utils
- * Utility library for the adblock-compiler-core engine.
+ * Utility library for the compiler-core engine.
  *
  * Provides a wide range of cross-cutting helpers grouped by concern:
  *

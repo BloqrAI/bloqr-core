@@ -60,7 +60,7 @@ docker run -v $(pwd)/rules:/app/rules ad-blocking-compiler:latest
 FROM denoland/deno:2.0.0
 
 WORKDIR /app
-COPY src/adblock-compiler-core/ .
+COPY src/compilers/typescript/ .
 
 RUN deno cache src/mod.ts
 
@@ -311,7 +311,7 @@ jobs:
       - name: Test TypeScript
         if: matrix.component == 'typescript'
         run: |
-          cd src/adblock-compiler-core
+          cd src/compilers/typescript
           deno cache src/mod.ts
           deno task test
       
@@ -402,7 +402,7 @@ jobs:
       
       - name: Compile rules
         run: |
-          cd src/adblock-compiler-core
+          cd src/compilers/typescript
           deno task compile -- -c ../../Config/compiler-config.json -r
       
       - name: Upload artifact
@@ -435,7 +435,7 @@ test:typescript:
   stage: test
   image: denoland/deno:2.0.0
   script:
-    - cd src/adblock-compiler-core
+    - cd src/compilers/typescript
     - deno cache src/mod.ts
     - deno task test
 
@@ -493,7 +493,7 @@ pipeline {
                 stage('TypeScript') {
                     steps {
                         sh '''
-                            cd src/adblock-compiler-core
+                            cd src/compilers/typescript
                             deno cache src/mod.ts
                             deno task test
                         '''

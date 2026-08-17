@@ -1,14 +1,14 @@
 name: Deno/JSR Dependency Check
 
 # Dependabot has no native `jsr:` ecosystem, so pure JSR-native imports in
-# src/adblock-compiler-core/deno.json (jsr:@std/*, jsr:@bloqr/*, etc.) get
+# src/compilers/typescript/deno.json (jsr:@std/*, jsr:@bloqr/*, etc.) get
 # no automated update coverage from dependabot.yml -- only Deno's npm:
 # shorthand imports do. This workflow closes that gap using Deno's own
 # `deno outdated` command, on the same weekly cadence as Dependabot, and
 # opens a PR the same way compiler-core-version-bump.yml does: a human
 # reviews and merges, nothing auto-merges here.
 #
-# Scoped to src/adblock-compiler-core specifically (the one real JSR
+# Scoped to src/compilers/typescript specifically (the one real JSR
 # package in this repo today) -- extend the `directory` / branch name /
 # PR title below, or copy this file, when a second JSR package exists.
 # See docs/architecture/versioning-strategy.md for the per-package
@@ -35,7 +35,7 @@ jobs:
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: src/adblock-compiler-core
+        working-directory: src/compilers/typescript
     steps:
       - uses: actions/checkout@v7
 
@@ -101,7 +101,7 @@ jobs:
 
           Opened by the `deno-dependency-check.yml` workflow, which runs
           `deno outdated --update` on the same weekly cadence as Dependabot,
-          to cover `jsr:` dependencies in `src/adblock-compiler-core/deno.json`
+          to cover `jsr:` dependencies in `src/compilers/typescript/deno.json`
           that Dependabot's ecosystems don't reach.
 
           `deno task check`, `deno task lint`, `deno task test`, and

@@ -57,7 +57,7 @@ Pick the compiler that best fits your workflow:
 #### TypeScript (Deno)
 
 ```bash
-cd src/adblock-compiler-core
+cd src/compilers/typescript
 deno task compile
 ```
 
@@ -168,7 +168,7 @@ docker build -f Dockerfile.warp -t ad-blocking-dev .
 docker run -it -v $(pwd):/workspace ad-blocking-dev
 
 # Inside the container
-cd /workspace/src/adblock-compiler-core
+cd /workspace/src/compilers/typescript
 deno task compile
 ```
 

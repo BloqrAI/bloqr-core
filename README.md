@@ -7,7 +7,7 @@ A multi-language toolkit for compiling and validating AdGuard-syntax ad-blocking
 ## What's in this repo
 
 - **Rules compilers** for TypeScript/Deno, C#/.NET, Python, and Rust, plus bash/zsh shell scripts — all reading the same JSON/JSONC configuration schema and producing identical output.
-- **`@bloqr/compiler-core`** (`src/adblock-compiler-core/`) — the canonical, dependency-free compilation engine, published on [JSR](https://jsr.io/@bloqr/compiler-core). The .NET, Python, and Rust compilers shell out to it via Deno rather than reimplementing compilation logic.
+- **`@bloqr/compiler-core`** (`src/compilers/typescript/`) — the canonical, dependency-free compilation engine, published on [JSR](https://jsr.io/@bloqr/compiler-core). The .NET, Python, and Rust compilers shell out to it via Deno rather than reimplementing compilation logic.
 - **RulesCompiler PowerShell toolkit** (`src/rules-compiler-powershell/`) — class-based modules (`Common`, `RulesCompiler`, `AdGuardWebhook`) with Pester test suites.
 - **Validation library** (`src/validation/`) — a Rust validation library (`bloqr-validator-core`) and CLI (`bloqr-validator-core-cli`) for filter/config validation (hash verification, URL security, syntax linting).
 - **Documentation website** (`website/`) — a Gatsby 5 site that builds guides, API reference, and security docs from `docs/` and this README.
@@ -41,7 +41,7 @@ Then pick a compiler:
 ### TypeScript (Deno)
 
 ```bash
-cd src/adblock-compiler-core
+cd src/compilers/typescript
 deno task compile              # compile with the default config
 deno task interactive          # menu-driven interactive mode
 deno task test                 # run tests
@@ -113,7 +113,7 @@ docker compose --profile test run --rm test   # run all tests
 ```
 bloqr-core/
 ├── src/
-│   ├── adblock-compiler-core/    # TypeScript/Deno — canonical @bloqr/compiler-core (JSR)
+│   ├── compilers/typescript/    # TypeScript/Deno — canonical @bloqr/compiler-core (JSR)
 │   ├── common/dotnet/            # C#/.NET 10 — shared library (own solution), consumed by the two below
 │   ├── compilers/dotnet/    # C#/.NET 10 — library + Spectre.Console CLI
 │   ├── rules-compiler-python/    # Python 3.9+ — pip-installable package + CLI
@@ -129,7 +129,7 @@ bloqr-core/
 
 The TypeScript compiler is the only one that implements compilation logic directly — it *is* `@bloqr/compiler-core`. The .NET, Python, and Rust compilers are thin wrappers that shell out to it via Deno, so behavior and output stay identical across languages; the shell scripts and PowerShell toolkit call whichever compiler is available. `src/validation/` provides the shared hash-verification and syntax-validation layer that all of them rely on for security.
 
-`@bloqr/compiler-core` is deliberately separate from Bloqr's commercial `@bloqr/compiler` product ([`BloqrAI/bloqr-compiler`](https://github.com/BloqrAI/bloqr-compiler)), which layers AST tooling, linting, plugins, and Cloudflare Workers deployment on top of this open-source engine — see [`src/adblock-compiler-core/README.md`](src/adblock-compiler-core/README.md#architecture) for the full relationship.
+`@bloqr/compiler-core` is deliberately separate from Bloqr's commercial `@bloqr/compiler` product ([`BloqrAI/bloqr-compiler`](https://github.com/BloqrAI/bloqr-compiler)), which layers AST tooling, linting, plugins, and Cloudflare Workers deployment on top of this open-source engine — see [`src/compilers/typescript/README.md`](src/compilers/typescript/README.md#architecture) for the full relationship.
 
 ## Related repositories
 
@@ -154,7 +154,7 @@ The TypeScript compiler is the only one that implements compilation logic direct
 ## Testing
 
 ```bash
-cd src/adblock-compiler-core && deno task test
+cd src/compilers/typescript && deno task test
 cd src/compilers/dotnet && dotnet test CompilerDotnet.slnx
 cd src/rules-compiler-python && pytest
 cd src/rules-compiler-rust && cargo test

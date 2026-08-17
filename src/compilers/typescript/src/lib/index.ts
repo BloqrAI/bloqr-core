@@ -2,7 +2,7 @@
  * Rules Compiler Library API
  *
  * This module provides the main library entry points for programmatic usage.
- * Use these exports when integrating adblock-compiler-core into your application.
+ * Use these exports when integrating compiler-core into your application.
  *
  * @example
  * ```typescript

@@ -1,6 +1,6 @@
 /**
  * @module services
- * High-level service layer for the adblock-compiler-core engine.
+ * High-level service layer for the compiler-core engine.
  *
  * Exports:
  * - {@link FilterService} – wraps source downloading in a service-oriented

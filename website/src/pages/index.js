@@ -124,7 +124,7 @@ const IndexPage = () => {
           </div>
           <div className="feature">
             <h3>
-              <Link to="/adblock-compiler">@bloqr/compiler-core</Link>
+              <Link to="/compiler-core">@bloqr/compiler-core</Link>
             </h3>
             <p>The open-source, dependency-free TypeScript engine that powers every compiler in this repository.</p>
           </div>

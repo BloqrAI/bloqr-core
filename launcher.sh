@@ -236,7 +236,7 @@ rules_menu() {
                 if require_tool deno "Deno" \
                     "Required to run @bloqr/compiler-core, the TypeScript compilation engine." \
                     'curl -fsSL https://deno.land/install.sh | sh && export PATH="$PATH:$HOME/.deno/bin"'; then
-                    cd src/adblock-compiler-core
+                    cd src/compilers/typescript
                     deno task compile
                     cd "$SCRIPT_DIR"
                 fi
@@ -277,7 +277,7 @@ rules_menu() {
                 local test_choice
                 test_choice=$(show_menu "Test Which Compiler?" "TypeScript" "Rust" ".NET" "Python" "← Cancel")
                 case $test_choice in
-                    1) cd src/adblock-compiler-core && deno task test && cd "$SCRIPT_DIR" ;;
+                    1) cd src/compilers/typescript && deno task test && cd "$SCRIPT_DIR" ;;
                     2) cargo test -p rules-compiler ;;
                     3) cd src/compilers/dotnet && dotnet test CompilerDotnet.slnx && cd "$SCRIPT_DIR" ;;
                     4) cd src/rules-compiler-python && python3 -m pytest && cd "$SCRIPT_DIR" ;;

@@ -191,7 +191,7 @@ function Build-TypeScriptProjects {
     # Build Rules Compiler TypeScript
     Write-Host "→ Building Rules Compiler (TypeScript)..."
     try {
-        Push-Location src/adblock-compiler-core
+        Push-Location src/compilers/typescript
         try {
             deno task generate:types
             deno task check

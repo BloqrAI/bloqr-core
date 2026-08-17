@@ -1,6 +1,6 @@
-name: Publish adblock-compiler-core to JSR
+name: Publish @bloqr/compiler-core to JSR
 
-# Publishes src/adblock-compiler-core (the @bloqr/compiler-core package)
+# Publishes src/compilers/typescript/ (the @bloqr/compiler-core package)
 # to JSR whenever its version changes on main. `deno publish` is idempotent —
 # it no-ops if the current deno.json version is already published — so this
 # is safe to run on every push that touches the package.
@@ -32,7 +32,7 @@ on:
   push:
     branches: ["main"]
     paths:
-      - "src/adblock-compiler-core/**"
+      - "src/compilers/typescript/**"
       - ".github/workflows/publish-jsr.yml"
   workflow_dispatch: {}
 
@@ -50,7 +50,7 @@ jobs:
 
     defaults:
       run:
-        working-directory: src/adblock-compiler-core
+        working-directory: src/compilers/typescript
 
     steps:
       - uses: actions/checkout@v7
@@ -64,7 +64,7 @@ jobs:
         uses: actions/cache@v6
         with:
           path: ~/.cache/deno
-          key: ${{ runner.os }}-deno-jsr-publish-${{ hashFiles('src/adblock-compiler-core/deno.json') }}
+          key: ${{ runner.os }}-deno-jsr-publish-${{ hashFiles('src/compilers/typescript/deno.json') }}
 
       - name: Type check
         run: deno task check

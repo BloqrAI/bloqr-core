@@ -196,7 +196,7 @@ async function main(): Promise<void> {
   if (gaps.length > 0) {
     console.log('\nUndocumented symbols:');
     for (const gap of gaps.sort((a, b) => a.file.localeCompare(b.file) || a.line - b.line)) {
-      const relFile = gap.file.replace(/^file:\/\/.*\/src\/adblock-compiler-core\//, '');
+      const relFile = gap.file.replace(/^file:\/\/.*\/src\/compilers\/typescript\//, '');
       console.log(`  ${relFile}:${gap.line}  ${gap.name}`);
     }
   }

@@ -4,7 +4,7 @@ A comprehensive guide to using the TypeScript rules compiler with Deno 2.0+.
 
 ## Overview
 
-The TypeScript rules compiler (`src/adblock-compiler-core/`) is a Deno-based implementation that *is* [`@bloqr/compiler-core`](https://jsr.io/@bloqr/compiler-core) — this repo's own dependency-free filter compilation engine — compiling filter lists from multiple sources with transformations, inclusions, and exclusions. See the [`@bloqr/compiler-core` Guide](adblock-compiler-guide.md) for the full architecture.
+The TypeScript rules compiler (`src/compilers/typescript/`) is a Deno-based implementation that *is* [`@bloqr/compiler-core`](https://jsr.io/@bloqr/compiler-core) — this repo's own dependency-free filter compilation engine — compiling filter lists from multiple sources with transformations, inclusions, and exclusions. See the [`@bloqr/compiler-core` Guide](adblock-compiler-guide.md) for the full architecture.
 
 ## Features
 
@@ -20,7 +20,7 @@ The TypeScript rules compiler (`src/adblock-compiler-core/`) is a Deno-based imp
 | Requirement | Version | Installation |
 |-------------|---------|--------------|
 | Deno | 2.0+ | [deno.land](https://deno.land/) |
-| @bloqr/compiler-core | 1.0.0 | Via JSR (this is `src/adblock-compiler-core/` itself, no separate install needed) |
+| @bloqr/compiler-core | 1.0.0 | Via JSR (this is `src/compilers/typescript/` itself, no separate install needed) |
 
 ## Installation
 
@@ -41,7 +41,7 @@ deno --version
 
 ```bash
 git clone https://github.com/BloqrAI/bloqr-core.git
-cd bloqr-core/src/adblock-compiler-core
+cd bloqr-core/src/compilers/typescript
 
 # Cache dependencies
 deno cache src/mod.ts
@@ -169,7 +169,7 @@ See [Configuration Reference](../configuration-reference.md) for complete docume
 ### Project Structure
 
 ```
-src/adblock-compiler-core/
+src/compilers/typescript/
 ├── src/
 │   ├── mod.ts              # Main entry point
 │   ├── cli.ts              # CLI argument parsing
@@ -420,7 +420,7 @@ deno run --allow-read https://deno.land/std/json/parse.ts config.json
 
 - name: Compile Rules
   run: |
-    cd src/adblock-compiler-core
+    cd src/compilers/typescript
     deno task compile -- -c config.json -r
 ```
 
@@ -430,7 +430,7 @@ deno run --allow-read https://deno.land/std/json/parse.ts config.json
 FROM denoland/deno:2.0.0
 
 WORKDIR /app
-COPY src/adblock-compiler-core .
+COPY src/compilers/typescript .
 
 RUN deno cache src/mod.ts
 
@@ -444,8 +444,8 @@ If you're in a Node.js project, you can add to `package.json`:
 ```json
 {
   "scripts": {
-    "compile-rules": "cd src/adblock-compiler-core && deno task compile",
-    "compile-interactive": "cd src/adblock-compiler-core && deno task interactive"
+    "compile-rules": "cd src/compilers/typescript && deno task compile",
+    "compile-interactive": "cd src/compilers/typescript && deno task interactive"
   }
 }
 ```

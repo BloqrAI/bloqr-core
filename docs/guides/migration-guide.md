@@ -47,7 +47,7 @@ Your existing JSON/JSONC configuration file works across all compilers:
 ```bash
 # TypeScript (Deno)
 curl -fsSL https://deno.land/install.sh | sh
-cd src/adblock-compiler-core
+cd src/compilers/typescript
 deno cache src/mod.ts
 
 # .NET

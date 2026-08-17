@@ -234,7 +234,7 @@ function Show-RulesMenu {
                     -Description "Required to run @bloqr/compiler-core, the TypeScript compilation engine." `
                     -InstallAction { winget install --id DenoLand.Deno -e }
                 if ($ready) {
-                    Push-Location "$Script:RootDir\src\adblock-compiler-core"
+                    Push-Location "$Script:RootDir\src\compilers\typescript"
                     try {
                         deno task compile
                     }
@@ -306,7 +306,7 @@ function Show-RulesMenu {
                 $testChoice = Show-Menu -Title "Test Which Compiler?" -Options @("TypeScript", "Rust", ".NET", "Python", "← Cancel")
                 switch ($testChoice) {
                     "1" {
-                        Push-Location "$Script:RootDir\src\adblock-compiler-core"
+                        Push-Location "$Script:RootDir\src\compilers\typescript"
                         try { deno task test } finally { Pop-Location }
                     }
                     "2" { cargo test -p rules-compiler }

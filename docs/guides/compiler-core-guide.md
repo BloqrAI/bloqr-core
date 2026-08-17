@@ -15,7 +15,7 @@ A comprehensive guide to `@bloqr/compiler-core` — the in-repo, dependency-free
 
 ## What is @bloqr/compiler-core?
 
-`@bloqr/compiler-core` is this repository's own TypeScript package for compiling ad-blocking filter lists from multiple sources. Its canonical source lives at [`src/adblock-compiler-core/`](../../src/adblock-compiler-core/) in this repo, and it's published to [JSR (JavaScript Registry)](https://jsr.io/@bloqr/compiler-core) at v1.0.0. It serves as the core compilation engine for all four rules compilers in this repository (TypeScript directly, .NET/Python/Rust by shelling out to its CLI via Deno).
+`@bloqr/compiler-core` is this repository's own TypeScript package for compiling ad-blocking filter lists from multiple sources. Its canonical source lives at [`src/compilers/typescript/`](../../src/compilers/typescript/) in this repo, and it's published to [JSR (JavaScript Registry)](https://jsr.io/@bloqr/compiler-core) at v1.0.0. It serves as the core compilation engine for all four rules compilers in this repository (TypeScript directly, .NET/Python/Rust by shelling out to its CLI via Deno).
 
 **Key Features:**
 - ✅ **Multi-source compilation**: Combine local and remote filter lists
@@ -29,7 +29,7 @@ A comprehensive guide to `@bloqr/compiler-core` — the in-repo, dependency-free
 
 **Package Information:**
 - **Registry**: [jsr.io/@bloqr/compiler-core](https://jsr.io/@bloqr/compiler-core)
-- **Source**: [`src/adblock-compiler-core/`](../../src/adblock-compiler-core/) in this repo ([BloqrAI/bloqr-core](https://github.com/BloqrAI/bloqr-core))
+- **Source**: [`src/compilers/typescript/`](../../src/compilers/typescript/) in this repo ([BloqrAI/bloqr-core](https://github.com/BloqrAI/bloqr-core))
 - **Current Version**: 1.0.0
 - **License**: GPL-3.0
 
@@ -57,7 +57,7 @@ Core compilation components (`FilterCompiler`, downloader, logger) support depen
 - **Chunked parallel compilation**: For large rule lists (10M+ entries), with SHA-384 hash consistency preserved across chunks
 - **Memory Efficiency**: Optimized for large filter lists (100k+ rules)
 - **Validation**: Zod-based schema validation prevents invalid configurations
-- **1008 passing tests, clean type-check/lint/fmt**: verified on every change to `src/adblock-compiler-core/`
+- **1008 passing tests, clean type-check/lint/fmt**: verified on every change to `src/compilers/typescript/`
 
 ## Relationship to AdGuard's hostlist-compiler and the commercial bloqr-compiler
 
@@ -70,7 +70,7 @@ This package is **not** a drop-in npm-compatible fork of `@adguard/hostlist-comp
 | AdGuard libraries (`@adguard/agtree`, etc.) | Not used — rule classification is string/regex-based | N/A | Used, for AST-level rule parsing and validation |
 | Distribution | JSR, open source | npm | Not currently published |
 
-`@bloqr/compiler-core` is deliberately kept separate from Bloqr's commercial `@bloqr/compiler` product too — see [`src/adblock-compiler-core/README.md`](../../src/adblock-compiler-core/README.md#architecture) for that split and the backporting relationship between the two, and [`docs/backporting-policy.md`](../backporting-policy.md) for the process.
+`@bloqr/compiler-core` is deliberately kept separate from Bloqr's commercial `@bloqr/compiler` product too — see [`src/compilers/typescript/README.md`](../../src/compilers/typescript/README.md#architecture) for that split and the backporting relationship between the two, and [`docs/backporting-policy.md`](../backporting-policy.md) for the process.
 
 ### Specific Improvements
 
@@ -336,7 +336,7 @@ jobs:
       
       - name: Compile with TypeScript
         run: |
-          cd src/adblock-compiler-core
+          cd src/compilers/typescript
           deno task compile
           cp ../../../bloqr-blocklists/output/adguard_user_filter.txt /tmp/output-ts.txt
       
@@ -610,7 +610,7 @@ services:
 The package is organized into a small number of top-level modules, each independently exported as a JSR subpath:
 
 ```
-src/adblock-compiler-core/
+src/compilers/typescript/
 ├── src/index.ts            # Core compilation engine (@bloqr/compiler-core)
 │                            #   FilterCompiler, SourceCompiler, compile(), transformations,
 │                            #   downloader, formatters, ConfigurationValidator
@@ -623,7 +623,7 @@ src/adblock-compiler-core/
 └── src/mod.ts               # Deno entry point — re-exports the core engine, runs the CLI
 ```
 
-`FilterCompiler` is the orchestrator: it coordinates configuration validation (`ConfigurationValidator`), source compilation (`SourceCompiler`), and the transformation pipeline, with a logger and optional event hooks injected via its constructor. See [`src/adblock-compiler-core/README.md`](../../src/adblock-compiler-core/README.md#package-layout) for the full layout and how each subpath maps to a JSR export.
+`FilterCompiler` is the orchestrator: it coordinates configuration validation (`ConfigurationValidator`), source compilation (`SourceCompiler`), and the transformation pipeline, with a logger and optional event hooks injected via its constructor. See [`src/compilers/typescript/README.md`](../../src/compilers/typescript/README.md#package-layout) for the full layout and how each subpath maps to a JSR export.
 
 ### Key Interfaces
 
@@ -894,7 +894,7 @@ await cache.set(cacheKey, rules, { ttl: 3600 });
 **Solutions:**
 - Check internet connectivity to jsr.io
 - Verify firewall/proxy settings allow JSR access
-- For CI runners without JSR access, vendor `src/adblock-compiler-core/` directly or run from a local path import instead of `jsr:`
+- For CI runners without JSR access, vendor `src/compilers/typescript/` directly or run from a local path import instead of `jsr:`
 
 #### 2. Type Errors After Upgrading
 
@@ -919,7 +919,7 @@ deno run --allow-read --allow-write --allow-env --allow-net --allow-run jsr:@blo
 ## Resources
 
 - **JSR Package**: https://jsr.io/@bloqr/compiler-core
-- **Source Code**: [`src/adblock-compiler-core/`](../../src/adblock-compiler-core/) in this repo
+- **Source Code**: [`src/compilers/typescript/`](../../src/compilers/typescript/) in this repo
 - **Issue Tracker**: https://github.com/BloqrAI/bloqr-core/issues
 - **This Repository**: https://github.com/BloqrAI/bloqr-core
 - **ADR 0001**: [Canonical Rules Compilation Engine](../adr/0001-canonical-rules-compilation-engine.md)
@@ -929,13 +929,13 @@ deno run --allow-read --allow-write --allow-env --allow-net --allow-run jsr:@blo
 
 - **v1.0.0**: First stable release under this repo's ownership. Extracted from the commercial `bloqr-compiler`'s core engine, with all AGTree/AdGuard-library-dependent and Cloudflare-specific code excluded. Replaces the JSR namespace's previous interim use (v0.6.0–v0.96.0, which briefly pointed at commercial `bloqr-compiler` snapshots — see [ADR 0001](../adr/0001-canonical-rules-compilation-engine.md) for that history).
 
-See [`src/adblock-compiler-core/CHANGELOG.md`](../../src/adblock-compiler-core/CHANGELOG.md) for the full changelog going forward.
+See [`src/compilers/typescript/CHANGELOG.md`](../../src/compilers/typescript/CHANGELOG.md) for the full changelog going forward.
 
 ## Contributing
 
 Contributions to `@bloqr/compiler-core` are welcome! Please:
 
-1. Work in [`src/adblock-compiler-core/`](../../src/adblock-compiler-core/) in this repository
+1. Work in [`src/compilers/typescript/`](../../src/compilers/typescript/) in this repository
 2. Review [CONTRIBUTING.md](../../CONTRIBUTING.md)
 3. Submit issues or pull requests against [BloqrAI/bloqr-core](https://github.com/BloqrAI/bloqr-core)
 

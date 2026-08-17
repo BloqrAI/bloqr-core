@@ -7,7 +7,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 This repository is a comprehensive multi-language toolkit for ad-blocking, network protection, and AdGuard DNS management:
 
 ### Rules Compilers (4 languages)
-- **TypeScript** (`src/adblock-compiler-core/`) - Deno 2.0+ with npm compatibility
+- **TypeScript** (`src/compilers/typescript/`) - Deno 2.0+ with npm compatibility
 - **C#/.NET 10** (`src/compilers/dotnet/`) - Library and Spectre.Console CLI with DI support
 - **Python 3.9+** (`src/rules-compiler-python/`) - pip-installable package with CLI and API
 - **Rust** (`src/rules-compiler-rust/`) - High-performance single binary with zero runtime deps
@@ -65,9 +65,9 @@ Warp Environment: `jaysonknight/warp-env:ad-blocking` (ID: `Egji4sZU4TNIOwNasFU7
 
 ## Common Commands
 
-### TypeScript Rules Compiler (`src/adblock-compiler-core/`)
+### TypeScript Rules Compiler (`src/compilers/typescript/`)
 ```bash
-cd src/adblock-compiler-core
+cd src/compilers/typescript
 
 # Deno tasks
 deno task start                # Start (auto-detect interactive or CLI mode)
@@ -200,7 +200,7 @@ Invoke-ScriptAnalyzer -Path src/rules-compiler-powershell -Recurse
 
 ### TypeScript (Deno)
 ```bash
-cd src/adblock-compiler-core
+cd src/compilers/typescript
 deno test src/cli.test.ts                  # By file
 deno test --filter "parseArgs"             # By test name
 deno task test:coverage                    # With coverage
@@ -249,7 +249,7 @@ cargo test config::                       # Tests in module
 ### Filter Rules
 - Compiled filter lists live in [`BloqrAI/bloqr-blocklists`](https://github.com/BloqrAI/bloqr-blocklists), not this repo — see `output/adguard_dns_filter.txt` there.
 
-### Rules Compiler - TypeScript (`src/adblock-compiler-core/`)
+### Rules Compiler - TypeScript (`src/compilers/typescript/`)
 - TypeScript compiler using @bloqr/compiler-core
 - Deno 2.0+ runtime with npm compatibility
 - Supports JSON, YAML, and TOML configuration formats
@@ -383,7 +383,7 @@ GitHub Actions workflows validate:
 - `.github/workflows/docker-image.yml` - Builds the `Dockerfile.warp` development image
 - `.github/workflows/validation-compliance.yml` - Runs the Rust validation CLI against filter/config fixtures
 - `.github/workflows/release.yml` - Builds and publishes release binaries (.NET, Rust, Python)
-- `.github/workflows/publish-jsr.yml` - Publishes `@bloqr/compiler-core` to JSR on pushes to `main` touching `src/adblock-compiler-core/**`; idempotent (no-ops if the current `deno.json` version is already published). Token-authenticated (`JSR_WORKFLOW_TOKEN`) — see `docs/jsr-token-authentication.md`.
+- `.github/workflows/publish-jsr.yml` - Publishes `@bloqr/compiler-core` to JSR on pushes to `main` touching `src/compilers/typescript/**`; idempotent (no-ops if the current `deno.json` version is already published). Token-authenticated (`JSR_WORKFLOW_TOKEN`) — see `docs/jsr-token-authentication.md`.
 - `.github/workflows/compiler-core-version-bump.yml` / `.github/workflows/compiler-core-create-version-tag.yml` - Automated Conventional-Commits version bumping and tagging for `@bloqr/compiler-core`, scoped to that package only. Reference implementation for the org-wide per-package versioning standard — see `docs/architecture/versioning-strategy.md` before adding an equivalent pair for any future decomposed package.
 - `.github/workflows/stale-reference-check.yml` - Greps for the pre-rename GitHub repo path and the retired JSR scope (see the workflow file itself for the exact patterns — this file can't repeat them literally without tripping the check).
 - `.github/workflows/claude.yml` - Claude AI integration for @claude mentions
@@ -417,7 +417,7 @@ GitHub Actions workflows validate:
   checklist for onboarding a new package.
 - **`@bloqr/compiler-core`'s JSR symbol-documentation score must stay as
   close to 100% as possible.** Any time you add, rename, or touch an
-  exported symbol in `src/adblock-compiler-core/src/` — including enum
+  exported symbol in `src/compilers/typescript/src/` — including enum
   members and public interface/class properties and methods, not just
   top-level declarations — add or update its JSDoc in the same change.
   `deno doc --lint` (run in every CI job) only catches top-level exported
@@ -481,7 +481,7 @@ GitHub Actions workflows validate:
      check JSR first; only fall back to `npm:` specifiers in `deno.json`
      when no JSR-native equivalent exists (and say so in a comment next to
      the import, matching the existing `ora`/`figlet`/`@inquirer/prompts`
-     entries in `src/adblock-compiler-core/deno.json`).
+     entries in `src/compilers/typescript/deno.json`).
   3. **Bun is a formally supported runtime target, not a fallback.**
      Consumer-facing TypeScript packages (e.g. `@bloqr/compiler-core`)
      should work correctly under Bun as well as Deno — no unguarded
@@ -513,7 +513,7 @@ GitHub Actions workflows validate:
 | Python | 3.9+ | Python compiler |
 | Rust | 1.85+ | Rust compiler (install via rustup) |
 | @bloqr/compiler-core | 1.0.0 | TypeScript compiler (via JSR: `deno add @bloqr/compiler-core`) |
-| Bun | latest | Optional — formally supported alternative runtime target for `src/adblock-compiler-core` (not required for this repo's own tooling; see that package's README) |
+| Bun | latest | Optional — formally supported alternative runtime target for `src/compilers/typescript` (not required for this repo's own tooling; see that package's README) |
 | Docker | 24.0+ | Container development (optional but recommended) |
 
 ## Key File Locations

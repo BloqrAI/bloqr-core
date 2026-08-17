@@ -34,7 +34,7 @@ jobs:
           STALE_SCOPE: jk-com
         run: |
           if grep -rln "$STALE_SCOPE" --include="*.md" --include="*.json" --include="*.js" --include="*.ts" --include="*.cs" --include="*.py" --include="*.rs" --include="*.yml" --include="*.yaml" . \
-              | grep -vFx -e "./src/adblock-compiler-core/README.md" -e "./src/adblock-compiler-core/CHANGELOG.md" -e "./docs/adr/0001-canonical-rules-compilation-engine.md" -e "./.github/workflows/stale-reference-check.yml" ; then
+              | grep -vFx -e "./src/compilers/typescript/README.md" -e "./src/compilers/typescript/CHANGELOG.md" -e "./docs/adr/0001-canonical-rules-compilation-engine.md" -e "./.github/workflows/stale-reference-check.yml" ; then
             echo "::error::Found a reference to the retired JSR scope outside the historical-record files where it's expected. Update it to @bloqr."
             exit 1
           fi

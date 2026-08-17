@@ -1,7 +1,7 @@
 name: compiler-core Version Bump
 
 # Auto-bumps @bloqr/compiler-core's version from Conventional Commits, scoped
-# to src/adblock-compiler-core/**. This is the reference implementation of
+# to src/compilers/typescript/**. This is the reference implementation of
 # BloqrAI's per-package JSR versioning standard — see
 # docs/architecture/versioning-strategy.md. As bloqr-core decomposes into
 # more JSR packages, each new package gets its own copy of this workflow
@@ -13,7 +13,7 @@ on:
     branches:
       - main
     paths:
-      - 'src/adblock-compiler-core/**'
+      - 'src/compilers/typescript/**'
   workflow_dispatch:
     inputs:
       bump_type:
@@ -50,7 +50,7 @@ jobs:
       bump_type: ${{ steps.determine_bump.outputs.bump_type }}
     defaults:
       run:
-        working-directory: src/adblock-compiler-core
+        working-directory: src/compilers/typescript
     steps:
       - name: Checkout
         uses: actions/checkout@v7
@@ -83,10 +83,10 @@ jobs:
           echo "Analyzing commits since $LAST_VERSION_COMMIT"
 
           # Only consider commits that actually touched this package's directory.
-          # NB: this step runs with working-directory: src/adblock-compiler-core
+          # NB: this step runs with working-directory: src/compilers/typescript
           # (the job-level default), so pathspecs here are relative to that
-          # directory already -- 'src/adblock-compiler-core/src/' would resolve
-          # to the nonexistent src/adblock-compiler-core/src/adblock-compiler-core/src/
+          # directory already -- 'src/compilers/typescript/src/' would resolve
+          # to the nonexistent src/compilers/typescript/src/compilers/typescript/src/
           # and silently match nothing on every run.
           CHANGED_SRC=$(git diff --name-only "$LAST_VERSION_COMMIT"..HEAD -- 'src/' | grep -E '\.ts$' | grep -v '\.test\.ts$' || true)
           if [ -z "$CHANGED_SRC" ]; then
@@ -174,8 +174,8 @@ jobs:
 
           ENTRY="## [${NEW_VERSION}] - $(date +%Y-%m-%d)"$'\n'
           # See the "Determine version bump type" step for why these pathspecs
-          # are '.' rather than 'src/adblock-compiler-core/' -- this step also
-          # runs with working-directory: src/adblock-compiler-core.
+          # are '.' rather than 'src/compilers/typescript/' -- this step also
+          # runs with working-directory: src/compilers/typescript.
           FEATURES=$(git log --format="%s" "$LAST_VERSION_COMMIT"..HEAD -- '.' | grep -E "^feat(\(.+\))?:" | sed 's/^feat(\([^)]*\)): \(.*\)/- **\1**: \2/' | sed 's/^feat: /- /' || echo "")
           FIXES=$(git log --format="%s" "$LAST_VERSION_COMMIT"..HEAD -- '.' | grep -E "^fix(\(.+\))?:" | sed 's/^fix(\([^)]*\)): \(.*\)/- **\1**: \2/' | sed 's/^fix: /- /' || echo "")
 
@@ -230,11 +230,11 @@ jobs:
           - **Old Version**: ${{ steps.bump.outputs.old }}
           - **New Version**: ${{ steps.bump.outputs.new }}
           - **Bump Type**: ${{ steps.determine_bump.outputs.bump_type }}
-          - **Package**: \`@bloqr/compiler-core\` (\`src/adblock-compiler-core/\`)
+          - **Package**: \`@bloqr/compiler-core\` (\`src/compilers/typescript/\`)
 
           ### Changes
-          - Updated \`VERSION\` in \`src/adblock-compiler-core/src/version.ts\` (single source of truth)
-          - Synced \`version\` field in \`src/adblock-compiler-core/deno.json\` via \`deno task version:sync\`
+          - Updated \`VERSION\` in \`src/compilers/typescript/src/version.ts\` (single source of truth)
+          - Synced \`version\` field in \`src/compilers/typescript/deno.json\` via \`deno task version:sync\`
           - Updated \`CHANGELOG.md\`
 
           ### Next steps

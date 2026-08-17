@@ -37,7 +37,7 @@ Rust-based validation library (`src/validation/`) provides unified security acro
 - `bloqr-validate` (CLI tool, shelled out to by the non-Rust/non-.NET wrappers)
 
 ### Compiler Equivalence
-All four compilers (TypeScript, .NET, Python, Rust) use **[@bloqr/compiler-core](../src/adblock-compiler-core/)** and **must**:
+All four compilers (TypeScript, .NET, Python, Rust) use **[@bloqr/compiler-core](../src/compilers/typescript/)** and **must**:
 - Support JSON config (JSONC on .NET/Dashboard); YAML/TOML remain functional but undocumented (see #259)
 - Count rules identically (exclude empty lines and `!`/`#` comments)
 - Compute SHA-384 hash of output (96 hex chars)
@@ -54,7 +54,7 @@ bloqr-core/
 ├── docs/                           # Documentation
 ├── schemas/                        # First-party JSON schemas
 ├── src/
-│   ├── adblock-compiler-core/      # TypeScript rules compiler (@bloqr/compiler-core)
+│   ├── compilers/typescript/      # TypeScript rules compiler (@bloqr/compiler-core)
 │   ├── compilers/dotnet/      # .NET rules compiler
 │   ├── rules-compiler-python/      # Python rules compiler
 │   ├── rules-compiler-rust/        # Rust rules compiler
@@ -88,7 +88,7 @@ The AdGuard/Linear API clients and the compiled filter lists have moved to [`Blo
 **Compilation**:
 ```bash
 # TypeScript (primary method)
-cd src/adblock-compiler-core && npm run compile
+cd src/compilers/typescript && npm run compile
 
 # Validates inputs, fetches remote sources, writes output, computes SHA-384
 # CI: .github/workflows/typescript.yml runs this with type-checking
@@ -116,7 +116,7 @@ cd src/adblock-compiler-core && npm run compile
 1. **Compile with all four compilers** using the same config:
    ```bash
    # TypeScript
-   cd src/adblock-compiler-core && npm run compile
+   cd src/compilers/typescript && npm run compile
    
    # .NET
    cd src/compilers/dotnet && dotnet run --project src/Bloqr.Compiler.Dotnet.Console
@@ -139,7 +139,7 @@ cd src/adblock-compiler-core && npm run compile
 4. **Test with different configs** (JSON is documented; YAML/TOML remain functional but undocumented)
 
 **Test file patterns** that verify this:
-- TypeScript: `src/adblock-compiler-core/src/__tests__/compiler.test.ts`
+- TypeScript: `src/compilers/typescript/src/__tests__/compiler.test.ts`
 - .NET: `src/compilers/dotnet/src/Bloqr.Compiler.Dotnet.Tests/OutputWriterTests.cs`
 - Python: `src/rules-compiler-python/tests/test_compiler.py`
 - Rust: `src/rules-compiler-rust/src/compiler.rs` (integration tests)
@@ -148,7 +148,7 @@ All test suites assert `hash.length === 96` and verify consistent hashing.
 
 ## Build and Test Commands
 
-### TypeScript Rules Compiler (`src/adblock-compiler-core/`)
+### TypeScript Rules Compiler (`src/compilers/typescript/`)
 ```bash
 # Install dependencies
 npm ci
@@ -363,7 +363,7 @@ Supports 3 formats (JSON/YAML/TOML), based on `@bloqr/compiler-core` schema:
   "transformations": ["RemoveComments", "Compress", "Validate"]
 }
 ```
-See `src/adblock-compiler-core/compiler-config.json` for reference.
+See `src/compilers/typescript/compiler-config.json` for reference.
 
 ## CI/CD Workflows
 
@@ -425,7 +425,7 @@ npm install <package-name>
 cd src/compilers/dotnet && dotnet test CompilerDotnet.slnx
 
 # Run all TypeScript tests
-cd src/adblock-compiler-core && npm test
+cd src/compilers/typescript && npm test
 
 # Run all Python tests
 cd src/rules-compiler-python && pytest
@@ -439,7 +439,7 @@ cd src/rules-compiler-rust && cargo test
 ### @bloqr/compiler-core
 - **All compilers depend on this**: JSR package
 - **Installation**: `deno add @bloqr/compiler-core` or via JSR
-- **Source**: `src/adblock-compiler-core/` (this repo)
+- **Source**: `src/compilers/typescript/` (this repo)
 - **Documentation**: https://jsr.io/@bloqr/compiler-core
 - Provides 11 transformations (RemoveComments, Compress, Validate, etc.)
 - Compilers use this, handling config parsing and result formatting
@@ -458,7 +458,7 @@ cd src/rules-compiler-rust && cargo test
 | File/Folder | Purpose | When to Modify |
 |-------------|---------|----------------|
 | `../bloqr-blocklists/output/adguard_user_filter.txt` | **Production filter list** | After successful compilation and testing |
-| `src/adblock-compiler-core/compiler-config.json` | **Primary config** for rule compilation | To change filter sources or transformations |
+| `src/compilers/typescript/compiler-config.json` | **Primary config** for rule compilation | To change filter sources or transformations |
 | `src/rules-compiler-powershell/Invoke-RulesCompiler.psm1` | PowerShell wrapper for compiler | Extending PowerShell automation |
 | `docs/compiler-comparison.md` | **Decision guide** for choosing compiler | When adding features to compilers |
 

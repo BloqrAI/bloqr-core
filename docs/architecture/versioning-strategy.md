@@ -28,15 +28,15 @@ So the standard is **per-package**, not per-repo:
 
 ## Reference implementation: `@bloqr/compiler-core`
 
-This is the first package on the new standard, and it's meant to be the copy-paste template for every future one. Four pieces, all scoped to `src/adblock-compiler-core/`:
+This is the first package on the new standard, and it's meant to be the copy-paste template for every future one. Four pieces, all scoped to `src/compilers/typescript/`:
 
 | File | Role |
 |---|---|
-| `src/adblock-compiler-core/src/version.ts` | `export const VERSION = '1.0.0'` — hand-edited only by the bump automation (or a human doing a manual override), never by feature PRs. |
-| `src/adblock-compiler-core/scripts/sync-version.ts` | `deno task version:sync` — reads `VERSION` from `version.ts`, writes it into `deno.json`'s `"version"` field. No-ops if already in sync. |
-| `.github/workflows/compiler-core-version-bump.yml` | Runs on every push to `main` that touches `src/adblock-compiler-core/**`. Walks Conventional Commits since the last `chore: bump compiler-core version` commit, determines the bump type (see below), bumps `version.ts`, runs the sync script, updates `CHANGELOG.md`, and opens a PR (`auto-version-bump-compiler-core-<version>` branch). |
+| `src/compilers/typescript/src/version.ts` | `export const VERSION = '1.0.0'` — hand-edited only by the bump automation (or a human doing a manual override), never by feature PRs. |
+| `src/compilers/typescript/scripts/sync-version.ts` | `deno task version:sync` — reads `VERSION` from `version.ts`, writes it into `deno.json`'s `"version"` field. No-ops if already in sync. |
+| `.github/workflows/compiler-core-version-bump.yml` | Runs on every push to `main` that touches `src/compilers/typescript/**`. Walks Conventional Commits since the last `chore: bump compiler-core version` commit, determines the bump type (see below), bumps `version.ts`, runs the sync script, updates `CHANGELOG.md`, and opens a PR (`auto-version-bump-compiler-core-<version>` branch). |
 | `.github/workflows/compiler-core-create-version-tag.yml` | Runs when a `auto-version-bump-compiler-core-*` PR merges. Reads the now-updated `deno.json` version and pushes the `compiler-core-v<version>` tag. |
-| `.github/workflows/publish-jsr.yml` | Unchanged by this doc's introduction — it already triggers on any push to `src/adblock-compiler-core/**` on `main`, and `deno publish` is idempotent (no-ops if the current version is already published). The version-bump PR's merge commit is what actually causes the next real publish; the tag above exists for traceability, not to gate the publish. |
+| `.github/workflows/publish-jsr.yml` | Unchanged by this doc's introduction — it already triggers on any push to `src/compilers/typescript/**` on `main`, and `deno publish` is idempotent (no-ops if the current version is already published). The version-bump PR's merge commit is what actually causes the next real publish; the tag above exists for traceability, not to gate the publish. |
 
 ### Conventional Commits → bump type
 
@@ -58,7 +58,7 @@ When a piece of `bloqr-core` (or a brand-new repo) becomes its own `@bloqr/*` JS
 1. `<package-dir>/src/version.ts` (or equivalent) — new file, `VERSION = '0.1.0'` (or wherever the extracted code's version actually starts — if it's an extraction of existing code that already has a version, keep continuity rather than resetting to 0.1.0).
 2. `<package-dir>/scripts/sync-version.ts` — copy `compiler-core`'s, change the relative import path if the directory depth differs. If the new package also ships a `package.json`/`wrangler.toml` (unlikely for a pure JSR library, but possible), add sync steps for those too — see `bloqr-compiler`'s fuller `sync-version.ts` for that shape.
 3. `.github/workflows/<package-slug>-version-bump.yml` — copy `compiler-core-version-bump.yml`, replace:
-   - the `paths:` filter (`src/adblock-compiler-core/**` → the new package's path)
+   - the `paths:` filter (`src/compilers/typescript/**` → the new package's path)
    - the bump-commit grep marker (`chore: bump compiler-core version` → `chore: bump <package-slug> version`)
    - the branch prefix (`auto-version-bump-compiler-core-` → `auto-version-bump-<package-slug>-`)
    - the `working-directory` default

@@ -8,8 +8,8 @@ Project scope
 - CI pipelines (GitHub Actions) validate the .NET, TypeScript/Deno, Python, Rust, and PowerShell compilers, plus the Gatsby site. Keep local commands aligned with the workflows below.
 
 Common commands (build, lint, test)
-TypeScript/Deno – rules compiler (src/adblock-compiler-core)
-- Cache deps: cd src/adblock-compiler-core && deno cache src/mod.ts
+TypeScript/Deno – rules compiler (src/compilers/typescript)
+- Cache deps: cd src/compilers/typescript && deno cache src/mod.ts
 - Type-check: deno check src/mod.ts
 - Lint: deno task lint
 - Unit tests: deno task test
@@ -37,7 +37,7 @@ PowerShell scripts (src/rules-compiler-powershell)
 
 Running a single test
 - TypeScript/Deno
-  - By file: cd src/adblock-compiler-core && deno test src/cli.test.ts
+  - By file: cd src/compilers/typescript && deno test src/cli.test.ts
   - All tests: deno task test
 - .NET (xUnit)
   - By class pattern (rules compiler): cd src/compilers/dotnet && dotnet test CompilerDotnet.slnx --filter "FullyQualifiedName~BloqrCompilerServiceTests"
@@ -49,7 +49,7 @@ High-level architecture and structure
 - Filter rules ([`BloqrAI/bloqr-blocklists`](https://github.com/BloqrAI/bloqr-blocklists))
   - `output/adguard_dns_filter.txt` is the compiled, tracked filter list consumed by AdGuard DNS. It is no longer part of this repo.
 - Rules compilers (`src/`)
-  - `src/adblock-compiler-core/` — Deno/TypeScript wrapper around `@bloqr/compiler-core`, published on JSR.
+  - `src/compilers/typescript/` — Deno/TypeScript wrapper around `@bloqr/compiler-core`, published on JSR.
   - `src/compilers/dotnet/` — .NET 10 library + Spectre.Console CLI.
   - `src/rules-compiler-python/` — pip-installable package with CLI and API.
   - `src/rules-compiler-rust/` — single-binary CLI with zero runtime deps.

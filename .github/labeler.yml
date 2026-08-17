@@ -13,7 +13,7 @@ dotnet:
 typescript:
   - changed-files:
       - any-glob-to-any-file:
-          - 'src/adblock-compiler-core/**'
+          - 'src/compilers/typescript/**'
           - '**/*.ts'
           - '**/deno.json'
 

@@ -43,7 +43,7 @@ The compiler automatically searches for configuration files in the following ord
 
 1. **Explicit path**: If `-c/--config` is provided, uses that file
 2. **Current directory**: Looks for `compiler-config.{json,yaml,toml}`
-3. **Repository-specific path**: `src/adblock-compiler-core/compiler-config.json`
+3. **Repository-specific path**: `src/compilers/typescript/compiler-config.json`
 4. **Parent directories**: Traverses up the directory tree looking for `compiler-config.{json,yaml,toml}` (like git)
 
 This means you can run the compiler from any subdirectory and it will find the nearest configuration file in the directory hierarchy.
