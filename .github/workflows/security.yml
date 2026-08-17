@@ -62,8 +62,8 @@ jobs:
       - name: Build .NET projects
         if: matrix.language == 'csharp'
         run: |
-          dotnet restore src/rules-compiler-dotnet/RulesCompiler.slnx
-          dotnet build src/rules-compiler-dotnet/RulesCompiler.slnx --no-restore
+          dotnet restore src/compilers/dotnet/CompilerDotnet.slnx
+          dotnet build src/compilers/dotnet/CompilerDotnet.slnx --no-restore
 
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@v4

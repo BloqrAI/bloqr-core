@@ -1,10 +1,10 @@
 # Compiler Common (.NET)
 
-The shared .NET library behind this repo's `.NET` filter-rules compiler and the Dashboard: `Bloqr.Compiler.Abstractions` and `Bloqr.Compiler.Core`. Neither project contains compiler-specific logic — both are pure shared building blocks, consumed by [`src/rules-compiler-dotnet/`](../../rules-compiler-dotnet/) and [`src/bloqr-dashboard/`](../../bloqr-dashboard/) via `<ProjectReference>`.
+The shared .NET library behind this repo's `.NET` filter-rules compiler and the Dashboard: `Bloqr.Compiler.Abstractions` and `Bloqr.Compiler.Core`. Neither project contains compiler-specific logic — both are pure shared building blocks, consumed by [`src/compilers/dotnet/`](../../compilers/dotnet/) and [`src/bloqr-dashboard/`](../../bloqr-dashboard/) via `<ProjectReference>`.
 
 ## Why this is its own solution
 
-`Bloqr.Compiler.Abstractions`/`Core` used to live inside `RulesCompiler.slnx`. Functionally they were already a shared library — the Dashboard referenced them across directories the same way it does today — but structurally they weren't isolated from the rules compiler's own solution. This directory and `CompilerCommon.slnx` exist so the common library can be built, tested, and versioned independently of either consumer, and so its build doesn't imply "you're building the rules compiler."
+`Bloqr.Compiler.Abstractions`/`Core` used to live inside the .NET compiler's own solution (now `CompilerDotnet.slnx`, then still named `RulesCompiler.slnx`). Functionally they were already a shared library — the Dashboard referenced them across directories the same way it does today — but structurally they weren't isolated from the compiler's own solution. This directory and `CompilerCommon.slnx` exist so the common library can be built, tested, and versioned independently of either consumer, and so its build doesn't imply "you're building the compiler."
 
 ## Projects
 
@@ -30,7 +30,7 @@ In-repo consumers reference the projects directly rather than through a package 
 <ProjectReference Include="..\..\..\common\dotnet\src\Bloqr.Compiler.Core\Bloqr.Compiler.Core.csproj" />
 ```
 
-`RulesCompiler` (`src/rules-compiler-dotnet/`) references both. `Bloqr.Dashboard.Abstractions` references `Bloqr.Compiler.Abstractions`; `Bloqr.Dashboard.Core` references `Bloqr.Compiler.Core`. There's no reason to make an in-repo build round-trip through a package feed — `<ProjectReference>` gives identical `dotnet publish --self-contained` output at zero extra latency. See [`docs/architecture/nuget-distribution-strategy.md`](../../../docs/architecture/nuget-distribution-strategy.md) for the full decision record.
+`RulesCompiler` (`src/compilers/dotnet/`) references both. `Bloqr.Dashboard.Abstractions` references `Bloqr.Compiler.Abstractions`; `Bloqr.Dashboard.Core` references `Bloqr.Compiler.Core`. There's no reason to make an in-repo build round-trip through a package feed — `<ProjectReference>` gives identical `dotnet publish --self-contained` output at zero extra latency. See [`docs/architecture/nuget-distribution-strategy.md`](../../../docs/architecture/nuget-distribution-strategy.md) for the full decision record.
 
 Out-of-repo consumers (a future .NET MAUI host, or this library becoming its own repo) can instead take it as a NuGet package — see [Publishing](#publishing) below.
 
@@ -41,14 +41,14 @@ Out-of-repo consumers (a future .NET MAUI host, or this library becoming its own
 | Interface | Description |
 |-----------|-------------|
 | `IConfigurationReader` | Reads and parses configuration files (JSON/JSONC documented; YAML/TOML backward-compatible) |
-| `IRulesCompilerService` | Top-level compilation orchestration |
+| `IBloqrCompilerService` | Top-level compilation orchestration |
 | `IFilterCompiler` | Compiles filter rules |
 | `IOutputWriter` / `IOutputPublisher` | Output file operations: writing, conflict strategy, archiving |
 | `IChunkingService` | Chunked compilation for large rule lists |
 | `IFileLockService` | File-locking around compilation output |
 | `IPluginManager` | Plugin discovery and validation |
 | `IHashDatabaseService` | Hash verification sidecar (`.hashes.json`) reads/writes |
-| `IRulesValidatorService` | Syntax/URL validation via the native `bloqr-validator` library |
+| `IBloqrValidatorService` | Syntax/URL validation via the native `bloqr-validator` library |
 | `ICompilationEventDispatcher` / `ICompilationEventHandler` | The compilation event pipeline |
 | `ICompilationPipeline` / `ICompilationPipelineBuilder` / `ICompilationMiddleware` | Middleware-based compilation pipeline |
 | `IConfigurationFormatPlugin` / `IOutputDestinationPlugin` / `IRuleTransformationPlugin` / `IRuleValidationPlugin` / `IPlugin` | Plugin system extension points |
@@ -86,26 +86,26 @@ Out-of-repo consumers (a future .NET MAUI host, or this library becoming its own
 | `CompilationEventDispatcher` / `QueuedCompilationEventDispatcher` | Compilation event pipeline, with an opt-in background-queueing decorator and Polly retry policy |
 | `HashDatabaseService` | Reads/writes the `.hashes.json` hash-verification sidecar |
 | `OutputPublisher` | Output-publishing with conflict strategy and archiving |
-| `RulesValidatorService` (+ `RulesValidatorNativeMethods`) | P/Invoke wrapper around the native `bloqr-validator` library |
+| `BloqrValidatorService` (+ `RulesValidatorNativeMethods`) | P/Invoke wrapper around the native `bloqr-validator` library |
 | `CommandHelper` / `PlatformHelper` | Generic process-execution and platform-detection utilities |
 | `StructuredJsonLogFormatter` | Structured JSON log formatting shared by the console apps |
 
 ## Dependency Injection
 
-`Bloqr.Compiler.Core` ships DI registration extensions per concern (`EventDispatchingServiceCollectionExtensions`, `LoggingServiceCollectionExtensions`); consumers compose them alongside their own compiler-specific registrations rather than a single `AddCompilerCommon()` — see `RulesCompiler`'s `AddRulesCompiler()` extension for the pattern.
+`Bloqr.Compiler.Core` ships DI registration extensions per concern (`EventDispatchingServiceCollectionExtensions`, `LoggingServiceCollectionExtensions`); consumers compose them alongside their own compiler-specific registrations rather than a single `AddCompilerCommon()` — see `Bloqr.Compiler.Dotnet`'s `AddBloqrCompiler()` extension for the pattern.
 
 ## Running Tests
 
-`Bloqr.Compiler.Core.Tests` covers everything that doesn't need a `RulesCompiler`-specific fixture — `ConfigurationReader`, `ConfigurationValidator`, `CompilerConfigJsonSchemaValidator`, `ChunkingService`, `HashDatabaseService`, `OutputPublisher`, `RulesValidatorService`, `CompilationEventDispatcher`/`QueuedCompilationEventDispatcher`, `PlatformHelper`, `StructuredJsonLogFormatter`, the DI extensions, and the `Bloqr.Compiler.Abstractions` models/enums:
+`Bloqr.Compiler.Core.Tests` covers everything that doesn't need a `Bloqr.Compiler.Dotnet`-specific fixture — `ConfigurationReader`, `ConfigurationValidator`, `CompilerConfigJsonSchemaValidator`, `ChunkingService`, `HashDatabaseService`, `OutputPublisher`, `BloqrValidatorService`, `CompilationEventDispatcher`/`QueuedCompilationEventDispatcher`, `PlatformHelper`, `StructuredJsonLogFormatter`, the DI extensions, and the `Bloqr.Compiler.Abstractions` models/enums:
 
 ```bash
 cd src/common/dotnet
 dotnet test CompilerCommon.slnx
 ```
 
-`RulesCompiler`-specific behavior (`RulesCompilerService`, `OutputWriter`) stays covered by `RulesCompiler.Tests` (`src/rules-compiler-dotnet/src/RulesCompiler.Tests/`), which references `RulesCompiler` and, transitively, this library — see that project's own test run instructions.
+`Bloqr.Compiler.Dotnet`-specific behavior (`BloqrCompilerService`, `OutputWriter`) stays covered by `Bloqr.Compiler.Dotnet.Tests` (`src/compilers/dotnet/src/Bloqr.Compiler.Dotnet.Tests/`), which references `Bloqr.Compiler.Dotnet` and, transitively, this library — see that project's own test run instructions.
 
-`build.sh`/`build.ps1` build this solution but don't run any .NET tests (neither do they for `RulesCompiler.slnx`/`BloqrDashboard.slnx`) — test execution is CI-only, via `.github/workflows/dotnet.yml`'s matrix.
+`build.sh`/`build.ps1` build this solution but don't run any .NET tests (neither do they for `CompilerDotnet.slnx`/`BloqrDashboard.slnx`) — test execution is CI-only, via `.github/workflows/dotnet.yml`'s matrix.
 
 ## Publishing
 

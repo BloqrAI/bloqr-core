@@ -5,7 +5,7 @@
 dotnet:
   - changed-files:
       - any-glob-to-any-file:
-          - 'src/rules-compiler-dotnet/**'
+          - 'src/compilers/dotnet/**'
           - '**/*.cs'
           - '**/*.csproj'
           - '**/*.slnx'

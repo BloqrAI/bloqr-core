@@ -20,7 +20,7 @@ public static class LoggingServiceCollectionExtensions
     /// if <paramref name="minimumLevel"/> is <c>null</c> (logging disabled).
     /// </summary>
     /// <param name="applicationName">
-    /// The application's name, used as the log-file prefix (e.g. <c>rules-compiler-dotnet-.jsonl</c>)
+    /// The application's name, used as the log-file prefix (e.g. <c>bloqr-compiler-dotnet-.jsonl</c>)
     /// and stamped onto every log event as the <c>application</c> field.
     /// </param>
     /// <param name="logDirectory">The directory log files are written to.</param>

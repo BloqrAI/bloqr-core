@@ -123,8 +123,8 @@ const GettingStartedPage = () => {
               <br />
               # .NET
               <br />
-              cd src/rules-compiler-dotnet && dotnet run --project
-              src/RulesCompiler.Console
+              cd src/compilers/dotnet && dotnet run --project
+              src/Bloqr.Compiler.Dotnet.Console
               <br />
               <br />
               # Python

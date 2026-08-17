@@ -139,7 +139,7 @@ Write-Host ""
 Write-Host "=== Integration Tests: .NET Builds ===" -ForegroundColor Blue
 if (Get-Command dotnet -ErrorAction SilentlyContinue) {
     Run-Test ".NET debug build succeeds" { pwsh -File .\build.ps1 -DotNet }
-    Test-OutputContains ".NET debug build shows rules compiler" { pwsh -File .\build.ps1 -DotNet } "Rules Compiler"
+    Test-OutputContains ".NET debug build shows compiler dotnet" { pwsh -File .\build.ps1 -DotNet } "Compiler Dotnet"
     
     Run-Test ".NET release build succeeds" { pwsh -File .\build.ps1 -DotNet -Profile release }
     Test-OutputContains ".NET release build uses Release config" { pwsh -File .\build.ps1 -DotNet -Profile release } "Build Profile: release"

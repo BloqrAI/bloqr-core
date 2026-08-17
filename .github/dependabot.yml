@@ -108,7 +108,7 @@ updates:
           - "patch"
 
   # nuget: central package management (Directory.Packages.props at repo
-  # root) covers every nested .csproj under src/rules-compiler-dotnet/.
+  # root) covers every nested .csproj under src/compilers/dotnet/.
   - package-ecosystem: "nuget"
     directory: "/"
     schedule:
