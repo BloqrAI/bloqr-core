@@ -1,5 +1,5 @@
 {
-  "dotnet.defaultSolution": "src/rules-compiler-dotnet/RulesCompiler.slnx",
+  "dotnet.defaultSolution": "src/compilers/dotnet/CompilerDotnet.slnx",
   "powerShellUniversal.syncSamples": true,
   "sarif-viewer.connectToGithubCodeScanning": "on",
   "deno.enable": true

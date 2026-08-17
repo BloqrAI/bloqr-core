@@ -77,7 +77,7 @@ public class Program
             {
                 options.FormatterName = "simple";
             });
-            builder.AddStructuredFileLogging("rules-compiler-dotnet", logDirectory, LogEventLevel.Information);
+            builder.AddStructuredFileLogging("bloqr-compiler-dotnet", logDirectory, LogEventLevel.Information);
         });
 
         // Add BloqrCompiler services

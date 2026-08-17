@@ -44,9 +44,17 @@ that overrides how each language names things. Concretely, this pilot:
   hard constraint both issues restate: internal identifiers and published package names are
   decoupled and must stay that way.
 - **.NET**: left `RulesValidatorService`, `IRulesValidatorService`, and
-  `RulesValidatorNativeMethods` (all PascalCase, .NET idiomatic) unchanged. Only the P/Invoke
-  library name and the FFI function names they call were renamed, because those are the actual
-  cross-language contract with the renamed Rust library — see "FFI is a real ABI boundary" below.
+  `RulesValidatorNativeMethods` (all PascalCase, .NET idiomatic) unchanged in this pilot. Only the
+  P/Invoke library name and the FFI function names they call were renamed, because those are the
+  actual cross-language contract with the renamed Rust library — see "FFI is a real ABI boundary"
+  below.
+  > **Superseded**: the repo owner later hardened #331/#372's "Rules"/"lists" ban into an explicit
+  > "substitute Bloqr" rule that reaches internal class/interface names too, not just
+  > directories/namespaces. The `src/compilers/dotnet` migration PR renamed these three to
+  > `BloqrValidatorService`/`IBloqrValidatorService`/`BloqrValidatorNativeMethods` accordingly. The
+  > "rule of thumb" below (leave a language's own internal-only identifiers alone) still holds as
+  > the general default — this is a narrower, explicit exception the owner called out for this
+  > specific vague-noun case, not a reversal of the rule of thumb itself.
 - **Python, TypeScript, PowerShell, bash/zsh**: left every wrapper's own internal function, module,
   and class names unchanged (`find_rules_validate_binary`, `findRulesValidateBinary`,
   `Invoke-RulesValidator`, `RulesValidatorResult`, `find_rules_validate_binary`/

@@ -85,7 +85,7 @@ class BenchmarkRunner:
             return sys.executable, ["-m", "rules_compiler"]
 
         elif compiler == "dotnet":
-            console_project = project_root / "src" / "rules-compiler-dotnet" / "src" / "RulesCompiler.Console"
+            console_project = project_root / "src" / "compilers" / "dotnet" / "src" / "Bloqr.Compiler.Dotnet.Console"
             if console_project.exists():
                 return "dotnet", ["run", "--project", str(console_project), "--"]
             return None

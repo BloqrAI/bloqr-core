@@ -35,7 +35,7 @@ dotnet build BloqrDashboard.slnx
 ```
 
 Or from the repo root: `./build.sh --dotnet` / `./build.ps1 -DotNet` (builds both
-`rules-compiler-dotnet` and `bloqr-dashboard`).
+`compilers/dotnet` and `bloqr-dashboard`).
 
 ## Running
 

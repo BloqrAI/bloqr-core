@@ -54,7 +54,7 @@ services:
       - ad-blocking-net
 
   # ---------------------------------------------------------------------------
-  # .NET Rules Compiler service
+  # .NET Compiler service
   # ---------------------------------------------------------------------------
   dotnet-compiler:
     build:
@@ -65,8 +65,8 @@ services:
     volumes:
       - .:/workspace
       - nuget_packages:/root/.nuget/packages
-    working_dir: /workspace/src/rules-compiler-dotnet
-    command: dotnet run --project src/RulesCompiler.Console
+    working_dir: /workspace/src/compilers/dotnet
+    command: dotnet run --project src/Bloqr.Compiler.Dotnet.Console
     depends_on:
       - dev
     profiles:
@@ -137,7 +137,7 @@ services:
         echo '=== Running TypeScript Tests ===' &&
         cd /workspace/src/adblock-compiler-core && deno task test &&
         echo '=== Running .NET Tests ===' &&
-        cd /workspace/src/rules-compiler-dotnet && dotnet test RulesCompiler.slnx &&
+        cd /workspace/src/compilers/dotnet && dotnet test CompilerDotnet.slnx &&
         echo '=== Running Python Tests ===' &&
         cd /workspace/src/rules-compiler-python && pytest &&
         echo '=== Running Rust Tests ===' &&

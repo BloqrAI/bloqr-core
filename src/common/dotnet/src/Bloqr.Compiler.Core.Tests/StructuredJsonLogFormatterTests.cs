@@ -53,7 +53,7 @@ public sealed class StructuredJsonLogFormatterTests : IDisposable
         var logPath = Path.Combine(_tempDirectory, "app.jsonl");
         using (var logger = new LoggerConfiguration()
             .MinimumLevel.Verbose()
-            .Enrich.WithProperty("Application", "rules-compiler-dotnet")
+            .Enrich.WithProperty("Application", "bloqr-compiler-dotnet")
             .WriteTo.File(new StructuredJsonLogFormatter(), logPath)
             .CreateLogger())
         {
@@ -63,7 +63,7 @@ public sealed class StructuredJsonLogFormatterTests : IDisposable
         var line = File.ReadAllLines(logPath).First(l => !string.IsNullOrWhiteSpace(l));
         using var document = JsonDocument.Parse(line);
 
-        Assert.Equal("rules-compiler-dotnet", document.RootElement.GetProperty("application").GetString());
+        Assert.Equal("bloqr-compiler-dotnet", document.RootElement.GetProperty("application").GetString());
     }
 
     private string WriteSingleLogLine(Action<Serilog.ILogger> log)

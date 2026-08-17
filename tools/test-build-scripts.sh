@@ -120,7 +120,7 @@ echo ""
 echo -e "${BLUE}=== Integration Tests: .NET Builds ===${NC}"
 if command -v dotnet &> /dev/null; then
     run_test ".NET debug build succeeds" "./build.sh --dotnet --debug" 0
-    test_output_contains ".NET debug build shows rules compiler" "./build.sh --dotnet --debug" "Rules Compiler"
+    test_output_contains ".NET debug build shows compiler dotnet" "./build.sh --dotnet --debug" "Compiler Dotnet"
     
     run_test ".NET release build succeeds" "./build.sh --dotnet --release" 0
     test_output_contains ".NET release build uses Release config" "./build.sh --dotnet --release" "Build Profile: release"

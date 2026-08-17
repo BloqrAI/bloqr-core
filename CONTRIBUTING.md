@@ -54,7 +54,7 @@ bloqr-core/
 ├── tools/                       # Build and utility scripts
 ├── schemas/                     # First-party JSON schemas
 ├── src/                         # Source code organized by language
-│   ├── rules-compiler-dotnet/       # .NET rules compiler
+│   ├── compilers/dotnet/            # .NET compiler
 │   ├── rules-compiler-rust/         # Rust rules compiler
 │   ├── adblock-compiler-core/       # TypeScript rules compiler (@bloqr/compiler-core)
 │   ├── rules-compiler-python/       # Python rules compiler
@@ -212,7 +212,7 @@ All new features and bug fixes must include appropriate tests:
 
 # Language-specific tests
 cd src/adblock-compiler-core && deno task test
-cd src/rules-compiler-dotnet && dotnet test
+cd src/compilers/dotnet && dotnet test
 cd src/rules-compiler-python && pytest
 cd src/rules-compiler-rust && cargo test
 cd src/rules-compiler-powershell && Invoke-Pester
