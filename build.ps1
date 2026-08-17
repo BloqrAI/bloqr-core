@@ -123,7 +123,7 @@ function Build-DotNetProjects {
     # Build Compiler Common (.NET) - shared library, standalone solution
     Write-Host "→ Building Compiler Common (.NET)..."
     try {
-        Push-Location src/compiler-common-dotnet
+        Push-Location src/common/dotnet
         try {
             dotnet restore CompilerCommon.slnx
             dotnet build CompilerCommon.slnx --no-restore --configuration $configuration

@@ -20,7 +20,7 @@ This repository is a comprehensive multi-language toolkit for ad-blocking, netwo
 - **RulesCompiler Toolkit** (`src/rules-compiler-powershell/`) - Canonical, actively-developed modular PowerShell toolkit (class-based `Common`, `RulesCompiler`, `AdGuardWebhook` modules with Pester tests)
 
 ### Common .NET Library
-- **`Bloqr.Compiler.Abstractions`/`Bloqr.Compiler.Core`** (`src/compiler-common-dotnet/`) - Shared .NET library (own solution, `CompilerCommon.slnx`) consumed by the .NET rules compiler and Dashboard via `<ProjectReference>`; not part of either consumer's solution
+- **`Bloqr.Compiler.Abstractions`/`Bloqr.Compiler.Core`** (`src/common/dotnet/`) - Shared .NET library (own solution, `CompilerCommon.slnx`) consumed by the .NET rules compiler and Dashboard via `<ProjectReference>`; not part of either consumer's solution
 
 ### Dashboard
 - **Bloqr Dashboard** (`src/bloqr-dashboard/`) - flagship .NET console app (own solution, `BloqrDashboard.slnx`) for generating/editing/round-tripping compiler configs, running compilations with rich progress UI, and validation/diagnostics — menu-driven interactively, or automatable via CLI switches or as an embedded library (`IDashboardService`)
@@ -104,9 +104,9 @@ deno run --allow-read --allow-write --allow-env --allow-run src/mod.ts --version
 ./src/rules-compiler-shell/zsh/compile-rules.zsh -v                 # Show version
 ```
 
-### Common .NET Library (`src/compiler-common-dotnet/`)
+### Common .NET Library (`src/common/dotnet/`)
 ```bash
-cd src/compiler-common-dotnet
+cd src/common/dotnet
 dotnet restore CompilerCommon.slnx
 dotnet build CompilerCommon.slnx
 dotnet test CompilerCommon.slnx
@@ -211,7 +211,7 @@ deno task test:coverage                    # With coverage
 cd src/rules-compiler-dotnet
 dotnet test RulesCompiler.slnx --filter "FullyQualifiedName~RulesCompilerServiceTests"
 
-cd ../compiler-common-dotnet
+cd ../common/dotnet
 dotnet test CompilerCommon.slnx --filter "FullyQualifiedName~ConfigurationValidatorTests"
 dotnet test CompilerCommon.slnx --filter "FullyQualifiedName~TransformationTests"
 ```
@@ -277,7 +277,7 @@ cargo test config::                       # Tests in module
 - `zsh/compile-rules.zsh` - Zsh script with native zsh features (zparseopts, EPOCHREALTIME)
 - Supports JSON, YAML, TOML via external tools (yq, Python)
 
-### Common .NET Library (`src/compiler-common-dotnet/`)
+### Common .NET Library (`src/common/dotnet/`)
 - Its own independent .NET solution (`CompilerCommon.slnx`), isolated from `RulesCompiler.slnx` and `BloqrDashboard.slnx` — every in-repo .NET consumer reaches it via `<ProjectReference>` across directories, not via shared solution membership
 - `Bloqr.Compiler.Abstractions` - Interfaces, event-args, and model/DTO types shared across the compiler stack
 - `Bloqr.Compiler.Core` - Configuration reading/validation, chunking, file-locking, plugin management, and the compilation pipeline, built on `Bloqr.Compiler.Abstractions`
@@ -287,7 +287,7 @@ cargo test config::                       # Tests in module
 ### Rules Compiler - .NET (`src/rules-compiler-dotnet/`)
 - .NET 10 library for filter compilation
 - Supports JSON, YAML, and TOML configuration formats
-- `RulesCompiler` - Thin library referencing `Bloqr.Compiler.Abstractions`/`Bloqr.Compiler.Core` (from `src/compiler-common-dotnet/`), plus compiler-specific services (e.g. `FilterCompiler`)
+- `RulesCompiler` - Thin library referencing `Bloqr.Compiler.Abstractions`/`Bloqr.Compiler.Core` (from `src/common/dotnet/`), plus compiler-specific services (e.g. `FilterCompiler`)
 - `RulesCompiler.Console` - Spectre.Console interactive and CLI frontend
 - `RulesCompiler.Tests` - xUnit tests
 - Key interfaces: `IRulesCompilerService`, `IConfigurationReader`, `IFilterCompiler`
@@ -520,7 +520,7 @@ GitHub Actions workflows validate:
 
 - **Main filter list**: `output/adguard_dns_filter.txt` in [`BloqrAI/bloqr-blocklists`](https://github.com/BloqrAI/bloqr-blocklists)
 - **Compiler configs**: `src/rules-compiler-*/`
-- **Common .NET library**: `src/compiler-common-dotnet/` (`Bloqr.Compiler.Abstractions`/`Bloqr.Compiler.Core`, own solution)
+- **Common .NET library**: `src/common/dotnet/` (`Bloqr.Compiler.Abstractions`/`Bloqr.Compiler.Core`, own solution)
 - **JSON Schemas**: `schemas/compiler-config.schema.json`, `schemas/dashboard-config.schema.json` — `compiler-config.schema.json` is wired into `Bloqr.Compiler.Core`'s `ConfigurationValidator` via `CompilerConfigJsonSchemaValidator` (#258); the Dashboard's `ICompilerConfigSchemaValidator` delegates to the same validator rather than re-embedding the schema
 - **Deno configs**: `src/*/deno.json`
 - **OpenAPI spec**: `api/openapi.yaml` in [`BloqrAI/bloqr-apiclients`](https://github.com/BloqrAI/bloqr-apiclients)

@@ -13,7 +13,7 @@ on:
     paths:
       - 'src/validation/**'
       - 'src/rules-compiler-*/**'
-      - 'src/compiler-common-dotnet/**'
+      - 'src/common/dotnet/**'
       - 'tools/check-validation-compliance.sh'
       - '.github/workflows/validation-compliance.yml'
   pull_request:
@@ -21,7 +21,7 @@ on:
     paths:
       - 'src/validation/**'
       - 'src/rules-compiler-*/**'
-      - 'src/compiler-common-dotnet/**'
+      - 'src/common/dotnet/**'
       - 'tools/check-validation-compliance.sh'
       - '.github/workflows/validation-compliance.yml'
   workflow_dispatch:
@@ -98,7 +98,7 @@ jobs:
           fi
 
           # .NET
-          if grep -rq "bloqr_validator" src/rules-compiler-dotnet src/compiler-common-dotnet 2>/dev/null; then
+          if grep -rq "bloqr_validator" src/rules-compiler-dotnet src/common/dotnet 2>/dev/null; then
             echo "| .NET | integrated |" >> $GITHUB_STEP_SUMMARY
           else
             echo "| .NET | pending |" >> $GITHUB_STEP_SUMMARY

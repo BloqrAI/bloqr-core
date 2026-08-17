@@ -41,7 +41,7 @@ Running a single test
   - All tests: deno task test
 - .NET (xUnit)
   - By class pattern (rules compiler): cd src/rules-compiler-dotnet && dotnet test RulesCompiler.slnx --filter "FullyQualifiedName~RulesCompilerServiceTests"
-  - By class pattern (shared library): cd src/compiler-common-dotnet && dotnet test CompilerCommon.slnx --filter "FullyQualifiedName~ConfigurationValidatorTests"
+  - By class pattern (shared library): cd src/common/dotnet && dotnet test CompilerCommon.slnx --filter "FullyQualifiedName~ConfigurationValidatorTests"
 - Python: pytest -k "test_read_yaml"
 - Rust: cargo test test_count_rules
 

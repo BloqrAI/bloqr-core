@@ -1,6 +1,6 @@
 # Compiler Common (.NET)
 
-The shared .NET library behind this repo's `.NET` filter-rules compiler and the Dashboard: `Bloqr.Compiler.Abstractions` and `Bloqr.Compiler.Core`. Neither project contains compiler-specific logic — both are pure shared building blocks, consumed by [`src/rules-compiler-dotnet/`](../rules-compiler-dotnet/) and [`src/bloqr-dashboard/`](../bloqr-dashboard/) via `<ProjectReference>`.
+The shared .NET library behind this repo's `.NET` filter-rules compiler and the Dashboard: `Bloqr.Compiler.Abstractions` and `Bloqr.Compiler.Core`. Neither project contains compiler-specific logic — both are pure shared building blocks, consumed by [`src/rules-compiler-dotnet/`](../../rules-compiler-dotnet/) and [`src/bloqr-dashboard/`](../../bloqr-dashboard/) via `<ProjectReference>`.
 
 ## Why this is its own solution
 
@@ -16,7 +16,7 @@ The shared .NET library behind this repo's `.NET` filter-rules compiler and the 
 ## Installation
 
 ```bash
-cd src/compiler-common-dotnet
+cd src/common/dotnet
 dotnet restore CompilerCommon.slnx
 dotnet build CompilerCommon.slnx
 ```
@@ -26,11 +26,11 @@ dotnet build CompilerCommon.slnx
 In-repo consumers reference the projects directly rather than through a package feed:
 
 ```xml
-<ProjectReference Include="..\..\..\compiler-common-dotnet\src\Bloqr.Compiler.Abstractions\Bloqr.Compiler.Abstractions.csproj" />
-<ProjectReference Include="..\..\..\compiler-common-dotnet\src\Bloqr.Compiler.Core\Bloqr.Compiler.Core.csproj" />
+<ProjectReference Include="..\..\..\common\dotnet\src\Bloqr.Compiler.Abstractions\Bloqr.Compiler.Abstractions.csproj" />
+<ProjectReference Include="..\..\..\common\dotnet\src\Bloqr.Compiler.Core\Bloqr.Compiler.Core.csproj" />
 ```
 
-`RulesCompiler` (`src/rules-compiler-dotnet/`) references both. `Bloqr.Dashboard.Abstractions` references `Bloqr.Compiler.Abstractions`; `Bloqr.Dashboard.Core` references `Bloqr.Compiler.Core`. There's no reason to make an in-repo build round-trip through a package feed — `<ProjectReference>` gives identical `dotnet publish --self-contained` output at zero extra latency. See [`docs/architecture/nuget-distribution-strategy.md`](../../docs/architecture/nuget-distribution-strategy.md) for the full decision record.
+`RulesCompiler` (`src/rules-compiler-dotnet/`) references both. `Bloqr.Dashboard.Abstractions` references `Bloqr.Compiler.Abstractions`; `Bloqr.Dashboard.Core` references `Bloqr.Compiler.Core`. There's no reason to make an in-repo build round-trip through a package feed — `<ProjectReference>` gives identical `dotnet publish --self-contained` output at zero extra latency. See [`docs/architecture/nuget-distribution-strategy.md`](../../../docs/architecture/nuget-distribution-strategy.md) for the full decision record.
 
 Out-of-repo consumers (a future .NET MAUI host, or this library becoming its own repo) can instead take it as a NuGet package — see [Publishing](#publishing) below.
 
@@ -99,7 +99,7 @@ Out-of-repo consumers (a future .NET MAUI host, or this library becoming its own
 `Bloqr.Compiler.Core.Tests` covers everything that doesn't need a `RulesCompiler`-specific fixture — `ConfigurationReader`, `ConfigurationValidator`, `CompilerConfigJsonSchemaValidator`, `ChunkingService`, `HashDatabaseService`, `OutputPublisher`, `RulesValidatorService`, `CompilationEventDispatcher`/`QueuedCompilationEventDispatcher`, `PlatformHelper`, `StructuredJsonLogFormatter`, the DI extensions, and the `Bloqr.Compiler.Abstractions` models/enums:
 
 ```bash
-cd src/compiler-common-dotnet
+cd src/common/dotnet
 dotnet test CompilerCommon.slnx
 ```
 
@@ -109,7 +109,7 @@ dotnet test CompilerCommon.slnx
 
 ## Publishing
 
-Both packages publish to GitHub Packages' NuGet feed (`https://nuget.pkg.github.com/BloqrAI/index.json`) as part of `.github/workflows/release.yml`'s `publish-nuget` job, triggered on `v*` release tags and authenticated with the workflow's own `GITHUB_TOKEN`. See [`docs/architecture/nuget-distribution-strategy.md`](../../docs/architecture/nuget-distribution-strategy.md) for why these two libraries are published this way while everything else in the .NET solutions stays on in-repo project references, and [`docs/release-guide.md`](../../docs/release-guide.md) for the release process.
+Both packages publish to GitHub Packages' NuGet feed (`https://nuget.pkg.github.com/BloqrAI/index.json`) as part of `.github/workflows/release.yml`'s `publish-nuget` job, triggered on `v*` release tags and authenticated with the workflow's own `GITHUB_TOKEN`. See [`docs/architecture/nuget-distribution-strategy.md`](../../../docs/architecture/nuget-distribution-strategy.md) for why these two libraries are published this way while everything else in the .NET solutions stays on in-repo project references, and [`docs/release-guide.md`](../../../docs/release-guide.md) for the release process.
 
 To pack locally:
 
@@ -121,7 +121,7 @@ dotnet pack src/Bloqr.Compiler.Core/Bloqr.Compiler.Core.csproj -c Release -o ./n
 ## Project Structure
 
 ```
-src/compiler-common-dotnet/
+src/common/dotnet/
 ├── src/
 │   ├── Bloqr.Compiler.Abstractions/ # Shared interfaces, event-args, and models
 │   ├── Bloqr.Compiler.Core/         # Common implementation
@@ -135,10 +135,10 @@ src/compiler-common-dotnet/
 
 ## Related Projects
 
-- [Rules Compiler (.NET)](../rules-compiler-dotnet/) - the compiler-specific consumer: `FilterCompiler`, `OutputWriter`, `RulesCompilerService`
-- [Bloqr Dashboard](../bloqr-dashboard/) - the other in-repo consumer
-- [Validation Library](../validation/) - the native Rust library `RulesValidatorService` wraps
+- [Rules Compiler (.NET)](../../rules-compiler-dotnet/) - the compiler-specific consumer: `FilterCompiler`, `OutputWriter`, `RulesCompilerService`
+- [Bloqr Dashboard](../../bloqr-dashboard/) - the other in-repo consumer
+- [Validation Library](../../validation/) - the native Rust library `RulesValidatorService` wraps
 
 ## License
 
-GPLv3 - See [LICENSE](../../LICENSE) for details.
+GPLv3 - See [LICENSE](../../../LICENSE) for details.

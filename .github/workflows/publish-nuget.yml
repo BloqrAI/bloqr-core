@@ -1,6 +1,6 @@
 name: Publish Common .NET Library to NuGet
 
-# Publishes src/compiler-common-dotnet (Bloqr.Compiler.Abstractions and
+# Publishes src/common/dotnet (Bloqr.Compiler.Abstractions and
 # Bloqr.Compiler.Core) to GitHub Packages' NuGet feed whenever either
 # project changes on main, or on demand. Mirrors publish-jsr.yml's and
 # publish-crates.yml's pattern: path-filtered push trigger, independent of
@@ -21,7 +21,7 @@ on:
   push:
     branches: ["main"]
     paths:
-      - "src/compiler-common-dotnet/**"
+      - "src/common/dotnet/**"
       - ".github/workflows/publish-nuget.yml"
   workflow_dispatch: {}
 
@@ -54,10 +54,10 @@ jobs:
           restore-keys: ${{ runner.os }}-nuget-
 
       - name: Restore Compiler Common dependencies
-        run: dotnet restore src/compiler-common-dotnet/CompilerCommon.slnx
+        run: dotnet restore src/common/dotnet/CompilerCommon.slnx
 
       - name: Test
-        run: dotnet test src/compiler-common-dotnet/CompilerCommon.slnx --configuration Release --no-restore
+        run: dotnet test src/common/dotnet/CompilerCommon.slnx --configuration Release --no-restore
 
       # Bloqr.Compiler.Abstractions/Core are "the common .NET library" - see
       # docs/architecture/nuget-distribution-strategy.md for why these two
@@ -65,11 +65,11 @@ jobs:
       # Bloqr.Dashboard.*) stay on <ProjectReference>.
       - name: Pack common library packages
         run: |
-          dotnet pack src/compiler-common-dotnet/src/Bloqr.Compiler.Abstractions/Bloqr.Compiler.Abstractions.csproj \
+          dotnet pack src/common/dotnet/src/Bloqr.Compiler.Abstractions/Bloqr.Compiler.Abstractions.csproj \
             --configuration Release \
             --no-restore \
             --output ./nuget-packages
-          dotnet pack src/compiler-common-dotnet/src/Bloqr.Compiler.Core/Bloqr.Compiler.Core.csproj \
+          dotnet pack src/common/dotnet/src/Bloqr.Compiler.Core/Bloqr.Compiler.Core.csproj \
             --configuration Release \
             --no-restore \
             --output ./nuget-packages
