@@ -1,5 +1,5 @@
 """
-Tests for the bloqr-validator CLI wiring helpers in rules_compiler.compiler (#361).
+Tests for the bloqr-validator CLI wiring helpers in bloqr_compiler.compiler (#361).
 
 `_run_rules_validator` shells out to the `bloqr-validate` binary rather than binding
 against the native library directly, so these tests mock `find_rules_validate_binary`
@@ -15,9 +15,9 @@ from pathlib import Path
 
 import pytest
 
-from rules_compiler import compiler as compiler_module
-from rules_compiler.compiler import _run_rules_validator, find_rules_validate_binary
-from rules_compiler.events import CompilationEventHandler, EventDispatcher, ValidationEventArgs
+from bloqr_compiler import compiler as compiler_module
+from bloqr_compiler.compiler import _run_rules_validator, find_rules_validate_binary
+from bloqr_compiler.events import CompilationEventHandler, EventDispatcher, ValidationEventArgs
 
 
 class RecordingHandler(CompilationEventHandler):
@@ -49,7 +49,7 @@ class TestFindRulesValidateBinary:
         monkeypatch.setattr(compiler_module.shutil, "which", lambda _cmd: None)
         # Point the module's own __file__ at a fake repo layout under tmp_path so the
         # dev-convenience target/release|debug fallback candidates don't exist either.
-        fake_file = tmp_path / "src" / "rules-compiler-python" / "rules_compiler" / "compiler.py"
+        fake_file = tmp_path / "src" / "compilers" / "python" / "bloqr_compiler" / "compiler.py"
         monkeypatch.setattr(compiler_module, "__file__", str(fake_file))
 
         assert find_rules_validate_binary() is None

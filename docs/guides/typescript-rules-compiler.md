@@ -4,7 +4,7 @@ A comprehensive guide to using the TypeScript rules compiler with Deno 2.0+.
 
 ## Overview
 
-The TypeScript rules compiler (`src/compilers/typescript/`) is a Deno-based implementation that *is* [`@bloqr/compiler-core`](https://jsr.io/@bloqr/compiler-core) — this repo's own dependency-free filter compilation engine — compiling filter lists from multiple sources with transformations, inclusions, and exclusions. See the [`@bloqr/compiler-core` Guide](adblock-compiler-guide.md) for the full architecture.
+The TypeScript rules compiler (`src/compilers/typescript/`) is a Deno-based implementation that *is* [`@bloqr/compiler-core`](https://jsr.io/@bloqr/compiler-core) — this repo's own dependency-free filter compilation engine — compiling filter lists from multiple sources with transformations, inclusions, and exclusions. See the [`@bloqr/compiler-core` Guide](compiler-core-guide.md) for the full architecture.
 
 ## Features
 
@@ -474,7 +474,7 @@ If you're in a Node.js project, you can add to `package.json`:
 - [Configuration Reference](../configuration-reference.md)
 - [Compiler Comparison](../compiler-comparison.md)
 - [.NET Compiler](../../src/compilers/dotnet/README.md)
-- [Python Compiler](../../src/rules-compiler-python/README.md)
+- [Python Compiler](../../src/compilers/python/README.md)
 - [Rust Compiler](../../src/rules-compiler-rust/README.md)
 
 ## License

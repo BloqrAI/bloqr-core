@@ -3,7 +3,7 @@ requires = ["setuptools>=61.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "rules-compiler"
+name = "bloqr-compiler"
 version = "2.0.0"
 description = "Python API for compiling AdGuard filter rules using hostlist-compiler"
 readme = "README.md"
@@ -50,17 +50,17 @@ interactive = [
     "questionary>=2.1.0",
 ]
 all = [
-    "rules-compiler[dev,toml-export,interactive]",
+    "bloqr-compiler[dev,toml-export,interactive]",
 ]
 
 [project.scripts]
-rules-compiler = "rules_compiler.cli:main"
+bloqr-compiler = "bloqr_compiler.cli:main"
 
 [project.urls]
 Homepage = "https://github.com/BloqrAI/bloqr-core"
 Repository = "https://github.com/BloqrAI/bloqr-core"
 Issues = "https://github.com/BloqrAI/bloqr-core/issues"
-Documentation = "https://github.com/BloqrAI/bloqr-core/tree/main/src/rules-compiler-python"
+Documentation = "https://github.com/BloqrAI/bloqr-core/tree/main/src/compilers/python"
 Changelog = "https://github.com/BloqrAI/bloqr-core/releases"
 
 [tool.setuptools.packages.find]
@@ -89,10 +89,10 @@ select = ["E", "F", "W", "I", "N", "UP", "B", "C4", "SIM", "RUF"]
 ignore = ["E501"]  # Line length handled by formatter
 
 [tool.ruff.lint.isort]
-known-first-party = ["rules_compiler"]
+known-first-party = ["bloqr_compiler"]
 
 [tool.coverage.run]
-source = ["rules_compiler"]
+source = ["bloqr_compiler"]
 branch = true
 
 [tool.coverage.report]

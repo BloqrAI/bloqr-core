@@ -9,7 +9,7 @@ each stage of the compilation process. Events can be used to:
 - Monitor performance metrics
 
 Example:
-    >>> from rules_compiler.events import EventDispatcher, CompilationEventHandler
+    >>> from bloqr_compiler.events import EventDispatcher, CompilationEventHandler
     >>>
     >>> class MyHandler(CompilationEventHandler):
     ...     async def on_source_loading(self, args):
@@ -49,8 +49,8 @@ else:
     _HAS_FCNTL = True
 
 if TYPE_CHECKING:
-    from rules_compiler.config import FilterSource, CompilerConfiguration
-    from rules_compiler.chunking import ChunkMetadata
+    from bloqr_compiler.config import FilterSource, CompilerConfiguration
+    from bloqr_compiler.chunking import ChunkMetadata
 
 logger = logging.getLogger(__name__)
 

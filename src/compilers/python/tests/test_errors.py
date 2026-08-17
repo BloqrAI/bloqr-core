@@ -2,7 +2,7 @@
 
 import pytest
 
-from rules_compiler.errors import (
+from bloqr_compiler.errors import (
     CompilationError,
     CompilerError,
     CompilerNotFoundError,

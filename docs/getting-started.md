@@ -73,9 +73,9 @@ dotnet run --project src/Bloqr.Compiler.Dotnet.Console
 #### Python
 
 ```bash
-cd src/rules-compiler-python
+cd src/compilers/python
 pip install -e .
-rules-compiler
+bloqr-compiler
 ```
 
 #### Rust
@@ -138,7 +138,7 @@ deno task compile -- -c my-config.json -o my-filter.txt
 dotnet run --project src/Bloqr.Compiler.Dotnet.Console -- -c my-config.json -o my-filter.txt
 
 # Python
-rules-compiler -c my-config.json -o my-filter.txt
+bloqr-compiler -c my-config.json -o my-filter.txt
 
 # Rust
 cargo run -- -c my-config.json -o my-filter.txt
@@ -219,7 +219,7 @@ chmod +x src/rules-compiler-shell/bash/compile-rules.sh
 Install in development mode:
 
 ```bash
-cd src/rules-compiler-python
+cd src/compilers/python
 pip install -e .
 ```
 

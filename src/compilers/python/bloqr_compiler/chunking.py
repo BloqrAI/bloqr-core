@@ -20,12 +20,12 @@ from enum import Enum
 from pathlib import Path
 from typing import Any
 
-from rules_compiler.config import (
+from bloqr_compiler.config import (
     CompilerConfiguration,
     FilterSource,
     to_json,
 )
-from rules_compiler.errors import CompilerNotFoundError
+from bloqr_compiler.errors import CompilerNotFoundError
 
 logger = logging.getLogger(__name__)
 

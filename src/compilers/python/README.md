@@ -1,4 +1,4 @@
-# Rules Compiler (Python)
+# Bloqr Compiler (Python)
 
 Python API for compiling AdGuard filter rules.
 
@@ -6,7 +6,7 @@ Python API for compiling AdGuard filter rules.
 
 ```bash
 # Install from source
-cd src/rules-compiler-python
+cd src/compilers/python
 pip install -e .
 
 # Install with development dependencies
@@ -24,28 +24,28 @@ pip install -e ".[dev]"
 
 ```bash
 # Use default config (compiler-config.json)
-rules-compiler
+bloqr-compiler
 
 # Use specific configuration file
-rules-compiler -c compiler-config.json
+bloqr-compiler -c compiler-config.json
 
 # Compile and copy to rules directory
-rules-compiler -c config.json -r
+bloqr-compiler -c config.json -r
 
 # Show version info
-rules-compiler -v
+bloqr-compiler -v
 
 # Enable debug output
-rules-compiler -c config.json -d
+bloqr-compiler -c config.json -d
 
 # Show help
-rules-compiler -h
+bloqr-compiler -h
 
 # Disable validation before compilation
-rules-compiler -c config.json --no-validate-config
+bloqr-compiler -c config.json --no-validate-config
 
 # Fail on validation warnings
-rules-compiler -c config.json --fail-on-warnings
+bloqr-compiler -c config.json --fail-on-warnings
 ```
 
 ### CLI Options
@@ -69,10 +69,10 @@ rules-compiler -c config.json --fail-on-warnings
 ### Basic Usage (Synchronous)
 
 ```python
-from rules_compiler import RulesCompiler
+from bloqr_compiler import BloqrCompiler
 
 # Create compiler
-compiler = RulesCompiler()
+compiler = BloqrCompiler()
 
 # Compile rules
 result = compiler.compile("compiler-config.json", copy_to_rules=True)
@@ -90,10 +90,10 @@ The Python compiler now supports asynchronous operations for better performance 
 
 ```python
 import asyncio
-from rules_compiler import RulesCompiler
+from bloqr_compiler import BloqrCompiler
 
 async def main():
-    compiler = RulesCompiler()
+    compiler = BloqrCompiler()
     
     # Use async API for better performance
     result = await compiler.compile_async(
@@ -116,7 +116,7 @@ Compile multiple configurations in parallel:
 
 ```python
 import asyncio
-from rules_compiler import compile_rules_async
+from bloqr_compiler import compile_rules_async
 
 async def compile_all():
     configs = ["config1.json", "config2.json", "config3.json"]
@@ -140,7 +140,7 @@ Use async functions for file operations:
 
 ```python
 import asyncio
-from rules_compiler import count_rules_async, compute_hash_async
+from bloqr_compiler import count_rules_async, compute_hash_async
 
 async def analyze_file(path):
     # Count rules and compute hash in parallel
@@ -173,7 +173,7 @@ asyncio.run(analyze_file("rules.txt"))
 ### Reading Configuration
 
 ```python
-from rules_compiler import read_configuration, ConfigurationFormat
+from bloqr_compiler import read_configuration, ConfigurationFormat
 
 # Auto-detect format from extension
 config = read_configuration("config.json")
@@ -187,7 +187,7 @@ config = read_configuration("config.txt", format=ConfigurationFormat.JSON)
 ### Version Information
 
 ```python
-from rules_compiler import get_version_info
+from bloqr_compiler import get_version_info
 
 info = get_version_info()
 print(f"Module: {info.module_version}")
@@ -199,9 +199,9 @@ print(f"Platform: {info.platform.os_name}")
 ### Using the Compiler Class
 
 ```python
-from rules_compiler import RulesCompiler, ConfigurationFormat
+from bloqr_compiler import BloqrCompiler, ConfigurationFormat
 
-compiler = RulesCompiler(debug=True)
+compiler = BloqrCompiler(debug=True)
 
 # Read and inspect configuration
 config = compiler.read_config("config.json")
@@ -269,7 +269,7 @@ type = "adblock"
 ## Running Tests
 
 ```bash
-cd src/rules-compiler-python
+cd src/compilers/python
 
 # Install dev dependencies
 pip install -e ".[dev]"
@@ -278,7 +278,7 @@ pip install -e ".[dev]"
 pytest
 
 # Run with coverage
-pytest --cov=rules_compiler --cov-report=term-missing
+pytest --cov=bloqr_compiler --cov-report=term-missing
 
 # Run specific test file
 pytest tests/test_config.py
@@ -291,17 +291,17 @@ pytest -v
 
 ```bash
 # Run mypy
-mypy rules_compiler
+mypy bloqr_compiler
 ```
 
 ## Linting
 
 ```bash
 # Run ruff
-ruff check rules_compiler
+ruff check bloqr_compiler
 
 # Auto-fix issues
-ruff check --fix rules_compiler
+ruff check --fix bloqr_compiler
 ```
 
 ## API Reference
@@ -310,7 +310,7 @@ ruff check --fix rules_compiler
 
 | Class | Description |
 |-------|-------------|
-| `RulesCompiler` | Main compiler class |
+| `BloqrCompiler` | Main compiler class |
 | `CompilerResult` | Result of a compilation operation |
 | `CompilerConfiguration` | Configuration file model |
 | `FilterSource` | Source filter list definition |

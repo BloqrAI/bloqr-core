@@ -9,13 +9,13 @@ import argparse
 import sys
 from pathlib import Path
 
-from rules_compiler import __version__
-from rules_compiler.compiler import (
-    RulesCompiler,
+from bloqr_compiler import __version__
+from bloqr_compiler.compiler import (
+    BloqrCompiler,
     get_version_info,
     validate_configuration,
 )
-from rules_compiler.config import (
+from bloqr_compiler.config import (
     ConfigurationFormat,
     Transformation,
     read_configuration,
@@ -505,7 +505,7 @@ def main(args: list[str] | None = None) -> int:
 
     # Handle interactive mode
     if opts.interactive:
-        from rules_compiler.interactive import run_interactive_menu
+        from bloqr_compiler.interactive import run_interactive_menu
         
         # Try to determine initial config
         initial_config = None
@@ -561,7 +561,7 @@ def main(args: list[str] | None = None) -> int:
     fail_on_warnings = opts.fail_on_warnings
 
     # Create compiler and run
-    compiler = RulesCompiler(debug=opts.debug)
+    compiler = BloqrCompiler(debug=opts.debug)
 
     try:
         print(f"[INFO] Starting compilation with config: {config_path}")

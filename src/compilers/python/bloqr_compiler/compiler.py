@@ -28,14 +28,14 @@ try:
 except ImportError:
     AIOFILES_AVAILABLE = False
 
-from rules_compiler.config import (
+from bloqr_compiler.config import (
     CompilerConfiguration,
     ConfigurationFormat,
     HashVerificationSettings,
     read_configuration,
     to_json,
 )
-from rules_compiler.errors import (
+from bloqr_compiler.errors import (
     CompilationError,
     CompilerNotFoundError,
     CopyError,
@@ -43,15 +43,15 @@ from rules_compiler.errors import (
     TimeoutError as CompilerTimeoutError,
     ValidationError,
 )
-from rules_compiler.events import (
+from bloqr_compiler.events import (
     EventDispatcher,
     HashComputedEventArgs,
     HashMismatchEventArgs,
     HashVerifiedEventArgs,
     ValidationEventArgs,
 )
-from rules_compiler.hash_database import HashDatabaseEntry, load_hash_database, record_hash
-from rules_compiler.output_publisher import publish_output
+from bloqr_compiler.hash_database import HashDatabaseEntry, load_hash_database, record_hash
+from bloqr_compiler.output_publisher import publish_output
 
 logger = logging.getLogger(__name__)
 
@@ -167,8 +167,8 @@ def find_rules_validate_binary() -> str | None:
         return on_path
 
     binary_name = "bloqr-validate.exe" if platform.system() == "Windows" else "bloqr-validate"
-    # compiler.py -> rules_compiler/ -> rules-compiler-python/ -> src/ -> repo root
-    repo_root = Path(__file__).resolve().parents[3]
+    # compiler.py -> bloqr_compiler/ -> python/ -> compilers/ -> src/ -> repo root
+    repo_root = Path(__file__).resolve().parents[4]
     for profile in ("release", "debug"):
         candidate = repo_root / "target" / profile / binary_name
         if candidate.is_file():
@@ -179,7 +179,7 @@ def find_rules_validate_binary() -> str | None:
 
 def get_version_info() -> VersionInfo:
     """Get version information for all components."""
-    from rules_compiler import __version__
+    from bloqr_compiler import __version__
 
     info = VersionInfo(
         module_version=__version__,
@@ -561,12 +561,12 @@ def _get_compiler_command(config_path: str, output_path: str) -> tuple[list[str]
     raise CompilerNotFoundError(["deno"])
 
 
-class RulesCompiler:
+class BloqrCompiler:
     """
     Main compiler class for AdGuard filter rules.
 
     Example:
-        >>> compiler = RulesCompiler()
+        >>> compiler = BloqrCompiler()
         >>> result = compiler.compile("config.yaml", copy_to_rules=True)
         >>> if result.success:
         ...     print(f"Compiled {result.rule_count} rules")
@@ -692,7 +692,7 @@ class RulesCompiler:
             Compilation result.
 
         Example:
-            >>> compiler = RulesCompiler()
+            >>> compiler = BloqrCompiler()
             >>> result = await compiler.compile_async("config.yaml")
             >>> if result.success:
             ...     print(f"Compiled {result.rule_count} rules")

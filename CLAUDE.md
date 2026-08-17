@@ -9,7 +9,7 @@ This repository is a comprehensive multi-language toolkit for ad-blocking, netwo
 ### Rules Compilers (4 languages)
 - **TypeScript** (`src/compilers/typescript/`) - Deno 2.0+ with npm compatibility
 - **C#/.NET 10** (`src/compilers/dotnet/`) - Library and Spectre.Console CLI with DI support
-- **Python 3.9+** (`src/rules-compiler-python/`) - pip-installable package with CLI and API
+- **Python 3.9+** (`src/compilers/python/`) - pip-installable package with CLI and API
 - **Rust** (`src/rules-compiler-rust/`) - High-performance single binary with zero runtime deps
 
 ### Shell Scripts (`src/rules-compiler-shell/`)
@@ -130,9 +130,9 @@ dotnet run --project src/Bloqr.Compiler.Dotnet.Console -- --config config.yaml -
 dotnet run --project src/Bloqr.Compiler.Dotnet.Console -- --version
 ```
 
-### Python Rules Compiler (`src/rules-compiler-python/`)
+### Python Compiler (`src/compilers/python/`)
 ```bash
-cd src/rules-compiler-python
+cd src/compilers/python
 
 # Install in development mode
 pip install -e .
@@ -143,16 +143,16 @@ pip install -e ".[dev]"
 # Run tests
 pytest
 pytest -v                    # Verbose output
-pytest --cov=rules_compiler  # With coverage
+pytest --cov=bloqr_compiler  # With coverage
 
 # CLI usage
-rules-compiler                           # Use default config
-rules-compiler -c config.yaml            # Specific config
-rules-compiler -c config.json -r         # Compile and copy to rules
-rules-compiler -c config.toml -o out.txt # Custom output
-rules-compiler -V                        # Show version info
-rules-compiler -d                        # Debug output
-rules-compiler --help                    # Show help
+bloqr-compiler                           # Use default config
+bloqr-compiler -c config.yaml            # Specific config
+bloqr-compiler -c config.json -r         # Compile and copy to rules
+bloqr-compiler -c config.toml -o out.txt # Custom output
+bloqr-compiler -V                        # Show version info
+bloqr-compiler -d                        # Debug output
+bloqr-compiler --help                    # Show help
 ```
 
 ### Rust Rules Compiler (`src/rules-compiler-rust/`)
@@ -227,12 +227,12 @@ Invoke-Pester -Path ./src/rules-compiler-powershell/ -Output Detailed
 
 ### Python (pytest)
 ```bash
-cd src/rules-compiler-python
+cd src/compilers/python
 pytest                                    # Run all tests
 pytest -v                                 # Verbose output
 pytest tests/test_config.py               # Specific file
 pytest -k "test_read_yaml"                # By test name
-pytest --cov=rules_compiler               # With coverage
+pytest --cov=bloqr_compiler               # With coverage
 ```
 
 ### Rust (cargo test)
@@ -293,14 +293,14 @@ cargo test config::                       # Tests in module
 - Key interfaces: `IBloqrCompilerService`, `IConfigurationReader`, `IFilterCompiler`
 - Features: Configuration validation, verbose mode, dependency injection
 
-### Rules Compiler - Python (`src/rules-compiler-python/`)
+### Bloqr Compiler - Python (`src/compilers/python/`)
 - Python 3.9+ package for filter compilation
 - Supports JSON, YAML, and TOML configuration formats
-- `rules_compiler/config.py` - Multi-format configuration reader
-- `rules_compiler/compiler.py` - Core `RulesCompiler` class and `compile_rules()` function
-- `rules_compiler/cli.py` - argparse-based CLI
+- `bloqr_compiler/config.py` - Multi-format configuration reader
+- `bloqr_compiler/compiler.py` - Core `BloqrCompiler` class and `compile_rules()` function
+- `bloqr_compiler/cli.py` - argparse-based CLI
 - Install via `pip install -e .` for development
-- Key classes: `RulesCompiler`, `CompilerConfiguration`, `CompilerResult`
+- Key classes: `BloqrCompiler`, `CompilerConfiguration`, `CompilerResult`
 - Tools: pytest, mypy, ruff
 
 ### Rules Compiler - Rust (`src/rules-compiler-rust/`)
@@ -519,7 +519,7 @@ GitHub Actions workflows validate:
 ## Key File Locations
 
 - **Main filter list**: `output/adguard_dns_filter.txt` in [`BloqrAI/bloqr-blocklists`](https://github.com/BloqrAI/bloqr-blocklists)
-- **Compiler configs**: `src/rules-compiler-*/`
+- **Compiler configs**: `src/compilers/*/` and the not-yet-migrated `src/rules-compiler-*/`
 - **Common .NET library**: `src/common/dotnet/` (`Bloqr.Compiler.Abstractions`/`Bloqr.Compiler.Core`, own solution)
 - **JSON Schemas**: `schemas/compiler-config.schema.json`, `schemas/dashboard-config.schema.json` — `compiler-config.schema.json` is wired into `Bloqr.Compiler.Core`'s `ConfigurationValidator` via `CompilerConfigJsonSchemaValidator` (#258); the Dashboard's `ICompilerConfigSchemaValidator` delegates to the same validator rather than re-embedding the schema
 - **Deno configs**: `src/*/deno.json`

@@ -264,8 +264,8 @@ rules_menu() {
                 ;;
             4)
                 if command -v python3 &> /dev/null; then
-                    cd src/rules-compiler-python
-                    python3 -m rules_compiler
+                    cd src/compilers/python
+                    python3 -m bloqr_compiler
                     cd "$SCRIPT_DIR"
                 else
                     echo -e "${RED}✗ Python 3 is not installed${NC}"
@@ -280,7 +280,7 @@ rules_menu() {
                     1) cd src/compilers/typescript && deno task test && cd "$SCRIPT_DIR" ;;
                     2) cargo test -p rules-compiler ;;
                     3) cd src/compilers/dotnet && dotnet test CompilerDotnet.slnx && cd "$SCRIPT_DIR" ;;
-                    4) cd src/rules-compiler-python && python3 -m pytest && cd "$SCRIPT_DIR" ;;
+                    4) cd src/compilers/python && python3 -m pytest && cd "$SCRIPT_DIR" ;;
                 esac
                 pause
                 ;;

@@ -311,7 +311,7 @@ services.AddCompilationEventHandler<MyEventHandler>();
 ### Python
 
 ```python
-from rules_compiler import (
+from bloqr_compiler import (
     CompilationEventHandler,
     EventDispatcher,
     ValidationEventArgs,
@@ -423,7 +423,7 @@ var stillValid = await lockService.VerifyIntegrityAsync(
 ### Python
 
 ```python
-from rules_compiler import FileLockService
+from bloqr_compiler import FileLockService
 
 lock_service = FileLockService()
 
@@ -520,5 +520,5 @@ RUST_LOG=debug
 See the language-specific API documentation:
 
 - [.NET API Reference](../src/compilers/dotnet/README.md)
-- [Python API Reference](../src/rules-compiler-python/README.md)
+- [Python API Reference](../src/compilers/python/README.md)
 - [Rust API Reference](../src/rules-compiler-rust/README.md)

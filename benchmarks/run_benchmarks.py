@@ -69,20 +69,20 @@ class BenchmarkRunner:
         project_root = Path(__file__).parent.parent
 
         if compiler == "python":
-            # Check if rules-compiler is installed
+            # Check if bloqr-compiler is installed
             try:
                 result = subprocess.run(
-                    ["rules-compiler", "--version"],
+                    ["bloqr-compiler", "--version"],
                     capture_output=True,
                     timeout=5
                 )
                 if result.returncode == 0:
-                    return "rules-compiler", []
+                    return "bloqr-compiler", []
             except Exception:
                 pass
 
             # Try running via python -m
-            return sys.executable, ["-m", "rules_compiler"]
+            return sys.executable, ["-m", "bloqr_compiler"]
 
         elif compiler == "dotnet":
             console_project = project_root / "src" / "compilers" / "dotnet" / "src" / "Bloqr.Compiler.Dotnet.Console"
@@ -101,7 +101,7 @@ class BenchmarkRunner:
             return None
 
         elif compiler == "typescript":
-            ts_project = project_root / "src" / "rules-compiler-typescript"
+            ts_project = project_root / "src" / "compilers" / "typescript"
             if ts_project.exists():
                 return "deno", ["task", "--cwd", str(ts_project), "compile"]
             return None

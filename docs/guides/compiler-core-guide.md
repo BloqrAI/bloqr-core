@@ -745,7 +745,7 @@ deno run --allow-read --allow-write --allow-env --allow-net --allow-run \
 diff output-old.txt output-new.txt
 ```
 
-Each non-TypeScript compiler in this repo (`src/compilers/dotnet/`, `src/rules-compiler-python/`, `src/rules-compiler-rust/`) keeps its existing public API and field names (e.g. `VersionInfo.HostlistCompilerVersion` in .NET) unchanged across this migration — only what populates them changed, to avoid a second breaking change for downstream consumers.
+Each non-TypeScript compiler in this repo (`src/compilers/dotnet/`, `src/compilers/python/`, `src/rules-compiler-rust/`) keeps its existing public API and field names (e.g. `VersionInfo.HostlistCompilerVersion` in .NET) unchanged across this migration — only what populates them changed, to avoid a second breaking change for downstream consumers.
 
 ## API Reference
 

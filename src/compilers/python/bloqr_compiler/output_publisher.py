@@ -15,7 +15,7 @@ from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
 
-from rules_compiler.config import ArchivingSettings, OutputSettings
+from bloqr_compiler.config import ArchivingSettings, OutputSettings
 
 _ARCHIVE_DIRECTORY_NAME = "archive"
 

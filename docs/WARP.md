@@ -22,8 +22,8 @@ TypeScript/Deno – rules compiler (src/compilers/typescript)
 - Restore/build/test: cd src/compilers/dotnet; dotnet restore CompilerDotnet.slnx; dotnet build CompilerDotnet.slnx; dotnet test CompilerDotnet.slnx
 - Run the console UI: dotnet run --project src/Bloqr.Compiler.Dotnet.Console/Bloqr.Compiler.Dotnet.Console.csproj
 
-Python – rules compiler (src/rules-compiler-python)
-- Install: cd src/rules-compiler-python && pip install -e ".[dev]"
+Python – rules compiler (src/compilers/python)
+- Install: cd src/compilers/python && pip install -e ".[dev]"
 - Test: pytest
 - Lint/type-check: ruff check .; mypy .
 
@@ -51,7 +51,7 @@ High-level architecture and structure
 - Rules compilers (`src/`)
   - `src/compilers/typescript/` — Deno/TypeScript wrapper around `@bloqr/compiler-core`, published on JSR.
   - `src/compilers/dotnet/` — .NET 10 library + Spectre.Console CLI.
-  - `src/rules-compiler-python/` — pip-installable package with CLI and API.
+  - `src/compilers/python/` — pip-installable package with CLI and API.
   - `src/rules-compiler-rust/` — single-binary CLI with zero runtime deps.
   - `src/rules-compiler-shell/` — bash and zsh scripts for compiling rules without a language runtime.
   - `src/rules-compiler-powershell/` — class-based PowerShell modules with Pester tests.

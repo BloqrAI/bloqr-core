@@ -280,18 +280,18 @@ function Show-RulesMenu {
             }
             "4" {
                 if (Get-Command python3 -ErrorAction SilentlyContinue) {
-                    Push-Location "$Script:RootDir\src\rules-compiler-python"
+                    Push-Location "$Script:RootDir\src\compilers\python"
                     try {
-                        python3 -m rules_compiler
+                        python3 -m bloqr_compiler
                     }
                     finally {
                         Pop-Location
                     }
                 }
                 elseif (Get-Command python -ErrorAction SilentlyContinue) {
-                    Push-Location "$Script:RootDir\src\rules-compiler-python"
+                    Push-Location "$Script:RootDir\src\compilers\python"
                     try {
-                        python -m rules_compiler
+                        python -m bloqr_compiler
                     }
                     finally {
                         Pop-Location
@@ -315,7 +315,7 @@ function Show-RulesMenu {
                         try { dotnet test CompilerDotnet.slnx } finally { Pop-Location }
                     }
                     "4" {
-                        Push-Location "$Script:RootDir\src\rules-compiler-python"
+                        Push-Location "$Script:RootDir\src\compilers\python"
                         try {
                             if (Get-Command python3 -ErrorAction SilentlyContinue) {
                                 python3 -m pytest

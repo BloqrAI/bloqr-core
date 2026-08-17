@@ -10,7 +10,7 @@ This project uses different testing frameworks for each language implementation:
 |-----------|-----------|---------------|--------------|
 | TypeScript (Rules Compiler) | Deno Test | `src/compilers/typescript/tests/` | `deno task test` |
 | .NET (Compiler) | xUnit | `src/compilers/dotnet/src/Bloqr.Compiler.Dotnet.Tests/` | `dotnet test` |
-| Python | pytest | `src/rules-compiler-python/tests/` | `pytest` |
+| Python | pytest | `src/compilers/python/tests/` | `pytest` |
 | Rust (Rules Compiler) | cargo test | `src/rules-compiler-rust/src/` | `cargo test` |
 | Rust (Validator) | cargo test | `src/validation/` | `cargo test` |
 | PowerShell | Pester | `src/rules-compiler-powershell/` | `Invoke-Pester -Recurse` |
@@ -184,7 +184,7 @@ public class MyServiceTests
 ### Running Tests
 
 ```bash
-cd src/rules-compiler-python
+cd src/compilers/python
 
 # Install dev dependencies first
 pip install -e ".[dev]"
@@ -205,10 +205,10 @@ pytest tests/test_config.py::test_read_yaml
 pytest -k "test_read"
 
 # Run with coverage
-pytest --cov=rules_compiler --cov-report=term-missing
+pytest --cov=bloqr_compiler --cov-report=term-missing
 
 # Run with coverage HTML report
-pytest --cov=rules_compiler --cov-report=html
+pytest --cov=bloqr_compiler --cov-report=html
 
 # Run in parallel (requires pytest-xdist)
 pytest -n auto
@@ -218,12 +218,12 @@ pytest -n auto
 
 ```python
 import pytest
-from rules_compiler import RulesCompiler
+from bloqr_compiler import BloqrCompiler
 
-class TestRulesCompiler:
+class TestBloqrCompiler:
     @pytest.fixture
     def compiler(self):
-        return RulesCompiler()
+        return BloqrCompiler()
 
     def test_compile(self, compiler):
         result = compiler.compile("config.json")
@@ -465,9 +465,9 @@ jobs:
           python-version: '3.9'
       - name: Install and test
         run: |
-          cd src/rules-compiler-python
+          cd src/compilers/python
           pip install -e ".[dev]"
-          pytest --cov=rules_compiler
+          pytest --cov=bloqr_compiler
 
   test-rust:
     runs-on: ubuntu-latest
@@ -513,8 +513,8 @@ reportgenerator -reports:coverage.opencover.xml -targetdir:coverage
 
 #### Python
 ```bash
-cd src/rules-compiler-python
-pytest --cov=rules_compiler --cov-report=html
+cd src/compilers/python
+pytest --cov=bloqr_compiler --cov-report=html
 # View coverage/index.html
 ```
 
@@ -654,7 +654,7 @@ echo "Running .NET tests..."
 cd src/compilers/dotnet && dotnet test CompilerDotnet.slnx && cd ../..
 
 echo "Running Python tests..."
-cd src/rules-compiler-python && pytest && cd ../..
+cd src/compilers/python && pytest && cd ../..
 
 echo "Running Rust tests..."
 cd src/rules-compiler-rust && cargo test && cd ../..
@@ -669,7 +669,7 @@ echo "All tests passed!"
 
 - [TypeScript Rules Compiler Guide](./typescript-rules-compiler.md)
 - [.NET Compiler README](../../src/compilers/dotnet/README.md)
-- [Python Compiler README](../../src/rules-compiler-python/README.md)
+- [Python Compiler README](../../src/compilers/python/README.md)
 - [Rust Compiler README](../../src/rules-compiler-rust/README.md)
 
 ## License

@@ -306,7 +306,7 @@ appeared in an earlier draft of this feature's tracking issue):
 
 **Event Handler:**
 ```python
-from rules_compiler.events import (
+from bloqr_compiler.events import (
     CompilationEventHandler,
     HashComputedEventArgs,
     HashVerifiedEventArgs,
@@ -329,7 +329,7 @@ class MyHashHandler(CompilationEventHandler):
 
 **Usage:**
 
-`compile_rules`/`compile_rules_async` (and `RulesCompiler.compile`/`compile_async`) accept an
+`compile_rules`/`compile_rules_async` (and `BloqrCompiler.compile`/`compile_async`) accept an
 optional `event_dispatcher` parameter; the three hash events are raised at each stage from the
 diagram above (config file, output file, and - if `copy_to_rules` is used - the copied rules
 file), driven by the `hash_verification` block of the compiler configuration. Hash
@@ -338,8 +338,8 @@ dispatcher is supplied - the dispatcher only adds observability, matching every 
 behavior when no handler overrides it.
 
 ```python
-from rules_compiler.compiler import compile_rules
-from rules_compiler.events import EventDispatcher
+from bloqr_compiler.compiler import compile_rules
+from bloqr_compiler.events import EventDispatcher
 
 dispatcher = EventDispatcher()
 dispatcher.add_handler(MyHashHandler())
@@ -359,8 +359,8 @@ result = compile_rules("config.json", event_dispatcher=dispatcher)
 ```
 
 Mode semantics, output conflict strategy, and archiving behave identically to the .NET
-implementation described above - see `rules_compiler.hash_database` and
-`rules_compiler.output_publisher` for the sidecar and publishing implementations. As with
+implementation described above - see `bloqr_compiler.hash_database` and
+`bloqr_compiler.output_publisher` for the sidecar and publishing implementations. As with
 .NET, only the config file, output file, and copied rules file stages are implemented today;
 per-source verification of local and remote inputs is tracked as follow-up work.
 
@@ -464,7 +464,7 @@ See `examples/hash_audit_handler.rs` for a complete implementation of:
 Potential additions:
 - ~~Hash database persistence across compilations~~ - implemented for .NET via the
   `.hashes.json` sidecar and `IHashDatabaseService`, and for Python via
-  `rules_compiler.hash_database`.
+  `bloqr_compiler.hash_database`.
 - Per-source (local and remote input) hash verification, requiring either re-implementing
   source fetching in .NET/Python or having `@bloqr/compiler-core` report per-source hashes back
 - Historical hash tracking and drift detection

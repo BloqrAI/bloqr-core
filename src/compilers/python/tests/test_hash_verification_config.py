@@ -1,6 +1,6 @@
 """Tests for the output/hash-verification/archiving config model additions (#273)."""
 
-from rules_compiler.config import (
+from bloqr_compiler.config import (
     ArchivingSettings,
     CompilerConfiguration,
     FilterSource,

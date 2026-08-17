@@ -14,7 +14,7 @@
       "Bash(cargo test:*)",
       "Bash(python quick_benchmark.py:*)",
       "Bash(python generate_synthetic_data.py:*)",
-      "Bash(python -m rules_compiler:*)",
+      "Bash(python -m bloqr_compiler:*)",
       "Bash(rules-compiler:*)",
       "Bash(\"C:/Users/jayson.knight/.claude-worktrees/ad-blocking/reverent-lehmann/src/rules-compiler-rust/target/release/rules-compiler\" --benchmark --benchmark-rules 50000)",
       "Bash(./target/release/rules-compiler.exe:*)",

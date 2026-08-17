@@ -108,9 +108,9 @@ var result = await compiler.RunAsync(new CompilerOptions
 **Best for**: Python developers, data scientists, scripting
 
 ```bash
-cd src/rules-compiler-python
+cd src/compilers/python
 pip install -e .
-rules-compiler -c config.json
+bloqr-compiler -c config.json
 ```
 
 **Pros**:
@@ -132,14 +132,14 @@ rules-compiler -c config.json
 **Library Usage**:
 
 ```python
-from rules_compiler import RulesCompiler, compile_rules
+from bloqr_compiler import BloqrCompiler, compile_rules
 
 # Simple function
 result = compile_rules("config.json")
 print(f"Compiled {result.rule_count} rules")
 
 # Class-based
-compiler = RulesCompiler()
+compiler = BloqrCompiler()
 result = compiler.compile("config.json", output_path="output.txt")
 ```
 

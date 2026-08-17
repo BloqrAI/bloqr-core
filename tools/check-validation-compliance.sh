@@ -96,7 +96,7 @@ check_python_integration() {
     echo ""
     echo "→ Checking Python compiler integration..."
     
-    local python_dir="$REPO_ROOT/src/rules-compiler-python"
+    local python_dir="$REPO_ROOT/src/compilers/python"
     
     if [ ! -d "$python_dir" ]; then
         echo -e "${YELLOW}⚠ Python compiler not found${NC}"
@@ -105,8 +105,8 @@ check_python_integration() {
     fi
     
     # Python shells out to the bloqr-validate CLI (_run_rules_validator in
-    # rules_compiler/compiler.py, #361) rather than depending on a package.
-    if grep -rq "_run_rules_validator\|find_rules_validate_binary" "$python_dir/rules_compiler" 2>/dev/null; then
+    # bloqr_compiler/compiler.py, #361) rather than depending on a package.
+    if grep -rq "_run_rules_validator\|find_rules_validate_binary" "$python_dir/bloqr_compiler" 2>/dev/null; then
         echo -e "${GREEN}✓ Python: Validation library integrated (#361)${NC}"
     else
         echo -e "${YELLOW}⚠ Python: Validation library not yet integrated${NC}"

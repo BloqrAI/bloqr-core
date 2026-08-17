@@ -56,7 +56,7 @@ bloqr-core/
 ├── src/
 │   ├── compilers/typescript/      # TypeScript rules compiler (@bloqr/compiler-core)
 │   ├── compilers/dotnet/      # .NET rules compiler
-│   ├── rules-compiler-python/      # Python rules compiler
+│   ├── compilers/python/           # Python rules compiler
 │   ├── rules-compiler-rust/        # Rust rules compiler
 │   ├── rules-compiler-shell/       # Shell scripts (bash, zsh)
 │   ├── rules-compiler-powershell/  # Canonical PowerShell compiler toolkit
@@ -122,7 +122,7 @@ cd src/compilers/typescript && npm run compile
    cd src/compilers/dotnet && dotnet run --project src/Bloqr.Compiler.Dotnet.Console
    
    # Python
-   cd src/rules-compiler-python && rules-compiler
+   cd src/compilers/python && bloqr-compiler
    
    # Rust
    cd src/rules-compiler-rust && cargo run --release
@@ -141,7 +141,7 @@ cd src/compilers/typescript && npm run compile
 **Test file patterns** that verify this:
 - TypeScript: `src/compilers/typescript/src/__tests__/compiler.test.ts`
 - .NET: `src/compilers/dotnet/src/Bloqr.Compiler.Dotnet.Tests/OutputWriterTests.cs`
-- Python: `src/rules-compiler-python/tests/test_compiler.py`
+- Python: `src/compilers/python/tests/test_compiler.py`
 - Rust: `src/rules-compiler-rust/src/compiler.rs` (integration tests)
 
 All test suites assert `hash.length === 96` and verify consistent hashing.
@@ -174,7 +174,7 @@ npm run test:coverage
 
 **Requirements**: Node.js 18+
 
-### Python Rules Compiler (`src/rules-compiler-python/`)
+### Python Rules Compiler (`src/compilers/python/`)
 ```bash
 # Install in development mode
 pip install -e ".[dev]"
@@ -183,13 +183,13 @@ pip install -e ".[dev]"
 pytest
 
 # Type checking
-mypy rules_compiler/
+mypy bloqr_compiler/
 
 # Linting
-ruff check rules_compiler/
+ruff check bloqr_compiler/
 
 # Run compiler
-rules-compiler --help
+bloqr-compiler --help
 ```
 
 **Requirements**: Python 3.9+
@@ -428,7 +428,7 @@ cd src/compilers/dotnet && dotnet test CompilerDotnet.slnx
 cd src/compilers/typescript && npm test
 
 # Run all Python tests
-cd src/rules-compiler-python && pytest
+cd src/compilers/python && pytest
 
 # Run all Rust tests
 cd src/rules-compiler-rust && cargo test
@@ -487,7 +487,7 @@ cd src/rules-compiler-rust && cargo test
 1. **Update version numbers** in project files:
    - `src/compilers/dotnet/src/Bloqr.Compiler.Dotnet.Console/Bloqr.Compiler.Dotnet.Console.csproj`
    - `src/rules-compiler-rust/Cargo.toml`
-   - `src/rules-compiler-python/pyproject.toml`
+   - `src/compilers/python/pyproject.toml`
 
 2. **Create and push tag**:
    ```bash
@@ -505,7 +505,7 @@ cd src/rules-compiler-rust && cargo test
 4. **Verify release** at `https://github.com/BloqrAI/bloqr-core/releases`:
    - `Bloqr.Compiler.Dotnet.Console-{windows,linux,macos}.{zip,tar.gz}`
    - `rules-compiler-rust-{windows,linux,macos}.{zip,tar.gz}`
-   - `rules_compiler-*.whl` (Python wheel)
+   - `bloqr_compiler-*.whl` (Python wheel)
 
 ### Build Characteristics
 - **.NET**: Self-contained, single-file, trimmed (no runtime required)

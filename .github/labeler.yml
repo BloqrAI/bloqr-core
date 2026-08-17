@@ -20,7 +20,7 @@ typescript:
 python:
   - changed-files:
       - any-glob-to-any-file:
-          - 'src/rules-compiler-python/**'
+          - 'src/compilers/python/**'
           - '**/*.py'
           - '**/pyproject.toml'
           - '**/setup.py'
