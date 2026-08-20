@@ -165,7 +165,7 @@ check_shell_integration() {
     echo ""
     echo "→ Checking Shell (bash/zsh) script integration..."
 
-    local shell_dir="$REPO_ROOT/src/rules-compiler-shell"
+    local shell_dir="$REPO_ROOT/src/compilers/shell"
 
     if [ ! -d "$shell_dir" ]; then
         echo -e "${YELLOW}⚠ Shell scripts not found${NC}"
@@ -173,7 +173,7 @@ check_shell_integration() {
         return 0
     fi
 
-    # Both compile-rules.sh and compile-rules.zsh shell out to the
+    # Both compile.sh and compile.zsh shell out to the
     # bloqr-validate CLI (run_rules_validator/find_rules_validate_binary, #361).
     if grep -rq "run_rules_validator\|find_rules_validate_binary" "$shell_dir/bash" "$shell_dir/zsh" 2>/dev/null; then
         echo -e "${GREEN}✓ Shell: Validation library integrated (#361)${NC}"

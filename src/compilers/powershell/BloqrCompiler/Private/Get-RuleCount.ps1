@@ -4,7 +4,7 @@ function Get-RuleCount {
         Counts non-empty, non-comment lines in a compiled rules file.
 
     .DESCRIPTION
-        Mirrors compile-rules.sh/zsh's count_rules(): blank lines and lines
+        Mirrors compile.sh/zsh's count_rules(): blank lines and lines
         starting with `!` or `#` don't count as rules. Returns 0 if the file
         doesn't exist.
 

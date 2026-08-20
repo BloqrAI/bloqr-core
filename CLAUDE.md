@@ -12,9 +12,9 @@ This repository is a comprehensive multi-language toolkit for ad-blocking, netwo
 - **Python 3.9+** (`src/compilers/python/`) - pip-installable package with CLI and API
 - **Rust** (`src/compilers/rust/`) - High-performance single binary with zero runtime deps
 
-### Shell Scripts (`src/rules-compiler-shell/`)
-- **Bash** (`src/rules-compiler-shell/bash/compile-rules.sh`) - Linux/macOS
-- **Zsh** (`src/rules-compiler-shell/zsh/compile-rules.zsh`) - macOS/Linux with zsh-specific features
+### Shell Scripts (`src/compilers/shell/`)
+- **Bash** (`src/compilers/shell/bash/compile.sh`) - Linux/macOS
+- **Zsh** (`src/compilers/shell/zsh/compile.zsh`) - macOS/Linux with zsh-specific features
 
 ### PowerShell Modules
 - **BloqrCompiler Toolkit** (`src/compilers/powershell/`) - Canonical, actively-developed modular PowerShell toolkit (class-based `Common`, `BloqrCompiler`, `AdGuardWebhook` modules with Pester tests)
@@ -91,17 +91,17 @@ deno run --allow-read --allow-write --allow-env --allow-run src/mod.ts --help
 deno run --allow-read --allow-write --allow-env --allow-run src/mod.ts --version
 ```
 
-### Shell Scripts (`src/rules-compiler-shell/`)
+### Shell Scripts (`src/compilers/shell/`)
 ```bash
 # Bash (Linux/macOS)
-./src/rules-compiler-shell/bash/compile-rules.sh                    # Use default config
-./src/rules-compiler-shell/bash/compile-rules.sh -c config.yaml -r  # YAML config, copy to rules
-./src/rules-compiler-shell/bash/compile-rules.sh -v                 # Show version
+./src/compilers/shell/bash/compile.sh                    # Use default config
+./src/compilers/shell/bash/compile.sh -c config.yaml -r  # YAML config, copy to rules
+./src/compilers/shell/bash/compile.sh -v                 # Show version
 
 # Zsh (macOS/Linux)
-./src/rules-compiler-shell/zsh/compile-rules.zsh                    # Use default config
-./src/rules-compiler-shell/zsh/compile-rules.zsh -c config.yaml -r  # YAML config, copy to rules
-./src/rules-compiler-shell/zsh/compile-rules.zsh -v                 # Show version
+./src/compilers/shell/zsh/compile.zsh                    # Use default config
+./src/compilers/shell/zsh/compile.zsh -c config.yaml -r  # YAML config, copy to rules
+./src/compilers/shell/zsh/compile.zsh -v                 # Show version
 ```
 
 ### Common .NET Library (`src/common/dotnet/`)
@@ -271,10 +271,10 @@ cargo test config::                       # Tests in module
 - Key classes: `RulesCompiler`, `RulesCompilerBuilder`, `ConfigurationBuilder`, `ConsoleApplication`
 - Uses Deno's built-in testing framework
 
-### Shell Scripts (`src/rules-compiler-shell/`)
+### Shell Scripts (`src/compilers/shell/`)
 - Cross-platform shell scripts for filter compilation
-- `bash/compile-rules.sh` - Bash script for Linux/macOS
-- `zsh/compile-rules.zsh` - Zsh script with native zsh features (zparseopts, EPOCHREALTIME)
+- `bash/compile.sh` - Bash script for Linux/macOS
+- `zsh/compile.zsh` - Zsh script with native zsh features (zparseopts, EPOCHREALTIME)
 - Supports JSON, YAML, TOML via external tools (yq, Python)
 
 ### Common .NET Library (`src/common/dotnet/`)

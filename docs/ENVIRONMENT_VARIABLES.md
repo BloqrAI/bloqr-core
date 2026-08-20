@@ -16,7 +16,7 @@ Environment variables give the shell/PowerShell wrappers and .NET apps configura
 
 ## Rules Compiler (Shell/PowerShell wrappers)
 
-Read by `src/rules-compiler-shell/bash/compile-rules.sh`, `src/rules-compiler-shell/zsh/compile-rules.zsh`, and `src/compilers/powershell/BloqrCompiler/Public/Invoke-BloqrCompiler.ps1`.
+Read by `src/compilers/shell/bash/compile.sh`, `src/compilers/shell/zsh/compile.zsh`, and `src/compilers/powershell/BloqrCompiler/Public/Invoke-BloqrCompiler.ps1`.
 
 ### ADGUARD_COMPILER_CONFIG
 **Description**: Configuration file path
@@ -151,7 +151,7 @@ env:
 steps:
   - name: Compile rules
     run: |
-      ./src/rules-compiler-shell/bash/compile-rules.sh -r
+      ./src/compilers/shell/bash/compile.sh -r
 ```
 
 ## Priority Order
@@ -189,7 +189,7 @@ Remove-Item env:ADGUARD_COMPILER_CONFIG
 
 ### Debug mode
 ```bash
-DEBUG=1 ./compile-rules.sh
+DEBUG=1 ./compile.sh
 ```
 
 ## API clients and Linear import tool
@@ -199,6 +199,6 @@ The AdGuard DNS API clients (.NET, TypeScript, Rust, PowerShell) and the Linear 
 ## See Also
 
 - [PowerShell Modules README](../src/compilers/powershell/README.md)
-- [Shell Scripts README](../src/rules-compiler-shell/README.md)
+- [Shell Scripts README](../src/compilers/shell/README.md)
 - [Configuration Reference](./configuration-reference.md)
 - [Dashboard Guide](./guides/dashboard-guide.md)

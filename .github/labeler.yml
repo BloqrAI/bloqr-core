@@ -37,7 +37,7 @@ powershell:
   - changed-files:
       - any-glob-to-any-file:
           - 'src/compilers/powershell/**'
-          - 'src/rules-compiler-shell/*.ps1'
+          - 'src/compilers/shell/*.ps1'
           - '**/*.ps1'
           - '**/*.psm1'
           - '**/*.psd1'
@@ -45,17 +45,17 @@ powershell:
 shell:
   - changed-files:
       - any-glob-to-any-file:
-          - 'src/rules-compiler-shell/**'
+          - 'src/compilers/shell/**'
           - '**/*.sh'
           - '**/*.zsh'
           - '**/*.cmd'
           - '**/*.bat'
 
 # Component labels
-rules-compiler:
+compilers:
   - changed-files:
       - any-glob-to-any-file:
-          - 'src/rules-compiler-*/**'
+          - 'src/compilers/**'
 
 filter-rules:
   - changed-files:

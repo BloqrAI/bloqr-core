@@ -113,7 +113,7 @@ These modules follow modern PowerShell best practices:
 
 ## Related Documentation
 
-- [Shell Scripts](../../rules-compiler-shell/README.md) - Shell script alternatives
+- [Shell Scripts](../shell/README.md) - Shell script alternatives
 - [Main README](../../../README.md) - General usage
 
 ## Support
