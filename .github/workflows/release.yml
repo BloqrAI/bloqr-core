@@ -1,7 +1,7 @@
 name: Release Binaries
 
 # Builds and bundles the coordinated multi-language binary release: .NET
-# (Bloqr.Compiler.Dotnet.Console, Bloqr.Dashboard.Console), Rust (rules-compiler,
+# (Bloqr.Compiler.Dotnet.Console, Bloqr.Dashboard.Console), Rust (bloqr-compiler,
 # bloqr-validator-core-cli's bloqr-validate binary + native library) - all
 # attached to one GitHub Release under one tag. This is the one thing that
 # genuinely needs to stay a single coordinated event; independently
@@ -260,25 +260,25 @@ jobs:
 
       - name: Build Rust compiler
         shell: bash
-        working-directory: ./src/rules-compiler-rust
+        working-directory: ./src/compilers/rust
         run: cargo build --release --target ${{ matrix.target }}
 
       - name: Package binary (Windows)
         if: runner.os == 'Windows'
         shell: pwsh
         run: |
-          # cargo build was run with working-directory: ./src/rules-compiler-rust, but
-          # rules-compiler is a member of the workspace rooted at the repo root (see
+          # cargo build was run with working-directory: ./src/compilers/rust, but
+          # bloqr-compiler is a member of the workspace rooted at the repo root (see
           # Cargo.toml's [workspace] members), so Cargo places build output under the
           # repo-root target/ dir, not a per-member one - there's no target-dir override
           # in .cargo/config.toml to make it otherwise.
-          Compress-Archive -Path ./target/${{ matrix.target }}/release/rules-compiler${{ matrix.ext }} -DestinationPath rules-compiler-rust-${{ matrix.artifact }}.zip
+          Compress-Archive -Path ./target/${{ matrix.target }}/release/bloqr-compiler${{ matrix.ext }} -DestinationPath bloqr-compiler-rust-${{ matrix.artifact }}.zip
 
       - name: Package binary (Unix)
         if: runner.os != 'Windows'
         shell: bash
         run: |
-          tar -czf rules-compiler-rust-${{ matrix.artifact }}.tar.gz -C ./target/${{ matrix.target }}/release rules-compiler${{ matrix.ext }}
+          tar -czf bloqr-compiler-rust-${{ matrix.artifact }}.tar.gz -C ./target/${{ matrix.target }}/release bloqr-compiler${{ matrix.ext }}
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v7
@@ -359,7 +359,7 @@ jobs:
             This release includes pre-built binaries for:
             - **Bloqr.Compiler.Dotnet.Console** - .NET compiler (Windows, Linux, macOS)
             - **Bloqr.Dashboard.Console** - .NET Dashboard app (Windows, Linux, macOS)
-            - **rules-compiler** (Rust) - Rust rules compiler (Windows, Linux, macOS)
+            - **bloqr-compiler** (Rust) - Rust rules compiler (Windows, Linux, macOS)
             - **bloqr-validator** - native validation library (`bloqr_validator`) and its `bloqr-validate` CLI (Windows, Linux, macOS)
 
             `Bloqr.Compiler.Abstractions` and `Bloqr.Compiler.Core` (the common .NET library) are published independently to [GitHub Packages](https://github.com/orgs/BloqrAI/packages?repo_name=bloqr-core) as they change, not gated behind this release — see [`docs/architecture/nuget-distribution-strategy.md`](https://github.com/BloqrAI/bloqr-core/blob/main/docs/architecture/nuget-distribution-strategy.md). Likewise, `bloqr-validator-core` publishes independently to [crates.io](https://crates.io/crates/bloqr-validator-core) — see [`docs/architecture/versioning-strategy.md`](https://github.com/BloqrAI/bloqr-core/blob/main/docs/architecture/versioning-strategy.md).
@@ -380,11 +380,11 @@ jobs:
             - Linux: `Bloqr.Dashboard.Console-linux.tar.gz`
             - macOS: `Bloqr.Dashboard.Console-macos.tar.gz`
 
-            #### Rules Compiler (Rust)
+            #### Bloqr Compiler (Rust)
             Download and extract:
-            - Windows: `rules-compiler-rust-windows.zip`
-            - Linux: `rules-compiler-rust-linux.tar.gz`
-            - macOS: `rules-compiler-rust-macos.tar.gz`
+            - Windows: `bloqr-compiler-rust-windows.zip`
+            - Linux: `bloqr-compiler-rust-linux.tar.gz`
+            - macOS: `bloqr-compiler-rust-macos.tar.gz`
 
             #### Bloqr Validator (native library + CLI)
             Download and extract:
@@ -395,8 +395,8 @@ jobs:
             ### Usage
 
             After extraction, run the executables:
-            - Windows: `.\Bloqr.Compiler.Dotnet.Console.exe`, `.\Bloqr.Dashboard.Console.exe`, `.\rules-compiler.exe`, or `.\bloqr-validate.exe`
-            - Linux/macOS: `./Bloqr.Compiler.Dotnet.Console`, `./Bloqr.Dashboard.Console`, `./rules-compiler`, or `./bloqr-validate`
+            - Windows: `.\Bloqr.Compiler.Dotnet.Console.exe`, `.\Bloqr.Dashboard.Console.exe`, `.\bloqr-compiler.exe`, or `.\bloqr-validate.exe`
+            - Linux/macOS: `./Bloqr.Compiler.Dotnet.Console`, `./Bloqr.Dashboard.Console`, `./bloqr-compiler`, or `./bloqr-validate`
 
             For detailed documentation, see the [README](https://github.com/BloqrAI/bloqr-core/blob/main/README.md).
           draft: false

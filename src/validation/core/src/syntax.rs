@@ -9,8 +9,8 @@
 //! not yet implemented; see that ADR's Phase 2).
 //!
 //! `HostlistCompiler` is what this toolkit's own compilers already shell out to for the real
-//! compile step (see `rules-compiler-rust`'s README) — so this module's job is to predict what
-//! that real compile step will accept, not to invent independent rules.
+//! compile step (see `bloqr-compiler`'s README in `src/compilers/rust/`) — so this module's job
+//! is to predict what that real compile step will accept, not to invent independent rules.
 
 use regex::Regex;
 use serde::{Deserialize, Serialize};

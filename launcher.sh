@@ -256,7 +256,7 @@ rules_menu() {
                 if require_tool cargo "Rust toolchain" \
                     "Required to build/run the Rust rules compiler." \
                     'curl --proto "=https" --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y && source "$HOME/.cargo/env"'; then
-                    cd src/rules-compiler-rust
+                    cd src/compilers/rust
                     cargo run --release
                     cd "$SCRIPT_DIR"
                 fi

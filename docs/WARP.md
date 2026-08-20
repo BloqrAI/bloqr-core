@@ -27,8 +27,8 @@ Python – rules compiler (src/compilers/python)
 - Test: pytest
 - Lint/type-check: ruff check .; mypy .
 
-Rust – rules compiler (src/rules-compiler-rust)
-- Build/test: cd src/rules-compiler-rust && cargo build && cargo test
+Rust – rules compiler (src/compilers/rust)
+- Build/test: cd src/compilers/rust && cargo build && cargo test
 - Run: cargo run -- -c config.json
 
 PowerShell scripts (src/rules-compiler-powershell)
@@ -52,7 +52,7 @@ High-level architecture and structure
   - `src/compilers/typescript/` — Deno/TypeScript wrapper around `@bloqr/compiler-core`, published on JSR.
   - `src/compilers/dotnet/` — .NET 10 library + Spectre.Console CLI.
   - `src/compilers/python/` — pip-installable package with CLI and API.
-  - `src/rules-compiler-rust/` — single-binary CLI with zero runtime deps.
+  - `src/compilers/rust/` — single-binary CLI with zero runtime deps.
   - `src/rules-compiler-shell/` — bash and zsh scripts for compiling rules without a language runtime.
   - `src/rules-compiler-powershell/` — class-based PowerShell modules with Pester tests.
 - Validation

@@ -26,19 +26,19 @@ from bloqr_compiler.config import (
 def create_parser() -> argparse.ArgumentParser:
     """Create the argument parser."""
     parser = argparse.ArgumentParser(
-        prog="rules-compiler",
+        prog="bloqr-compiler",
         description="AdGuard Filter Rules Compiler - Python API",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
-  rules-compiler                           # Use default config
-  rules-compiler config.yaml               # Use positional config path
-  rules-compiler -c config.yaml -r         # Use YAML config, copy to rules
-  rules-compiler --config config.toml      # Use TOML config
-  rules-compiler --show-config             # Display parsed configuration
-  rules-compiler --validate                # Validate config without compiling
-  rules-compiler -v                        # Show version info
-  rules-compiler --transformations         # List available transformations
+  bloqr-compiler                           # Use default config
+  bloqr-compiler config.yaml               # Use positional config path
+  bloqr-compiler -c config.yaml -r         # Use YAML config, copy to rules
+  bloqr-compiler --config config.toml      # Use TOML config
+  bloqr-compiler --show-config             # Display parsed configuration
+  bloqr-compiler --validate                # Validate config without compiling
+  bloqr-compiler -v                        # Show version info
+  bloqr-compiler --transformations         # List available transformations
         """,
     )
 
@@ -466,7 +466,7 @@ def find_default_config() -> Path | None:
         Path.cwd() / "compiler-config.yaml",
         Path.cwd() / "compiler-config.yml",
         Path.cwd() / "compiler-config.toml",
-        Path.cwd() / "src" / "rules-compiler-typescript" / "compiler-config.json",
+        Path.cwd() / "src" / "compilers" / "typescript" / "compiler-config.json",
     ]
 
     for path in search_paths:
@@ -536,7 +536,7 @@ def main(args: list[str] | None = None) -> int:
             print("  - compiler-config.yaml", file=sys.stderr)
             print("  - compiler-config.yml", file=sys.stderr)
             print("  - compiler-config.toml", file=sys.stderr)
-            print("  - src/rules-compiler-typescript/compiler-config.json", file=sys.stderr)
+            print("  - src/compilers/typescript/compiler-config.json", file=sys.stderr)
             print("\nSpecify config path with -c/--config or as positional argument", file=sys.stderr)
             return 1
 

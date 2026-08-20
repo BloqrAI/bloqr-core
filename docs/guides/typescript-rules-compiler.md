@@ -475,7 +475,7 @@ If you're in a Node.js project, you can add to `package.json`:
 - [Compiler Comparison](../compiler-comparison.md)
 - [.NET Compiler](../../src/compilers/dotnet/README.md)
 - [Python Compiler](../../src/compilers/python/README.md)
-- [Rust Compiler](../../src/rules-compiler-rust/README.md)
+- [Rust Compiler](../../src/compilers/rust/README.md)
 
 ## License
 

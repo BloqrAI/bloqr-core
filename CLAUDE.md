@@ -10,7 +10,7 @@ This repository is a comprehensive multi-language toolkit for ad-blocking, netwo
 - **TypeScript** (`src/compilers/typescript/`) - Deno 2.0+ with npm compatibility
 - **C#/.NET 10** (`src/compilers/dotnet/`) - Library and Spectre.Console CLI with DI support
 - **Python 3.9+** (`src/compilers/python/`) - pip-installable package with CLI and API
-- **Rust** (`src/rules-compiler-rust/`) - High-performance single binary with zero runtime deps
+- **Rust** (`src/compilers/rust/`) - High-performance single binary with zero runtime deps
 
 ### Shell Scripts (`src/rules-compiler-shell/`)
 - **Bash** (`src/rules-compiler-shell/bash/compile-rules.sh`) - Linux/macOS
@@ -155,9 +155,9 @@ bloqr-compiler -d                        # Debug output
 bloqr-compiler --help                    # Show help
 ```
 
-### Rust Rules Compiler (`src/rules-compiler-rust/`)
+### Rust Rules Compiler (`src/compilers/rust/`)
 ```bash
-cd src/rules-compiler-rust
+cd src/compilers/rust
 
 # Build
 cargo build              # Debug build
@@ -176,7 +176,7 @@ cargo run -- -d                          # Debug output
 cargo run -- --help                      # Show help
 
 # Release binary
-./target/release/rules-compiler -c config.yaml
+./target/release/bloqr-compiler -c config.yaml
 ```
 
 ### PowerShell RulesCompiler Toolkit (`src/rules-compiler-powershell/`)
@@ -237,7 +237,7 @@ pytest --cov=bloqr_compiler               # With coverage
 
 ### Rust (cargo test)
 ```bash
-cd src/rules-compiler-rust
+cd src/compilers/rust
 cargo test                                # Run all tests
 cargo test -- --nocapture                 # With output
 cargo test test_count_rules               # Specific test
@@ -303,15 +303,15 @@ cargo test config::                       # Tests in module
 - Key classes: `BloqrCompiler`, `CompilerConfiguration`, `CompilerResult`
 - Tools: pytest, mypy, ruff
 
-### Rules Compiler - Rust (`src/rules-compiler-rust/`)
+### Bloqr Compiler - Rust (`src/compilers/rust/`)
 - High-performance Rust library and CLI for filter compilation
 - Supports JSON, YAML, and TOML configuration formats
 - `src/config.rs` - Configuration structs and parsing
-- `src/compiler.rs` - `RulesCompiler` struct and `compile_rules()` function
+- `src/compiler.rs` - `BloqrCompiler` struct and `compile_rules()` function
 - `src/main.rs` - clap-based CLI with argument parsing
 - `src/error.rs` - `CompilerError` enum with thiserror
 - Single binary distribution with zero runtime dependencies (except hostlist-compiler)
-- Key structs: `RulesCompiler`, `CompilerConfiguration`, `CompilerResult`, `VersionInfo`
+- Key structs: `BloqrCompiler`, `CompilerConfiguration`, `CompilerResult`, `VersionInfo`
 - LTO optimization enabled for small binary size
 
 ### PowerShell Toolkit (`src/rules-compiler-powershell/`)

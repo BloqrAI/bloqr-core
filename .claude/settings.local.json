@@ -16,7 +16,7 @@
       "Bash(python generate_synthetic_data.py:*)",
       "Bash(python -m bloqr_compiler:*)",
       "Bash(rules-compiler:*)",
-      "Bash(\"C:/Users/jayson.knight/.claude-worktrees/ad-blocking/reverent-lehmann/src/rules-compiler-rust/target/release/rules-compiler\" --benchmark --benchmark-rules 50000)",
+      "Bash(\"C:/Users/jayson.knight/.claude-worktrees/ad-blocking/reverent-lehmann/src/compilers/rust/target/release/bloqr-compiler\" --benchmark --benchmark-rules 50000)",
       "Bash(./target/release/rules-compiler.exe:*)",
       "Bash(\"C:/Users/jayson.knight/.claude-worktrees/ad-blocking/reverent-lehmann/target/release/rules-compiler.exe\" --benchmark --benchmark-rules 50000)",
       "Bash(dotnet run:*)",

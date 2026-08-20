@@ -3,7 +3,7 @@
 //! This example demonstrates how to use the hash verification events
 //! to monitor and validate integrity at each stage of compilation.
 
-use rules_compiler::events::{
+use bloqr_compiler::events::{
     CompilationEventHandler, HashComputedEventArgs, HashMismatchEventArgs, HashVerifiedEventArgs,
 };
 
@@ -91,7 +91,7 @@ fn main() {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use rules_compiler::events::EventTimestamp;
+    use bloqr_compiler::events::EventTimestamp;
 
     #[test]
     fn test_audit_handler_creation() {

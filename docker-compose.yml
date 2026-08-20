@@ -107,7 +107,7 @@ services:
       - .:/workspace
       - cargo_registry:/root/.cargo/registry
       - cargo_git:/root/.cargo/git
-    working_dir: /workspace/src/rules-compiler-rust
+    working_dir: /workspace/src/compilers/rust
     command: cargo run --release
     depends_on:
       - dev
@@ -141,7 +141,7 @@ services:
         echo '=== Running Python Tests ===' &&
         cd /workspace/src/compilers/python && pytest &&
         echo '=== Running Rust Tests ===' &&
-        cd /workspace/src/rules-compiler-rust && cargo test &&
+        cd /workspace/src/compilers/rust && cargo test &&
         echo '=== Running PowerShell Tests ===' &&
         pwsh -Command 'Invoke-Pester -Path /workspace/src/rules-compiler-powershell -PassThru' &&
         echo '=== All Tests Complete ==='

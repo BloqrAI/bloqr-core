@@ -1,4 +1,4 @@
-# Rules Compiler (Rust)
+# Bloqr Compiler (Rust)
 
 Rust API for compiling AdGuard filter rules.
 
@@ -20,7 +20,7 @@ Rust API for compiling AdGuard filter rules.
 ## Building
 
 ```bash
-cd src/rules-compiler-rust
+cd src/compilers/rust
 
 # Debug build
 cargo build
@@ -52,34 +52,34 @@ This means you can run the compiler from any subdirectory and it will find the n
 
 ```bash
 # Use default config (auto-discovery)
-rules-compiler
+bloqr-compiler
 
 # Use specific configuration file
-rules-compiler -c compiler-config.json
+bloqr-compiler -c compiler-config.json
 
 # Compile and copy to rules directory
-rules-compiler -c config.json -r
+bloqr-compiler -c config.json -r
 
 # Show version info
-rules-compiler -V
+bloqr-compiler -V
 
 # Show configuration only
-rules-compiler config
+bloqr-compiler config
 
 # Interactive menu mode
-rules-compiler -i
+bloqr-compiler -i
 
 # Enable debug output
-rules-compiler -c config.json -d
+bloqr-compiler -c config.json -d
 
 # Show help
-rules-compiler --help
+bloqr-compiler --help
 
 # Validate configuration before compiling
-rules-compiler compile --validate
+bloqr-compiler compile --validate
 
 # Fail on validation warnings
-rules-compiler compile --validate --fail-on-warnings
+bloqr-compiler compile --validate --fail-on-warnings
 ```
 
 ### CLI Options
@@ -108,16 +108,16 @@ Add to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-rules-compiler = { path = "../rules-compiler-rust" }
+bloqr-compiler = { path = "../rust" }
 ```
 
 ### Basic Usage
 
 ```rust
-use rules_compiler::{RulesCompiler, ConfigurationFormat};
+use bloqr_compiler::{BloqrCompiler, ConfigurationFormat};
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let compiler = RulesCompiler::new();
+    let compiler = BloqrCompiler::new();
 
     let result = compiler.compile(
         "compiler-config.json",
@@ -141,7 +141,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 ### Reading Configuration
 
 ```rust
-use rules_compiler::{read_configuration, ConfigurationFormat};
+use bloqr_compiler::{read_configuration, ConfigurationFormat};
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Auto-detect format from extension
@@ -159,7 +159,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 ### Version Information
 
 ```rust
-use rules_compiler::get_version_info;
+use bloqr_compiler::get_version_info;
 
 fn main() {
     let info = get_version_info();
@@ -177,7 +177,7 @@ fn main() {
 ### Helper Functions
 
 ```rust
-use rules_compiler::{count_rules, compute_hash};
+use bloqr_compiler::{count_rules, compute_hash};
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Count rules in a file
@@ -194,7 +194,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
 ## Configuration Formats
 
-JSON (and JSONC, JSON with comments) is the only documented configuration format. YAML and TOML remain readable for backward compatibility but are undocumented — see [`docs/guides/migration-guide.md`](../../docs/guides/migration-guide.md) for converting legacy configs to JSON.
+JSON (and JSONC, JSON with comments) is the only documented configuration format. YAML and TOML remain readable for backward compatibility but are undocumented — see [`docs/guides/migration-guide.md`](../../../docs/guides/migration-guide.md) for converting legacy configs to JSON.
 
 ### JSON
 
@@ -242,7 +242,7 @@ type = "adblock"
 
 | Struct | Description |
 |--------|-------------|
-| `RulesCompiler` | Main compiler struct |
+| `BloqrCompiler` | Main compiler struct |
 | `CompilerResult` | Result of a compilation operation |
 | `CompilerConfiguration` | Configuration file model |
 | `FilterSource` | Source filter list definition |
@@ -271,7 +271,7 @@ type = "adblock"
 ## Running Tests
 
 ```bash
-cd src/rules-compiler-rust
+cd src/compilers/rust
 
 # Run all tests
 cargo test
@@ -319,4 +319,4 @@ cargo build --release --target aarch64-apple-darwin
 
 ## License
 
-GPLv3 - See [LICENSE](../../LICENSE) for details.
+GPLv3 - See [LICENSE](../../../LICENSE) for details.

@@ -81,9 +81,9 @@ bloqr-compiler
 #### Rust
 
 ```bash
-cd src/rules-compiler-rust
+cd src/compilers/rust
 cargo build --release
-./target/release/rules-compiler
+./target/release/bloqr-compiler
 ```
 
 #### PowerShell

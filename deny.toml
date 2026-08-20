@@ -1,4 +1,4 @@
-# cargo-deny configuration for the Rust workspace (rules-compiler,
+# cargo-deny configuration for the Rust workspace (bloqr-compiler,
 # bloqr-validator-core, bloqr-validator-core-cli). Run via `cargo deny check`
 # (wired into .github/workflows/rust-clippy.yml). See
 # https://embarkstudios.github.io/cargo-deny/ for the full schema.
@@ -27,7 +27,7 @@ allow = [
     "Zlib",
     "MPL-2.0",
     "0BSD",
-    # This workspace's own license (rules-compiler, bloqr-validator-core,
+    # This workspace's own license (bloqr-compiler, bloqr-validator-core,
     # bloqr-validator-core-cli) - not a third-party dependency license.
     "GPL-3.0",
 ]

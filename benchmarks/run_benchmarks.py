@@ -91,11 +91,13 @@ class BenchmarkRunner:
             return None
 
         elif compiler == "rust":
-            rust_binary = project_root / "src" / "rules-compiler-rust" / "target" / "release" / "rules-compiler"
+            # bloqr-compiler is a workspace member (see repo-root Cargo.toml), so cargo
+            # places build output under the repo-root target/ dir, not a per-member one.
+            rust_binary = project_root / "target" / "release" / "bloqr-compiler"
             if rust_binary.exists():
                 return str(rust_binary), []
             # Try cargo run
-            rust_project = project_root / "src" / "rules-compiler-rust"
+            rust_project = project_root / "src" / "compilers" / "rust"
             if rust_project.exists():
                 return "cargo", ["run", "--release", "--manifest-path", str(rust_project / "Cargo.toml"), "--"]
             return None

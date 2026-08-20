@@ -134,7 +134,7 @@ const GettingStartedPage = () => {
               <br />
               # Rust
               <br />
-              cargo run --release -p rules-compiler
+              cargo run --release -p bloqr-compiler
             </pre>
           </li>
         </ol>

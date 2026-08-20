@@ -13,6 +13,7 @@ on:
     paths:
       - 'src/validation/**'
       - 'src/compilers/python/**'
+      - 'src/compilers/rust/**'
       - 'src/rules-compiler-*/**'
       - 'src/common/dotnet/**'
       - 'tools/check-validation-compliance.sh'
@@ -22,6 +23,7 @@ on:
     paths:
       - 'src/validation/**'
       - 'src/compilers/python/**'
+      - 'src/compilers/rust/**'
       - 'src/rules-compiler-*/**'
       - 'src/common/dotnet/**'
       - 'tools/check-validation-compliance.sh'
@@ -114,7 +116,7 @@ jobs:
           fi
 
           # Rust
-          if grep -q "bloqr-validator" src/rules-compiler-rust/Cargo.toml 2>/dev/null; then
+          if grep -q "bloqr-validator" src/compilers/rust/Cargo.toml 2>/dev/null; then
             echo "| Rust | integrated |" >> $GITHUB_STEP_SUMMARY
           else
             echo "| Rust | pending |" >> $GITHUB_STEP_SUMMARY

@@ -65,7 +65,7 @@ Bloqr.Dashboard.Console-<platform>.{zip,tar.gz}
 └── appsettings.json
 ```
 
-Each archive is self-contained: no `build.sh`/`build.ps1`, no launcher script, no separately-installed .NET runtime, no separately-installed `bloqr-validator` binary. Extract and run — this already satisfies "binaries-only, no launcher, no build scripts, Dashboard as the sole entrypoint" for the .NET apps. The Rust `rules-compiler` and `bloqr-validator` CLI get the equivalent treatment via their own release-mode static binaries.
+Each archive is self-contained: no `build.sh`/`build.ps1`, no launcher script, no separately-installed .NET runtime, no separately-installed `bloqr-validator` binary. Extract and run — this already satisfies "binaries-only, no launcher, no build scripts, Dashboard as the sole entrypoint" for the .NET apps. The Rust `bloqr-compiler` and `bloqr-validator` CLI get the equivalent treatment via their own release-mode static binaries.
 
 The **source release** shape (option 1 — bootstrapped by the launcher/build scripts) is simply this same repository checked out and run via `./build.sh`/`./launcher.sh` (or the `.ps1` equivalents) as documented in the root README — no new packaging work was needed for that side; it already exists and is exercised by `.github/workflows/build-scripts-tests.yml`.
 

@@ -3,7 +3,7 @@ resolver = "2"
 members = [
     "src/validation/core",
     "src/validation/cli",
-    "src/rules-compiler-rust",
+    "src/compilers/rust",
 ]
 
 [workspace.package]

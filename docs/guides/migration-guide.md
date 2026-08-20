@@ -59,7 +59,7 @@ cd src/compilers/python
 pip install -e .
 
 # Rust
-cd src/rules-compiler-rust
+cd src/compilers/rust
 cargo build --release
 
 # PowerShell

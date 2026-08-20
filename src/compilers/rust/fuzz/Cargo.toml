@@ -1,5 +1,5 @@
 [package]
-name = "rules-compiler-fuzz"
+name = "bloqr-compiler-fuzz"
 version = "0.0.0"
 publish = false
 edition = "2021"
@@ -20,7 +20,7 @@ serde_json = "1.0"
 serde_yaml = "0.9"
 toml = "1.1"
 
-[dependencies.rules-compiler]
+[dependencies.bloqr-compiler]
 path = ".."
 
 [[bin]]

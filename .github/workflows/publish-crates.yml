@@ -9,7 +9,7 @@ name: Publish Rust Validator Crates to crates.io
 # full multi-language binary release to reach crates.io. See
 # docs/architecture/versioning-strategy.md.
 #
-# rules-compiler (src/rules-compiler-rust/) is NOT published - it has no
+# bloqr-compiler (src/compilers/rust/) is NOT published - it has no
 # external consumer as a library and its binary already ships via
 # release.yml's GitHub Release bundle.
 #

@@ -488,9 +488,9 @@ public class BloqrCompilerService : IBloqrCompilerService
         var searchPaths = new[]
         {
             DefaultConfigFileName,
-            Path.Combine("src", "rules-compiler-typescript", DefaultConfigFileName),
-            Path.Combine("..", "rules-compiler-typescript", DefaultConfigFileName),
-            Path.Combine("..", "..", "src", "rules-compiler-typescript", DefaultConfigFileName)
+            Path.Combine("src", "compilers", "typescript", DefaultConfigFileName),
+            Path.Combine("..", "compilers", "typescript", DefaultConfigFileName),
+            Path.Combine("..", "..", "src", "compilers", "typescript", DefaultConfigFileName)
         };
 
         foreach (var path in searchPaths)

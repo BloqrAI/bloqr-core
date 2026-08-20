@@ -55,7 +55,7 @@ bloqr-core/
 ├── schemas/                     # First-party JSON schemas
 ├── src/                         # Source code organized by language
 │   ├── compilers/dotnet/            # .NET compiler
-│   ├── rules-compiler-rust/         # Rust rules compiler
+│   ├── compilers/rust/               # Rust rules compiler
 │   ├── compilers/typescript/       # TypeScript rules compiler (@bloqr/compiler-core)
 │   ├── compilers/python/            # Python compiler
 │   ├── rules-compiler-powershell/   # PowerShell rules compiler toolkit
@@ -214,7 +214,7 @@ All new features and bug fixes must include appropriate tests:
 cd src/compilers/typescript && deno task test
 cd src/compilers/dotnet && dotnet test
 cd src/compilers/python && pytest
-cd src/rules-compiler-rust && cargo test
+cd src/compilers/rust && cargo test
 cd src/rules-compiler-powershell && Invoke-Pester
 ```
 

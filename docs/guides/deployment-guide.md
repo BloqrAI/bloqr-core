@@ -96,12 +96,12 @@ CMD ["bloqr-compiler"]
 ```dockerfile
 FROM rust:1.70 AS builder
 WORKDIR /app
-COPY src/rules-compiler-rust/ .
+COPY src/compilers/rust/ .
 RUN cargo build --release
 
 FROM debian:bookworm-slim
-COPY --from=builder /app/target/release/rules-compiler /usr/local/bin/
-CMD ["rules-compiler"]
+COPY --from=builder /app/target/release/bloqr-compiler /usr/local/bin/
+CMD ["bloqr-compiler"]
 ```
 
 ### 2. Docker Compose Deployment
@@ -331,7 +331,7 @@ jobs:
       - name: Test Rust
         if: matrix.component == 'rust'
         run: |
-          cd src/rules-compiler-rust
+          cd src/compilers/rust
           cargo test
 
   build:
@@ -458,7 +458,7 @@ test:rust:
   stage: test
   image: rust:1.70
   script:
-    - cd src/rules-compiler-rust
+    - cd src/compilers/rust
     - cargo test
 
 build:
@@ -519,7 +519,7 @@ pipeline {
                 stage('Rust') {
                     steps {
                         sh '''
-                            cd src/rules-compiler-rust
+                            cd src/compilers/rust
                             cargo test
                         '''
                     }

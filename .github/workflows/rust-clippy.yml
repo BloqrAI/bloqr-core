@@ -11,7 +11,7 @@ on:
   push:
     branches: ["main"]
     paths:
-      - 'src/rules-compiler-rust/**'
+      - 'src/compilers/rust/**'
       - 'src/validation/**'
       - 'Cargo.toml'
       - 'Cargo.lock'
@@ -19,7 +19,7 @@ on:
   pull_request:
     branches: ["main"]
     paths:
-      - 'src/rules-compiler-rust/**'
+      - 'src/compilers/rust/**'
       - 'src/validation/**'
       - 'Cargo.toml'
       - 'Cargo.lock'
@@ -57,7 +57,7 @@ jobs:
 
       - name: Check formatting
         run: |
-          cargo fmt -p rules-compiler -p bloqr-validator-core -p bloqr-validator-core-cli -- --check
+          cargo fmt -p bloqr-compiler -p bloqr-validator-core -p bloqr-validator-core-cli -- --check
 
       - name: Build workspace
         run: cargo build --workspace --all-features
@@ -67,7 +67,7 @@ jobs:
 
       - name: Run clippy
         run: |
-          cargo clippy --no-deps -p rules-compiler -p bloqr-validator-core -p bloqr-validator-core-cli \
+          cargo clippy --no-deps -p bloqr-compiler -p bloqr-validator-core -p bloqr-validator-core-cli \
             --all-features -- -D clippy::all -D clippy::correctness -D clippy::suspicious
 
       - name: Install cargo-deny
@@ -109,7 +109,7 @@ jobs:
 
       - name: Run clippy for security analysis
         run: |
-          cargo clippy --no-deps -p rules-compiler -p bloqr-validator-core -p bloqr-validator-core-cli \
+          cargo clippy --no-deps -p bloqr-compiler -p bloqr-validator-core -p bloqr-validator-core-cli \
             --all-features --message-format=json | clippy-sarif | tee rust-clippy-results.sarif | sarif-fmt
         continue-on-error: true
 
@@ -144,7 +144,7 @@ jobs:
               - 'Cargo.lock'
               - '.github/workflows/rust-clippy.yml'
             compiler:
-              - 'src/rules-compiler-rust/**'
+              - 'src/compilers/rust/**'
               - 'Cargo.toml'
               - 'Cargo.lock'
               - '.github/workflows/rust-clippy.yml'
@@ -161,8 +161,8 @@ jobs:
             ~/.cargo/registry
             ~/.cargo/git
             src/validation/core/fuzz/target
-            src/rules-compiler-rust/fuzz/target
-          key: ${{ runner.os }}-cargo-fuzz-${{ hashFiles('src/validation/core/fuzz/Cargo.lock', 'src/rules-compiler-rust/fuzz/Cargo.lock') }}
+            src/compilers/rust/fuzz/target
+          key: ${{ runner.os }}-cargo-fuzz-${{ hashFiles('src/validation/core/fuzz/Cargo.lock', 'src/compilers/rust/fuzz/Cargo.lock') }}
           restore-keys: ${{ runner.os }}-cargo-fuzz-
 
       - name: Install cargo-fuzz
@@ -191,12 +191,12 @@ jobs:
 
       - name: Fuzz fuzz_compiler_config (20s)
         if: github.event_name == 'schedule' || steps.filter.outputs.compiler == 'true'
-        working-directory: src/rules-compiler-rust
+        working-directory: src/compilers/rust
         run: cargo +nightly fuzz run fuzz_compiler_config -- -max_total_time=20
 
       - name: Fuzz fuzz_merge_chunks (20s)
         if: github.event_name == 'schedule' || steps.filter.outputs.compiler == 'true'
-        working-directory: src/rules-compiler-rust
+        working-directory: src/compilers/rust
         run: cargo +nightly fuzz run fuzz_merge_chunks -- -max_total_time=20
 
       - name: Upload crash artifacts (if any)
@@ -206,5 +206,5 @@ jobs:
           name: fuzz-crash-artifacts
           path: |
             src/validation/core/fuzz/artifacts/
-            src/rules-compiler-rust/fuzz/artifacts/
+            src/compilers/rust/fuzz/artifacts/
           if-no-files-found: ignore

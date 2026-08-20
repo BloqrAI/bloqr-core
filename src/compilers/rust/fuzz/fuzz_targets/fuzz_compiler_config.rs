@@ -4,7 +4,7 @@
 #![no_main]
 
 use libfuzzer_sys::fuzz_target;
-use rules_compiler::CompilerConfig;
+use bloqr_compiler::CompilerConfig;
 
 fuzz_target!(|data: &[u8]| {
     if data.is_empty() {

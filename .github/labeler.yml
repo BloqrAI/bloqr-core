@@ -28,7 +28,7 @@ python:
 rust:
   - changed-files:
       - any-glob-to-any-file:
-          - 'src/rules-compiler-rust/**'
+          - 'src/compilers/rust/**'
           - '**/*.rs'
           - '**/Cargo.toml'
           - '**/Cargo.lock'

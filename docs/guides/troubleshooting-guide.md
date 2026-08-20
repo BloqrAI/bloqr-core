@@ -730,7 +730,7 @@ pytest -n auto
 4. **Use compiled binaries for faster execution:**
 ```bash
 # Rust release binary is fastest
-./target/release/rules-compiler -c config.json
+./target/release/bloqr-compiler -c config.json
 ```
 
 ### High Memory Usage
