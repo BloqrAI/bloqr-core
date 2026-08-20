@@ -142,7 +142,7 @@ check_powershell_integration() {
     echo ""
     echo "→ Checking PowerShell module integration..."
 
-    local ps_dir="$REPO_ROOT/src/rules-compiler-powershell"
+    local ps_dir="$REPO_ROOT/src/compilers/powershell"
 
     if [ ! -d "$ps_dir" ]; then
         echo -e "${YELLOW}⚠ PowerShell toolkit not found${NC}"
@@ -151,8 +151,8 @@ check_powershell_integration() {
     fi
 
     # PowerShell shells out to the bloqr-validate CLI (Invoke-RulesValidator /
-    # Find-RulesValidateBinary in the RulesCompiler module, #361).
-    if grep -rq "Invoke-RulesValidator\|Find-RulesValidateBinary" "$ps_dir/RulesCompiler" 2>/dev/null; then
+    # Find-RulesValidateBinary in the BloqrCompiler module, #361).
+    if grep -rq "Invoke-RulesValidator\|Find-RulesValidateBinary" "$ps_dir/BloqrCompiler" 2>/dev/null; then
         echo -e "${GREEN}✓ PowerShell: Validation library integrated (#361)${NC}"
     else
         echo -e "${YELLOW}⚠ PowerShell: Validation library not yet integrated${NC}"

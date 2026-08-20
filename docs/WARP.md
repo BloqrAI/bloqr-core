@@ -31,9 +31,9 @@ Rust – rules compiler (src/compilers/rust)
 - Build/test: cd src/compilers/rust && cargo build && cargo test
 - Run: cargo run -- -c config.json
 
-PowerShell scripts (src/rules-compiler-powershell)
-- Static analysis (same as CI): Invoke-ScriptAnalyzer -Path src/rules-compiler-powershell -Recurse
-- Tests: Invoke-Pester -Path ./src/rules-compiler-powershell -Recurse
+PowerShell scripts (src/compilers/powershell)
+- Static analysis (same as CI): Invoke-ScriptAnalyzer -Path src/compilers/powershell -Recurse
+- Tests: Invoke-Pester -Path ./src/compilers/powershell -Recurse
 
 Running a single test
 - TypeScript/Deno
@@ -54,7 +54,7 @@ High-level architecture and structure
   - `src/compilers/python/` — pip-installable package with CLI and API.
   - `src/compilers/rust/` — single-binary CLI with zero runtime deps.
   - `src/rules-compiler-shell/` — bash and zsh scripts for compiling rules without a language runtime.
-  - `src/rules-compiler-powershell/` — class-based PowerShell modules with Pester tests.
+  - `src/compilers/powershell/` — class-based PowerShell modules with Pester tests.
 - Validation
   - `src/validation/` — Rust library (published to crates.io as `bloqr-validator-core`) and CLI (published as `bloqr-validator-core-cli`) for filter/config validation.
 - Documentation site

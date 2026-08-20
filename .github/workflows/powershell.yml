@@ -1,5 +1,5 @@
 # PowerShell Modules Build and Test workflow
-# Covers the modular PowerShell toolkit (src/rules-compiler-powershell)
+# Covers the modular PowerShell toolkit (src/compilers/powershell)
 
 name: PowerShell Build
 
@@ -11,12 +11,12 @@ on:
   push:
     branches: ["main"]
     paths:
-      - 'src/rules-compiler-powershell/**'
+      - 'src/compilers/powershell/**'
       - '.github/workflows/powershell.yml'
   pull_request:
     branches: ["main"]
     paths:
-      - 'src/rules-compiler-powershell/**'
+      - 'src/compilers/powershell/**'
       - '.github/workflows/powershell.yml'
 
 jobs:
@@ -31,7 +31,7 @@ jobs:
         run: |
           Install-Module -Name PSScriptAnalyzer -Force -Scope CurrentUser -SkipPublisherCheck
           $results = @()
-          $results += Invoke-ScriptAnalyzer -Path 'src/rules-compiler-powershell' -Recurse -Severity Warning,Error
+          $results += Invoke-ScriptAnalyzer -Path 'src/compilers/powershell' -Recurse -Severity Warning,Error
           $results | Format-Table -AutoSize
           $errors = $results | Where-Object { $_.Severity -eq 'Error' }
           if ($errors.Count -gt 0) {
@@ -51,7 +51,7 @@ jobs:
           Install-Module -Name Pester -Force -Scope CurrentUser -SkipPublisherCheck -MinimumVersion 5.0
           Import-Module Pester -PassThru
           $config = New-PesterConfiguration
-          $config.Run.Path = 'src/rules-compiler-powershell'
+          $config.Run.Path = 'src/compilers/powershell'
           $config.Output.Verbosity = 'Detailed'
           $config.Run.Exit = $true
           Invoke-Pester -Configuration $config

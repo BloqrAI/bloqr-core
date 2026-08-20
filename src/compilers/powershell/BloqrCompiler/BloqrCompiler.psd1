@@ -1,6 +1,6 @@
 @{
-    # Module manifest for RulesCompiler module
-    RootModule = 'RulesCompiler.psm1'
+    # Module manifest for BloqrCompiler module
+    RootModule = 'BloqrCompiler.psm1'
     ModuleVersion = '2.0.0'
     GUID = '7e4f3c1d-2a6b-4f8c-9d5e-1b3a8f2e9c4d'
     Author = 'Jayson Knight'
@@ -26,14 +26,14 @@
     )
 
     # Functions to export
-    FunctionsToExport = @('Invoke-RulesCompiler', 'Invoke-RulesValidator')
+    FunctionsToExport = @('Invoke-BloqrCompiler', 'Invoke-RulesValidator')
     CmdletsToExport = @()
     VariablesToExport = @()
     AliasesToExport = @()
     
     PrivateData = @{
         PSData = @{
-            Tags = @('AdGuard', 'PowerShell', 'RulesCompiler', 'DNS', 'AdBlocking', 'OOP')
+            Tags = @('AdGuard', 'PowerShell', 'BloqrCompiler', 'DNS', 'AdBlocking', 'OOP')
             LicenseUri = 'https://github.com/jaypatrick/ad-blocking/blob/main/LICENSE'
             ProjectUri = 'https://github.com/jaypatrick/ad-blocking'
             ReleaseNotes = @'

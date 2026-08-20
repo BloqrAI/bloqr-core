@@ -89,8 +89,8 @@ cargo build --release
 #### PowerShell
 
 ```powershell
-Import-Module ./src/rules-compiler-powershell/RulesCompiler/RulesCompiler.psd1
-Invoke-RulesCompiler
+Import-Module ./src/compilers/powershell/BloqrCompiler/BloqrCompiler.psd1
+Invoke-BloqrCompiler
 ```
 
 #### Bash/Shell

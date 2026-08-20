@@ -16,7 +16,7 @@
 
 BeforeAll {
     $script:CommonManifest = Join-Path $PSScriptRoot '..' '..' 'Common' 'Common.psd1'
-    $script:ModuleManifest = Join-Path $PSScriptRoot '..' 'RulesCompiler.psd1'
+    $script:ModuleManifest = Join-Path $PSScriptRoot '..' 'BloqrCompiler.psd1'
     Import-Module $script:CommonManifest -Force
     Import-Module $script:ModuleManifest -Force
 
@@ -51,7 +51,7 @@ Describe 'Invoke-RulesValidator' {
     }
 
     It 'Returns $null when the binary cannot be found' {
-        Mock -ModuleName RulesCompiler Find-RulesValidateBinary { $null }
+        Mock -ModuleName BloqrCompiler Find-RulesValidateBinary { $null }
 
         $result = Invoke-RulesValidator -Path $script:outputFile
 
@@ -61,7 +61,7 @@ Describe 'Invoke-RulesValidator' {
     It 'Returns a passing result for valid syntax' {
         $binary = New-FakeRulesValidateBinary -Directory $script:tempDir `
             -Stdout '{"is_valid":true,"format":"adblock","valid_rules":1,"invalid_rules":0,"messages":[]}'
-        Mock -ModuleName RulesCompiler Find-RulesValidateBinary { $binary }.GetNewClosure()
+        Mock -ModuleName BloqrCompiler Find-RulesValidateBinary { $binary }.GetNewClosure()
 
         $result = Invoke-RulesValidator -Path $script:outputFile
 
@@ -75,7 +75,7 @@ Describe 'Invoke-RulesValidator' {
     It 'Returns a failing result with messages for invalid syntax' {
         $binary = New-FakeRulesValidateBinary -Directory $script:tempDir -ExitCode 1 `
             -Stdout '{"is_valid":false,"format":"unknown","valid_rules":0,"invalid_rules":1,"messages":["line 1: bad rule"]}'
-        Mock -ModuleName RulesCompiler Find-RulesValidateBinary { $binary }.GetNewClosure()
+        Mock -ModuleName BloqrCompiler Find-RulesValidateBinary { $binary }.GetNewClosure()
 
         $result = Invoke-RulesValidator -Path $script:outputFile
 
@@ -87,7 +87,7 @@ Describe 'Invoke-RulesValidator' {
     It 'Passes a HashDatabasePath override through to the CLI invocation' {
         $binary = New-FakeRulesValidateBinary -Directory $script:tempDir `
             -Stdout '{"is_valid":true,"format":"adblock","valid_rules":1,"invalid_rules":0,"messages":[]}'
-        Mock -ModuleName RulesCompiler Find-RulesValidateBinary { $binary }.GetNewClosure()
+        Mock -ModuleName BloqrCompiler Find-RulesValidateBinary { $binary }.GetNewClosure()
         $customHashDb = Join-Path $script:tempDir 'custom-hashes.json'
 
         $result = Invoke-RulesValidator -Path $script:outputFile -HashDatabasePath $customHashDb
@@ -97,7 +97,7 @@ Describe 'Invoke-RulesValidator' {
 
     It 'Returns $null when the CLI produces non-JSON output' {
         $binary = New-FakeRulesValidateBinary -Directory $script:tempDir -ExitCode 1 -Stdout 'not json'
-        Mock -ModuleName RulesCompiler Find-RulesValidateBinary { $binary }.GetNewClosure()
+        Mock -ModuleName BloqrCompiler Find-RulesValidateBinary { $binary }.GetNewClosure()
 
         $result = Invoke-RulesValidator -Path $script:outputFile
 

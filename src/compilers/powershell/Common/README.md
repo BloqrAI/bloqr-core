@@ -96,7 +96,7 @@ Common/
 ## Dependent Modules
 
 The following modules depend on the Common module:
-- **RulesCompiler**: Uses CompilerLogger and CompilerResult for compilation operations
+- **BloqrCompiler**: Uses CompilerLogger and CompilerResult for compilation operations
 - **AdGuardWebhook**: Uses CompilerLogger for webhook invocation logging
 - **adguard-api-powershell**: (Future) Will use shared classes for API operations
 
@@ -160,4 +160,4 @@ To add a new shared class to the Common module:
 
 Copyright (c) 2025 Jayson Knight. All rights reserved.
 
-See [LICENSE](https://github.com/BloqrAI/bloqr-lists/blob/main/LICENSE) for details.
+See [LICENSE](https://github.com/BloqrAI/bloqr-core/blob/main/LICENSE) for details.

@@ -188,8 +188,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 **Best for**: Windows administrators, automation scripts, cross-platform PowerShell users
 
 ```powershell
-Import-Module ./src/rules-compiler-powershell/RulesCompiler/RulesCompiler.psd1
-Invoke-RulesCompiler -CopyToRules
+Import-Module ./src/compilers/powershell/BloqrCompiler/BloqrCompiler.psd1
+Invoke-BloqrCompiler -CopyToRules
 ```
 
 **Pros**:
@@ -221,7 +221,7 @@ $result = Invoke-FilterCompiler -Config $config
 Write-CompiledOutput -Content $result.Content -Path "output.txt"
 
 # All-in-one
-Invoke-RulesCompiler -CopyToRules
+Invoke-BloqrCompiler -CopyToRules
 
 # Get version info
 Get-CompilerVersion | Format-List
@@ -342,5 +342,5 @@ deno task compile -- -c config.json -o output.txt
 ./target/release/bloqr-compiler -c config.json -o output.txt
 
 # Automation with PowerShell
-Invoke-RulesCompiler -ConfigPath config.json
+Invoke-BloqrCompiler -ConfigPath config.json
 ```

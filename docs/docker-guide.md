@@ -204,7 +204,7 @@ cargo run --release
 
 # PowerShell
 cd /workspace
-pwsh -Command "Import-Module ./src/rules-compiler-powershell/RulesCompiler/RulesCompiler.psd1; Invoke-RulesCompiler"
+pwsh -Command "Import-Module ./src/compilers/powershell/BloqrCompiler/BloqrCompiler.psd1; Invoke-BloqrCompiler"
 ```
 
 ### Running Tests
@@ -228,7 +228,7 @@ cargo test
 
 # PowerShell tests
 cd /workspace
-pwsh -Command "Invoke-Pester -Path ./src/rules-compiler-powershell -Recurse"
+pwsh -Command "Invoke-Pester -Path ./src/compilers/powershell -Recurse"
 
 # Or run all tests via docker compose
 docker compose --profile test run --rm test

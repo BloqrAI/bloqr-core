@@ -28,9 +28,9 @@ function Find-RulesValidateBinary {
 
     $binaryName = if ($IsWindows) { 'bloqr-validate.exe' } else { 'bloqr-validate' }
 
-    # Dev-convenience fallback: Private/ -> RulesCompiler/ -> rules-compiler-powershell/ -> src/ -> repo root
+    # Dev-convenience fallback: Private/ -> BloqrCompiler/ -> powershell/ -> compilers/ -> src/ -> repo root
     $repoRoot = $PSScriptRoot
-    for ($i = 0; $i -lt 4; $i++) {
+    for ($i = 0; $i -lt 5; $i++) {
         $repoRoot = Split-Path -Parent $repoRoot
     }
 

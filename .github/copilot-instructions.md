@@ -59,7 +59,7 @@ bloqr-core/
 │   ├── compilers/python/           # Python rules compiler
 │   ├── compilers/rust/             # Rust rules compiler
 │   ├── rules-compiler-shell/       # Shell scripts (bash, zsh)
-│   ├── rules-compiler-powershell/  # Canonical PowerShell compiler toolkit
+│   ├── compilers/powershell/       # Canonical PowerShell compiler toolkit
 │   ├── validation/                 # Rust validation library (core/) + CLI (cli/)
 │   └── website/                    # Gatsby website
 └── README.md
@@ -225,7 +225,7 @@ npm run build
 
 **Requirements**: Node.js 18+, Gatsby CLI
 
-### PowerShell Scripts (`src/rules-compiler-powershell/`)
+### PowerShell Scripts (`src/compilers/powershell/`)
 ```bash
 # Run PSScriptAnalyzer
 pwsh -Command "Invoke-ScriptAnalyzer -Path . -Recurse"
@@ -283,8 +283,8 @@ pwsh -Command "Invoke-ScriptAnalyzer -Path . -Recurse"
   - Use secure input or environment variables
 - **Testing**: Pester v5 tests in `Tests/` folders
 - **Linting**: PSScriptAnalyzer enforced in CI (`.github/workflows/powershell.yml`)
-- **RulesCompiler module** (`src/rules-compiler-powershell/`):
-  - `Invoke-RulesCompiler` wraps TypeScript compiler
+- **BloqrCompiler module** (`src/compilers/powershell/`):
+  - `Invoke-BloqrCompiler` wraps TypeScript compiler
 
 ### Security Practices
 
@@ -372,7 +372,7 @@ See `src/compilers/typescript/compiler-config.json` for reference.
 |----------|------|----------|---------|
 | .NET | `dotnet.yml` | Push to main, PRs | Build/test the .NET rules compiler (`dotnet test CompilerDotnet.slnx`) |
 | TypeScript | `typescript.yml` | Push to main, PRs | Type-check, lint, test (`deno task check/lint/test`) |
-| PowerShell | `powershell.yml` | On-demand | PSScriptAnalyzer on `src/rules-compiler-powershell/` |
+| PowerShell | `powershell.yml` | On-demand | PSScriptAnalyzer on `src/compilers/powershell/` |
 | Gatsby | `gatsby.yml` | Push to main | Build and deploy to GitHub Pages |
 | Security | `security.yml` | Schedule, push to main | CodeQL + DevSkim scanning (breaks on high/critical) |
 | Release | `release.yml` | Version tags | Build binaries for distribution |
@@ -459,7 +459,7 @@ cd src/compilers/rust && cargo test
 |-------------|---------|----------------|
 | `../bloqr-blocklists/output/adguard_user_filter.txt` | **Production filter list** | After successful compilation and testing |
 | `src/compilers/typescript/compiler-config.json` | **Primary config** for rule compilation | To change filter sources or transformations |
-| `src/rules-compiler-powershell/Invoke-RulesCompiler.psm1` | PowerShell wrapper for compiler | Extending PowerShell automation |
+| `src/compilers/powershell/BloqrCompiler/BloqrCompiler.psm1` | PowerShell wrapper for compiler | Extending PowerShell automation |
 | `docs/compiler-comparison.md` | **Decision guide** for choosing compiler | When adding features to compilers |
 
 ## Common Gotchas
