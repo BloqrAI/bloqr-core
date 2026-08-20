@@ -36,7 +36,7 @@ rust:
 powershell:
   - changed-files:
       - any-glob-to-any-file:
-          - 'src/rules-compiler-powershell/**'
+          - 'src/compilers/powershell/**'
           - 'src/rules-compiler-shell/*.ps1'
           - '**/*.ps1'
           - '**/*.psm1'

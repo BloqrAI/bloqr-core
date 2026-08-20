@@ -8,19 +8,19 @@ Write-Host ''
 
 try {
     # Test 1: Core PowerShell Modules
-    Write-Host '1. Testing Core PowerShell Modules (src/rules-compiler-powershell)...' -ForegroundColor Yellow
+    Write-Host '1. Testing Core PowerShell Modules (src/compilers/powershell)...' -ForegroundColor Yellow
     $scriptRoot = Split-Path -Parent $PSScriptRoot
-    Import-Module $scriptRoot\src\rules-compiler-powershell\Common\Common.psd1 -ErrorAction Stop
-    Import-Module $scriptRoot\src\rules-compiler-powershell\RulesCompiler\RulesCompiler.psd1 -ErrorAction Stop
-    Import-Module $scriptRoot\src\rules-compiler-powershell\AdGuardWebhook\AdGuardWebhook.psd1 -ErrorAction Stop
+    Import-Module $scriptRoot\src\compilers\powershell\Common\Common.psd1 -ErrorAction Stop
+    Import-Module $scriptRoot\src\compilers\powershell\BloqrCompiler\BloqrCompiler.psd1 -ErrorAction Stop
+    Import-Module $scriptRoot\src\compilers\powershell\AdGuardWebhook\AdGuardWebhook.psd1 -ErrorAction Stop
     Write-Host '   ✓ All modules loaded successfully' -ForegroundColor Green
     Write-Host ''
 
     # Test 2: Verify Functions
     Write-Host '2. Verifying Exported Functions...' -ForegroundColor Yellow
-    $rulesCommands = Get-Command -Module RulesCompiler | Select-Object -ExpandProperty Name
+    $rulesCommands = Get-Command -Module BloqrCompiler | Select-Object -ExpandProperty Name
     $webhookCommands = Get-Command -Module Webhook-Manifest | Select-Object -ExpandProperty Name
-    Write-Host '   RulesCompiler: ' -NoNewline -ForegroundColor Gray
+    Write-Host '   BloqrCompiler: ' -NoNewline -ForegroundColor Gray
     Write-Host $rulesCommands.Count -NoNewline -ForegroundColor White
     Write-Host ' functions' -ForegroundColor Gray
     Write-Host '   Webhook: ' -NoNewline -ForegroundColor Gray
@@ -33,7 +33,7 @@ try {
     Write-Host '3. Verifying Module Dependencies...' -ForegroundColor Yellow
     $allModules = Get-Module
     $commonLoaded = $allModules | Where-Object Name -eq 'Common'
-    $rulesLoaded = $allModules | Where-Object Name -like '*RulesCompiler*'
+    $rulesLoaded = $allModules | Where-Object Name -like '*BloqrCompiler*'
     $webhookLoaded = $allModules | Where-Object Name -like '*Webhook*'
     Write-Host "   Modules loaded: $($allModules.Count)" -ForegroundColor Cyan
     Write-Host '   ✓ Common module dependency resolved' -ForegroundColor Green
@@ -43,10 +43,10 @@ try {
     # Test 4: Module Versions
     Write-Host '4. Verifying Module Versions...' -ForegroundColor Yellow
     $commonModule = Get-Module Common
-    $rulesModule = Get-Module RulesCompiler -ListAvailable | Where-Object Path -Like "*src/rules-compiler-powershell*" | Select-Object -First 1
+    $rulesModule = Get-Module BloqrCompiler -ListAvailable | Where-Object Path -Like "*src/compilers/powershell*" | Select-Object -First 1
     $webhookModule = Get-Module AdGuardWebhook
     Write-Host "   Common: v$($commonModule.Version)" -ForegroundColor Cyan
-    Write-Host "   RulesCompiler: v$($rulesModule.Version)" -ForegroundColor Cyan
+    Write-Host "   BloqrCompiler: v$($rulesModule.Version)" -ForegroundColor Cyan
     Write-Host "   AdGuardWebhook: v$($webhookModule.Version)" -ForegroundColor Cyan
     Write-Host '   ✓ All versions verified' -ForegroundColor Green
     Write-Host ''

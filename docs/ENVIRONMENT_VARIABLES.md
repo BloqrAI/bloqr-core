@@ -16,7 +16,7 @@ Environment variables give the shell/PowerShell wrappers and .NET apps configura
 
 ## Rules Compiler (Shell/PowerShell wrappers)
 
-Read by `src/rules-compiler-shell/bash/compile-rules.sh`, `src/rules-compiler-shell/zsh/compile-rules.zsh`, and `src/rules-compiler-powershell/RulesCompiler/Public/Invoke-RulesCompiler.ps1`.
+Read by `src/rules-compiler-shell/bash/compile-rules.sh`, `src/rules-compiler-shell/zsh/compile-rules.zsh`, and `src/compilers/powershell/BloqrCompiler/Public/Invoke-BloqrCompiler.ps1`.
 
 ### ADGUARD_COMPILER_CONFIG
 **Description**: Configuration file path
@@ -198,7 +198,7 @@ The AdGuard DNS API clients (.NET, TypeScript, Rust, PowerShell) and the Linear 
 
 ## See Also
 
-- [PowerShell Modules README](../src/rules-compiler-powershell/README.md)
+- [PowerShell Modules README](../src/compilers/powershell/README.md)
 - [Shell Scripts README](../src/rules-compiler-shell/README.md)
 - [Configuration Reference](./configuration-reference.md)
 - [Dashboard Guide](./guides/dashboard-guide.md)

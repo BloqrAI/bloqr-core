@@ -13,7 +13,7 @@ This project uses different testing frameworks for each language implementation:
 | Python | pytest | `src/compilers/python/tests/` | `pytest` |
 | Rust (Rules Compiler) | cargo test | `src/compilers/rust/src/` | `cargo test` |
 | Rust (Validator) | cargo test | `src/validation/` | `cargo test` |
-| PowerShell | Pester | `src/rules-compiler-powershell/` | `Invoke-Pester -Recurse` |
+| PowerShell | Pester | `src/compilers/powershell/` | `Invoke-Pester -Recurse` |
 
 The AdGuard DNS API client test suites (TypeScript, .NET, Rust, PowerShell) moved with the clients to [`BloqrAI/bloqr-apiclients`](https://github.com/BloqrAI/bloqr-apiclients).
 
@@ -351,19 +351,19 @@ mod tests {
 ### Running Tests
 
 ```powershell
-cd src/rules-compiler-powershell
+cd src/compilers/powershell
 
-# Run all tests (Common, RulesCompiler, AdGuardWebhook modules)
+# Run all tests (Common, BloqrCompiler, AdGuardWebhook modules)
 Invoke-Pester -Path . -Recurse
 
 # Run with detailed output
 Invoke-Pester -Path . -Recurse -Output Detailed
 
 # Run tests for a single module
-Invoke-Pester -Path ./RulesCompiler/Tests/
+Invoke-Pester -Path ./BloqrCompiler/Tests/
 
 # Run specific test file
-Invoke-Pester -Path ./RulesCompiler/Tests/CompilerResult.Tests.ps1
+Invoke-Pester -Path ./BloqrCompiler/Tests/CompilerResult.Tests.ps1
 
 # Run with results export
 Invoke-Pester -Path . -Recurse -Output Detailed -OutputFile ./TestResults.xml
@@ -372,19 +372,19 @@ Invoke-Pester -Path . -Recurse -Output Detailed -OutputFile ./TestResults.xml
 ### Writing Pester Tests
 
 ```powershell
-Describe "RulesCompiler" {
+Describe "BloqrCompiler" {
     BeforeAll {
-        Import-Module ./Invoke-RulesCompiler.psm1 -Force
+        Import-Module ./Invoke-BloqrCompiler.psm1 -Force
     }
 
     Context "When compiling rules" {
         It "Should compile successfully" {
-            $result = Invoke-RulesCompiler -ConfigPath "config.json"
+            $result = Invoke-BloqrCompiler -ConfigPath "config.json"
             $result.Success | Should -Be $true
         }
 
         It "Should handle missing config" {
-            { Invoke-RulesCompiler -ConfigPath "nonexistent.json" } | 
+            { Invoke-BloqrCompiler -ConfigPath "nonexistent.json" } | 
                 Should -Throw
         }
     }
@@ -401,13 +401,13 @@ Describe "RulesCompiler" {
         ) {
             param($ConfigPath)
             
-            $result = Invoke-RulesCompiler -ConfigPath $ConfigPath
+            $result = Invoke-BloqrCompiler -ConfigPath $ConfigPath
             $result | Should -Not -BeNull
         }
     }
 
     AfterAll {
-        Remove-Module Invoke-RulesCompiler -Force
+        Remove-Module Invoke-BloqrCompiler -Force
     }
 }
 ```
@@ -489,7 +489,7 @@ jobs:
         shell: pwsh
         run: |
           Install-Module -Name Pester -Force -SkipPublisherCheck
-          Invoke-Pester -Path ./src/rules-compiler-powershell -Recurse -Output Detailed
+          Invoke-Pester -Path ./src/compilers/powershell -Recurse -Output Detailed
 ```
 
 ## Test Coverage
@@ -660,7 +660,7 @@ echo "Running Rust tests..."
 cd src/compilers/rust && cargo test && cd ../..
 
 echo "Running PowerShell tests..."
-pwsh -Command "Invoke-Pester -Path ./src/rules-compiler-powershell -Recurse"
+pwsh -Command "Invoke-Pester -Path ./src/compilers/powershell -Recurse"
 
 echo "All tests passed!"
 ```

@@ -2,11 +2,11 @@
 
 <#
 .SYNOPSIS
-    Tests for the Invoke-RulesCompiler compile pipeline (#368).
+    Tests for the Invoke-BloqrCompiler compile pipeline (#368).
 
 .DESCRIPTION
-    Invoke-RulesCompiler shells out to hostlist-compiler rather than embedding a
-    compiler itself, so these tests mock Get-RulesCompilerCommand (the
+    Invoke-BloqrCompiler shells out to hostlist-compiler rather than embedding a
+    compiler itself, so these tests mock Get-BloqrCompilerCommand (the
     module-private resolver) with a small fake script that writes canned output
     to whatever --output path it's given - keeping the tests deterministic and
     independent of whether hostlist-compiler is actually installed, mirroring the
@@ -15,7 +15,7 @@
 
 BeforeAll {
     $script:CommonManifest = Join-Path $PSScriptRoot '..' '..' 'Common' 'Common.psd1'
-    $script:ModuleManifest = Join-Path $PSScriptRoot '..' 'RulesCompiler.psd1'
+    $script:ModuleManifest = Join-Path $PSScriptRoot '..' 'BloqrCompiler.psd1'
     Import-Module $script:CommonManifest -Force
     Import-Module $script:ModuleManifest -Force
 
@@ -66,7 +66,7 @@ exit $ExitCode
     }
 }
 
-Describe 'Invoke-RulesCompiler' {
+Describe 'Invoke-BloqrCompiler' {
 
     BeforeEach {
         $script:tempDir = Join-Path ([System.IO.Path]::GetTempPath()) ([guid]::NewGuid())
@@ -81,7 +81,7 @@ Describe 'Invoke-RulesCompiler' {
         $originalEnv = $env:ADGUARD_COMPILER_CONFIG
         $env:ADGUARD_COMPILER_CONFIG = $null
         try {
-            $result = Invoke-RulesCompiler -ConfigPath ''
+            $result = Invoke-BloqrCompiler -ConfigPath ''
         }
         finally {
             $env:ADGUARD_COMPILER_CONFIG = $originalEnv
@@ -92,7 +92,7 @@ Describe 'Invoke-RulesCompiler' {
     }
 
     It 'Fails cleanly when the configuration file does not exist' {
-        $result = Invoke-RulesCompiler -ConfigPath (Join-Path $script:tempDir 'does-not-exist.json')
+        $result = Invoke-BloqrCompiler -ConfigPath (Join-Path $script:tempDir 'does-not-exist.json')
 
         $result.Success | Should -Be $false
         $result.ErrorMessage | Should -Match 'Configuration error'
@@ -100,9 +100,9 @@ Describe 'Invoke-RulesCompiler' {
 
     It 'Fails cleanly when hostlist-compiler cannot be found' {
         $configPath = New-TestConfig -Directory $script:tempDir
-        Mock -ModuleName RulesCompiler Get-RulesCompilerCommand { $null }
+        Mock -ModuleName BloqrCompiler Get-BloqrCompilerCommand { $null }
 
-        $result = Invoke-RulesCompiler -ConfigPath $configPath -OutputPath (Join-Path $script:tempDir 'output.txt')
+        $result = Invoke-BloqrCompiler -ConfigPath $configPath -OutputPath (Join-Path $script:tempDir 'output.txt')
 
         $result.Success | Should -Be $false
         $result.ErrorMessage | Should -Match 'hostlist-compiler not found'
@@ -112,10 +112,10 @@ Describe 'Invoke-RulesCompiler' {
         $configPath = New-TestConfig -Directory $script:tempDir
         $outputPath = Join-Path $script:tempDir 'output.txt'
         $fakeCompiler = New-FakeHostlistCompiler -Directory $script:tempDir
-        Mock -ModuleName RulesCompiler Get-RulesCompilerCommand { @{ Executable = $fakeCompiler; Arguments = @() } }.GetNewClosure()
-        Mock -ModuleName RulesCompiler Invoke-RulesValidator { $null }
+        Mock -ModuleName BloqrCompiler Get-BloqrCompilerCommand { @{ Executable = $fakeCompiler; Arguments = @() } }.GetNewClosure()
+        Mock -ModuleName BloqrCompiler Invoke-RulesValidator { $null }
 
-        $result = Invoke-RulesCompiler -ConfigPath $configPath -OutputPath $outputPath
+        $result = Invoke-BloqrCompiler -ConfigPath $configPath -OutputPath $outputPath
 
         $result.Success | Should -Be $true
         $result.RuleCount | Should -Be 2
@@ -129,9 +129,9 @@ Describe 'Invoke-RulesCompiler' {
         $configPath = New-TestConfig -Directory $script:tempDir
         $outputPath = Join-Path $script:tempDir 'output.txt'
         $fakeCompiler = New-FakeHostlistCompiler -Directory $script:tempDir -ExitCode 1
-        Mock -ModuleName RulesCompiler Get-RulesCompilerCommand { @{ Executable = $fakeCompiler; Arguments = @() } }.GetNewClosure()
+        Mock -ModuleName BloqrCompiler Get-BloqrCompilerCommand { @{ Executable = $fakeCompiler; Arguments = @() } }.GetNewClosure()
 
-        $result = Invoke-RulesCompiler -ConfigPath $configPath -OutputPath $outputPath
+        $result = Invoke-BloqrCompiler -ConfigPath $configPath -OutputPath $outputPath
 
         $result.Success | Should -Be $false
         $result.ErrorMessage | Should -Match 'hostlist-compiler exited with code 1'
@@ -142,10 +142,10 @@ Describe 'Invoke-RulesCompiler' {
         $outputPath = Join-Path $script:tempDir 'output.txt'
         $rulesDir = Join-Path $script:tempDir 'rules'
         $fakeCompiler = New-FakeHostlistCompiler -Directory $script:tempDir
-        Mock -ModuleName RulesCompiler Get-RulesCompilerCommand { @{ Executable = $fakeCompiler; Arguments = @() } }.GetNewClosure()
-        Mock -ModuleName RulesCompiler Invoke-RulesValidator { $null }
+        Mock -ModuleName BloqrCompiler Get-BloqrCompilerCommand { @{ Executable = $fakeCompiler; Arguments = @() } }.GetNewClosure()
+        Mock -ModuleName BloqrCompiler Invoke-RulesValidator { $null }
 
-        $result = Invoke-RulesCompiler -ConfigPath $configPath -OutputPath $outputPath -CopyToRules -RulesDirectory $rulesDir
+        $result = Invoke-BloqrCompiler -ConfigPath $configPath -OutputPath $outputPath -CopyToRules -RulesDirectory $rulesDir
 
         $result.Success | Should -Be $true
         Test-Path -LiteralPath (Join-Path $rulesDir 'adguard_user_filter.txt') | Should -Be $true
@@ -158,7 +158,7 @@ Describe 'Invoke-RulesCompiler' {
         $configPath = Join-Path $script:tempDir 'compiler-config.yaml'
         Set-Content -Path $configPath -Value "name: test-filter`nsources:`n  - source: https://example.com/list.txt`n"
 
-        $result = Invoke-RulesCompiler -ConfigPath $configPath
+        $result = Invoke-BloqrCompiler -ConfigPath $configPath
 
         $result.Success | Should -Be $false
         $result.ErrorMessage | Should -Match 'Only JSON configuration files can be compiled today|powershell-yaml'

@@ -1,4 +1,4 @@
-function Get-RulesCompilerCommand {
+function Get-BloqrCompilerCommand {
     <#
     .SYNOPSIS
         Resolves how to invoke hostlist-compiler.

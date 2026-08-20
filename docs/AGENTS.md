@@ -6,7 +6,7 @@
 - `src/` contains the multi-language rules-compiler toolchain:
   - `src/compilers/typescript/`, `src/compilers/dotnet/`, `src/compilers/python/`, `src/compilers/rust/` — TypeScript/Deno, .NET, Python, and Rust compilers that use `@bloqr/compiler-core`.
   - `src/rules-compiler-shell/` — shell compilers, not yet migrated to `src/compilers/`.
-  - `src/rules-compiler-powershell/` class-based PowerShell modules and Pester tests.
+  - `src/compilers/powershell/` class-based PowerShell modules and Pester tests.
   - `src/validation/` Rust validation library and CLI.
   - `website/` Gatsby documentation site.
 - `docs/` holds guides and reference documentation.
@@ -23,7 +23,7 @@
 - .NET (`src/compilers/dotnet/`): `dotnet restore CompilerDotnet.slnx`, `dotnet build CompilerDotnet.slnx`, `dotnet test CompilerDotnet.slnx`
 - Python (`src/compilers/python/`): `pip install -e ".[dev]"`, `pytest`, `ruff check .`, `mypy .`
 - Rust (`src/compilers/rust/`, `src/validation/`): `cargo build`, `cargo test`, `cargo fmt`, `cargo clippy`
-- PowerShell (`src/rules-compiler-powershell/`): `Invoke-Pester -Path ./src/rules-compiler-powershell -Recurse`
+- PowerShell (`src/compilers/powershell/`): `Invoke-Pester -Path ./src/compilers/powershell -Recurse`
 - Docker dev env: `docker build -f Dockerfile.warp .` (use when you want a pre-baked toolchain).
 
 ## Coding Style & Naming Conventions

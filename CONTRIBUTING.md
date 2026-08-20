@@ -58,7 +58,7 @@ bloqr-core/
 │   ├── compilers/rust/               # Rust rules compiler
 │   ├── compilers/typescript/       # TypeScript rules compiler (@bloqr/compiler-core)
 │   ├── compilers/python/            # Python compiler
-│   ├── rules-compiler-powershell/   # PowerShell rules compiler toolkit
+│   ├── compilers/powershell/        # PowerShell rules compiler toolkit
 │   ├── rules-compiler-shell/        # Shell script utilities (bash/zsh)
 │   ├── validation/                  # Rust validation library + CLI
 │   └── website/                     # Gatsby documentation site
@@ -115,7 +115,7 @@ ruff check bloqr_compiler/
 cargo clippy --workspace
 
 # PowerShell
-Invoke-ScriptAnalyzer -Path src/rules-compiler-powershell -Recurse
+Invoke-ScriptAnalyzer -Path src/compilers/powershell -Recurse
 ```
 
 ### 5. Commit Changes
@@ -215,7 +215,7 @@ cd src/compilers/typescript && deno task test
 cd src/compilers/dotnet && dotnet test
 cd src/compilers/python && pytest
 cd src/compilers/rust && cargo test
-cd src/rules-compiler-powershell && Invoke-Pester
+cd src/compilers/powershell && Invoke-Pester
 ```
 
 ## Pull Request Process

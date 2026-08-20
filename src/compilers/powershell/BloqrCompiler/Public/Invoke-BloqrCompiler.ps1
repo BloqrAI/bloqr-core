@@ -1,7 +1,7 @@
 using module ..\Classes\CompilerConfiguration.psm1
 using module ..\Classes\CompilerResult.psm1
 
-function Invoke-RulesCompiler {
+function Invoke-BloqrCompiler {
     <#
     .SYNOPSIS
         Compiles AdGuard-style filter rules from a compiler configuration file.
@@ -42,7 +42,7 @@ function Invoke-RulesCompiler {
         CompilerResult
 
     .EXAMPLE
-        Invoke-RulesCompiler -ConfigPath ./compiler-config.json -CopyToRules
+        Invoke-BloqrCompiler -ConfigPath ./compiler-config.json -CopyToRules
     #>
     [CmdletBinding()]
     [OutputType([CompilerResult])]
@@ -90,7 +90,7 @@ function Invoke-RulesCompiler {
         New-Item -ItemType Directory -Path $outputDir -Force | Out-Null
     }
 
-    $compilerCommand = Get-RulesCompilerCommand
+    $compilerCommand = Get-BloqrCompilerCommand
     if (-not $compilerCommand) {
         return [CompilerResult]::CreateFailure('hostlist-compiler not found. Install with: npm install -g @adguard/hostlist-compiler')
     }
@@ -132,7 +132,7 @@ function Invoke-RulesCompiler {
     if ($CopyToRules) {
         if (-not $RulesDirectory) {
             $repoRoot = $PSScriptRoot
-            for ($i = 0; $i -lt 4; $i++) { $repoRoot = Split-Path -Parent $repoRoot }
+            for ($i = 0; $i -lt 5; $i++) { $repoRoot = Split-Path -Parent $repoRoot }
             $RulesDirectory = Join-Path $repoRoot 'rules'
         }
 

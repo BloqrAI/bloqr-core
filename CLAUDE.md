@@ -17,7 +17,7 @@ This repository is a comprehensive multi-language toolkit for ad-blocking, netwo
 - **Zsh** (`src/rules-compiler-shell/zsh/compile-rules.zsh`) - macOS/Linux with zsh-specific features
 
 ### PowerShell Modules
-- **RulesCompiler Toolkit** (`src/rules-compiler-powershell/`) - Canonical, actively-developed modular PowerShell toolkit (class-based `Common`, `RulesCompiler`, `AdGuardWebhook` modules with Pester tests)
+- **BloqrCompiler Toolkit** (`src/compilers/powershell/`) - Canonical, actively-developed modular PowerShell toolkit (class-based `Common`, `BloqrCompiler`, `AdGuardWebhook` modules with Pester tests)
 
 ### Common .NET Library
 - **`Bloqr.Compiler.Abstractions`/`Bloqr.Compiler.Core`** (`src/common/dotnet/`) - Shared .NET library (own solution, `CompilerCommon.slnx`) consumed by the .NET rules compiler and Dashboard via `<ProjectReference>`; not part of either consumer's solution
@@ -179,21 +179,21 @@ cargo run -- --help                      # Show help
 ./target/release/bloqr-compiler -c config.yaml
 ```
 
-### PowerShell RulesCompiler Toolkit (`src/rules-compiler-powershell/`)
+### PowerShell BloqrCompiler Toolkit (`src/compilers/powershell/`)
 ```powershell
 # Import the modules
-Import-Module ./src/rules-compiler-powershell/Common/Common.psd1
-Import-Module ./src/rules-compiler-powershell/RulesCompiler/RulesCompiler.psd1
-Import-Module ./src/rules-compiler-powershell/AdGuardWebhook/AdGuardWebhook.psd1
+Import-Module ./src/compilers/powershell/Common/Common.psd1
+Import-Module ./src/compilers/powershell/BloqrCompiler/BloqrCompiler.psd1
+Import-Module ./src/compilers/powershell/AdGuardWebhook/AdGuardWebhook.psd1
 
 # Compile filter rules
-Invoke-RulesCompiler
+Invoke-BloqrCompiler
 
 # Run Pester tests
-Invoke-Pester -Path ./src/rules-compiler-powershell -Recurse
+Invoke-Pester -Path ./src/compilers/powershell -Recurse
 
 # Lint with PSScriptAnalyzer
-Invoke-ScriptAnalyzer -Path src/rules-compiler-powershell -Recurse
+Invoke-ScriptAnalyzer -Path src/compilers/powershell -Recurse
 ```
 
 ## Running Individual Tests
@@ -219,10 +219,10 @@ dotnet test CompilerCommon.slnx --filter "FullyQualifiedName~TransformationTests
 ### PowerShell (Pester)
 ```powershell
 # Run all PowerShell tests
-Invoke-Pester -Path ./src/rules-compiler-powershell/
+Invoke-Pester -Path ./src/compilers/powershell/
 
 # Run with detailed output
-Invoke-Pester -Path ./src/rules-compiler-powershell/ -Output Detailed
+Invoke-Pester -Path ./src/compilers/powershell/ -Output Detailed
 ```
 
 ### Python (pytest)
@@ -314,9 +314,9 @@ cargo test config::                       # Tests in module
 - Key structs: `BloqrCompiler`, `CompilerConfiguration`, `CompilerResult`, `VersionInfo`
 - LTO optimization enabled for small binary size
 
-### PowerShell Toolkit (`src/rules-compiler-powershell/`)
+### PowerShell Toolkit (`src/compilers/powershell/`)
 - **Common** (`Common/`) - Shared `CompilerLogger` and `CompilerResult` classes used by other modules
-- **RulesCompiler** (`RulesCompiler/`) - Class-based rules compiler module (`CompilerConfiguration`, `CompilerResult`, `CompilerLogger`)
+- **BloqrCompiler** (`BloqrCompiler/`) - Class-based rules compiler module (`CompilerConfiguration`, `CompilerResult`, `CompilerLogger`)
 - **AdGuardWebhook** (`AdGuardWebhook/`) - Class-based webhook invocation module (`WebhookConfiguration`, `WebhookInvoker`, `WebhookStatistics`)
 - Each module ships its own `.psd1` manifest and `Tests/` Pester suite
 

@@ -143,7 +143,7 @@ services:
         echo '=== Running Rust Tests ===' &&
         cd /workspace/src/compilers/rust && cargo test &&
         echo '=== Running PowerShell Tests ===' &&
-        pwsh -Command 'Invoke-Pester -Path /workspace/src/rules-compiler-powershell -PassThru' &&
+        pwsh -Command 'Invoke-Pester -Path /workspace/src/compilers/powershell -PassThru' &&
         echo '=== All Tests Complete ==='
       "
     depends_on:

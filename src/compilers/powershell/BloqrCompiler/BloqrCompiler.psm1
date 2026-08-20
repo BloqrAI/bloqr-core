@@ -1,4 +1,4 @@
-# RulesCompiler.psm1 - AdGuard Rules Compiler Module
+# BloqrCompiler.psm1 - AdGuard Rules Compiler Module
 # This module provides rules compilation functionality with OOP design
 
 # Load Common module for shared classes (CompilerLogger, CompilerResult)

@@ -8,7 +8,7 @@ A multi-language toolkit for compiling and validating AdGuard-syntax ad-blocking
 
 - **Rules compilers** for TypeScript/Deno, C#/.NET, Python, and Rust, plus bash/zsh shell scripts — all reading the same JSON/JSONC configuration schema and producing identical output.
 - **`@bloqr/compiler-core`** (`src/compilers/typescript/`) — the canonical, dependency-free compilation engine, published on [JSR](https://jsr.io/@bloqr/compiler-core). The .NET, Python, and Rust compilers shell out to it via Deno rather than reimplementing compilation logic.
-- **RulesCompiler PowerShell toolkit** (`src/rules-compiler-powershell/`) — class-based modules (`Common`, `RulesCompiler`, `AdGuardWebhook`) with Pester test suites.
+- **BloqrCompiler PowerShell toolkit** (`src/compilers/powershell/`) — class-based modules (`Common`, `BloqrCompiler`, `AdGuardWebhook`) with Pester test suites.
 - **Validation library** (`src/validation/`) — a Rust validation library (`bloqr-validator-core`) and CLI (`bloqr-validator-core-cli`) for filter/config validation (hash verification, URL security, syntax linting).
 - **Documentation website** (`website/`) — a Gatsby 5 site that builds guides, API reference, and security docs from `docs/` and this README.
 
@@ -84,8 +84,8 @@ cargo test
 ### PowerShell
 
 ```powershell
-Import-Module ./src/rules-compiler-powershell/RulesCompiler/RulesCompiler.psd1
-Invoke-RulesCompiler
+Import-Module ./src/compilers/powershell/BloqrCompiler/BloqrCompiler.psd1
+Invoke-BloqrCompiler
 ```
 
 Every compiler supports JSON configuration (the .NET compiler and Dashboard also read JSONC), the full transformation set (`Deduplicate`, `Validate`, `RemoveComments`, `Compress`, and more — see [Configuration Reference](docs/configuration-reference.md)), and per-source inclusions/exclusions/transformations. YAML and TOML remain supported for backward compatibility but are no longer documented — see [Configuration Reference](docs/configuration-reference.md#supported-formats).
@@ -119,7 +119,7 @@ bloqr-core/
 │   ├── compilers/python/         # Python 3.9+ — pip-installable package + CLI
 │   ├── compilers/rust/           # Rust — single-binary CLI, zero runtime deps
 │   ├── rules-compiler-shell/     # bash + zsh scripts
-│   ├── rules-compiler-powershell/# PowerShell modules + Pester tests
+│   ├── compilers/powershell/     # PowerShell modules + Pester tests
 │   ├── validation/                # Rust validation library (core/) + CLI (cli/)
 │   ├── bloqr-dashboard/          # C#/.NET 10 — Dashboard console app
 │   └── website/                  # Gatsby 5 documentation site
@@ -159,7 +159,7 @@ cd src/compilers/dotnet && dotnet test CompilerDotnet.slnx
 cd src/compilers/python && pytest
 cd src/compilers/rust && cargo test
 cargo test --workspace   # bloqr-compiler + validation
-Invoke-Pester -Path ./src/rules-compiler-powershell -Recurse
+Invoke-Pester -Path ./src/compilers/powershell -Recurse
 ```
 
 See [`docs/guides/testing-guide.md`](docs/guides/testing-guide.md) for coverage tooling, CI examples, and troubleshooting.
