@@ -14,7 +14,7 @@ Centralized validation library for AdGuard filter compilation with comprehensive
 
 > The Rust AdGuard DNS API client (`adguard-api-rust`) that used to live in this workspace moved to [`BloqrAI/bloqr-apiclients`](https://github.com/BloqrAI/bloqr-apiclients) and is no longer a member of this Cargo workspace.
 
-### 2. **rules-compiler-rust** (`src/rules-compiler-rust/`)
+### 2. **bloqr-compiler** (`src/compilers/rust/`)
 Rust compiler for AdGuard filter rules using `@bloqr/compiler-core`.
 
 - Library and CLI for compiling filter rules
@@ -59,8 +59,8 @@ cargo fmt --all -- --check
 cargo build -p bloqr-validator-core
 cargo build -p bloqr-validator-core-cli
 
-# Build only rules-compiler
-cargo build -p rules-compiler
+# Build only bloqr-compiler
+cargo build -p bloqr-compiler
 ```
 
 ## Running Binaries
@@ -69,11 +69,11 @@ cargo build -p rules-compiler
 # Run bloqr-validate CLI
 cargo run -p bloqr-validator-core-cli -- --help
 
-# Run rules-compiler
-cargo run -p rules-compiler -- --help
+# Run bloqr-compiler
+cargo run -p bloqr-compiler -- --help
 
 # Release mode (faster)
-cargo run --release -p rules-compiler -- -c config.json
+cargo run --release -p bloqr-compiler -- -c config.json
 ```
 
 ## Development
@@ -119,9 +119,10 @@ bloqr-core/
     │   └── cli/
     │       ├── Cargo.toml
     │       └── src/
-    └── rules-compiler-rust/
-        ├── Cargo.toml
-        └── src/
+    └── compilers/
+        └── rust/
+            ├── Cargo.toml
+            └── src/
 ```
 
 ## Workspace Benefits
@@ -185,7 +186,7 @@ cargo bench
 cargo clean
 
 # Clean specific package
-cargo clean -p rules-compiler
+cargo clean -p bloqr-compiler
 ```
 
 ## CI/CD Integration

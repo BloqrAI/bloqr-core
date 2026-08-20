@@ -291,11 +291,11 @@ impl CompileOptions {
 
 /// Main compiler for AdGuard filter rules.
 #[derive(Debug, Default)]
-pub struct RulesCompiler {
+pub struct BloqrCompiler {
     options: CompileOptions,
 }
 
-impl RulesCompiler {
+impl BloqrCompiler {
     /// Create a new compiler instance with default options.
     #[must_use]
     pub fn new() -> Self {

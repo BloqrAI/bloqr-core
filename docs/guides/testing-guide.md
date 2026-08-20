@@ -11,7 +11,7 @@ This project uses different testing frameworks for each language implementation:
 | TypeScript (Rules Compiler) | Deno Test | `src/compilers/typescript/tests/` | `deno task test` |
 | .NET (Compiler) | xUnit | `src/compilers/dotnet/src/Bloqr.Compiler.Dotnet.Tests/` | `dotnet test` |
 | Python | pytest | `src/compilers/python/tests/` | `pytest` |
-| Rust (Rules Compiler) | cargo test | `src/rules-compiler-rust/src/` | `cargo test` |
+| Rust (Rules Compiler) | cargo test | `src/compilers/rust/src/` | `cargo test` |
 | Rust (Validator) | cargo test | `src/validation/` | `cargo test` |
 | PowerShell | Pester | `src/rules-compiler-powershell/` | `Invoke-Pester -Recurse` |
 
@@ -266,7 +266,7 @@ class TestBloqrCompiler:
 ### Rules Compiler Tests
 
 ```bash
-cd src/rules-compiler-rust
+cd src/compilers/rust
 
 # Run all tests
 cargo test
@@ -284,7 +284,7 @@ cargo test config::
 cargo test -- --nocapture --test-threads=1
 
 # Run tests for specific package
-cargo test --package rules-compiler
+cargo test --package bloqr-compiler
 
 # Run doc tests
 cargo test --doc
@@ -303,14 +303,14 @@ mod tests {
 
     #[test]
     fn test_basic_functionality() {
-        let compiler = RulesCompiler::new();
+        let compiler = BloqrCompiler::new();
         let result = compiler.compile("config.json", None);
         assert!(result.is_ok());
     }
 
     #[test]
     fn test_error_handling() {
-        let compiler = RulesCompiler::new();
+        let compiler = BloqrCompiler::new();
         let result = compiler.compile("nonexistent.yaml", None);
         assert!(result.is_err());
     }
@@ -478,7 +478,7 @@ jobs:
           toolchain: stable
       - name: Run Rust tests
         run: |
-          cd src/rules-compiler-rust
+          cd src/compilers/rust
           cargo test
 
   test-powershell:
@@ -520,7 +520,7 @@ pytest --cov=bloqr_compiler --cov-report=html
 
 #### Rust
 ```bash
-cd src/rules-compiler-rust
+cd src/compilers/rust
 cargo install cargo-tarpaulin
 cargo tarpaulin --out Html
 # View tarpaulin-report.html
@@ -657,7 +657,7 @@ echo "Running Python tests..."
 cd src/compilers/python && pytest && cd ../..
 
 echo "Running Rust tests..."
-cd src/rules-compiler-rust && cargo test && cd ../..
+cd src/compilers/rust && cargo test && cd ../..
 
 echo "Running PowerShell tests..."
 pwsh -Command "Invoke-Pester -Path ./src/rules-compiler-powershell -Recurse"
@@ -670,7 +670,7 @@ echo "All tests passed!"
 - [TypeScript Rules Compiler Guide](./typescript-rules-compiler.md)
 - [.NET Compiler README](../../src/compilers/dotnet/README.md)
 - [Python Compiler README](../../src/compilers/python/README.md)
-- [Rust Compiler README](../../src/rules-compiler-rust/README.md)
+- [Rust Compiler README](../../src/compilers/rust/README.md)
 
 ## License
 

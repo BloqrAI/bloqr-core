@@ -11,10 +11,10 @@
 //! ## Quick Start
 //!
 //! ```no_run
-//! use rules_compiler::{RulesCompiler, CompileOptions};
+//! use bloqr_compiler::{BloqrCompiler, CompileOptions};
 //!
 //! // Create a compiler with default options
-//! let compiler = RulesCompiler::new();
+//! let compiler = BloqrCompiler::new();
 //!
 //! // Compile rules from a configuration file
 //! let result = compiler.compile("config.yaml")?;
@@ -22,28 +22,28 @@
 //! if result.success {
 //!     println!("Compiled {} rules to {}", result.rule_count, result.output_path_str());
 //! }
-//! # Ok::<(), rules_compiler::CompilerError>(())
+//! # Ok::<(), bloqr_compiler::CompilerError>(())
 //! ```
 //!
 //! ## With Options
 //!
 //! ```no_run
-//! use rules_compiler::{RulesCompiler, CompileOptions, ConfigFormat};
+//! use bloqr_compiler::{BloqrCompiler, CompileOptions, ConfigFormat};
 //!
 //! let options = CompileOptions::new()
 //!     .with_copy_to_rules(true)
 //!     .with_debug(true)
 //!     .with_validation(true);
 //!
-//! let compiler = RulesCompiler::with_options(options);
+//! let compiler = BloqrCompiler::with_options(options);
 //! let result = compiler.compile("config.yaml")?;
-//! # Ok::<(), rules_compiler::CompilerError>(())
+//! # Ok::<(), bloqr_compiler::CompilerError>(())
 //! ```
 //!
 //! ## Reading Configuration
 //!
 //! ```no_run
-//! use rules_compiler::{read_config, ConfigFormat};
+//! use bloqr_compiler::{read_config, ConfigFormat};
 //!
 //! // Auto-detect format from extension
 //! let config = read_config("config.yaml", None)?;
@@ -53,7 +53,7 @@
 //!
 //! println!("Filter: {} v{}", config.name, config.version);
 //! println!("Sources: {}", config.sources.len());
-//! # Ok::<(), rules_compiler::CompilerError>(())
+//! # Ok::<(), bloqr_compiler::CompilerError>(())
 //! ```
 
 pub mod chunking;
@@ -71,7 +71,7 @@ pub use config::{
 // Re-export main types from compiler module
 pub use compiler::{
     compile_rules, compile_rules_with_events, compute_hash, compute_hash_with_events, count_rules,
-    verify_hash_with_events, CompileOptions, CompilerResult, PlatformInfo, RulesCompiler,
+    verify_hash_with_events, BloqrCompiler, CompileOptions, CompilerResult, PlatformInfo,
     VersionInfo,
 };
 
@@ -141,13 +141,13 @@ mod tests {
 
     #[test]
     fn test_name_constant() {
-        assert_eq!(NAME, "rules-compiler");
+        assert_eq!(NAME, "bloqr-compiler");
     }
 
     #[test]
     fn test_exports() {
         // Verify all main types are exported
-        let _: fn() -> RulesCompiler = RulesCompiler::new;
+        let _: fn() -> BloqrCompiler = BloqrCompiler::new;
         let _: fn() -> CompileOptions = CompileOptions::new;
         let _: fn() -> VersionInfo = VersionInfo::collect;
         let _: fn() -> PlatformInfo = PlatformInfo::detect;

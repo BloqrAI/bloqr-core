@@ -176,7 +176,7 @@ cd /workspace/src/compilers/python
 pip install -e ".[dev]"
 
 # Rust compiler
-cd /workspace/src/rules-compiler-rust
+cd /workspace/src/compilers/rust
 cargo build
 ```
 
@@ -196,7 +196,7 @@ cd /workspace/src/compilers/python
 bloqr-compiler
 
 # Rust
-cd /workspace/src/rules-compiler-rust
+cd /workspace/src/compilers/rust
 cargo run --release
 
 # Shell (Bash)
@@ -223,7 +223,7 @@ cd /workspace/src/compilers/python
 pytest
 
 # Rust tests
-cd /workspace/src/rules-compiler-rust
+cd /workspace/src/compilers/rust
 cargo test
 
 # PowerShell tests
@@ -298,7 +298,7 @@ jobs:
           docker run --rm \
             -v ${{ github.workspace }}:/workspace \
             ad-blocking-dev \
-            bash -c "cd /workspace/src/rules-compiler-rust && cargo test"
+            bash -c "cd /workspace/src/compilers/rust && cargo test"
 ```
 
 ## Troubleshooting
@@ -343,7 +343,7 @@ If Rust compilation fails:
 
 ```bash
 docker run -it -v $(pwd):/workspace ad-blocking-dev bash -c "
-  cd /workspace/src/rules-compiler-rust
+  cd /workspace/src/compilers/rust
   cargo clean
   cargo build
 "

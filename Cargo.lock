@@ -110,6 +110,32 @@ dependencies = [
 ]
 
 [[package]]
+name = "bloqr-compiler"
+version = "1.0.0"
+dependencies = [
+ "bloqr-validator-core",
+ "chrono",
+ "clap",
+ "dialoguer",
+ "futures",
+ "hex",
+ "libc",
+ "rand",
+ "rustc_version_runtime",
+ "serde",
+ "serde_json",
+ "serde_yaml",
+ "sha2",
+ "tempfile",
+ "thiserror",
+ "tokio",
+ "toml",
+ "tracing",
+ "uuid",
+ "which",
+]
+
+[[package]]
 name = "bloqr-validator-core"
 version = "1.1.1"
 dependencies = [
@@ -1103,32 +1129,6 @@ dependencies = [
  "libc",
  "untrusted",
  "windows-sys 0.52.0",
-]
-
-[[package]]
-name = "rules-compiler"
-version = "1.0.0"
-dependencies = [
- "bloqr-validator-core",
- "chrono",
- "clap",
- "dialoguer",
- "futures",
- "hex",
- "libc",
- "rand",
- "rustc_version_runtime",
- "serde",
- "serde_json",
- "serde_yaml",
- "sha2",
- "tempfile",
- "thiserror",
- "tokio",
- "toml",
- "tracing",
- "uuid",
- "which",
 ]
 
 [[package]]

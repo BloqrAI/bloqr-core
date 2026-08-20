@@ -267,7 +267,7 @@ function Show-RulesMenu {
                     -InstallAction { winget install --id Rustlang.Rustup -e }
                 if ($ready) {
                     Invoke-SafeCommand {
-                        Push-Location "$Script:RootDir\src\rules-compiler-rust"
+                        Push-Location "$Script:RootDir\src\compilers\rust"
                         try {
                             cargo run --release
                         }

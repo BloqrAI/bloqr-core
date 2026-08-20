@@ -57,7 +57,7 @@ bloqr-core/
 │   ├── compilers/typescript/      # TypeScript rules compiler (@bloqr/compiler-core)
 │   ├── compilers/dotnet/      # .NET rules compiler
 │   ├── compilers/python/           # Python rules compiler
-│   ├── rules-compiler-rust/        # Rust rules compiler
+│   ├── compilers/rust/             # Rust rules compiler
 │   ├── rules-compiler-shell/       # Shell scripts (bash, zsh)
 │   ├── rules-compiler-powershell/  # Canonical PowerShell compiler toolkit
 │   ├── validation/                 # Rust validation library (core/) + CLI (cli/)
@@ -125,7 +125,7 @@ cd src/compilers/typescript && npm run compile
    cd src/compilers/python && bloqr-compiler
    
    # Rust
-   cd src/rules-compiler-rust && cargo run --release
+   cd src/compilers/rust && cargo run --release
    ```
 
 2. **Compare SHA-384 hashes** - all must produce identical 96-char hash:
@@ -142,7 +142,7 @@ cd src/compilers/typescript && npm run compile
 - TypeScript: `src/compilers/typescript/src/__tests__/compiler.test.ts`
 - .NET: `src/compilers/dotnet/src/Bloqr.Compiler.Dotnet.Tests/OutputWriterTests.cs`
 - Python: `src/compilers/python/tests/test_compiler.py`
-- Rust: `src/rules-compiler-rust/src/compiler.rs` (integration tests)
+- Rust: `src/compilers/rust/src/compiler.rs` (integration tests)
 
 All test suites assert `hash.length === 96` and verify consistent hashing.
 
@@ -194,7 +194,7 @@ bloqr-compiler --help
 
 **Requirements**: Python 3.9+
 
-### Rust Rules Compiler (`src/rules-compiler-rust/`)
+### Rust Rules Compiler (`src/compilers/rust/`)
 ```bash
 # Build
 cargo build
@@ -431,7 +431,7 @@ cd src/compilers/typescript && npm test
 cd src/compilers/python && pytest
 
 # Run all Rust tests
-cd src/rules-compiler-rust && cargo test
+cd src/compilers/rust && cargo test
 ```
 
 ## Integration Points
@@ -486,7 +486,7 @@ cd src/rules-compiler-rust && cargo test
 
 1. **Update version numbers** in project files:
    - `src/compilers/dotnet/src/Bloqr.Compiler.Dotnet.Console/Bloqr.Compiler.Dotnet.Console.csproj`
-   - `src/rules-compiler-rust/Cargo.toml`
+   - `src/compilers/rust/Cargo.toml`
    - `src/compilers/python/pyproject.toml`
 
 2. **Create and push tag**:
@@ -504,7 +504,7 @@ cd src/rules-compiler-rust && cargo test
 
 4. **Verify release** at `https://github.com/BloqrAI/bloqr-core/releases`:
    - `Bloqr.Compiler.Dotnet.Console-{windows,linux,macos}.{zip,tar.gz}`
-   - `rules-compiler-rust-{windows,linux,macos}.{zip,tar.gz}`
+   - `bloqr-compiler-rust-{windows,linux,macos}.{zip,tar.gz}`
    - `bloqr_compiler-*.whl` (Python wheel)
 
 ### Build Characteristics

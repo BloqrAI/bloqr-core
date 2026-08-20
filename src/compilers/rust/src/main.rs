@@ -7,13 +7,13 @@ use dialoguer::{theme::ColorfulTheme, Confirm, Input, Select};
 use std::path::PathBuf;
 use std::process::ExitCode;
 
-use rules_compiler::{
-    read_config, CompileOptions, ConfigFormat, RulesCompiler, VersionInfo, VERSION,
+use bloqr_compiler::{
+    read_config, BloqrCompiler, CompileOptions, ConfigFormat, VersionInfo, VERSION,
 };
 
 /// AdGuard Filter Rules Compiler - Rust CLI
 #[derive(Parser, Debug)]
-#[command(name = "rules-compiler")]
+#[command(name = "bloqr-compiler")]
 #[command(version = VERSION)]
 #[command(about = "Compile AdGuard filter rules using hostlist-compiler")]
 #[command(
@@ -347,7 +347,7 @@ fn run_compile(
         options
     };
 
-    let compiler = RulesCompiler::with_options(options);
+    let compiler = BloqrCompiler::with_options(options);
 
     println!();
     println!("╔════════════════════════════════════════════════════════════╗");
@@ -410,7 +410,7 @@ fn run_compile(
 ///
 /// Search strategy:
 /// 1. Check current directory for compiler-config.{json,yaml,toml}
-/// 2. Check src/rules-compiler-typescript/compiler-config.json (repository-specific)
+/// 2. Check src/compilers/typescript/compiler-config.json (repository-specific)
 /// 3. Traverse up parent directories looking for compiler-config.{json,yaml,toml}
 ///
 /// This mimics the behavior of tools like git, eslint, and prettier.
@@ -420,7 +420,7 @@ fn find_default_config() -> Option<PathBuf> {
         PathBuf::from("compiler-config.json"),
         PathBuf::from("compiler-config.yaml"),
         PathBuf::from("compiler-config.toml"),
-        PathBuf::from("src/rules-compiler-typescript/compiler-config.json"),
+        PathBuf::from("src/compilers/typescript/compiler-config.json"),
     ];
 
     for path in &current_dir_paths {
@@ -469,7 +469,7 @@ fn print_config_not_found_error() {
     eprintln!("  - compiler-config.json");
     eprintln!("  - compiler-config.yaml");
     eprintln!("  - compiler-config.toml");
-    eprintln!("  - src/rules-compiler-typescript/compiler-config.json");
+    eprintln!("  - src/compilers/typescript/compiler-config.json");
     eprintln!();
 
     if let Ok(current_dir) = std::env::current_dir() {

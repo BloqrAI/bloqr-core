@@ -26,7 +26,7 @@ def require_interactive() -> None:
         print("[ERROR] Interactive mode requires the 'questionary' package.", file=sys.stderr)
         print("", file=sys.stderr)
         print("Install with:", file=sys.stderr)
-        print("  pip install rules-compiler[interactive]", file=sys.stderr)
+        print("  pip install bloqr-compiler[interactive]", file=sys.stderr)
         print("", file=sys.stderr)
         print("Or install questionary directly:", file=sys.stderr)
         print("  pip install questionary", file=sys.stderr)
@@ -59,7 +59,7 @@ def run_interactive_menu(initial_config: Path | None = None) -> int:
             Path.cwd() / "compiler-config.yaml",
             Path.cwd() / "compiler-config.yml",
             Path.cwd() / "compiler-config.toml",
-            Path.cwd() / "src" / "rules-compiler-typescript" / "compiler-config.json",
+            Path.cwd() / "src" / "compilers" / "typescript" / "compiler-config.json",
         ]
         
         for path in search_paths:

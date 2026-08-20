@@ -2,7 +2,7 @@
 name = "bloqr-validator-core"
 # Independent version, not workspace-inherited: bloqr-validator-core is its
 # own published crates.io artifact (#365) and must be bumpable on its own
-# cadence, decoupled from bloqr-validator-core-cli and rules-compiler - see
+# cadence, decoupled from bloqr-validator-core-cli and bloqr-compiler - see
 # docs/architecture/versioning-strategy.md.
 version = "1.1.1"
 edition.workspace = true

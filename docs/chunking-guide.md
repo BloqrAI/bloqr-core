@@ -128,7 +128,7 @@ bloqr-compiler -c config.json --chunking --max-parallel 4
 #### Programmatic Usage
 
 ```rust
-use rules_compiler::{
+use bloqr_compiler::{
     ChunkingOptions, ChunkingStrategy, CompilerConfig,
     should_enable_chunking, split_into_chunks, compile_chunks_async, merge_chunks
 };
@@ -154,7 +154,7 @@ if should_enable_chunking(&config, Some(&options)) {
 #### CLI Usage
 
 ```bash
-rules-compiler -c config.json --chunking --max-parallel 4
+bloqr-compiler -c config.json --chunking --max-parallel 4
 ```
 
 ## Configuration Options

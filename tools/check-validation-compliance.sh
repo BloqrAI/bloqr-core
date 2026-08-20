@@ -119,7 +119,7 @@ check_rust_integration() {
     echo ""
     echo "→ Checking Rust compiler integration..."
     
-    local rust_dir="$REPO_ROOT/src/rules-compiler-rust"
+    local rust_dir="$REPO_ROOT/src/compilers/rust"
     
     if [ ! -d "$rust_dir" ]; then
         echo -e "${YELLOW}⚠ Rust compiler not found${NC}"

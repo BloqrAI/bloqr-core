@@ -109,7 +109,7 @@ const DEFAULT_CONFIG_PATHS = [
   'compiler-config.yaml',
   'compiler-config.yml',
   'compiler-config.toml',
-  '../rules-compiler-typescript/compiler-config.json',
+  '../compilers/typescript/compiler-config.json',
 ];
 
 /**

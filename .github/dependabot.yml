@@ -86,7 +86,7 @@ updates:
           - "minor"
           - "patch"
 
-  # cargo: workspace root covers rules-compiler-rust and both
+  # cargo: workspace root covers bloqr-compiler and both
   # bloqr-validator crates (workspace members), no separate entries needed.
   - package-ecosystem: "cargo"
     directory: "/"

@@ -148,9 +148,9 @@ result = compiler.compile("config.json", output_path="output.txt")
 **Best for**: Performance-critical use, single-binary deployment, systems integration
 
 ```bash
-cd src/rules-compiler-rust
+cd src/compilers/rust
 cargo build --release
-./target/release/rules-compiler -c config.json
+./target/release/bloqr-compiler -c config.json
 ```
 
 **Pros**:
@@ -173,10 +173,10 @@ cargo build --release
 **Library Usage**:
 
 ```rust
-use rules_compiler::{RulesCompiler, CompilerConfiguration};
+use bloqr_compiler::{BloqrCompiler, CompilerConfiguration};
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let compiler = RulesCompiler::new();
+    let compiler = BloqrCompiler::new();
     let result = compiler.compile("config.json", None)?;
     println!("Compiled {} rules", result.rule_count);
     Ok(())
@@ -339,7 +339,7 @@ Example workflow:
 deno task compile -- -c config.json -o output.txt
 
 # CI/CD with Rust for speed
-./target/release/rules-compiler -c config.json -o output.txt
+./target/release/bloqr-compiler -c config.json -o output.txt
 
 # Automation with PowerShell
 Invoke-RulesCompiler -ConfigPath config.json

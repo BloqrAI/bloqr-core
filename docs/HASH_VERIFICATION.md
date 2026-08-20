@@ -106,7 +106,7 @@ Fired when a hash does NOT match the expected value.
 
 **Event Handler Trait:**
 ```rust
-use rules_compiler::events::{
+use bloqr_compiler::events::{
     CompilationEventHandler,
     HashComputedEventArgs,
     HashVerifiedEventArgs,
@@ -135,7 +135,7 @@ impl CompilationEventHandler for MyHandler {
 
 **Usage:**
 ```rust
-use rules_compiler::{compile_rules_with_events, EventDispatcher};
+use bloqr_compiler::{compile_rules_with_events, EventDispatcher};
 
 let mut dispatcher = EventDispatcher::new();
 dispatcher.add_handler(Box::new(MyHandler));

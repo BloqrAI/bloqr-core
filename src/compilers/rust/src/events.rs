@@ -10,7 +10,7 @@
 //! # Example
 //!
 //! ```ignore
-//! use rules_compiler::events::{EventDispatcher, CompilationEventHandler, ValidationEventArgs};
+//! use bloqr_compiler::events::{EventDispatcher, CompilationEventHandler, ValidationEventArgs};
 //!
 //! struct MyHandler;
 //!

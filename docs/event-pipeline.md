@@ -351,7 +351,7 @@ await dispatcher.raise_compilation_starting(CompilationStartedEventArgs())
 ### Rust
 
 ```rust
-use rules_compiler::{
+use bloqr_compiler::{
     CompilationEventHandler, EventDispatcher,
     CompilationStartedEventArgs, ValidationEventArgs, SourceLoadingEventArgs,
 };
@@ -444,7 +444,7 @@ is_valid = await lock_service.verify_integrity(
 ### Rust
 
 ```rust
-use rules_compiler::FileLockService;
+use bloqr_compiler::FileLockService;
 
 let service = FileLockService::new();
 
@@ -521,4 +521,4 @@ See the language-specific API documentation:
 
 - [.NET API Reference](../src/compilers/dotnet/README.md)
 - [Python API Reference](../src/compilers/python/README.md)
-- [Rust API Reference](../src/rules-compiler-rust/README.md)
+- [Rust API Reference](../src/compilers/rust/README.md)

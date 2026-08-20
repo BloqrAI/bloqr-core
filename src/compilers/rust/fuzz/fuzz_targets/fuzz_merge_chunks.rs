@@ -4,7 +4,7 @@
 #![no_main]
 
 use libfuzzer_sys::fuzz_target;
-use rules_compiler::merge_chunks;
+use bloqr_compiler::merge_chunks;
 
 fuzz_target!(|chunks: Vec<Vec<String>>| {
     let _ = merge_chunks(&chunks);

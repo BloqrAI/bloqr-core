@@ -1,5 +1,5 @@
 [package]
-name = "rules-compiler"
+name = "bloqr-compiler"
 version.workspace = true
 edition.workspace = true
 authors.workspace = true
@@ -11,16 +11,16 @@ categories = ["command-line-utilities", "web-programming"]
 rust-version.workspace = true
 
 [lib]
-name = "rules_compiler"
+name = "bloqr_compiler"
 path = "src/lib.rs"
 
 [[bin]]
-name = "rules-compiler"
+name = "bloqr-compiler"
 path = "src/main.rs"
 
 [dependencies]
 # Rules validation (workspace sibling - no registry involved)
-bloqr_validator = { path = "../validation/core", package = "bloqr-validator-core", version = "1" }
+bloqr_validator = { path = "../../validation/core", package = "bloqr-validator-core", version = "1" }
 
 # Async runtime
 tokio = { workspace = true, features = ["fs", "process", "io-util"] }
