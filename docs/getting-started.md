@@ -96,7 +96,7 @@ Invoke-BloqrCompiler
 #### Bash/Shell
 
 ```bash
-./src/rules-compiler-shell/bash/compile-rules.sh
+./src/compilers/shell/bash/compile.sh
 ```
 
 ## First Compilation
@@ -211,7 +211,7 @@ deno run --allow-read --allow-write --allow-env --allow-net --allow-run jsr:@blo
 Make shell scripts executable:
 
 ```bash
-chmod +x src/rules-compiler-shell/bash/compile-rules.sh
+chmod +x src/compilers/shell/bash/compile.sh
 ```
 
 ### Python package not found

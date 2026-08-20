@@ -5,7 +5,7 @@
 - The tracked filter list and compiler configuration files live in [`BloqrAI/bloqr-blocklists`](https://github.com/BloqrAI/bloqr-blocklists) (formerly `data/` in this repo).
 - `src/` contains the multi-language rules-compiler toolchain:
   - `src/compilers/typescript/`, `src/compilers/dotnet/`, `src/compilers/python/`, `src/compilers/rust/` — TypeScript/Deno, .NET, Python, and Rust compilers that use `@bloqr/compiler-core`.
-  - `src/rules-compiler-shell/` — shell compilers, not yet migrated to `src/compilers/`.
+  - `src/compilers/shell/` — shell compilers.
   - `src/compilers/powershell/` class-based PowerShell modules and Pester tests.
   - `src/validation/` Rust validation library and CLI.
   - `website/` Gatsby documentation site.
@@ -14,7 +14,7 @@
 
 ## Build, Test, and Development Commands
 
-- Compile rules (any platform): `./src/rules-compiler-shell/bash/compile-rules.sh -c config.json -r` (see `src/rules-compiler-shell/`).
+- Compile rules (any platform): `./src/compilers/shell/bash/compile.sh -c config.json -r` (see `src/compilers/shell/`).
 - TypeScript compiler (`src/compilers/typescript/`):
   - `deno cache src/mod.ts` — cache dependencies
   - `deno task compile` — compile rules

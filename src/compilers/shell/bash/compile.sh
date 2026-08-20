@@ -1,12 +1,12 @@
 #!/usr/bin/env bash
 #
-# compile-rules.sh - Cross-platform shell script for compiling AdGuard filter rules
+# compile.sh - Cross-platform shell script for compiling AdGuard filter rules
 #
 # This script provides a Unix/Linux/macOS interface to the hostlist-compiler,
 # supporting JSON, YAML, and TOML configuration formats.
 #
 # Usage:
-#   ./compile-rules.sh [OPTIONS]
+#   ./compile.sh [OPTIONS]
 #
 # Options:
 #   -c, --config PATH    Path to configuration file (default: compiler-config.json)
@@ -18,9 +18,9 @@
 #   -d, --debug          Enable debug output
 #
 # Examples:
-#   ./compile-rules.sh
-#   ./compile-rules.sh -c config.yaml -r
-#   ./compile-rules.sh --config config.toml --output my-rules.txt
+#   ./compile.sh
+#   ./compile.sh -c config.yaml -r
+#   ./compile.sh --config config.toml --output my-rules.txt
 #
 # Author: jaypatrick
 # License: GPLv3
@@ -39,7 +39,7 @@ readonly NC='\033[0m' # No Color
 
 # Default paths
 readonly SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-readonly PROJECT_ROOT="$(cd "${SCRIPT_DIR}/../../.." && pwd)"
+readonly PROJECT_ROOT="$(cd "${SCRIPT_DIR}/../../../.." && pwd)"
 readonly DEFAULT_CONFIG="${PROJECT_ROOT}/src/compilers/typescript/compiler-config.json"
 readonly DEFAULT_RULES_DIR="${PROJECT_ROOT}/rules"
 readonly DEFAULT_OUTPUT_FILE="adguard_user_filter.txt"

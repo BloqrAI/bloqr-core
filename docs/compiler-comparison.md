@@ -232,7 +232,7 @@ Get-CompilerVersion | Format-List
 **Best for**: Simple automation, CI/CD, Unix environments
 
 ```bash
-./src/rules-compiler-shell/bash/compile-rules.sh -c config.json -r
+./src/compilers/shell/bash/compile.sh -c config.json -r
 ```
 
 **Pros**:
@@ -248,7 +248,7 @@ Get-CompilerVersion | Format-List
 
 | Script | Platform |
 |--------|----------|
-| `compile-rules.sh` | Linux/macOS (Bash) |
+| `compile.sh` | Linux/macOS (Bash) |
 | `compile-rules.ps1` | Cross-platform (PowerShell Core) |
 | `compile-rules.cmd` | Windows (Batch) |
 

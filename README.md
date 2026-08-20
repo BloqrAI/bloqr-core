@@ -77,8 +77,8 @@ cargo test
 ### Shell (bash/zsh)
 
 ```bash
-./src/rules-compiler-shell/bash/compile-rules.sh -c config.json -r
-./src/rules-compiler-shell/zsh/compile-rules.zsh -c config.json -r
+./src/compilers/shell/bash/compile.sh -c config.json -r
+./src/compilers/shell/zsh/compile.zsh -c config.json -r
 ```
 
 ### PowerShell
@@ -118,7 +118,7 @@ bloqr-core/
 │   ├── compilers/dotnet/    # C#/.NET 10 — library + Spectre.Console CLI
 │   ├── compilers/python/         # Python 3.9+ — pip-installable package + CLI
 │   ├── compilers/rust/           # Rust — single-binary CLI, zero runtime deps
-│   ├── rules-compiler-shell/     # bash + zsh scripts
+│   ├── compilers/shell/          # bash + zsh scripts
 │   ├── compilers/powershell/     # PowerShell modules + Pester tests
 │   ├── validation/                # Rust validation library (core/) + CLI (cli/)
 │   ├── bloqr-dashboard/          # C#/.NET 10 — Dashboard console app

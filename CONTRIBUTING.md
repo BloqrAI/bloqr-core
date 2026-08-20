@@ -59,7 +59,7 @@ bloqr-core/
 │   ├── compilers/typescript/       # TypeScript rules compiler (@bloqr/compiler-core)
 │   ├── compilers/python/            # Python compiler
 │   ├── compilers/powershell/        # PowerShell rules compiler toolkit
-│   ├── rules-compiler-shell/        # Shell script utilities (bash/zsh)
+│   ├── compilers/shell/             # Shell script utilities (bash/zsh)
 │   ├── validation/                  # Rust validation library + CLI
 │   └── website/                     # Gatsby documentation site
 └── .github/                     # GitHub workflows and configuration

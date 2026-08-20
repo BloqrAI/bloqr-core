@@ -58,7 +58,7 @@ bloqr-core/
 │   ├── compilers/dotnet/      # .NET rules compiler
 │   ├── compilers/python/           # Python rules compiler
 │   ├── compilers/rust/             # Rust rules compiler
-│   ├── rules-compiler-shell/       # Shell scripts (bash, zsh)
+│   ├── compilers/shell/            # Shell scripts (bash, zsh)
 │   ├── compilers/powershell/       # Canonical PowerShell compiler toolkit
 │   ├── validation/                 # Rust validation library (core/) + CLI (cli/)
 │   └── website/                    # Gatsby website

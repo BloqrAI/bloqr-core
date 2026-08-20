@@ -19,7 +19,7 @@ This script provides a Z Shell (zsh) interface to the filter compilation CLI too
 ## Usage
 
 ```zsh
-./compile-rules.zsh [OPTIONS]
+./compile.zsh [OPTIONS]
 ```
 
 ### Options
@@ -58,28 +58,28 @@ CLI Parameters > Config Files > Environment Variables > Defaults
 ### Basic Usage
 ```zsh
 # Use default configuration
-./compile-rules.zsh
+./compile.zsh
 
 # Show version
-./compile-rules.zsh -v
+./compile.zsh -v
 
 # Show help
-./compile-rules.zsh -h
+./compile.zsh -h
 ```
 
 ### With CLI Parameters
 ```zsh
 # Use custom config
-./compile-rules.zsh -c my-config.yaml
+./compile.zsh -c my-config.yaml
 
 # Compile and copy to rules directory
-./compile-rules.zsh -c config.json -r
+./compile.zsh -c config.json -r
 
 # Specify output location
-./compile-rules.zsh -o /tmp/custom-output.txt
+./compile.zsh -o /tmp/custom-output.txt
 
 # Debug mode
-./compile-rules.zsh -c config.json -d
+./compile.zsh -c config.json -d
 ```
 
 ### With Environment Variables
@@ -91,7 +91,7 @@ export ADGUARD_COMPILER_COPY_TO_RULES=1
 export ADGUARD_COMPILER_VERBOSE=true
 
 # Run with environment configuration
-./compile-rules.zsh
+./compile.zsh
 ```
 
 ### Mixed Usage (CLI overrides env vars)
@@ -101,19 +101,19 @@ export ADGUARD_COMPILER_CONFIG="default-config.yaml"
 export ADGUARD_COMPILER_COPY_TO_RULES=1
 
 # Override config path, keep COPY_TO_RULES from env
-./compile-rules.zsh -c special-config.json
+./compile.zsh -c special-config.json
 ```
 
 ### Debug Mode
 ```zsh
 # Via environment variable
-DEBUG=1 ./compile-rules.zsh
+DEBUG=1 ./compile.zsh
 
 # Via CLI flag
-./compile-rules.zsh -d
+./compile.zsh -d
 
 # With verbose mode
-ADGUARD_COMPILER_VERBOSE=1 ./compile-rules.zsh
+ADGUARD_COMPILER_VERBOSE=1 ./compile.zsh
 ```
 
 ## Configuration Formats
@@ -244,7 +244,7 @@ chsh -s $(which zsh)
 ### Script won't execute
 ```zsh
 # Make executable
-chmod +x compile-rules.zsh
+chmod +x compile.zsh
 
 # Verify zsh location
 which zsh
@@ -297,9 +297,9 @@ If you're using Oh My Zsh, you can add custom aliases:
 
 ```zsh
 # Add to ~/.zshrc
-alias compile-adguard='~/path/to/compile-rules.zsh'
-alias compile-adguard-debug='DEBUG=1 ~/path/to/compile-rules.zsh'
-alias compile-adguard-prod='ADGUARD_COMPILER_CONFIG=prod.yaml ~/path/to/compile-rules.zsh -r'
+alias compile-adguard='~/path/to/compile.zsh'
+alias compile-adguard-debug='DEBUG=1 ~/path/to/compile.zsh'
+alias compile-adguard-prod='ADGUARD_COMPILER_CONFIG=prod.yaml ~/path/to/compile.zsh -r'
 
 # Reload
 source ~/.zshrc
@@ -323,8 +323,7 @@ If migrating from bash scripts:
 ## Related Documentation
 
 - [Shell Scripts Overview](../README.md)
-- [Bash Implementation](../bash/README.md)
-- [Environment Variables Reference](../../../docs/ENVIRONMENT_VARIABLES.md)
+- [Environment Variables Reference](../../../../docs/ENVIRONMENT_VARIABLES.md)
 - [PowerShell Modules](../../powershell/README.md)
 
 ## Contributing
@@ -338,4 +337,4 @@ When contributing to this script:
 
 ## License
 
-GPLv3 - See [LICENSE](../../../LICENSE) for details.
+GPLv3 - See [LICENSE](../../../../LICENSE) for details.

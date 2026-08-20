@@ -53,7 +53,7 @@ High-level architecture and structure
   - `src/compilers/dotnet/` — .NET 10 library + Spectre.Console CLI.
   - `src/compilers/python/` — pip-installable package with CLI and API.
   - `src/compilers/rust/` — single-binary CLI with zero runtime deps.
-  - `src/rules-compiler-shell/` — bash and zsh scripts for compiling rules without a language runtime.
+  - `src/compilers/shell/` — bash and zsh scripts for compiling rules without a language runtime.
   - `src/compilers/powershell/` — class-based PowerShell modules with Pester tests.
 - Validation
   - `src/validation/` — Rust library (published to crates.io as `bloqr-validator-core`) and CLI (published as `bloqr-validator-core-cli`) for filter/config validation.
