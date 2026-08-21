@@ -13,14 +13,14 @@ on:
     paths:
       - 'src/common/dotnet/**'
       - 'src/compilers/dotnet/**'
-      - 'src/bloqr-dashboard/**'
+      - 'src/apps/dashboard/**'
       - '.github/workflows/dotnet.yml'
   pull_request:
     branches: ["main"]
     paths:
       - 'src/common/dotnet/**'
       - 'src/compilers/dotnet/**'
-      - 'src/bloqr-dashboard/**'
+      - 'src/apps/dashboard/**'
       - '.github/workflows/dotnet.yml'
 
 env:
@@ -45,7 +45,7 @@ jobs:
             solution: CompilerDotnet.slnx
             filter: ""
           - name: Build Dashboard
-            path: src/bloqr-dashboard
+            path: src/apps/dashboard
             solution: BloqrDashboard.slnx
             filter: ""
 

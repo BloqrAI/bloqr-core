@@ -1,6 +1,6 @@
 # Compiler Common (.NET)
 
-The shared .NET library behind this repo's `.NET` filter-rules compiler and the Dashboard: `Bloqr.Compiler.Abstractions` and `Bloqr.Compiler.Core`. Neither project contains compiler-specific logic — both are pure shared building blocks, consumed by [`src/compilers/dotnet/`](../../compilers/dotnet/) and [`src/bloqr-dashboard/`](../../bloqr-dashboard/) via `<ProjectReference>`.
+The shared .NET library behind this repo's `.NET` filter-rules compiler and the Dashboard: `Bloqr.Compiler.Abstractions` and `Bloqr.Compiler.Core`. Neither project contains compiler-specific logic — both are pure shared building blocks, consumed by [`src/compilers/dotnet/`](../../compilers/dotnet/) and [`src/apps/dashboard/`](../../apps/dashboard/) via `<ProjectReference>`.
 
 ## Why this is its own solution
 
@@ -136,7 +136,7 @@ src/common/dotnet/
 ## Related Projects
 
 - [Bloqr Compiler (.NET)](../../compilers/dotnet/) - the compiler-specific consumer: `FilterCompiler`, `OutputWriter`, `BloqrCompilerService`
-- [Bloqr Dashboard](../../bloqr-dashboard/) - the other in-repo consumer
+- [Bloqr Dashboard](../../apps/dashboard/) - the other in-repo consumer
 - [Validation Library](../../validation/) - the native Rust library `BloqrValidatorService` wraps
 
 ## License

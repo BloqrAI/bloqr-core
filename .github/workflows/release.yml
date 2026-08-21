@@ -172,12 +172,12 @@ jobs:
       - name: Restore Dashboard dependencies
         shell: bash
         run: |
-          dotnet restore src/bloqr-dashboard/BloqrDashboard.slnx
+          dotnet restore src/apps/dashboard/BloqrDashboard.slnx
 
       - name: Publish Bloqr.Dashboard.Console
         shell: bash
         run: |
-          dotnet publish src/bloqr-dashboard/src/Bloqr.Dashboard.Console/Bloqr.Dashboard.Console.csproj \
+          dotnet publish src/apps/dashboard/src/Bloqr.Dashboard.Console/Bloqr.Dashboard.Console.csproj \
             --configuration Release \
             --runtime ${{ matrix.runtime }} \
             --self-contained true \

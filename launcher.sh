@@ -297,7 +297,7 @@ run_dashboard() {
     if require_tool dotnet ".NET SDK" \
         "Required to run the Dashboard (installs to ~/.dotnet; add to PATH if it isn't already)." \
         'curl -sSL https://dot.net/v1/dotnet-install.sh | bash -s -- --channel 10.0 --install-dir "$HOME/.dotnet" && export PATH="$PATH:$HOME/.dotnet"'; then
-        cd src/bloqr-dashboard
+        cd src/apps/dashboard
         dotnet run --project src/Bloqr.Dashboard.Console
         cd "$SCRIPT_DIR"
     fi

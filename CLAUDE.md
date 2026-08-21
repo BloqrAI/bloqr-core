@@ -23,7 +23,7 @@ This repository is a comprehensive multi-language toolkit for ad-blocking, netwo
 - **`Bloqr.Compiler.Abstractions`/`Bloqr.Compiler.Core`** (`src/common/dotnet/`) - Shared .NET library (own solution, `CompilerCommon.slnx`) consumed by the .NET rules compiler and Dashboard via `<ProjectReference>`; not part of either consumer's solution
 
 ### Dashboard
-- **Bloqr Dashboard** (`src/bloqr-dashboard/`) - flagship .NET console app (own solution, `BloqrDashboard.slnx`) for generating/editing/round-tripping compiler configs, running compilations with rich progress UI, and validation/diagnostics — menu-driven interactively, or automatable via CLI switches or as an embedded library (`IDashboardService`)
+- **Bloqr Dashboard** (`src/apps/dashboard/`) - flagship .NET console app (own solution, `BloqrDashboard.slnx`) for generating/editing/round-tripping compiler configs, running compilations with rich progress UI, and validation/diagnostics — menu-driven interactively, or automatable via CLI switches or as an embedded library (`IDashboardService`)
 
 ### Rules Validator
 - **Validation Library** (`src/validation/`) - Rust validation library (`core/`, published to crates.io as [`bloqr-validator-core`](https://crates.io/crates/bloqr-validator-core)) and CLI (`cli/`, published as [`bloqr-validator-core-cli`](https://crates.io/crates/bloqr-validator-core-cli), installable via `cargo install`) for filter/config validation
@@ -281,7 +281,7 @@ cargo test config::                       # Tests in module
 - Its own independent .NET solution (`CompilerCommon.slnx`), isolated from `CompilerDotnet.slnx` and `BloqrDashboard.slnx` — every in-repo .NET consumer reaches it via `<ProjectReference>` across directories, not via shared solution membership
 - `Bloqr.Compiler.Abstractions` - Interfaces, event-args, and model/DTO types shared across the compiler stack
 - `Bloqr.Compiler.Core` - Configuration reading/validation, chunking, file-locking, plugin management, and the compilation pipeline, built on `Bloqr.Compiler.Abstractions`
-- Consumed by `Bloqr.Compiler.Dotnet` (`src/compilers/dotnet/`) and `Bloqr.Dashboard.Abstractions`/`Bloqr.Dashboard.Core` (`src/bloqr-dashboard/`)
+- Consumed by `Bloqr.Compiler.Dotnet` (`src/compilers/dotnet/`) and `Bloqr.Dashboard.Abstractions`/`Bloqr.Dashboard.Core` (`src/apps/dashboard/`)
 - Published as NuGet packages to GitHub Packages — see `docs/architecture/nuget-distribution-strategy.md`
 
 ### Bloqr Compiler - .NET (`src/compilers/dotnet/`)

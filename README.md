@@ -121,7 +121,7 @@ bloqr-core/
 │   ├── compilers/shell/          # bash + zsh scripts
 │   ├── compilers/powershell/     # PowerShell modules + Pester tests
 │   ├── validation/                # Rust validation library (core/) + CLI (cli/)
-│   ├── bloqr-dashboard/          # C#/.NET 10 — Dashboard console app
+│   ├── apps/dashboard/            # C#/.NET 10 — Dashboard console app
 │   └── website/                  # Gatsby 5 documentation site
 ├── docs/                         # Guides, reference docs, security docs
 └── schemas/                      # Shared configuration schema

@@ -3,7 +3,7 @@
 This app's structure mirrors
 [`AdGuard.ConsoleUI`](https://github.com/BloqrAI/bloqr-apiclients/tree/main/adguard-api-dotnet/src/AdGuard.ConsoleUI)
 (the console app in the private `BloqrAI/bloqr-apiclients` repo, described locally in
-[`docs/guides/consoleui-architecture.md`](../../docs/guides/consoleui-architecture.md)) —
+[`docs/guides/consoleui-architecture.md`](../../../docs/guides/consoleui-architecture.md)) —
 the two apps will eventually share a .NET MAUI host, so keeping their shapes consistent now avoids a
 later reconciliation. One deliberate departure is called out below.
 
