@@ -159,7 +159,7 @@ function Build-DotNetProjects {
     # Build Dashboard (.NET)
     Write-Host "→ Building Dashboard (.NET)..."
     try {
-        Push-Location src/bloqr-dashboard
+        Push-Location src/apps/dashboard
         try {
             dotnet restore BloqrDashboard.slnx
             dotnet build BloqrDashboard.slnx --no-restore --configuration $configuration

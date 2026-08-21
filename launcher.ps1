@@ -344,7 +344,7 @@ function Invoke-Dashboard {
         -Description "Required to run the Dashboard." `
         -InstallAction { winget install --id Microsoft.DotNet.SDK.10 -e }
     if ($ready) {
-        Push-Location src/bloqr-dashboard
+        Push-Location src/apps/dashboard
         try {
             dotnet run --project src/Bloqr.Dashboard.Console
         }

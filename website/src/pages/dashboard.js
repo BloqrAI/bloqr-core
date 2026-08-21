@@ -17,11 +17,11 @@ const DashboardPage = () => {
         <p>
           Dashboard lives at{" "}
           <a
-            href="https://github.com/BloqrAI/bloqr-core/tree/main/src/bloqr-dashboard"
+            href="https://github.com/BloqrAI/bloqr-core/tree/main/src/apps/dashboard"
             target="_blank"
             rel="noopener noreferrer"
           >
-            src/bloqr-dashboard/
+            src/apps/dashboard/
           </a>{" "}
           as its own .NET solution (<code>BloqrDashboard.slnx</code>). It's
           menu-driven and never terminates on an unhandled error — the goal
@@ -128,7 +128,7 @@ const DashboardPage = () => {
       <section style={{ marginTop: "2rem" }}>
         <h2>Quick Start</h2>
         <pre style={{ marginTop: "0.5rem", marginBottom: "1.5rem" }}>
-          <code>{`cd src/bloqr-dashboard
+          <code>{`cd src/apps/dashboard
 dotnet restore BloqrDashboard.slnx
 dotnet run --project src/Bloqr.Dashboard.Console
 

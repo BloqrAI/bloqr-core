@@ -7,7 +7,7 @@ its own, even on unexpected exceptions: every error is logged and rendered, and 
 returns to the main menu.
 
 See [`ARCHITECTURE.md`](./ARCHITECTURE.md) for the design patterns and project layout, and
-[`docs/guides/consoleui-architecture.md`](../../docs/guides/consoleui-architecture.md) for the
+[`docs/guides/consoleui-architecture.md`](../../../docs/guides/consoleui-architecture.md) for the
 sibling console app this one's architecture is modeled after.
 
 Part of [epic #256](https://github.com/BloqrAI/bloqr-core/issues/256): the app shell (#266),
@@ -29,13 +29,13 @@ are all implemented. Full `adguard-api-dotnet` integration remains a separate, l
 ## Building
 
 ```bash
-cd src/bloqr-dashboard
+cd src/apps/dashboard
 dotnet restore BloqrDashboard.slnx
 dotnet build BloqrDashboard.slnx
 ```
 
 Or from the repo root: `./build.sh --dotnet` / `./build.ps1 -DotNet` (builds both
-`compilers/dotnet` and `bloqr-dashboard`).
+`compilers/dotnet` and `apps/dashboard`).
 
 ## Running
 
@@ -88,7 +88,7 @@ rendering).
 ## Configuration
 
 The Dashboard's own settings live in a heavily-commented `.jsonc` file, generated on first run
-and validated against [`schemas/dashboard-config.schema.json`](../../schemas/dashboard-config.schema.json):
+and validated against [`schemas/dashboard-config.schema.json`](../../../schemas/dashboard-config.schema.json):
 
 - **Windows**: `%APPDATA%\bloqr-dashboard\dashboard-config.jsonc`
 - **Linux/macOS**: `$XDG_CONFIG_HOME/bloqr-dashboard/dashboard-config.jsonc` (falls back to
@@ -103,7 +103,7 @@ non-interactive mode fails fast with a distinct exit code instead of guessing.
 ## Logging
 
 Structured JSON logs (one JSON object per line, matching
-[`schemas/log-entry.schema.json`](../../schemas/log-entry.schema.json)) are written to the
+[`schemas/log-entry.schema.json`](../../../schemas/log-entry.schema.json)) are written to the
 Dashboard's log directory (sibling of the config directory above), rolling over at 24 hours or
 1024 KB, whichever comes first. Default level is `error`; view them from the Logs menu or read
 the `.jsonl` files directly.

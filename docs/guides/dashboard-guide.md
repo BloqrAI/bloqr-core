@@ -35,7 +35,7 @@ From the repository root:
 ./build.ps1 -DotNet       # Windows
 
 # Option 2: Direct .NET build
-cd src/bloqr-dashboard
+cd src/apps/dashboard
 dotnet restore BloqrDashboard.slnx
 dotnet build BloqrDashboard.slnx
 ```
@@ -43,7 +43,7 @@ dotnet build BloqrDashboard.slnx
 ### Run
 
 ```bash
-cd src/bloqr-dashboard
+cd src/apps/dashboard
 dotnet run --project src/Bloqr.Dashboard.Console
 ```
 
@@ -290,7 +290,7 @@ View logs location in Diagnostics menu (logs are stored in:
 
 For details on the Dashboard's architecture, project structure, and design patterns, see:
 
-- [`ARCHITECTURE.md`](../../src/bloqr-dashboard/ARCHITECTURE.md) - Technical architecture and patterns
+- [`ARCHITECTURE.md`](../../src/apps/dashboard/ARCHITECTURE.md) - Technical architecture and patterns
 - [`docs/guides/consoleui-architecture.md`](consoleui-architecture.md) - Console UI design template
 - [Epic #256](https://github.com/BloqrAI/bloqr-core/issues/256) - Feature tracking and implementation status
 
