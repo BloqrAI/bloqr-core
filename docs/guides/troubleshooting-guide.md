@@ -750,13 +750,14 @@ services:
 ```
 
 2. **Process lists in batches:**
-```yaml
-# Instead of one huge source, split into multiple smaller ones
-sources:
-  - name: EasyList Part 1
-    source: list1.txt
-  - name: EasyList Part 2
-    source: list2.txt
+```json
+// Instead of one huge source, split into multiple smaller ones
+{
+  "sources": [
+    { "name": "EasyList Part 1", "source": "list1.txt" },
+    { "name": "EasyList Part 2", "source": "list2.txt" }
+  ]
+}
 ```
 
 3. **Clear caches:**
