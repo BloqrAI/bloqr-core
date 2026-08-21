@@ -667,7 +667,7 @@ echo "All tests passed!"
 
 ## Related Documentation
 
-- [TypeScript Rules Compiler Guide](./typescript-rules-compiler.md)
+- [@bloqr/compiler-core Guide](./compiler-core-guide.md)
 - [.NET Compiler README](../../src/compilers/dotnet/README.md)
 - [Python Compiler README](../../src/compilers/python/README.md)
 - [Rust Compiler README](../../src/compilers/rust/README.md)

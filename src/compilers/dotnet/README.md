@@ -89,9 +89,9 @@ dotnet run --project src/Bloqr.Compiler.Dotnet.Console -- --version
 
 ## Configuration
 
-Configuration schema, all properties, transformations, and pattern-matching syntax are documented once, canonically, in [`docs/configuration-reference.md`](../../docs/configuration-reference.md) — this compiler reads the same JSON/JSONC schema every other compiler in this repo reads. `Config/compiler-config.json` in this project is a ready-to-edit starting point.
+Configuration schema, all properties, transformations, and pattern-matching syntax are documented once, canonically, in [`docs/configuration-reference.md`](../../../docs/configuration-reference.md) — this compiler reads the same JSON/JSONC schema every other compiler in this repo reads. `Config/compiler-config.json` in this project is a ready-to-edit starting point.
 
-YAML and TOML remain readable by `ConfigurationReader` for backward compatibility, but JSON/JSONC is the only documented format — see [Supported Formats](../../docs/configuration-reference.md#supported-formats) for which compilers tolerate `.jsonc` comments today.
+YAML and TOML remain readable by `ConfigurationReader` for backward compatibility, but JSON/JSONC is the only documented format — see [Supported Formats](../../../docs/configuration-reference.md#supported-formats) for which compilers tolerate `.jsonc` comments today.
 
 ## Library Usage
 
@@ -181,7 +181,7 @@ var invalid = TransformationHelper.GetInvalidTransformations(["Valid", "Invalid"
 
 ## Library Architecture
 
-This project is a thin, compiler-specific layer over the shared `Bloqr.Compiler.Abstractions`/`Bloqr.Compiler.Core` library, which now lives in its own solution at [`src/common/dotnet/`](../common/dotnet/) — see that project's README for the full API reference (interfaces, models, services) of the shared library.
+This project is a thin, compiler-specific layer over the shared `Bloqr.Compiler.Abstractions`/`Bloqr.Compiler.Core` library, which now lives in its own solution at [`src/common/dotnet/`](../../common/dotnet/) — see that project's README for the full API reference (interfaces, models, services) of the shared library.
 
 - **`Bloqr.Compiler.Abstractions`/`Bloqr.Compiler.Core`** (`src/common/dotnet/`) — interfaces, event-args, models, and the common implementation (config reading/validation, chunking, file locking, hash verification, the compilation event pipeline, and the plugin system). Consumed via `<ProjectReference>`, not part of this project's solution.
 - **`Bloqr.Compiler.Dotnet`** (this project) — the compiler-specific pieces: `FilterCompiler` (shells out to `@bloqr/compiler-core` via Deno), `OutputWriter`, `BloqrCompilerService` (top-level orchestration). References `Bloqr.Compiler.Core`.
@@ -223,7 +223,7 @@ dotnet test --filter "FullyQualifiedName~BloqrCompilerServiceTests"
 dotnet test --filter "FullyQualifiedName~OutputWriterTests"
 ```
 
-Tests for the shared library (`ConfigurationValidator`, `TransformationHelper`, etc.) live in `Bloqr.Compiler.Core.Tests` — see [`src/common/dotnet/README.md`](../common/dotnet/README.md#running-tests).
+Tests for the shared library (`ConfigurationValidator`, `TransformationHelper`, etc.) live in `Bloqr.Compiler.Core.Tests` — see [`src/common/dotnet/README.md`](../../common/dotnet/README.md#running-tests).
 
 ## Environment Variables
 
@@ -259,12 +259,12 @@ src/compilers/dotnet/
 
 ## Related Projects
 
-- [Compiler Common (.NET)](../common/dotnet/) - `Bloqr.Compiler.Abstractions`/`Bloqr.Compiler.Core`, the shared library this project builds on
-- [Rules Compiler (TypeScript)](../compilers/typescript/) - `@bloqr/compiler-core`, the canonical compilation engine this project shells out to
+- [Compiler Common (.NET)](../../common/dotnet/) - `Bloqr.Compiler.Abstractions`/`Bloqr.Compiler.Core`, the shared library this project builds on
+- [Bloqr Compiler (TypeScript)](../typescript/) - `@bloqr/compiler-core`, the canonical compilation engine this project shells out to
 - [Rules Compiler (Python)](../python/) - Python implementation
 - [Rules Compiler (Rust)](../rust/) - Rust implementation
 - [@adguard/hostlist-compiler](https://github.com/AdguardTeam/HostlistCompiler) - the compiler `@bloqr/compiler-core` is loosely based on
 
 ## License
 
-GPLv3 - See [LICENSE](../../LICENSE) for details.
+GPLv3 - See [LICENSE](../../../LICENSE) for details.

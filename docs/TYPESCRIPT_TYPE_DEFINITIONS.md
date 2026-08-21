@@ -124,7 +124,7 @@ This ensures that type definitions are always validated in CI but are not commit
 ### compilers/typescript
 - **Files**: 17 `.d.ts` files
 - **Entry Point**: `dist/index.d.ts`
-- **Main Exports**: RulesCompiler, ConfigurationBuilder, types
+- **Main Exports**: BloqrCompiler, ConfigurationBuilder, types
 
 > `adguard-api-typescript` and `linear` moved to [`BloqrAI/bloqr-apiclients`](https://github.com/BloqrAI/bloqr-apiclients); see that repo for their type-definition details.
 

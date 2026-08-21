@@ -67,6 +67,8 @@ pytest
 
 ### Rust
 
+Also published on [crates.io](https://crates.io/crates/bloqr-compiler) — `cargo install bloqr-compiler` installs the CLI directly, no clone needed.
+
 ```bash
 cd src/compilers/rust
 cargo build --release

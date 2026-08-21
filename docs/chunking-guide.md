@@ -87,7 +87,7 @@ var options = CompilerOptions.ForLargeLists;
 #### Dependency Injection
 
 ```csharp
-services.AddRulesCompiler();
+services.AddBloqrCompiler();
 
 // The IChunkingService is automatically registered
 var chunkingService = serviceProvider.GetRequiredService<IChunkingService>();

@@ -319,7 +319,7 @@ name: Validate Compiler Equivalence
 on:
   pull_request:
     paths:
-      - 'src/rules-compiler-*/**'
+      - 'src/compilers/*/**'
       - 'compiler-config.json'
 
 jobs:
@@ -619,7 +619,7 @@ src/compilers/typescript/
 │                            #   hashing, structured logging, graceful shutdown
 ├── src/console/             # Interactive terminal UI (./console)
 ├── src/lib/                 # High-level builder-pattern API (./lib)
-│                            #   RulesCompiler, ConfigurationBuilder
+│                            #   BloqrCompiler, ConfigurationBuilder
 └── src/mod.ts               # Deno entry point — re-exports the core engine, runs the CLI
 ```
 

@@ -74,7 +74,7 @@ pub struct VersionInfo {
     pub rust_version: String,
     /// Node.js version (if available).
     pub node_version: Option<String>,
-    /// adblock-compiler-core version (if available).
+    /// `@bloqr/compiler-core` (JSR) version (if available).
     pub hostlist_compiler_version: Option<String>,
     /// Path to the compiler command (deno).
     pub hostlist_compiler_path: Option<String>,
@@ -109,7 +109,7 @@ impl VersionInfo {
         info
     }
 
-    /// Check if the compiler (adblock-compiler-core, via Deno) is available.
+    /// Check if the compiler (`@bloqr/compiler-core`, via Deno) is available.
     #[must_use]
     pub fn has_compiler(&self) -> bool {
         self.hostlist_compiler_path.is_some()

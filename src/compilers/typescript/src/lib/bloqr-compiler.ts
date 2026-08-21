@@ -1,17 +1,17 @@
 /**
- * RulesCompiler - Main service class for programmatic library usage
+ * BloqrCompiler - Main service class for programmatic library usage
  *
  * Provides a clean, high-level API for compiling AdGuard filter rules.
- * Use RulesCompilerBuilder for fluent configuration.
+ * Use BloqrCompilerBuilder for fluent configuration.
  *
  * @example
  * ```typescript
  * // Simple usage
- * const compiler = RulesCompiler.create();
+ * const compiler = BloqrCompiler.create();
  * const result = await compiler.compile({ configPath: 'config.yaml' });
  *
  * // With builder
- * const compiler = RulesCompiler.builder()
+ * const compiler = BloqrCompiler.builder()
  *   .withTimeout(60000)
  *   .withLogger(customLogger)
  *   .build();
@@ -44,9 +44,9 @@ import { createLogger } from '../orchestration/logger.ts';
 import { getVersionInfo } from '../orchestration/cli.ts';
 
 /**
- * Options for the RulesCompiler service
+ * Options for the BloqrCompiler service
  */
-export interface RulesCompilerServiceOptions {
+export interface BloqrCompilerServiceOptions {
   /** Default compilation timeout in milliseconds */
   timeoutMs?: number;
   /** Maximum output file size in bytes */
@@ -90,20 +90,20 @@ export interface CompileProgressEvent {
 }
 
 /**
- * Main RulesCompiler service class
+ * Main BloqrCompiler service class
  *
  * This is the recommended entry point for programmatic usage.
  * Use the static `create()` or `builder()` methods to instantiate.
  */
-export class RulesCompiler {
-  private readonly options: Required<RulesCompilerServiceOptions>;
+export class BloqrCompiler {
+  private readonly options: Required<BloqrCompilerServiceOptions>;
   private readonly logger: Logger;
 
   /**
-   * Create a RulesCompiler with options
+   * Create a BloqrCompiler with options
    * @param options Service options
    */
-  constructor(options: RulesCompilerServiceOptions = {}) {
+  constructor(options: BloqrCompilerServiceOptions = {}) {
     this.options = {
       timeoutMs: options.timeoutMs ?? DEFAULT_RESOURCE_LIMITS.compilationTimeoutMs,
       maxOutputSize: options.maxOutputSize ?? DEFAULT_RESOURCE_LIMITS.maxOutputFileSize,
@@ -115,17 +115,17 @@ export class RulesCompiler {
   }
 
   /**
-   * Create a RulesCompiler with default options
+   * Create a BloqrCompiler with default options
    */
-  static create(): RulesCompiler {
-    return new RulesCompiler();
+  static create(): BloqrCompiler {
+    return new BloqrCompiler();
   }
 
   /**
-   * Create a RulesCompilerBuilder for fluent configuration
+   * Create a BloqrCompilerBuilder for fluent configuration
    */
-  static builder(): RulesCompilerBuilder {
-    return new RulesCompilerBuilder();
+  static builder(): BloqrCompilerBuilder {
+    return new BloqrCompilerBuilder();
   }
 
   /**
@@ -249,17 +249,17 @@ export class RulesCompiler {
   /**
    * Get the service options
    */
-  get serviceOptions(): Readonly<Required<RulesCompilerServiceOptions>> {
+  get serviceOptions(): Readonly<Required<BloqrCompilerServiceOptions>> {
     return this.options;
   }
 }
 
 /**
- * Builder for RulesCompiler with fluent configuration
+ * Builder for BloqrCompiler with fluent configuration
  *
  * @example
  * ```typescript
- * const compiler = RulesCompiler.builder()
+ * const compiler = BloqrCompiler.builder()
  *   .withTimeout(60000)
  *   .withMaxOutputSize(50 * 1024 * 1024)
  *   .withLogger(customLogger)
@@ -267,8 +267,8 @@ export class RulesCompiler {
  *   .build();
  * ```
  */
-export class RulesCompilerBuilder {
-  private options: RulesCompilerServiceOptions = {};
+export class BloqrCompilerBuilder {
+  private options: BloqrCompilerServiceOptions = {};
 
   /**
    * Set compilation timeout
@@ -316,16 +316,53 @@ export class RulesCompilerBuilder {
   }
 
   /**
-   * Build the RulesCompiler instance
+   * Build the BloqrCompiler instance
    */
-  build(): RulesCompiler {
-    return new RulesCompiler(this.options);
+  build(): BloqrCompiler {
+    return new BloqrCompiler(this.options);
   }
 }
 
 /**
- * Convenience function to create a RulesCompiler
+ * Convenience function to create a BloqrCompiler
  */
-export function createRulesCompiler(options?: RulesCompilerServiceOptions): RulesCompiler {
-  return new RulesCompiler(options);
+export function createBloqrCompiler(options?: BloqrCompilerServiceOptions): BloqrCompiler {
+  return new BloqrCompiler(options);
+}
+
+// --- Deprecated aliases (pre-#331/#372 "Rules"-branded names) -------------
+// Kept for one release cycle so existing @bloqr/compiler-core consumers don't
+// break on upgrade; not part of the internal source going forward. Remove in
+// the next major version per docs/architecture/versioning-strategy.md.
+
+/**
+ * @deprecated Use {@link BloqrCompiler} instead. Will be removed in the next major version.
+ */
+export const RulesCompiler = BloqrCompiler;
+
+/**
+ * @deprecated Use {@link BloqrCompiler} instead. Will be removed in the next major version.
+ */
+export type RulesCompiler = BloqrCompiler;
+
+/**
+ * @deprecated Use {@link BloqrCompilerBuilder} instead. Will be removed in the next major version.
+ */
+export const RulesCompilerBuilder = BloqrCompilerBuilder;
+
+/**
+ * @deprecated Use {@link BloqrCompilerBuilder} instead. Will be removed in the next major version.
+ */
+export type RulesCompilerBuilder = BloqrCompilerBuilder;
+
+/**
+ * @deprecated Use {@link BloqrCompilerServiceOptions} instead. Will be removed in the next major version.
+ */
+export type RulesCompilerServiceOptions = BloqrCompilerServiceOptions;
+
+/**
+ * @deprecated Use {@link createBloqrCompiler} instead. Will be removed in the next major version.
+ */
+export function createRulesCompiler(options?: BloqrCompilerServiceOptions): BloqrCompiler {
+  return createBloqrCompiler(options);
 }

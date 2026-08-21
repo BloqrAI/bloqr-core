@@ -31,7 +31,7 @@ This directory contains comprehensive documentation for the ad-blocking reposito
 |-------|-------------|
 | [Getting Started](getting-started.md) | Installation, prerequisites, and quick start |
 | [**Dashboard User Guide**](guides/dashboard-guide.md) | Console application for compiler configs, profiles, compilations, and diagnostics |
-| [**@bloqr/compiler-core Guide**](guides/adblock-compiler-guide.md) | **Core compilation package with CI/CD examples** |
+| [**@bloqr/compiler-core Guide**](guides/compiler-core-guide.md) | **Core compilation package with CI/CD examples** |
 | [Docker Guide](docker-guide.md) | Using Docker for development |
 | [Configuration Reference](configuration-reference.md) | Full configuration schema documentation |
 | [Compiler Comparison](compiler-comparison.md) | Feature comparison of all compilers |

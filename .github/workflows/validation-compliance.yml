@@ -12,10 +12,7 @@ on:
     branches: [main, develop]
     paths:
       - 'src/validation/**'
-      - 'src/compilers/python/**'
-      - 'src/compilers/rust/**'
-      - 'src/compilers/powershell/**'
-      - 'src/rules-compiler-*/**'
+      - 'src/compilers/**'
       - 'src/common/dotnet/**'
       - 'tools/check-validation-compliance.sh'
       - '.github/workflows/validation-compliance.yml'
@@ -23,10 +20,7 @@ on:
     branches: [main, develop]
     paths:
       - 'src/validation/**'
-      - 'src/compilers/python/**'
-      - 'src/compilers/rust/**'
-      - 'src/compilers/powershell/**'
-      - 'src/rules-compiler-*/**'
+      - 'src/compilers/**'
       - 'src/common/dotnet/**'
       - 'tools/check-validation-compliance.sh'
       - '.github/workflows/validation-compliance.yml'

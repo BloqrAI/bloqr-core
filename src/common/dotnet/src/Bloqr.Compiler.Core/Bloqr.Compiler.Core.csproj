@@ -8,7 +8,7 @@
     <Authors>Bloqr</Authors>
     <Company>Bloqr</Company>
     <AssemblyTitle>Bloqr Compiler Core</AssemblyTitle>
-    <Description>Common .NET library for Bloqr's filter-rules compilers and Dashboard: multi-format (JSON/YAML/TOML) configuration reading and validation, chunked parallel compilation support, file locking, the compilation event pipeline, the plugin system, and shared structured JSON logging. Extracted from RulesCompiler so it can be shared across compiler-specific projects.</Description>
+    <Description>Common .NET library for Bloqr's filter-rules compilers and Dashboard: multi-format (JSON/YAML/TOML) configuration reading and validation, chunked parallel compilation support, file locking, the compilation event pipeline, the plugin system, and shared structured JSON logging. Extracted from the .NET compiler so it can be shared across compiler-specific projects.</Description>
     <Copyright>Copyright 2024</Copyright>
     <RootNamespace>Bloqr.Compiler.Core</RootNamespace>
     <Version>1.0.0</Version>

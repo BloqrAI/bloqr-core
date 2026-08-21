@@ -489,7 +489,7 @@ $RECYCLE.BIN/
 
 
 # TypeScript build output (generated .d.ts files)
-src/rules-compiler-typescript/dist/
+src/compilers/typescript/dist/
 src/adguard-api-typescript/dist/
 src/linear/dist/
 
