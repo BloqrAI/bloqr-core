@@ -224,7 +224,7 @@ print(f"Time: {result.elapsed_ms}ms")
 
 ## Configuration Formats
 
-JSON (and JSONC, JSON with comments) is the only documented configuration format. YAML and TOML remain readable for backward compatibility but are undocumented — see [`docs/guides/migration-guide.md`](../../docs/guides/migration-guide.md) for converting legacy configs to JSON.
+JSON (and JSONC, JSON with comments) is the only documented configuration format. YAML and TOML remain readable for backward compatibility but are undocumented — see [`docs/guides/migration-guide.md`](../../../docs/guides/migration-guide.md) for converting legacy configs to JSON.
 
 ### JSON
 
@@ -335,4 +335,4 @@ ruff check --fix bloqr_compiler
 
 ## License
 
-GPLv3 - See [LICENSE](../../LICENSE) for details.
+GPLv3 - See [LICENSE](../../../LICENSE) for details.

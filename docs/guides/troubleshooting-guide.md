@@ -892,7 +892,7 @@ cat compiler-config.json
 
 ## Related Documentation
 
-- [TypeScript Rules Compiler Guide](./typescript-rules-compiler.md)
+- [@bloqr/compiler-core Guide](./compiler-core-guide.md)
 - [Testing Guide](./testing-guide.md)
 - [Deployment Guide](./deployment-guide.md)
 - [Configuration Reference](../configuration-reference.md)

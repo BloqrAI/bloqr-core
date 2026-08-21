@@ -1,5 +1,5 @@
 /**
- * Rules Compiler Library API
+ * Bloqr Compiler Library API
  *
  * This module provides the main library entry points for programmatic usage.
  * Use these exports when integrating compiler-core into your application.
@@ -7,18 +7,18 @@
  * @example
  * ```typescript
  * import {
- *   RulesCompiler,
+ *   BloqrCompiler,
  *   ConfigurationBuilder,
- *   createRulesCompiler,
+ *   createBloqrCompiler,
  *   createConfiguration
  * } from '@bloqr/compiler-core/lib';
  *
  * // Simple usage
- * const compiler = RulesCompiler.create();
+ * const compiler = BloqrCompiler.create();
  * const result = await compiler.compile({ configPath: 'config.yaml' });
  *
  * // With builder pattern
- * const compiler = RulesCompiler.builder()
+ * const compiler = BloqrCompiler.builder()
  *   .withTimeout(60000)
  *   .withDebug(true)
  *   .build();
@@ -37,13 +37,23 @@
  */
 
 // Main compiler service and builder
-export { createRulesCompiler, RulesCompiler, RulesCompilerBuilder } from './rules-compiler.ts';
+export {
+  BloqrCompiler,
+  BloqrCompilerBuilder,
+  createBloqrCompiler,
+  // Deprecated pre-#331/#372 aliases - see bloqr-compiler.ts
+  createRulesCompiler,
+  RulesCompiler,
+  RulesCompilerBuilder,
+} from './bloqr-compiler.ts';
 
 export type {
+  BloqrCompilerServiceOptions,
   CompileProgressEvent,
   CompileRunOptions,
+  // Deprecated pre-#331/#372 alias - see bloqr-compiler.ts
   RulesCompilerServiceOptions,
-} from './rules-compiler.ts';
+} from './bloqr-compiler.ts';
 
 // Configuration builder
 export {

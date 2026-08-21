@@ -190,7 +190,7 @@ This creates `.d.ts` files in the `dist/` directory that re-export types from th
 - `src/index.ts` — the core compilation engine (transformations, compiler, downloader, formatters). This is what `@bloqr/compiler-core` (package root) resolves to.
 - `src/orchestration/` — the CLI/config/chunking wrapper layer built on top of the core engine (multi-format config reading, chunking, parallel compilation, hashing, structured logging, graceful shutdown). Exported as the `./orchestration` subpath.
 - `src/console/` — the interactive terminal UI, exported as `./console`.
-- `src/lib/` — a high-level builder-pattern API (`RulesCompiler`, `ConfigurationBuilder`), exported as `./lib`.
+- `src/lib/` — a high-level builder-pattern API (`BloqrCompiler`, `ConfigurationBuilder`), exported as `./lib`.
 - `src/mod.ts` — the Deno entry point; re-exports the core engine and runs the CLI when executed directly.
 - `src/mod.bun.ts` — the Bun entry point (exported as `./bun`), for the same purpose from a local clone; see [Bun (Supported)](#bun-supported).
 

@@ -8,6 +8,17 @@ name: Release Binaries
 # publishable packages (NuGet, crates.io) have their own path-filtered
 # workflows (publish-nuget.yml, publish-crates.yml) and are NOT triggered
 # by this workflow - see docs/architecture/versioning-strategy.md.
+#
+# Job structure mirrors #331's release-artifact tiers 1-to-1 (src/ category
+# boundaries), rather than one job hand-packaging a mixed bag of tiers:
+#   Tier 1 (src/common/, src/validation/) -> build-bloqr-validator
+#   Tier 2 (src/compilers/*)              -> build-compilers-dotnet, build-rust
+#   Tier 3 (root launcher/build scripts)  -> not a build job: scripts ship via
+#                                             git checkout, nothing to compile
+#                                             or package as a binary asset
+#   Tier 4 (src/apps/dashboard)           -> build-apps-dashboard
+# Adding a new compilers/* language is a new Tier-2 job; it never touches the
+# Tier 1 or Tier 4 jobs. Likewise a new apps/* app is a new Tier-4 job.
 
 on:
   push:
@@ -24,8 +35,11 @@ permissions:
   contents: write
 
 jobs:
+  # Tier 1: src/validation/ (src/common/ has no binary artifact of its own -
+  # it's consumed via ProjectReference by the Tier 2/4 .NET jobs below, not
+  # published as a standalone release asset).
   build-bloqr-validator:
-    name: Build bloqr-validator
+    name: 'Tier 1: Build bloqr-validator'
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
@@ -109,8 +123,12 @@ jobs:
           path: ./staging/bloqr-validator/${{ matrix.cdylib }}
           if-no-files-found: error
 
-  build-dotnet:
-    name: Build .NET Executables
+  # Tier 2: src/compilers/dotnet (.NET language wrapper). Kept separate from
+  # the Tier 4 Dashboard job below so a new compilers/* language never has to
+  # touch, or be touched by, apps/* build logic - each tier's job is
+  # self-contained.
+  build-compilers-dotnet:
+    name: 'Tier 2: Build Bloqr.Compiler.Dotnet.Console'
     needs: build-bloqr-validator
     runs-on: ${{ matrix.os }}
     strategy:
@@ -169,6 +187,83 @@ jobs:
             -p:IncludeNativeLibrariesForSelfExtract=true \
             --output ./artifacts/compiler-dotnet
 
+      - name: Copy bloqr-validator native library into xcopy output
+        shell: bash
+        run: |
+          # The self-contained publish output is an xcopy-deployable unit, so the
+          # bloqr-validator native library (P/Invoked by IBloqrValidatorService, #264)
+          # is copied in rather than shared via a relative path.
+          cp ./native-lib/* ./artifacts/compiler-dotnet/
+
+      - name: Package binary (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          Compress-Archive -Path ./artifacts/compiler-dotnet/* -DestinationPath Bloqr.Compiler.Dotnet.Console-${{ matrix.artifact }}.zip
+
+      - name: Package binary (Unix)
+        if: runner.os != 'Windows'
+        shell: bash
+        run: |
+          cd ./artifacts/compiler-dotnet && tar -czf ../../Bloqr.Compiler.Dotnet.Console-${{ matrix.artifact }}.tar.gz * && cd ../..
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v7
+        with:
+          name: compilers-dotnet-${{ matrix.artifact }}
+          path: |
+            *.zip
+            *.tar.gz
+          if-no-files-found: error
+
+  # Tier 4: src/apps/dashboard. Separate job from Tier 2 above - the
+  # Dashboard is a consumer of the compiler wrappers, not one itself, and a
+  # future second app under apps/* would be its own Tier-4 job alongside
+  # this one, not a change to this one.
+  build-apps-dashboard:
+    name: 'Tier 4: Build Bloqr.Dashboard.Console'
+    needs: build-bloqr-validator
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            runtime: linux-x64
+            artifact: linux
+            ext: ''
+          - os: windows-latest
+            runtime: win-x64
+            artifact: windows
+            ext: '.exe'
+          - os: macos-latest
+            runtime: osx-x64
+            artifact: macos
+            ext: ''
+
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0  # Full history needed for tagging
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Cache NuGet packages
+        uses: actions/cache@v6
+        with:
+          path: ~/.nuget/packages
+          key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj', '**/*.slnx') }}
+          restore-keys: ${{ runner.os }}-nuget-
+
+      - name: Download native bloqr-validator library
+        uses: actions/download-artifact@v8
+        with:
+          name: bloqr-validator-native-${{ matrix.artifact }}
+          path: ./native-lib
+
       - name: Restore Dashboard dependencies
         shell: bash
         run: |
@@ -185,40 +280,38 @@ jobs:
             -p:IncludeNativeLibrariesForSelfExtract=true \
             --output ./artifacts/bloqr-dashboard
 
-      - name: Copy bloqr-validator native library into each app's xcopy output
+      - name: Copy bloqr-validator native library into xcopy output
         shell: bash
         run: |
-          # Each self-contained publish output is its own xcopy-deployable unit, so the
-          # bloqr-validator native library (P/Invoked by IBloqrValidatorService, #264) is
-          # copied into both rather than shared via a relative path between them.
-          cp ./native-lib/* ./artifacts/compiler-dotnet/
+          # The self-contained publish output is an xcopy-deployable unit, so the
+          # bloqr-validator native library (P/Invoked by IBloqrValidatorService, #264)
+          # is copied in rather than shared via a relative path.
           cp ./native-lib/* ./artifacts/bloqr-dashboard/
 
-      - name: Package binaries (Windows)
+      - name: Package binary (Windows)
         if: runner.os == 'Windows'
         shell: pwsh
         run: |
-          Compress-Archive -Path ./artifacts/compiler-dotnet/* -DestinationPath Bloqr.Compiler.Dotnet.Console-${{ matrix.artifact }}.zip
           Compress-Archive -Path ./artifacts/bloqr-dashboard/* -DestinationPath Bloqr.Dashboard.Console-${{ matrix.artifact }}.zip
 
-      - name: Package binaries (Unix)
+      - name: Package binary (Unix)
         if: runner.os != 'Windows'
         shell: bash
         run: |
-          cd ./artifacts/compiler-dotnet && tar -czf ../../Bloqr.Compiler.Dotnet.Console-${{ matrix.artifact }}.tar.gz * && cd ../..
           cd ./artifacts/bloqr-dashboard && tar -czf ../../Bloqr.Dashboard.Console-${{ matrix.artifact }}.tar.gz * && cd ../..
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v7
         with:
-          name: dotnet-${{ matrix.artifact }}
+          name: apps-dashboard-${{ matrix.artifact }}
           path: |
             *.zip
             *.tar.gz
           if-no-files-found: error
 
+  # Tier 2: src/compilers/rust.
   build-rust:
-    name: Build Rust Executable
+    name: 'Tier 2: Build bloqr-compiler (Rust)'
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
@@ -295,7 +388,7 @@ jobs:
     # NuGet (publish-nuget.yml) and crates.io (publish-crates.yml) publish
     # independently on their own path-filtered triggers now, matching
     # publish-jsr.yml's pattern - see docs/architecture/versioning-strategy.md.
-    needs: [build-dotnet, build-rust, build-bloqr-validator]
+    needs: [build-compilers-dotnet, build-apps-dashboard, build-rust, build-bloqr-validator]
     runs-on: ubuntu-latest
 
     steps:

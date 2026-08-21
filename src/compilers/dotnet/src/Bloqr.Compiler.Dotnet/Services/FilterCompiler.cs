@@ -1,7 +1,7 @@
 namespace Bloqr.Compiler.Dotnet.Services;
 
 /// <summary>
-/// Compiles filter rules using the adblock-compiler-core CLI
+/// Compiles filter rules using the Bloqr compiler-core CLI
 /// (published as @bloqr/compiler-core on JSR), run via Deno.
 /// </summary>
 public class FilterCompiler : IFilterCompiler
@@ -89,7 +89,7 @@ public class FilterCompiler : IFilterCompiler
 
             if (actualFormat != ConfigurationFormat.Json)
             {
-                // adblock-compiler-core only supports JSON, create temp file
+                // @bloqr/compiler-core only supports JSON, create temp file
                 tempConfigPath = Path.Combine(Path.GetTempPath(), $"compiler-config-{Guid.NewGuid()}.json");
                 var jsonContent = _configurationReader.ToJson(config);
                 await File.WriteAllTextAsync(tempConfigPath, jsonContent, cancellationToken);

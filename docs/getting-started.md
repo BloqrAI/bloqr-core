@@ -178,7 +178,7 @@ See [Docker Guide](docker-guide.md) for more details.
 
 ### Rules Compilers
 
-- [TypeScript Rules Compiler Guide](guides/typescript-rules-compiler.md) - Complete TypeScript/Deno guide
+- [@bloqr/compiler-core Guide](guides/compiler-core-guide.md) - Complete TypeScript/Deno guide
 - [Compiler Comparison](compiler-comparison.md) - Choose the right compiler for your needs
 - [Configuration Reference](configuration-reference.md) - Learn all configuration options
 

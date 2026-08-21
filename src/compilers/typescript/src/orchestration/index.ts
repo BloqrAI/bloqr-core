@@ -142,16 +142,22 @@ export type { RetryConfig, TimeoutController } from './timeout.ts';
 // Library API (high-level, builder-pattern wrapper)
 export {
   AVAILABLE_TRANSFORMATIONS,
+  BloqrCompiler,
+  BloqrCompilerBuilder,
   ConfigurationBuilder,
+  createBloqrCompiler,
   createConfiguration,
+  // Deprecated pre-#331/#372 aliases - see lib/bloqr-compiler.ts
   createRulesCompiler,
   RulesCompiler,
   RulesCompilerBuilder,
   TRANSFORMATION_DESCRIPTIONS,
 } from '../lib/index.ts';
 export type {
+  BloqrCompilerServiceOptions,
   CompileProgressEvent,
   CompileRunOptions,
+  // Deprecated pre-#331/#372 alias - see lib/bloqr-compiler.ts
   RulesCompilerServiceOptions,
   SourceConfig,
   SourceType,

@@ -22,8 +22,6 @@ This directory contains utility scripts for building, testing, and maintaining t
 
 | Script | Purpose | Usage |
 |--------|---------|-------|
-| `Migrate-To-NewStructure.ps1` | Reorganize shell scripts and PowerShell modules | `pwsh tools/Migrate-To-NewStructure.ps1` |
-
 ## Usage Examples
 
 ### Testing Build Scripts
@@ -79,23 +77,6 @@ Verify that all rule compilers integrate the centralized validation library:
 
 See [VALIDATION_ENFORCEMENT.md](../docs/VALIDATION_ENFORCEMENT.md) for requirements.
 
-### Migration to New Structure
-
-Reorganize the repository structure following Phase 2 modernization:
-
-```powershell
-# Dry run (see what would change)
-pwsh tools/Migrate-To-NewStructure.ps1 -WhatIf
-
-# Execute migration
-pwsh tools/Migrate-To-NewStructure.ps1
-```
-
-**What's migrated:**
-- Shell scripts to `src/shell-scripts/`
-- PowerShell modules to `src/powershell-modules/`
-- OOP class-based architecture
-
 ## Integration with CI/CD
 
 These tools are integrated into GitHub Actions workflows:
@@ -135,8 +116,7 @@ tools/
 ├── test-build-scripts.sh              # Bash build script tests
 ├── test-build-scripts.ps1             # PowerShell build script tests
 ├── test-modules.ps1                   # PowerShell module tests
-├── check-validation-compliance.sh     # Validation compliance check
-└── Migrate-To-NewStructure.ps1        # Migration script
+└── check-validation-compliance.sh     # Validation compliance check
 ```
 
 ## Related Documentation
@@ -144,7 +124,6 @@ tools/
 - [Build Scripts](../README.md#build-all-projects) - Main build documentation
 - [Testing Strategy](../README.md#testing) - Project-wide testing approach
 - [VALIDATION_ENFORCEMENT.md](../docs/VALIDATION_ENFORCEMENT.md) - Validation requirements
-- [PHASE2_IMPLEMENTATION.md](../docs/PHASE2_IMPLEMENTATION.md) - Modernization roadmap
 
 ## Support
 

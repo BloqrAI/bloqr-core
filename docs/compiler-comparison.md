@@ -41,7 +41,7 @@ deno task compile
 - JSON configuration
 - Debug output mode
 - Copy to rules directory option
-- Library API via `@bloqr/compiler-core/lib` (`RulesCompiler`, `ConfigurationBuilder`)
+- Library API via `@bloqr/compiler-core/lib` (`BloqrCompiler`, `ConfigurationBuilder`)
 
 **Library Usage**:
 

@@ -970,9 +970,15 @@ impl FileLockService {
             None
         };
 
-        // Track the lock
+        // Track the lock. A poisoned mutex only means some other caller panicked
+        // while holding it; the bookkeeping map itself is still structurally
+        // valid, so recovering rather than propagating the panic keeps one
+        // unrelated panic from cascading into every future lock operation.
         {
-            let mut locks = self.active_locks.lock().unwrap();
+            let mut locks = self
+                .active_locks
+                .lock()
+                .unwrap_or_else(std::sync::PoisonError::into_inner);
             locks.insert(lock_id.clone(), full_path.clone());
         }
 
@@ -1041,12 +1047,18 @@ impl FileLockService {
 
     /// Get the number of active locks.
     pub fn active_lock_count(&self) -> usize {
-        self.active_locks.lock().unwrap().len()
+        self.active_locks
+            .lock()
+            .unwrap_or_else(std::sync::PoisonError::into_inner)
+            .len()
     }
 
     /// Release all active locks.
     pub fn release_all_locks(&self) {
-        let mut locks = self.active_locks.lock().unwrap();
+        let mut locks = self
+            .active_locks
+            .lock()
+            .unwrap_or_else(std::sync::PoisonError::into_inner);
         tracing::info!("Releasing all {} active locks", locks.len());
         locks.clear();
     }

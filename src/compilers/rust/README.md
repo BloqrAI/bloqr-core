@@ -17,7 +17,19 @@ Rust API for compiling AdGuard filter rules.
 | Rust | 1.85+ | Core language |
 | Node.js | 18+ | For compilation engine |
 
-## Building
+## Installation
+
+Published to [crates.io](https://crates.io/crates/bloqr-compiler) as both a library and the `bloqr-compiler` binary:
+
+```bash
+# Install the CLI
+cargo install bloqr-compiler
+
+# Or add the library to a Cargo.toml
+cargo add bloqr-compiler
+```
+
+## Building (from a clone of this repository)
 
 ```bash
 cd src/compilers/rust
@@ -32,7 +44,7 @@ cargo build --release
 cargo test
 
 # Run with debug output
-cargo run -- -d -c ../filter-compiler/compiler-config.json
+cargo run -- -d -c ../typescript/compiler-config.json
 ```
 
 ## CLI Usage
@@ -114,22 +126,19 @@ bloqr-compiler = { path = "../rust" }
 ### Basic Usage
 
 ```rust
-use bloqr_compiler::{BloqrCompiler, ConfigurationFormat};
+use bloqr_compiler::{BloqrCompiler, CompileOptions};
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let compiler = BloqrCompiler::new();
+    let options = CompileOptions::new()
+        .with_copy_to_rules(true)
+        .with_validation(true);
 
-    let result = compiler.compile(
-        "compiler-config.json",
-        None,           // output_path
-        true,           // copy_to_rules
-        None,           // rules_directory
-        None,           // format
-    )?;
+    let compiler = BloqrCompiler::with_options(options);
+    let result = compiler.compile("compiler-config.json")?;
 
     if result.success {
         println!("Compiled {} rules", result.rule_count);
-        println!("Output: {}", result.output_path);
+        println!("Output: {}", result.output_path_str());
     } else {
         eprintln!("Error: {:?}", result.error_message);
     }
@@ -141,16 +150,16 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 ### Reading Configuration
 
 ```rust
-use bloqr_compiler::{read_configuration, ConfigurationFormat};
+use bloqr_compiler::{read_config, ConfigFormat};
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Auto-detect format from extension
-    let config = read_configuration("config.json", None)?;
+    let config = read_config("config.json", None)?;
     println!("Name: {}", config.name);
     println!("Sources: {}", config.sources.len());
 
-    // Force specific format
-    let config = read_configuration("config.txt", Some(ConfigurationFormat::Json))?;
+    // Force a specific format
+    let config = read_config("config.txt", Some(ConfigFormat::Json))?;
 
     Ok(())
 }
@@ -159,10 +168,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 ### Version Information
 
 ```rust
-use bloqr_compiler::get_version_info;
+use bloqr_compiler::VersionInfo;
 
 fn main() {
-    let info = get_version_info();
+    let info = VersionInfo::collect();
 
     println!("Module: {}", info.module_version);
     println!("Rust: {}", info.rust_version);
@@ -243,8 +252,9 @@ type = "adblock"
 | Struct | Description |
 |--------|-------------|
 | `BloqrCompiler` | Main compiler struct |
+| `CompileOptions` | Builder for compilation options (`with_copy_to_rules`, `with_debug`, `with_validation`, ...) |
 | `CompilerResult` | Result of a compilation operation |
-| `CompilerConfiguration` | Configuration file model |
+| `CompilerConfig` | Configuration file model |
 | `FilterSource` | Source filter list definition |
 | `VersionInfo` | Component version information |
 | `PlatformInfo` | Platform-specific information |
@@ -253,18 +263,18 @@ type = "adblock"
 
 | Enum | Values |
 |------|--------|
-| `ConfigurationFormat` | `Json`, `Yaml`, `Toml` (`Yaml`/`Toml` supported for backward compatibility only) |
-| `CompilerError` | Various error types |
+| `ConfigFormat` | `Json`, `Yaml`, `Toml` (`Yaml`/`Toml` supported for backward compatibility only) |
+| `SourceType` | `Adblock`, `Hosts` |
+| `CompilerError` | Various error types (see [`src/error.rs`](src/error.rs)) |
 
 ### Functions
 
 | Function | Description |
 |----------|-------------|
 | `compile_rules()` | Compile filter rules |
-| `read_configuration()` | Read configuration from file |
-| `detect_format()` | Detect format from file extension |
-| `to_json()` | Convert configuration to JSON |
-| `get_version_info()` | Get version information |
+| `read_config()` | Read configuration from file (auto-detects format from extension when `None` is passed) |
+| `to_json()` / `to_yaml()` / `to_toml()` | Serialize a `CompilerConfig` back to text |
+| `VersionInfo::collect()` | Collect version information for all components |
 | `count_rules()` | Count rules in a file |
 | `compute_hash()` | Compute SHA-384 hash |
 

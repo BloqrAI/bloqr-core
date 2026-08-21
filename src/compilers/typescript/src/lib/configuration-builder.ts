@@ -21,7 +21,7 @@
  *   .withTransformations(['RemoveComments', 'Deduplicate', 'TrimLines'])
  *   .build();
  *
- * const compiler = RulesCompiler.create();
+ * const compiler = BloqrCompiler.create();
  * const rules = await compiler.compileFromConfig(config);
  * ```
  */

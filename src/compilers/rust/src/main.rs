@@ -167,7 +167,7 @@ fn run_benchmark(rule_count: usize, max_parallel: Option<usize>) -> ExitCode {
     let parallel_time = chunk_times
         .iter()
         .cloned()
-        .max_by(|a, b| a.partial_cmp(b).unwrap())
+        .max_by(|a, b| a.total_cmp(b))
         .unwrap_or(0.0);
     println!("done ({parallel_time:.0}ms simulated)");
 

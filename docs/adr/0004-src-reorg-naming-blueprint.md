@@ -5,8 +5,9 @@
 Accepted. First slice landed: `src/rules-validator/{rules-validator-core,rules-validator-cli}` →
 `src/validation/{core,cli}`. All six `compilers/*` slices have since landed
 (`dotnet`, `typescript`, `python`, `rust`, `powershell`, `shell`) — see the addendum below for the
-naming-scope decision made across the last three. Only `common/dotnet` (already landed under #360)
-and `apps/dashboard` remain outstanding under #331/#372.
+naming-scope decision made across the last three. `common/dotnet` (landed under #360) and
+`apps/dashboard` (landed under #403) have also since landed — every category in #331's mapping
+table is now migrated.
 
 ## Context
 

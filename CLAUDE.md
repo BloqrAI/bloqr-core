@@ -249,26 +249,26 @@ cargo test config::                       # Tests in module
 ### Filter Rules
 - Compiled filter lists live in [`BloqrAI/bloqr-blocklists`](https://github.com/BloqrAI/bloqr-blocklists), not this repo — see `output/adguard_dns_filter.txt` there.
 
-### Rules Compiler - TypeScript (`src/compilers/typescript/`)
-- TypeScript compiler using @bloqr/compiler-core
-- Deno 2.0+ runtime with npm compatibility
+### Bloqr Compiler - TypeScript (`src/compilers/typescript/`)
+- TypeScript compiler published as `@bloqr/compiler-core` (JSR)
+- Deno 2.0+ runtime, with Bun formally supported and Node.js compatibility following from Bun's own shims
 - Supports JSON, YAML, and TOML configuration formats
-- **Library API** (`src/lib/`):
-  - `RulesCompiler` - Main service class with fluent builder pattern
+- **Library API** (`src/lib/`, exported as `@bloqr/compiler-core/lib`):
+  - `BloqrCompiler` / `BloqrCompilerBuilder` - Main service class with fluent builder pattern (`RulesCompiler`/`RulesCompilerBuilder` remain as deprecated aliases)
   - `ConfigurationBuilder` - Programmatic configuration creation
-  - Separate library export: `@rules-compiler/typescript/lib`
 - **Dual Mode Support**:
   - Interactive menu mode (default when no args)
   - CLI mode (when config path or action flags provided)
-- `src/cli.ts` - Command-line interface with argument parsing and mode detection
-- `src/config-reader.ts` - Multi-format configuration reader
-- `src/compiler.ts` - Core compilation logic
-- `src/console/` - Interactive console UI components:
+- `src/orchestration/cli.ts` - Command-line interface with argument parsing and mode detection
+- `src/orchestration/config-reader.ts` - Multi-format configuration reader
+- `src/orchestration/compiler.ts` - Core compilation orchestration (chunking, parallel compilation, hashing)
+- `src/compiler/` - The core compilation engine (`FilterCompiler`, `SourceCompiler`, transformations, downloader, formatters), exported as the package root (`@bloqr/compiler-core`)
+- `src/console/` - Interactive console UI components, exported as `./console`:
   - `app.ts` - `ConsoleApplication` class with menu-driven interface
   - `utils.ts` - Console utilities (spinners, tables, colored output)
-- `src/mod.ts` - Deno entry point
+- `src/mod.ts` - Deno entry point; `src/mod.bun.ts` - Bun entry point, exported as `./bun`
 - `deno.json` - Deno configuration and tasks
-- Key classes: `RulesCompiler`, `RulesCompilerBuilder`, `ConfigurationBuilder`, `ConsoleApplication`
+- Key classes: `BloqrCompiler`, `BloqrCompilerBuilder`, `ConfigurationBuilder`, `ConsoleApplication`
 - Uses Deno's built-in testing framework
 
 ### Shell Scripts (`src/compilers/shell/`)
@@ -519,7 +519,7 @@ GitHub Actions workflows validate:
 ## Key File Locations
 
 - **Main filter list**: `output/adguard_dns_filter.txt` in [`BloqrAI/bloqr-blocklists`](https://github.com/BloqrAI/bloqr-blocklists)
-- **Compiler configs**: `src/compilers/*/` and the not-yet-migrated `src/rules-compiler-*/`
+- **Compiler configs**: `src/compilers/*/`
 - **Common .NET library**: `src/common/dotnet/` (`Bloqr.Compiler.Abstractions`/`Bloqr.Compiler.Core`, own solution)
 - **JSON Schemas**: `schemas/compiler-config.schema.json`, `schemas/dashboard-config.schema.json` — `compiler-config.schema.json` is wired into `Bloqr.Compiler.Core`'s `ConfigurationValidator` via `CompilerConfigJsonSchemaValidator` (#258); the Dashboard's `ICompilerConfigSchemaValidator` delegates to the same validator rather than re-embedding the schema
 - **Deno configs**: `src/*/deno.json`

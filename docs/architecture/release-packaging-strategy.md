@@ -16,7 +16,7 @@ This doc answers three things: whether the current publish approach satisfies th
 
 ### What's already in place
 
-`release.yml`'s `build-dotnet` job already publishes both apps as:
+`release.yml`'s `build-compilers-dotnet` and `build-apps-dashboard` jobs already publish both apps as:
 
 ```
 dotnet publish ... --self-contained true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true
