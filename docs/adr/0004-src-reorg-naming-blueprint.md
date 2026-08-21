@@ -3,8 +3,10 @@
 ## Status
 
 Accepted. First slice landed: `src/rules-validator/{rules-validator-core,rules-validator-cli}` →
-`src/validation/{core,cli}`. Remaining categories (`compilers/`, `common/`, `apps/`) are tracked as
-follow-up migrations under #331/#372, each expected to repeat this pattern.
+`src/validation/{core,cli}`. All six `compilers/*` slices have since landed
+(`dotnet`, `typescript`, `python`, `rust`, `powershell`, `shell`) — see the addendum below for the
+naming-scope decision made across the last three. Only `common/dotnet` (already landed under #360)
+and `apps/dashboard` remain outstanding under #331/#372.
 
 ## Context
 
@@ -94,6 +96,52 @@ migrations — verify the naming table's "current identifier" column against the
 planning the "new identifier" column, since a plan written from memory can be wrong in ways that
 only surface once you're inside the code.
 
+## Addendum: the .NET "harden" exception generalized to Rust and PowerShell's own `RulesCompiler`
+
+The `.NET` bullet above records a narrow, explicit exception: the repo owner hardened the general
+"leave a language's own internal-only identifiers alone" rule of thumb specifically for
+`RulesValidatorService`/`IRulesValidatorService`/`RulesValidatorNativeMethods`, because "Rules" as a
+bare product-branding noun (as opposed to "rules" the domain concept — filter rules, rule counts,
+etc.) was judged to need to disappear everywhere, not just from directory names. That exception was
+written up during the `validation` pilot, before any `compilers/*` slice had touched a language with
+its own literal `RulesCompiler`-named identifier.
+
+Three of the six `compilers/*` slices later hit that exact case for the *compiler* (not validator)
+side of the naming:
+
+- **Rust** (`src/compilers/rust`): the crate's own `RulesCompiler` struct — the direct
+  compiler-side analog of `RulesValidatorService` — was renamed to `BloqrCompiler`, alongside the
+  already-decided `[lib]`/`[[bin]]` name changes.
+- **PowerShell** (`src/compilers/powershell`): the `RulesCompiler` module itself (directory,
+  `.psd1`/`.psm1`, and its public `Invoke-RulesCompiler` cmdlet) was renamed to `BloqrCompiler`/
+  `Invoke-BloqrCompiler`, plus the parallel private helper `Get-RulesCompilerCommand` →
+  `Get-BloqrCompilerCommand`.
+- **Shell** (`src/compilers/shell`): by contrast, hit no such case. Its own function names
+  (`compile_rules`, `get_compiler_command`, `count_rules`) were already domain-accurate — "rules"
+  meaning filter rules, never a `RulesCompiler`-branded noun — so nothing there needed the harden
+  exception. Only the *files* (`compile-rules.sh`/`.zsh` → `compile.sh`/`.zsh`) were renamed, and for
+  an unrelated reason: dropping a qualifier the `compilers/` category directory already makes
+  redundant, the same principle `rules-validate` → `bloqr-validate` used in the original pilot.
+
+Because renaming a language's own public module/cmdlet name is a real breaking change for anyone
+already importing it — unlike a directory move, which is invisible to existing callers — the
+PowerShell call in particular was confirmed with the repo owner via an explicit question before
+being made, rather than inferred silently from the .NET precedent. The answer: yes, extend it,
+matching Rust and .NET.
+
+Each of these three per-language slices' own validator-side wrappers (`Invoke-RulesValidator`,
+`RulesValidatorResult`, `Find-RulesValidateBinary` in PowerShell; `find_rules_validate_binary`/
+`run_rules_validator` in shell) were left exactly as this ADR's original text already decided —
+the harden exception is scoped to the *compiler*-branded `RulesCompiler` noun specifically, not a
+blanket re-opening of every already-settled validator-side name.
+
+**Updated rule of thumb**: the harden exception isn't .NET-specific — it applies to any language
+where the compiler slice finds its own literal `RulesCompiler`-branded identifier (a class, module,
+struct, or public command whose name *is* the old product noun, not domain language describing what
+it does). A future migration that finds no such identifier — as the shell slice didn't — needs no
+exception at all; the original "leave a language's own internal-only identifiers alone" default
+still governs everything else.
+
 ## Consequences
 
 - Future migrations (`compilers/*`, `common/dotnet`, `apps/dashboard`) should each produce a short
@@ -115,3 +163,6 @@ only surface once you're inside the code.
   migration's `[package] name` stability depends on.
 - `src/validation/README.md`, `src/validation/core/README.md`, `src/validation/cli/README.md` — the
   post-migration state this ADR describes the reasoning behind.
+- `src/compilers/rust/README.md`, `src/compilers/powershell/README.md`,
+  `src/compilers/shell/README.md` — the post-migration state the addendum above describes the
+  reasoning behind.
