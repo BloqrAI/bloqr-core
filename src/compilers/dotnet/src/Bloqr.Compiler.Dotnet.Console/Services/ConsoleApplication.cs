@@ -509,14 +509,12 @@ public class ConsoleApplication
             ? BenchmarkSizes
             : [size];
 
-        foreach (var s in sizes)
+        var invalidSize = sizes.FirstOrDefault(s => !BenchmarkSizes.Contains(s, StringComparer.OrdinalIgnoreCase));
+        if (invalidSize is not null)
         {
-            if (!BenchmarkSizes.Contains(s, StringComparer.OrdinalIgnoreCase))
-            {
-                AnsiConsole.MarkupLine(
-                    $"[red]Unknown benchmark size '{Markup.Escape(s)}'. Expected one of: {string.Join(", ", BenchmarkSizes)}, or 'all'.[/]");
-                return 1;
-            }
+            AnsiConsole.MarkupLine(
+                $"[red]Unknown benchmark size '{Markup.Escape(invalidSize)}'. Expected one of: {string.Join(", ", BenchmarkSizes)}, or 'all'.[/]");
+            return 1;
         }
 
         var resolvedDataDir = dataDir ?? FindBenchmarkDataDir();
