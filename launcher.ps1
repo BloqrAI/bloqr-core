@@ -149,6 +149,7 @@ function Show-MainMenu {
             "🔨 Build Tools"
             "⚙️  Compile Filter Rules"
             "🖥️  Bloqr Dashboard"
+            "⏱️  Benchmark Compilers"
             "🔍 Validation & Testing"
             "📦 Project Management"
             "ℹ️  System Information"
@@ -159,10 +160,11 @@ function Show-MainMenu {
             "1" { Show-BuildMenu }
             "2" { Show-RulesMenu }
             "3" { Invoke-Dashboard }
-            "4" { Show-ValidationMenu }
-            "5" { Show-ProjectMenu }
-            "6" { Show-SystemInfo }
-            "7" { exit 0 }
+            "4" { Show-BenchmarkMenu }
+            "5" { Show-ValidationMenu }
+            "6" { Show-ProjectMenu }
+            "7" { Show-SystemInfo }
+            "8" { exit 0 }
             default { Write-Host "Invalid choice" -ForegroundColor Red; Start-Sleep -Seconds 1 }
         }
     }
@@ -357,6 +359,39 @@ function Invoke-Dashboard {
 
 # AdGuard API Clients have moved to BloqrAI/bloqr-apiclients; this launcher
 # no longer manages them.
+
+# Benchmark Compilers Menu (#422)
+function Show-BenchmarkMenu {
+    while ($true) {
+        Show-Banner
+        Write-Host "Benchmark Compilers" -ForegroundColor Magenta
+        Write-Host ""
+        Write-Host "Compiles the canned benchmarks/data/ datasets through each compiler's real" -ForegroundColor DarkGray
+        Write-Host "pipeline, chunked vs unchunked - see benchmarks/README.md." -ForegroundColor DarkGray
+        Write-Host ""
+
+        $choice = Show-Menu -Title "Benchmark Which Compiler(s)?" -Options @(
+            "All installed compilers"
+            "Rust"
+            ".NET"
+            "TypeScript"
+            "Python"
+            "PowerShell"
+            "← Back to Main Menu"
+        )
+
+        switch ($choice) {
+            "1" { Invoke-SafeCommand { & "$Script:RootDir\benchmark-all.ps1" } "Benchmarking all installed compilers"; Pause }
+            "2" { Invoke-SafeCommand { & "$Script:RootDir\benchmark-all.ps1" -Languages rust } "Benchmarking Rust"; Pause }
+            "3" { Invoke-SafeCommand { & "$Script:RootDir\benchmark-all.ps1" -Languages dotnet } "Benchmarking .NET"; Pause }
+            "4" { Invoke-SafeCommand { & "$Script:RootDir\benchmark-all.ps1" -Languages typescript } "Benchmarking TypeScript"; Pause }
+            "5" { Invoke-SafeCommand { & "$Script:RootDir\benchmark-all.ps1" -Languages python } "Benchmarking Python"; Pause }
+            "6" { Invoke-SafeCommand { & "$Script:RootDir\benchmark-all.ps1" -Languages powershell } "Benchmarking PowerShell"; Pause }
+            "7" { return }
+            default { Write-Host "Invalid choice" -ForegroundColor Red; Start-Sleep -Seconds 1 }
+        }
+    }
+}
 
 # Validation & Testing Menu
 function Show-ValidationMenu {
