@@ -107,7 +107,9 @@ services:
       - .:/workspace
       - cargo_registry:/root/.cargo/registry
       - cargo_git:/root/.cargo/git
-    working_dir: /workspace/src/compilers/rust
+    # bloqr-compiler (the CLI crate, #173's core/cli split) lives at
+    # src/compilers/rust/cli; the library it wraps is src/compilers/rust/core.
+    working_dir: /workspace/src/compilers/rust/cli
     command: cargo run --release
     depends_on:
       - dev
@@ -141,7 +143,7 @@ services:
         echo '=== Running Python Tests ===' &&
         cd /workspace/src/compilers/python && pytest &&
         echo '=== Running Rust Tests ===' &&
-        cd /workspace/src/compilers/rust && cargo test &&
+        cargo test -p bloqr-compiler -p bloqr-compiler-core &&
         echo '=== Running PowerShell Tests ===' &&
         pwsh -Command 'Invoke-Pester -Path /workspace/src/compilers/powershell -PassThru' &&
         echo '=== All Tests Complete ==='

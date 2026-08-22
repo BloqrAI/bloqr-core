@@ -11,7 +11,7 @@ This project uses different testing frameworks for each language implementation:
 | TypeScript (Rules Compiler) | Deno Test | `src/compilers/typescript/tests/` | `deno task test` |
 | .NET (Compiler) | xUnit | `src/compilers/dotnet/src/Bloqr.Compiler.Dotnet.Tests/` | `dotnet test` |
 | Python | pytest | `src/compilers/python/tests/` | `pytest` |
-| Rust (Rules Compiler) | cargo test | `src/compilers/rust/src/` | `cargo test` |
+| Rust (Rules Compiler) | cargo test | `src/compilers/rust/core/src/`, `src/compilers/rust/cli/src/` | `cargo test -p bloqr-compiler-core -p bloqr-compiler` |
 | Rust (Validator) | cargo test | `src/validation/` | `cargo test` |
 | PowerShell | Pester | `src/compilers/powershell/` | `Invoke-Pester -Recurse` |
 
@@ -265,29 +265,32 @@ class TestBloqrCompiler:
 
 ### Rules Compiler Tests
 
-```bash
-cd src/compilers/rust
+The Rust rules compiler is split into a core lib crate (`bloqr-compiler-core`,
+`src/compilers/rust/core/`) and a thin CLI crate (`bloqr-compiler`,
+`src/compilers/rust/cli/`) — run these from the repo root, or `cd` into
+either crate's directory to drop the `-p` flag.
 
-# Run all tests
-cargo test
+```bash
+# Run all tests for both crates
+cargo test -p bloqr-compiler-core -p bloqr-compiler
 
 # Run with output
-cargo test -- --nocapture
+cargo test -p bloqr-compiler-core -- --nocapture
 
 # Run specific test
-cargo test test_count_rules
+cargo test -p bloqr-compiler-core test_count_rules
 
 # Run tests in a specific module
-cargo test config::
+cargo test -p bloqr-compiler-core config::
 
 # Run with verbose output
-cargo test -- --nocapture --test-threads=1
+cargo test -p bloqr-compiler-core -- --nocapture --test-threads=1
 
-# Run tests for specific package
-cargo test --package bloqr-compiler
+# Run just the CLI crate's own tests (config discovery)
+cargo test -p bloqr-compiler
 
 # Run doc tests
-cargo test --doc
+cargo test -p bloqr-compiler-core --doc
 ```
 
 ### API Client Tests
@@ -353,7 +356,7 @@ mod tests {
 ```powershell
 cd src/compilers/powershell
 
-# Run all tests (Common, BloqrCompiler, AdGuardWebhook modules)
+# Run all tests (Common, BloqrCompiler modules)
 Invoke-Pester -Path . -Recurse
 
 # Run with detailed output
@@ -477,9 +480,7 @@ jobs:
         with:
           toolchain: stable
       - name: Run Rust tests
-        run: |
-          cd src/compilers/rust
-          cargo test
+        run: cargo test -p bloqr-compiler-core -p bloqr-compiler
 
   test-powershell:
     runs-on: windows-latest
@@ -520,9 +521,8 @@ pytest --cov=bloqr_compiler --cov-report=html
 
 #### Rust
 ```bash
-cd src/compilers/rust
 cargo install cargo-tarpaulin
-cargo tarpaulin --out Html
+cargo tarpaulin -p bloqr-compiler-core -p bloqr-compiler --out Html
 # View tarpaulin-report.html
 ```
 
@@ -657,7 +657,7 @@ echo "Running Python tests..."
 cd src/compilers/python && pytest && cd ../..
 
 echo "Running Rust tests..."
-cd src/compilers/rust && cargo test && cd ../..
+cargo test -p bloqr-compiler-core -p bloqr-compiler
 
 echo "Running PowerShell tests..."
 pwsh -Command "Invoke-Pester -Path ./src/compilers/powershell -Recurse"

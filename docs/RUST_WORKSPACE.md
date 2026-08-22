@@ -15,9 +15,12 @@ Centralized validation library for AdGuard filter compilation with comprehensive
 > The Rust AdGuard DNS API client (`adguard-api-rust`) that used to live in this workspace moved to [`BloqrAI/bloqr-apiclients`](https://github.com/BloqrAI/bloqr-apiclients) and is no longer a member of this Cargo workspace.
 
 ### 2. **bloqr-compiler** (`src/compilers/rust/`)
-Rust compiler for AdGuard filter rules using `@bloqr/compiler-core`.
+Rust compiler for AdGuard filter rules using `@bloqr/compiler-core`. Split
+into a core lib crate + thin CLI crate (#173), mirroring the `validation`
+workspace member's own `core`/`cli` split above.
 
-- Library and CLI for compiling filter rules
+- **core** (published to crates.io as `bloqr-compiler-core`, lib name `bloqr_compiler`): the library
+- **cli** (published to crates.io as `bloqr-compiler`, unchanged binary name/registry name): the CLI
 - Supports JSON, YAML, and TOML configurations
 
 ## Prerequisites
@@ -59,7 +62,8 @@ cargo fmt --all -- --check
 cargo build -p bloqr-validator-core
 cargo build -p bloqr-validator-core-cli
 
-# Build only bloqr-compiler
+# Build only the compiler library/CLI
+cargo build -p bloqr-compiler-core
 cargo build -p bloqr-compiler
 ```
 
@@ -115,14 +119,20 @@ bloqr-core/
     ├── validation/
     │   ├── core/
     │   │   ├── Cargo.toml
-    │   │   └── src/
+    │   │   ├── src/
+    │   │   └── fuzz/
     │   └── cli/
     │       ├── Cargo.toml
     │       └── src/
     └── compilers/
         └── rust/
-            ├── Cargo.toml
-            └── src/
+            ├── core/
+            │   ├── Cargo.toml
+            │   ├── src/
+            │   └── fuzz/
+            └── cli/
+                ├── Cargo.toml
+                └── src/
 ```
 
 ## Workspace Benefits
@@ -187,6 +197,7 @@ cargo clean
 
 # Clean specific package
 cargo clean -p bloqr-compiler
+cargo clean -p bloqr-compiler-core
 ```
 
 ## CI/CD Integration

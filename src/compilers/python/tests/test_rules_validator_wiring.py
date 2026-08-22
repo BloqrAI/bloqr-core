@@ -56,7 +56,7 @@ class TestFindRulesValidateBinary:
 
 
 class TestRunRulesValidator:
-    def test_no_op_when_binary_not_found(
+    def test_fails_closed_by_default_when_binary_not_found(
         self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
     ) -> None:
         monkeypatch.setattr(compiler_module, "find_rules_validate_binary", lambda: None)
@@ -64,6 +64,21 @@ class TestRunRulesValidator:
         output.write_text("||example.com^\n")
 
         can_continue, error = asyncio.run(_run_rules_validator(output, None))
+
+        assert not can_continue
+        assert error is not None
+        assert "not found" in error
+
+    def test_skips_missing_binary_when_allow_unvalidated_set(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        monkeypatch.setattr(compiler_module, "find_rules_validate_binary", lambda: None)
+        output = tmp_path / "output.txt"
+        output.write_text("||example.com^\n")
+
+        can_continue, error = asyncio.run(
+            _run_rules_validator(output, None, allow_unvalidated=True)
+        )
 
         assert can_continue
         assert error is None
@@ -91,7 +106,7 @@ class TestRunRulesValidator:
         assert handler.validations[0].passed
         assert handler.validations[0].items_validated == 1
 
-    def test_invalid_syntax_with_messages_raises_error_findings(
+    def test_invalid_syntax_with_messages_fails_closed_by_default(
         self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
     ) -> None:
         monkeypatch.setattr(compiler_module, "find_rules_validate_binary", lambda: "bloqr-validate")
@@ -114,7 +129,39 @@ class TestRunRulesValidator:
 
         can_continue, error = asyncio.run(_run_rules_validator(output, dispatcher))
 
-        # Findings are informational by default - only an explicit handler abort should stop compilation.
+        # Fail-closed by default: an Error finding aborts even though no handler
+        # was registered to explicitly set abort - this is the gap the
+        # fail-closed rewrite closes.
+        assert not can_continue
+        assert error is not None
+        assert not handler.validations[0].passed
+
+    def test_invalid_syntax_does_not_abort_when_allow_unvalidated_set(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        monkeypatch.setattr(compiler_module, "find_rules_validate_binary", lambda: "bloqr-validate")
+        payload = json.dumps(
+            {
+                "is_valid": False,
+                "format": "adblock",
+                "valid_rules": 1,
+                "invalid_rules": 1,
+                "messages": ["line 2: malformed rule"],
+            }
+        )
+        monkeypatch.setattr(subprocess, "run", lambda *a, **k: _fake_completed_process(payload, returncode=1))
+
+        output = tmp_path / "output.txt"
+        output.write_text("||example.com^\nbad rule\n")
+        handler = RecordingHandler()
+        dispatcher = EventDispatcher()
+        dispatcher.add_handler(handler)
+
+        can_continue, error = asyncio.run(
+            _run_rules_validator(output, dispatcher, allow_unvalidated=True)
+        )
+
+        # Explicit opt-out reverts to legacy behavior: only a handler-set abort counts.
         assert can_continue
         assert error is None
         assert not handler.validations[0].passed
@@ -149,7 +196,7 @@ class TestRunRulesValidator:
         assert not can_continue
         assert error == "aborted by test handler"
 
-    def test_subprocess_error_is_swallowed(
+    def test_subprocess_error_fails_closed_by_default(
         self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
     ) -> None:
         monkeypatch.setattr(compiler_module, "find_rules_validate_binary", lambda: "bloqr-validate")
@@ -164,5 +211,50 @@ class TestRunRulesValidator:
 
         can_continue, error = asyncio.run(_run_rules_validator(output, None))
 
+        assert not can_continue
+        assert error is not None
+
+    def test_subprocess_error_is_swallowed_when_allow_unvalidated_set(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        monkeypatch.setattr(compiler_module, "find_rules_validate_binary", lambda: "bloqr-validate")
+
+        def _raise(*_args, **_kwargs):
+            raise OSError("binary not executable")
+
+        monkeypatch.setattr(subprocess, "run", _raise)
+
+        output = tmp_path / "output.txt"
+        output.write_text("||example.com^\n")
+
+        can_continue, error = asyncio.run(
+            _run_rules_validator(output, None, allow_unvalidated=True)
+        )
+
         assert can_continue
         assert error is None
+
+    def test_fail_on_warnings_aborts_on_warning_findings(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        monkeypatch.setattr(compiler_module, "find_rules_validate_binary", lambda: "bloqr-validate")
+        payload = json.dumps(
+            {
+                "is_valid": True,
+                "format": "adblock",
+                "valid_rules": 3,
+                "invalid_rules": 0,
+                "messages": ["suspicious but syntactically valid rule at line 2"],
+            }
+        )
+        monkeypatch.setattr(subprocess, "run", lambda *a, **k: _fake_completed_process(payload))
+
+        output = tmp_path / "output.txt"
+        output.write_text("||example.com^\n")
+
+        can_continue, error = asyncio.run(
+            _run_rules_validator(output, None, fail_on_warnings=True)
+        )
+
+        assert not can_continue
+        assert error is not None

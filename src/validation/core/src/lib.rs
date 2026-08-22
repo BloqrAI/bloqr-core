@@ -61,6 +61,8 @@ pub use archive::{create_archive, ArchiveManifest};
 pub use error::{Result, ValidationError};
 pub use file_conflict::{resolve_conflict, FileConflictResolver};
 pub use hash::{compute_file_hash, verify_file_hash, HashDatabase, HashEntry};
+/// Deprecated prototype API — see [`runtime_enforcement`] module docs.
+#[allow(deprecated)]
 pub use runtime_enforcement::{
     compile_with_validation, verify_compilation_was_validated, CompilationInput,
     CompilationOptions, EnforcedCompilationResult, ValidationMetadata,

@@ -22,6 +22,7 @@ on:
     branches: ["main"]
     paths:
       - "src/common/dotnet/**"
+      - "src/validation/core/**"
       - ".github/workflows/publish-nuget.yml"
   workflow_dispatch: {}
 
@@ -34,8 +35,57 @@ permissions:
   packages: write
 
 jobs:
+  # Builds bloqr-validator-core's cdylib per-RID so Bloqr.Compiler.Core's NuGet package can
+  # ship it as a standard runtimes/{rid}/native/ asset (see that csproj's "part 1" comment) -
+  # without this, IBloqrValidatorService.IsAvailable is false for anyone consuming the
+  # package from NuGet rather than building bloqr-core from source.
+  build-native:
+    name: 'Build bloqr_validator (${{ matrix.rid }})'
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            rid: linux-x64
+            cdylib: libbloqr_validator.so
+          - os: windows-latest
+            rid: win-x64
+            cdylib: bloqr_validator.dll
+          - os: macos-latest
+            rid: osx-x64
+            cdylib: libbloqr_validator.dylib
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Cache cargo registry and build artifacts
+        uses: actions/cache@v6
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: ${{ runner.os }}-cargo-validator-nuget-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: ${{ runner.os }}-cargo-validator-nuget-
+
+      - name: Build bloqr-validator-core (cdylib)
+        shell: bash
+        run: cargo build --release -p bloqr-validator-core
+
+      - name: Upload native library
+        uses: actions/upload-artifact@v7
+        with:
+          name: bloqr-validator-native-${{ matrix.rid }}
+          path: target/release/${{ matrix.cdylib }}
+          if-no-files-found: error
+
   publish:
     name: Publish to GitHub Packages
+    needs: build-native
     runs-on: ubuntu-latest
 
     steps:
@@ -52,6 +102,25 @@ jobs:
           path: ~/.nuget/packages
           key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj', '**/*.slnx') }}
           restore-keys: ${{ runner.os }}-nuget-
+
+      - name: Download native bloqr_validator libraries
+        uses: actions/download-artifact@v8
+        with:
+          pattern: bloqr-validator-native-*
+          path: ./native-libs
+          merge-multiple: false
+
+      - name: Lay out native libraries by RID for packing
+        shell: bash
+        run: |
+          # download-artifact (merge-multiple: false) nests each artifact under a directory
+          # named after it (bloqr-validator-native-<rid>/<cdylib>) - flatten that into the
+          # runtimes/{rid}/native/ shape Bloqr.Compiler.Core.csproj's -p:BloqrValidatorNativeLibsDir
+          # expects (<dir>/<rid>/<cdylib>).
+          mkdir -p ./native-libs-staged/win-x64 ./native-libs-staged/linux-x64 ./native-libs-staged/osx-x64
+          mv ./native-libs/bloqr-validator-native-win-x64/bloqr_validator.dll ./native-libs-staged/win-x64/
+          mv ./native-libs/bloqr-validator-native-linux-x64/libbloqr_validator.so ./native-libs-staged/linux-x64/
+          mv ./native-libs/bloqr-validator-native-osx-x64/libbloqr_validator.dylib ./native-libs-staged/osx-x64/
 
       - name: Restore Compiler Common dependencies
         run: dotnet restore src/common/dotnet/CompilerCommon.slnx
@@ -72,7 +141,8 @@ jobs:
           dotnet pack src/common/dotnet/src/Bloqr.Compiler.Core/Bloqr.Compiler.Core.csproj \
             --configuration Release \
             --no-restore \
-            --output ./nuget-packages
+            --output ./nuget-packages \
+            -p:BloqrValidatorNativeLibsDir="$(pwd)/native-libs-staged"
 
       - name: Push to GitHub Packages
         run: |

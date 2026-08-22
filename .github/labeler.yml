@@ -37,7 +37,6 @@ powershell:
   - changed-files:
       - any-glob-to-any-file:
           - 'src/compilers/powershell/**'
-          - 'src/compilers/shell/*.ps1'
           - '**/*.ps1'
           - '**/*.psm1'
           - '**/*.psd1'
@@ -45,7 +44,6 @@ powershell:
 shell:
   - changed-files:
       - any-glob-to-any-file:
-          - 'src/compilers/shell/**'
           - '**/*.sh'
           - '**/*.zsh'
           - '**/*.cmd'

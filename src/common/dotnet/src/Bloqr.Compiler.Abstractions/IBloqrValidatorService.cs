@@ -7,11 +7,16 @@ namespace Bloqr.Compiler.Abstractions;
 /// implements.
 /// </summary>
 /// <remarks>
-/// The native library isn't guaranteed to be present at runtime yet (its build/packaging into
-/// the .NET output directory is tracked separately by #276) - callers must check
-/// <see cref="IsAvailable"/> or simply treat a <c>null</c> result as "skip this check", never as
-/// a compilation failure. This mirrors how <c>IConfigurationReader</c> callers already treat a
-/// missing external tool (e.g. <c>deno</c>) defensively rather than crashing.
+/// This interface stays lenient at the FFI-wrapper level - it returns <c>null</c> rather than
+/// throwing when the native library is unavailable or a call otherwise can't complete - but
+/// that does NOT mean callers should silently skip the check. Whether "library unavailable" or
+/// "returned null" is safe to ignore is a decision each caller must make explicitly:
+/// <c>BloqrCompilerService</c>'s compile pipeline (the actual security-relevant checkpoint)
+/// fails closed by default via <see cref="CompilerOptions.AllowUnvalidatedOutput"/> - an
+/// unavailable/failed validator stops compilation unless that flag is explicitly set. A
+/// non-blocking UI surface (e.g. a diagnostics panel reporting native-library availability)
+/// may reasonably treat unavailability as informational instead; that's a caller-level choice,
+/// not a property of this interface.
 /// </remarks>
 public interface IBloqrValidatorService
 {

@@ -16,7 +16,7 @@ use crate::config::{read_config, to_json, CompilerConfig, ConfigFormat};
 use crate::error::{CompilerError, Result};
 use crate::events::{
     EventDispatcher, EventTimestamp, HashComputedEventArgs, HashMismatchEventArgs,
-    HashVerifiedEventArgs, ValidationEventArgs,
+    HashVerifiedEventArgs, ValidationEventArgs, ValidationSeverity,
 };
 use bloqr_validator::{ValidationConfig, Validator};
 
@@ -228,8 +228,17 @@ pub struct CompileOptions {
     pub debug: bool,
     /// Validate configuration before compiling.
     pub validate: bool,
-    /// Fail compilation on validation warnings.
+    /// Fail compilation on validation warnings (in addition to errors/critical findings,
+    /// which always fail compilation unless `allow_unvalidated_output` is set).
     pub fail_on_warnings: bool,
+    /// Explicit opt-out of the mandatory rules-validator syntax check on compiled output.
+    /// Security-relevant: leave this `false` (the default) in production. When `false`
+    /// (the default), compiled output is validated via `bloqr_validator::Validator` and
+    /// compilation fails closed - both a rules-validator run failure (e.g. the file can't
+    /// be read) and an invalid/error/critical finding cause `CompilerResult::success` to be
+    /// `false` - there is no silent skip. Set this to `true` only for deliberate debugging
+    /// of unvalidated output; doing so is logged as a warning.
+    pub allow_unvalidated_output: bool,
 }
 
 impl CompileOptions {
@@ -285,6 +294,14 @@ impl CompileOptions {
     #[must_use]
     pub const fn with_fail_on_warnings(mut self, fail_on_warnings: bool) -> Self {
         self.fail_on_warnings = fail_on_warnings;
+        self
+    }
+
+    /// Explicitly opt out of the mandatory rules-validator syntax check. Security-relevant -
+    /// see the field doc comment. Defaults to `false` (validation enforced, fail-closed).
+    #[must_use]
+    pub const fn with_allow_unvalidated_output(mut self, allow_unvalidated_output: bool) -> Self {
+        self.allow_unvalidated_output = allow_unvalidated_output;
         self
     }
 }
@@ -595,23 +612,45 @@ fn get_rules_directory(config_path: &Path, custom: Option<&Path>) -> PathBuf {
 }
 
 /// Run the native rules-validator syntax check against the compiled output and fire a
-/// `Validation` event with its findings. Findings are informational by default - a
-/// registered handler must explicitly set `abort` on the event args to fail compilation
-/// over them, matching this pipeline's other zero-trust checkpoints.
+/// `Validation` event with its findings.
 ///
-/// Returns `Some(reason)` if a handler aborted, `None` to continue. Silently continues
-/// if rules-validator fails to run at all (e.g. the file can't be read).
+/// **Fail-closed by default** (`allow_unvalidated`/`fail_on_warnings` come from
+/// `CompileOptions`): any Error/Critical finding aborts compilation, and so does a
+/// rules-validator run failure (e.g. the file can't be read) - a validator we couldn't
+/// run tells us nothing about the output's safety, so it can't be treated as "no
+/// findings". `fail_on_warnings` additionally escalates Warning findings to abort. A
+/// registered handler may still explicitly set `abort`/`abort_reason` on the event args
+/// for custom logic, but no handler is required for the default checks to hold - this
+/// closes the "no handler was registered, so nothing ever aborted" gap.
+///
+/// Setting `allow_unvalidated` to `true` reverts to the legacy, opt-in-only behavior
+/// (silently continue on a run failure; only an explicit handler-set `abort` counts) -
+/// use only for deliberate debugging of unvalidated output.
+///
+/// Returns `Some(reason)` if compilation should abort, `None` to continue.
 fn validate_output_with_events<P: AsRef<Path>>(
     path: P,
     dispatcher: &EventDispatcher,
     config: &ValidationConfig,
+    allow_unvalidated: bool,
+    fail_on_warnings: bool,
 ) -> Option<String> {
     let path = path.as_ref();
     let mut validator = Validator::new(config.clone());
 
     let syntax_result = match validator.validate_local_file(path) {
         Ok(result) => result,
-        Err(_) => return None,
+        Err(e) => {
+            return if allow_unvalidated {
+                None
+            } else {
+                Some(format!(
+                    "rules-validator could not run against {}: {e} (pass \
+                     --allow-unvalidated-output to bypass this check; not recommended)",
+                    path.display()
+                ))
+            };
+        }
     };
 
     let mut validation_args = ValidationEventArgs {
@@ -643,7 +682,15 @@ fn validate_output_with_events<P: AsRef<Path>>(
 
     dispatcher.raise_validation(&mut validation_args);
 
-    if validation_args.abort {
+    let has_warnings = validation_args
+        .findings
+        .iter()
+        .any(|f| matches!(f.severity, ValidationSeverity::Warning));
+    let should_abort = validation_args.abort
+        || (!allow_unvalidated
+            && (!validation_args.passed() || (fail_on_warnings && has_warnings)));
+
+    if should_abort {
         Some(
             validation_args.abort_reason.unwrap_or_else(|| {
                 format!("rules-validator validation failed for {}", path.display())
@@ -776,6 +823,24 @@ pub fn compile_rules<P: AsRef<Path>>(
     result.rule_count = count_rules(&output_path);
     result.output_hash = compute_hash(&output_path)?;
     result.success = true;
+
+    // Mandatory rules-validator syntax check on the compiled output - fail-closed by
+    // default (see validate_output_with_events doc comment). No EventDispatcher is
+    // threaded through this plain API, so use an empty one: the check runs and enforces
+    // regardless of whether any handlers are registered.
+    if let Some(abort_reason) = validate_output_with_events(
+        &output_path,
+        &EventDispatcher::new(),
+        &ValidationConfig::default(),
+        options.allow_unvalidated_output,
+        options.fail_on_warnings,
+    ) {
+        result.error_message = Some(abort_reason);
+        result.success = false;
+        result.end_time = Utc::now();
+        result.elapsed_ms = start.elapsed().as_millis() as u64;
+        return Ok(result);
+    }
 
     // Copy to rules directory if requested
     if options.copy_to_rules {
@@ -942,10 +1007,16 @@ pub fn compile_rules_with_events<P: AsRef<Path>>(
     result.output_hash = compute_hash_with_events(&output_path, "output_file", Some(dispatcher))?;
     result.success = true;
 
-    // Run the rules-validator syntax check and give handlers a chance to abort
-    if let Some(abort_reason) =
-        validate_output_with_events(&output_path, dispatcher, &ValidationConfig::default())
-    {
+    // Mandatory rules-validator syntax check - fail-closed by default (see
+    // validate_output_with_events doc comment); handlers may still customize via the
+    // dispatched event, but nothing has to be registered for the default checks to hold.
+    if let Some(abort_reason) = validate_output_with_events(
+        &output_path,
+        dispatcher,
+        &ValidationConfig::default(),
+        options.allow_unvalidated_output,
+        options.fail_on_warnings,
+    ) {
         result.error_message = Some(abort_reason);
         result.success = false;
         result.end_time = Utc::now();
@@ -1218,12 +1289,20 @@ mod tests {
             .with_output("/output/path.txt")
             .with_copy_to_rules(true)
             .with_debug(true)
-            .with_validation(true);
+            .with_validation(true)
+            .with_allow_unvalidated_output(true);
 
         assert_eq!(options.output_path, Some(PathBuf::from("/output/path.txt")));
         assert!(options.copy_to_rules);
         assert!(options.debug);
         assert!(options.validate);
+        assert!(options.allow_unvalidated_output);
+    }
+
+    #[test]
+    fn test_compile_options_default_is_fail_closed() {
+        // Security-relevant default: unvalidated output must never be silently allowed.
+        assert!(!CompileOptions::default().allow_unvalidated_output);
     }
 
     #[test]
@@ -1274,7 +1353,7 @@ mod tests {
     }
 
     #[test]
-    fn test_validate_output_with_events_no_handler_does_not_abort() {
+    fn test_validate_output_with_events_no_handler_no_findings_does_not_abort() {
         let dir = TempDir::new().unwrap();
         let path = dir.path().join("output.txt");
         fs::write(&path, "||example.com^\n").unwrap();
@@ -1282,9 +1361,41 @@ mod tests {
         let dispatcher = EventDispatcher::new();
         let config = scoped_validation_config(&dir);
 
-        // No handlers registered - findings are informational by default, so nothing aborts.
+        // No handlers registered, and the content is valid - nothing to abort over.
         assert_eq!(
-            validate_output_with_events(&path, &dispatcher, &config),
+            validate_output_with_events(&path, &dispatcher, &config, false, false),
+            None
+        );
+    }
+
+    #[test]
+    fn test_validate_output_with_events_invalid_content_aborts_with_no_handler() {
+        let dir = TempDir::new().unwrap();
+        let path = dir.path().join("output.txt");
+        // Public-suffix-only rule: rejected by default since it would block an entire
+        // public suffix - see docs/adr/0003-adguard-hostlist-compatibility.md.
+        fs::write(&path, "||co.uk^\n").unwrap();
+
+        let dispatcher = EventDispatcher::new();
+        let config = scoped_validation_config(&dir);
+
+        // Fail-closed by default: an Error/Critical finding aborts even with zero
+        // handlers registered - this is the gap the fail-closed rewrite closes.
+        assert!(validate_output_with_events(&path, &dispatcher, &config, false, false).is_some());
+    }
+
+    #[test]
+    fn test_validate_output_with_events_allow_unvalidated_skips_default_abort() {
+        let dir = TempDir::new().unwrap();
+        let path = dir.path().join("output.txt");
+        fs::write(&path, "||co.uk^\n").unwrap();
+
+        let dispatcher = EventDispatcher::new();
+        let config = scoped_validation_config(&dir);
+
+        // Explicit opt-out reverts to legacy behavior: only a handler-set abort counts.
+        assert_eq!(
+            validate_output_with_events(&path, &dispatcher, &config, true, false),
             None
         );
     }
@@ -1300,18 +1411,41 @@ mod tests {
         let config = scoped_validation_config(&dir);
 
         assert_eq!(
-            validate_output_with_events(&path, &dispatcher, &config),
+            validate_output_with_events(&path, &dispatcher, &config, false, false),
             Some("aborted by test handler".to_string())
         );
     }
 
     #[test]
-    fn test_validate_output_with_events_unreadable_file_returns_none() {
+    fn test_validate_output_with_events_unreadable_file_aborts_by_default() {
+        let dispatcher = EventDispatcher::new();
+        let config = ValidationConfig::default();
+
+        // A validator that couldn't run tells us nothing about the output's safety, so
+        // fail-closed treats that the same as a failed check, not a silent skip.
+        assert!(validate_output_with_events(
+            "/nonexistent/output.txt",
+            &dispatcher,
+            &config,
+            false,
+            false
+        )
+        .is_some());
+    }
+
+    #[test]
+    fn test_validate_output_with_events_unreadable_file_allow_unvalidated_returns_none() {
         let dispatcher = EventDispatcher::new();
         let config = ValidationConfig::default();
 
         assert_eq!(
-            validate_output_with_events("/nonexistent/output.txt", &dispatcher, &config),
+            validate_output_with_events(
+                "/nonexistent/output.txt",
+                &dispatcher,
+                &config,
+                true,
+                false
+            ),
             None
         );
     }

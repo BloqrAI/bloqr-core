@@ -119,13 +119,6 @@ RUN pwsh -Command "Set-PSRepository -Name 'PSGallery' -InstallationPolicy Truste
     pwsh -Command "Get-Module -ListAvailable Pester, PSScriptAnalyzer"
 
 # =============================================================================
-# YAML/TOML tools (yq for shell scripts)
-# =============================================================================
-RUN wget -q "https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64" -O /usr/local/bin/yq && \
-    chmod +x /usr/local/bin/yq && \
-    yq --version
-
-# =============================================================================
 # .NET workload and tool installation
 # =============================================================================
 RUN dotnet --info
@@ -142,7 +135,6 @@ RUN echo "=== Installed Versions ===" && \
     echo "cargo: $(cargo --version)" && \
     echo "pwsh: $(pwsh --version)" && \
     echo "git: $(git --version)" && \
-    echo "yq: $(yq --version)" && \
     echo "=========================="
 
 # =============================================================================

@@ -47,6 +47,13 @@ export interface CliOptions {
   validateConfig?: boolean;
   /** Fail compilation on validation warnings */
   failOnWarnings?: boolean;
+  /**
+   * Explicit opt-out of the mandatory rules-validator syntax check on
+   * compiled output. Security-relevant: leave this unset/`false` (the
+   * default) in production. Use only for deliberate debugging of
+   * unvalidated output.
+   */
+  allowUnvalidatedOutput?: boolean;
   /** Enable chunked parallel compilation */
   enableChunking?: boolean;
   /** Number of rules per chunk */

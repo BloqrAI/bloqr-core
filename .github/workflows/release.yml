@@ -353,14 +353,19 @@ jobs:
 
       - name: Build Rust compiler
         shell: bash
-        working-directory: ./src/compilers/rust
+        # bloqr-compiler (the CLI crate, #173's core/cli split) lives at
+        # src/compilers/rust/cli - building from there (rather than from
+        # src/compilers/rust, which has no Cargo.toml of its own any more)
+        # is what makes Cargo build just this package + its bloqr-compiler-core
+        # path dependency, instead of every workspace member.
+        working-directory: ./src/compilers/rust/cli
         run: cargo build --release --target ${{ matrix.target }}
 
       - name: Package binary (Windows)
         if: runner.os == 'Windows'
         shell: pwsh
         run: |
-          # cargo build was run with working-directory: ./src/compilers/rust, but
+          # cargo build was run with working-directory: ./src/compilers/rust/cli, but
           # bloqr-compiler is a member of the workspace rooted at the repo root (see
           # Cargo.toml's [workspace] members), so Cargo places build output under the
           # repo-root target/ dir, not a per-member one - there's no target-dir override

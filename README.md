@@ -1,14 +1,14 @@
 # Bloqr Core
 
-A multi-language toolkit for compiling and validating AdGuard-syntax ad-blocking filter rules. Four independent rules compilers (TypeScript, C#/.NET, Python, Rust), bash/zsh shell scripts, a PowerShell toolkit, a Rust validation library, and a Gatsby documentation site all live here and share one configuration schema.
+A multi-language toolkit for compiling and validating AdGuard-syntax ad-blocking filter rules. Four independent rules compilers (TypeScript, C#/.NET, Python, Rust), a PowerShell toolkit, a Rust validation library, and a Gatsby documentation site all live here and share one configuration schema.
 
 🚀 **Active development** — multi-language support, a Docker development environment, and CI/CD coverage across every component.
 
 ## What's in this repo
 
-- **Rules compilers** for TypeScript/Deno, C#/.NET, Python, and Rust, plus bash/zsh shell scripts — all reading the same JSON/JSONC configuration schema and producing identical output.
+- **Rules compilers** for TypeScript/Deno, C#/.NET, Python, and Rust, plus a PowerShell toolkit — all reading the same JSON/JSONC configuration schema and producing identical output.
 - **`@bloqr/compiler-core`** (`src/compilers/typescript/`) — the canonical, dependency-free compilation engine, published on [JSR](https://jsr.io/@bloqr/compiler-core). The .NET, Python, and Rust compilers shell out to it via Deno rather than reimplementing compilation logic.
-- **BloqrCompiler PowerShell toolkit** (`src/compilers/powershell/`) — class-based modules (`Common`, `BloqrCompiler`, `AdGuardWebhook`) with Pester test suites.
+- **BloqrCompiler PowerShell toolkit** (`src/compilers/powershell/`) — the sole cross-platform scripting-language compiler (PowerShell 7+ runs on Windows/Linux/macOS); class-based modules (`Common`, `BloqrCompiler`) with Pester test suites.
 - **Validation library** (`src/validation/`) — a Rust validation library (`bloqr-validator-core`) and CLI (`bloqr-validator-core-cli`) for filter/config validation (hash verification, URL security, syntax linting).
 - **Documentation website** (`website/`) — a Gatsby 5 site that builds guides, API reference, and security docs from `docs/` and this README.
 
@@ -70,17 +70,10 @@ pytest
 Also published on [crates.io](https://crates.io/crates/bloqr-compiler) — `cargo install bloqr-compiler` installs the CLI directly, no clone needed.
 
 ```bash
-cd src/compilers/rust
+cd src/compilers/rust/cli
 cargo build --release
 cargo run -- -c config.json
-cargo test
-```
-
-### Shell (bash/zsh)
-
-```bash
-./src/compilers/shell/bash/compile.sh -c config.json -r
-./src/compilers/shell/zsh/compile.zsh -c config.json -r
+cargo test -p bloqr-compiler -p bloqr-compiler-core
 ```
 
 ### PowerShell
@@ -120,8 +113,7 @@ bloqr-core/
 │   ├── compilers/dotnet/    # C#/.NET 10 — library + Spectre.Console CLI
 │   ├── compilers/python/         # Python 3.9+ — pip-installable package + CLI
 │   ├── compilers/rust/           # Rust — single-binary CLI, zero runtime deps
-│   ├── compilers/shell/          # bash + zsh scripts
-│   ├── compilers/powershell/     # PowerShell modules + Pester tests
+│   ├── compilers/powershell/     # PowerShell modules + Pester tests (cross-platform scripting compiler)
 │   ├── validation/                # Rust validation library (core/) + CLI (cli/)
 │   ├── apps/dashboard/            # C#/.NET 10 — Dashboard console app
 │   └── website/                  # Gatsby 5 documentation site
@@ -129,7 +121,7 @@ bloqr-core/
 └── schemas/                      # Shared configuration schema
 ```
 
-The TypeScript compiler is the only one that implements compilation logic directly — it *is* `@bloqr/compiler-core`. The .NET, Python, and Rust compilers are thin wrappers that shell out to it via Deno, so behavior and output stay identical across languages; the shell scripts and PowerShell toolkit call whichever compiler is available. `src/validation/` provides the shared hash-verification and syntax-validation layer that all of them rely on for security.
+The TypeScript compiler is the only one that implements compilation logic directly — it *is* `@bloqr/compiler-core`. The .NET, Python, and Rust compilers are thin wrappers that shell out to it via Deno, so behavior and output stay identical across languages; the PowerShell toolkit calls whichever compiler is available. `src/validation/` provides the shared hash-verification and syntax-validation layer that all of them rely on for security.
 
 `@bloqr/compiler-core` is deliberately separate from Bloqr's commercial `@bloqr/compiler` product ([`BloqrAI/bloqr-compiler`](https://github.com/BloqrAI/bloqr-compiler)), which layers AST tooling, linting, plugins, and Cloudflare Workers deployment on top of this open-source engine — see [`src/compilers/typescript/README.md`](src/compilers/typescript/README.md#architecture) for the full relationship.
 
@@ -159,8 +151,7 @@ The TypeScript compiler is the only one that implements compilation logic direct
 cd src/compilers/typescript && deno task test
 cd src/compilers/dotnet && dotnet test CompilerDotnet.slnx
 cd src/compilers/python && pytest
-cd src/compilers/rust && cargo test
-cargo test --workspace   # bloqr-compiler + validation
+cargo test --workspace   # bloqr-compiler/-core + validation
 Invoke-Pester -Path ./src/compilers/powershell -Recurse
 ```
 

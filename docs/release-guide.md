@@ -25,7 +25,7 @@ Before creating a release, ensure:
 - All tests pass in CI/CD
 - Version numbers are updated in project files if needed:
   - `src/compilers/dotnet/src/Bloqr.Compiler.Dotnet.Console/Bloqr.Compiler.Dotnet.Console.csproj`
-  - `src/compilers/rust/Cargo.toml`
+  - `src/compilers/rust/cli/Cargo.toml` (CLI binary version) / `src/compilers/rust/core/Cargo.toml` (library version)
   - `src/compilers/python/pyproject.toml`
 
 ### 2. Create and Push a Tag
@@ -108,7 +108,7 @@ The Python wheel package is built as a **universal wheel** compatible with Pytho
 
 ### crates.io Package
 
-Both `bloqr-validator-core` (library) and [`bloqr-validator-core-cli`](https://crates.io/crates/bloqr-validator-core-cli) (the `bloqr-validate` binary, installable via `cargo install bloqr-validator-core-cli`) are published to [crates.io](https://crates.io/crates/bloqr-validator-core) by `publish-crates.yml` — also independent of `release.yml` — triggered on every push to `main` touching either crate's directory, or manually via `workflow_dispatch`. The CLI job runs after the library job, since it depends on `bloqr-validator-core` via the registry. Authenticated via crates.io Trusted Publishing (OIDC, `rust-lang/crates-io-auth-action`) — no long-lived secret to manage or rotate. This briefly didn't work: this org's GitHub Enterprise account had the "Use enterprise-specific issuer URL" OIDC setting enabled, which crates.io's trusted-publishing backend rejected outright, so the workflow ran on the `CARGO_REGISTRY_TOKEN` secret for a short window. That Enterprise setting has since been disabled and OIDC has been live-verified end-to-end (real version bumps, real publishes) — see the auth comment block at the top of `publish-crates.yml` for the full history. `cargo publish` has no native `--skip-duplicate`, so the workflow checks the crates.io API for the current version before publishing to stay idempotent (the idempotency check itself needs a `User-Agent` header — crates.io's data-access policy 403s requests without one). `bloqr-compiler` ([crates.io](https://crates.io/crates/bloqr-compiler)) is also published by `publish-crates.yml`, alongside the two validation crates, whenever `src/compilers/rust/` changes — its binary continues to also ship via this release's GitHub Release bundle, a separate, coordinated event that doesn't gate or get gated by the crates.io publish. See [`docs/architecture/versioning-strategy.md`](architecture/versioning-strategy.md).
+Both `bloqr-validator-core` (library) and [`bloqr-validator-core-cli`](https://crates.io/crates/bloqr-validator-core-cli) (the `bloqr-validate` binary, installable via `cargo install bloqr-validator-core-cli`) are published to [crates.io](https://crates.io/crates/bloqr-validator-core) by `publish-crates.yml` — also independent of `release.yml` — triggered on every push to `main` touching either crate's directory, or manually via `workflow_dispatch`. The CLI job runs after the library job, since it depends on `bloqr-validator-core` via the registry. Authenticated via crates.io Trusted Publishing (OIDC, `rust-lang/crates-io-auth-action`) — no long-lived secret to manage or rotate. This briefly didn't work: this org's GitHub Enterprise account had the "Use enterprise-specific issuer URL" OIDC setting enabled, which crates.io's trusted-publishing backend rejected outright, so the workflow ran on the `CARGO_REGISTRY_TOKEN` secret for a short window. That Enterprise setting has since been disabled and OIDC has been live-verified end-to-end (real version bumps, real publishes) — see the auth comment block at the top of `publish-crates.yml` for the full history. `cargo publish` has no native `--skip-duplicate`, so the workflow checks the crates.io API for the current version before publishing to stay idempotent (the idempotency check itself needs a `User-Agent` header — crates.io's data-access policy 403s requests without one). `bloqr-compiler-core` ([crates.io](https://crates.io/crates/bloqr-compiler-core), the library, `src/compilers/rust/core/`) and `bloqr-compiler` ([crates.io](https://crates.io/crates/bloqr-compiler), the CLI, `src/compilers/rust/cli/`) are also published by `publish-crates.yml`, alongside the two validation crates, whenever `src/compilers/rust/` changes — the CLI's binary continues to also ship via this release's GitHub Release bundle, a separate, coordinated event that doesn't gate or get gated by the crates.io publish. See [`docs/architecture/versioning-strategy.md`](architecture/versioning-strategy.md).
 
 ## Troubleshooting
 
@@ -156,7 +156,7 @@ dotnet publish -c Release -r osx-x64 --self-contained -p:PublishSingleFile=true 
 ### Build Rust Binary
 
 ```bash
-cd src/compilers/rust
+cd src/compilers/rust/cli
 cargo build --release --target x86_64-unknown-linux-gnu
 cargo build --release --target x86_64-pc-windows-msvc
 cargo build --release --target x86_64-apple-darwin
@@ -192,9 +192,9 @@ python -m build
 
 - `.github/workflows/release.yml` - Coordinated multi-language binary release workflow
 - `.github/workflows/publish-nuget.yml` - Independent, path-filtered NuGet publish for the common .NET library
-- `.github/workflows/publish-crates.yml` - Independent, path-filtered crates.io publish for `bloqr-validator-core`
+- `.github/workflows/publish-crates.yml` - Independent, path-filtered crates.io publish for `bloqr-validator-core`/`-cli` and `bloqr-compiler-core`/`bloqr-compiler`
 - `src/compilers/dotnet/src/Bloqr.Compiler.Dotnet.Console/Bloqr.Compiler.Dotnet.Console.csproj` - .NET Compiler project
-- `src/compilers/rust/Cargo.toml` - Rust project configuration
+- `src/compilers/rust/cli/Cargo.toml` / `src/compilers/rust/core/Cargo.toml` - Rust project configuration
 - `src/compilers/python/pyproject.toml` - Python project configuration
 - `docs/architecture/nuget-distribution-strategy.md` - NuGet publishing decision record for the common .NET library
 - `docs/architecture/versioning-strategy.md` - Per-package versioning standard (JSR, crates.io, NuGet)

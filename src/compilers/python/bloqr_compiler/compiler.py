@@ -49,6 +49,7 @@ from bloqr_compiler.events import (
     HashMismatchEventArgs,
     HashVerifiedEventArgs,
     ValidationEventArgs,
+    ValidationSeverity,
 )
 from bloqr_compiler.hash_database import HashDatabaseEntry, load_hash_database, record_hash
 from bloqr_compiler.output_publisher import publish_output
@@ -438,23 +439,37 @@ async def _verify_and_record_hash(
 async def _run_rules_validator(
     output_path: Path,
     event_dispatcher: EventDispatcher | None,
+    allow_unvalidated: bool = False,
+    fail_on_warnings: bool = False,
 ) -> tuple[bool, str | None]:
     """
     Shell out to the native `bloqr-validate` CLI to run its syntax check against the
-    compiled output, and raise a `Validation` event with its findings. Findings are
-    informational by default - a registered handler must explicitly set `abort` to fail
-    compilation over them, matching this pipeline's other zero-trust checkpoints.
+    compiled output, and raise a `Validation` event with its findings.
 
-    Silently continues (returns `(True, None)`) if `bloqr-validate` isn't found or
-    fails to run at all, matching the .NET integration's graceful degradation when the
-    native library is unavailable.
+    Fail-closed by default: any Error/Critical finding (`not validation_args.passed`)
+    aborts compilation, and so does a missing/failed/unparseable validator run - a
+    validator we couldn't run tells us nothing about the output's safety, so it can't
+    be treated as "no findings". `fail_on_warnings` additionally escalates Warning
+    findings to abort. A registered handler may still explicitly set
+    `validation_args.abort` for custom logic, but no handler (or event_dispatcher) is
+    required for the default checks to hold - this closes the "no handler/dispatcher
+    was wired up, so nothing ever aborted" gap.
+
+    Pass `allow_unvalidated=True` to revert to the legacy, opt-in-only behavior
+    (silently continue on a run failure; only an explicit handler-set `abort` counts) -
+    use only for deliberate debugging of unvalidated output.
 
     Returns:
         Tuple of (can_continue, error_message).
     """
     binary = find_rules_validate_binary()
     if binary is None:
-        return True, None
+        if allow_unvalidated:
+            return True, None
+        return False, (
+            "bloqr-validate binary not found; cannot validate compiled output. "
+            "Pass allow_unvalidated_output to bypass this check (not recommended)."
+        )
 
     hash_db_path = output_path.parent / ".hashes.json"
     try:
@@ -466,20 +481,30 @@ async def _run_rules_validator(
         )
     except (OSError, subprocess.TimeoutExpired) as e:
         logger.warning(f"bloqr-validate failed to run: {e}")
-        return True, None
+        if allow_unvalidated:
+            return True, None
+        return False, (
+            f"bloqr-validate failed to run: {e}. "
+            "Pass allow_unvalidated_output to bypass this check (not recommended)."
+        )
 
     try:
         payload = json.loads(proc.stdout)
     except (json.JSONDecodeError, ValueError):
         logger.warning(f"bloqr-validate produced unparseable output: {proc.stdout!r}")
-        return True, None
+        if allow_unvalidated:
+            return True, None
+        return False, (
+            "bloqr-validate produced unparseable output; cannot validate compiled "
+            "output. Pass allow_unvalidated_output to bypass this check (not recommended)."
+        )
 
     validation_args = ValidationEventArgs(stage_name="bloqr-validator")
 
     if "error" in payload:
-        # bloqr-validate itself failed (e.g. unreadable file) - informational only,
-        # doesn't block compilation unless a handler explicitly aborts.
-        validation_args.add_warning("RV001", payload["error"])
+        # bloqr-validate itself failed (e.g. unreadable file) - this is a validation
+        # failure, not a mere finding, so it's added as an error (fail-closed default).
+        validation_args.add_error("RV001", payload["error"])
     else:
         is_valid = payload.get("is_valid", False)
         messages = payload.get("messages", [])
@@ -505,7 +530,15 @@ async def _run_rules_validator(
     if event_dispatcher is not None:
         await event_dispatcher.raise_validation(validation_args)
 
-    if validation_args.abort:
+    has_warnings = any(
+        f.severity == ValidationSeverity.WARNING for f in validation_args.findings
+    )
+    should_abort = validation_args.abort or (
+        not allow_unvalidated
+        and (not validation_args.passed or (fail_on_warnings and has_warnings))
+    )
+
+    if should_abort:
         return False, validation_args.abort_reason or f"bloqr-validator validation failed for {output_path}"
 
     return True, None
@@ -592,6 +625,7 @@ class BloqrCompiler:
         format: ConfigurationFormat | None = None,
         validate: bool = True,
         fail_on_warnings: bool = False,
+        allow_unvalidated_output: bool = False,
         event_dispatcher: EventDispatcher | None = None,
     ) -> CompilerResult:
         """
@@ -605,6 +639,11 @@ class BloqrCompiler:
             format: Force configuration format.
             validate: Validate configuration before compiling.
             fail_on_warnings: Fail compilation if configuration has validation warnings.
+            allow_unvalidated_output: Explicit opt-out of the mandatory rules-validator
+                syntax check on compiled output. Security-relevant: leave this False
+                (the default) in production - compiled output is validated and
+                compilation fails closed by default. Use only for deliberate
+                debugging of unvalidated output.
             event_dispatcher: Optional dispatcher for hash-verification events.
 
         Returns:
@@ -620,6 +659,7 @@ class BloqrCompiler:
             debug=self.debug,
             validate=validate,
             fail_on_warnings=fail_on_warnings,
+            allow_unvalidated_output=allow_unvalidated_output,
         )
 
     def read_config(
@@ -670,6 +710,7 @@ class BloqrCompiler:
         format: ConfigurationFormat | None = None,
         validate: bool = True,
         fail_on_warnings: bool = False,
+        allow_unvalidated_output: bool = False,
         event_dispatcher: EventDispatcher | None = None,
     ) -> CompilerResult:
         """
@@ -686,6 +727,11 @@ class BloqrCompiler:
             format: Force configuration format.
             validate: Validate configuration before compiling.
             fail_on_warnings: Fail compilation if configuration has validation warnings.
+            allow_unvalidated_output: Explicit opt-out of the mandatory rules-validator
+                syntax check on compiled output. Security-relevant: leave this False
+                (the default) in production - compiled output is validated and
+                compilation fails closed by default. Use only for deliberate
+                debugging of unvalidated output.
             event_dispatcher: Optional dispatcher for hash-verification events.
 
         Returns:
@@ -706,6 +752,7 @@ class BloqrCompiler:
             debug=self.debug,
             validate=validate,
             fail_on_warnings=fail_on_warnings,
+            allow_unvalidated_output=allow_unvalidated_output,
             event_dispatcher=event_dispatcher,
         )
 
@@ -719,6 +766,7 @@ def compile_rules(
     debug: bool = False,
     validate: bool = True,
     fail_on_warnings: bool = False,
+    allow_unvalidated_output: bool = False,
     event_dispatcher: EventDispatcher | None = None,
 ) -> CompilerResult:
     """
@@ -733,6 +781,11 @@ def compile_rules(
         debug: Enable debug logging.
         validate: Validate configuration before compiling.
         fail_on_warnings: Fail compilation if configuration has validation warnings.
+        allow_unvalidated_output: Explicit opt-out of the mandatory rules-validator
+            syntax check on compiled output. Security-relevant: leave this False (the
+            default) in production - compiled output is validated and compilation
+            fails closed by default. Use only for deliberate debugging of unvalidated
+            output.
         event_dispatcher: Optional dispatcher to raise HashComputed/HashVerified/HashMismatch
             events at each stage (see docs/HASH_VERIFICATION.md). Hash recording/verification
             against the `.hashes.json` sidecar (config.hash_verification) happens regardless
@@ -887,7 +940,9 @@ def compile_rules(
                 return result
 
         can_continue, error_message = asyncio.run(
-            _run_rules_validator(actual_output, event_dispatcher)
+            _run_rules_validator(
+                actual_output, event_dispatcher, allow_unvalidated_output, fail_on_warnings
+            )
         )
         if not can_continue:
             result.success = False
@@ -966,6 +1021,7 @@ async def compile_rules_async(
     debug: bool = False,
     validate: bool = True,
     fail_on_warnings: bool = False,
+    allow_unvalidated_output: bool = False,
     event_dispatcher: EventDispatcher | None = None,
 ) -> CompilerResult:
     """
@@ -983,6 +1039,11 @@ async def compile_rules_async(
         debug: Enable debug logging.
         validate: Validate configuration before compiling.
         fail_on_warnings: Fail compilation if configuration has validation warnings.
+        allow_unvalidated_output: Explicit opt-out of the mandatory rules-validator
+            syntax check on compiled output. Security-relevant: leave this False (the
+            default) in production - compiled output is validated and compilation
+            fails closed by default. Use only for deliberate debugging of unvalidated
+            output.
         event_dispatcher: Optional dispatcher to raise HashComputed/HashVerified/HashMismatch
             events at each stage (see docs/HASH_VERIFICATION.md). Hash recording/verification
             against the `.hashes.json` sidecar (config.hash_verification) happens regardless
@@ -1145,7 +1206,9 @@ async def compile_rules_async(
                 result.error_message = error_message
                 return result
 
-        can_continue, error_message = await _run_rules_validator(actual_output, event_dispatcher)
+        can_continue, error_message = await _run_rules_validator(
+            actual_output, event_dispatcher, allow_unvalidated_output, fail_on_warnings
+        )
         if not can_continue:
             result.success = False
             result.error_message = error_message

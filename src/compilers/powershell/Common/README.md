@@ -97,7 +97,6 @@ Common/
 
 The following modules depend on the Common module:
 - **BloqrCompiler**: Uses CompilerLogger and CompilerResult for compilation operations
-- **AdGuardWebhook**: Uses CompilerLogger for webhook invocation logging
 - **adguard-api-powershell**: (Future) Will use shared classes for API operations
 
 ## Environment Variables

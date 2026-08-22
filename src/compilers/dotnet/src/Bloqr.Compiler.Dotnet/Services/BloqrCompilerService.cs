@@ -167,13 +167,18 @@ public class BloqrCompilerService : IBloqrCompilerService
             }
         }
 
-        // Update options with resolved path
+        // Update options with resolved path. FailOnWarnings/AllowUnvalidatedOutput must be
+        // carried over explicitly - they're read downstream by ValidateOutputSyntaxAsync, and
+        // silently dropping them here would make that method's fail-closed default unreachable
+        // for the option that's supposed to opt out of it.
         var compilerOptions = new CompilerOptions
         {
             ConfigPath = actualConfigPath,
             OutputPath = options.OutputPath,
             Format = options.Format,
-            Verbose = options.Verbose
+            Verbose = options.Verbose,
+            FailOnWarnings = options.FailOnWarnings,
+            AllowUnvalidatedOutput = options.AllowUnvalidatedOutput,
         };
 
         // Read configuration once for the settings this method acts on directly
@@ -305,12 +310,18 @@ public class BloqrCompilerService : IBloqrCompilerService
 
     /// <summary>
     /// Runs the native bloqr-validator syntax check (#264) against the compiled output file
-    /// and raises a <c>Validation</c> event with its findings. Silently skipped (returns
-    /// <c>CanContinue: true</c> with no event) when the native library is unavailable -
-    /// see <see cref="IBloqrValidatorService"/>'s remarks. Findings are informational by
-    /// default (a registered handler must explicitly set <see cref="ValidationEventArgs.Abort"/>
-    /// to fail compilation over them), matching this pipeline's other zero-trust checkpoints.
+    /// and raises a <c>Validation</c> event with its findings.
     /// </summary>
+    /// <remarks>
+    /// Fail-closed by default (<see cref="CompilerOptions.AllowUnvalidatedOutput"/>/
+    /// <see cref="CompilerOptions.FailOnWarnings"/> control this): an unavailable or failed
+    /// native library, or any Error/Critical finding, stops compilation - an
+    /// unavailable/failed validator tells us nothing about the output's safety, so it can't
+    /// be treated as "no findings" and silently skipped. <see cref="CompilerOptions.FailOnWarnings"/>
+    /// additionally escalates Warning findings to abort. A registered handler may still set
+    /// <see cref="ValidationEventArgs.Abort"/> explicitly for custom logic, but no handler is
+    /// required for the default checks to hold.
+    /// </remarks>
     /// <returns>
     /// Whether compilation can continue, and an error message to surface if it cannot.
     /// </returns>
@@ -321,13 +332,20 @@ public class BloqrCompilerService : IBloqrCompilerService
     {
         if (!_rulesValidatorService.IsAvailable)
         {
-            return (true, null);
+            return options.AllowUnvalidatedOutput
+                ? (true, null)
+                : (false, "bloqr-validator native library is unavailable, so compiled output " +
+                          "could not be validated. Set CompilerOptions.AllowUnvalidatedOutput " +
+                          "to bypass this check (not recommended).");
         }
 
         var syntaxResult = await _rulesValidatorService.ValidateLocalFileAsync(outputPath, cancellationToken);
         if (syntaxResult is null)
         {
-            return (true, null);
+            return options.AllowUnvalidatedOutput
+                ? (true, null)
+                : (false, $"bloqr-validator could not run against {outputPath}. Set " +
+                          "CompilerOptions.AllowUnvalidatedOutput to bypass this check (not recommended).");
         }
 
         var validationArgs = new ValidationEventArgs(options, "bloqr-validator", new List<ValidationFinding>());
@@ -347,7 +365,12 @@ public class BloqrCompilerService : IBloqrCompilerService
 
         await _eventDispatcher.RaiseValidationAsync(validationArgs, cancellationToken);
 
-        if (validationArgs.Abort)
+        var hasWarnings = validationArgs.Findings.Any(f => f.Severity == ValidationSeverity.Warning);
+        var shouldAbort = validationArgs.Abort
+            || (!options.AllowUnvalidatedOutput
+                && (!validationArgs.Passed || (options.FailOnWarnings && hasWarnings)));
+
+        if (shouldAbort)
         {
             return (false, validationArgs.AbortReason ?? $"bloqr-validator validation failed for {outputPath}");
         }

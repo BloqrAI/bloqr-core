@@ -12,12 +12,8 @@ This repository is a comprehensive multi-language toolkit for ad-blocking, netwo
 - **Python 3.9+** (`src/compilers/python/`) - pip-installable package with CLI and API
 - **Rust** (`src/compilers/rust/`) - High-performance single binary with zero runtime deps
 
-### Shell Scripts (`src/compilers/shell/`)
-- **Bash** (`src/compilers/shell/bash/compile.sh`) - Linux/macOS
-- **Zsh** (`src/compilers/shell/zsh/compile.zsh`) - macOS/Linux with zsh-specific features
-
 ### PowerShell Modules
-- **BloqrCompiler Toolkit** (`src/compilers/powershell/`) - Canonical, actively-developed modular PowerShell toolkit (class-based `Common`, `BloqrCompiler`, `AdGuardWebhook` modules with Pester tests)
+- **BloqrCompiler Toolkit** (`src/compilers/powershell/`) - the sole cross-platform scripting-language compiler (PowerShell 7+ runs on Windows/Linux/macOS, so the earlier separate bash/zsh scripts under `src/compilers/shell/` were retired in favor of it) - canonical, actively-developed modular PowerShell toolkit (class-based `Common`/`BloqrCompiler` modules with Pester tests)
 
 ### Common .NET Library
 - **`Bloqr.Compiler.Abstractions`/`Bloqr.Compiler.Core`** (`src/common/dotnet/`) - Shared .NET library (own solution, `CompilerCommon.slnx`) consumed by the .NET rules compiler and Dashboard via `<ProjectReference>`; not part of either consumer's solution
@@ -45,7 +41,7 @@ A fully-featured Docker environment with all compilers and tools:
 # Dockerfile.warp
 FROM mcr.microsoft.com/dotnet/sdk:10.0-noble
 # Includes: .NET 10 SDK, Deno 2.x, Python 3.12, Rust stable, PowerShell 7
-# Pre-installed: hostlist-compiler (via Deno), yq, pytest, ruff, clippy, Pester
+# Pre-installed: hostlist-compiler (via Deno), pytest, ruff, clippy, Pester
 ```
 
 Build and run:
@@ -89,19 +85,6 @@ deno task start -- --interactive            # Force interactive mode
 deno task start -- --validate -c config.yaml  # Validate only
 deno run --allow-read --allow-write --allow-env --allow-run src/mod.ts --help
 deno run --allow-read --allow-write --allow-env --allow-run src/mod.ts --version
-```
-
-### Shell Scripts (`src/compilers/shell/`)
-```bash
-# Bash (Linux/macOS)
-./src/compilers/shell/bash/compile.sh                    # Use default config
-./src/compilers/shell/bash/compile.sh -c config.yaml -r  # YAML config, copy to rules
-./src/compilers/shell/bash/compile.sh -v                 # Show version
-
-# Zsh (macOS/Linux)
-./src/compilers/shell/zsh/compile.zsh                    # Use default config
-./src/compilers/shell/zsh/compile.zsh -c config.yaml -r  # YAML config, copy to rules
-./src/compilers/shell/zsh/compile.zsh -v                 # Show version
 ```
 
 ### Common .NET Library (`src/common/dotnet/`)
@@ -156,18 +139,22 @@ bloqr-compiler --help                    # Show help
 ```
 
 ### Rust Rules Compiler (`src/compilers/rust/`)
+Split into a library crate (`core/`, published as `bloqr-compiler-core`) and a
+thin CLI crate (`cli/`, published as `bloqr-compiler`, unchanged binary name)
+mirroring `src/validation`'s `core`/`cli` split (#173) - both are members of
+the repo-root Cargo workspace, so build/test commands run from the repo root
+with `-p`, or `cd` straight into `cli/` for CLI-only iteration.
 ```bash
-cd src/compilers/rust
-
-# Build
-cargo build              # Debug build
-cargo build --release    # Release build (optimized)
+# Build (from repo root)
+cargo build -p bloqr-compiler -p bloqr-compiler-core              # Debug build
+cargo build --release -p bloqr-compiler -p bloqr-compiler-core    # Release build (optimized)
 
 # Run tests
-cargo test
-cargo test -- --nocapture  # With output
+cargo test -p bloqr-compiler -p bloqr-compiler-core
+cargo test -p bloqr-compiler -p bloqr-compiler-core -- --nocapture  # With output
 
-# CLI usage
+# CLI usage (from src/compilers/rust/cli, or `cargo run -p bloqr-compiler --` from the repo root)
+cd src/compilers/rust/cli
 cargo run -- -c config.yaml              # Specific config
 cargo run -- -c config.json -r           # Compile and copy to rules
 cargo run -- -c config.toml -o out.txt   # Custom output
@@ -175,7 +162,7 @@ cargo run -- -V                          # Show version info
 cargo run -- -d                          # Debug output
 cargo run -- --help                      # Show help
 
-# Release binary
+# Release binary (built to the workspace-root target/ dir regardless of which member you built)
 ./target/release/bloqr-compiler -c config.yaml
 ```
 
@@ -184,10 +171,10 @@ cargo run -- --help                      # Show help
 # Import the modules
 Import-Module ./src/compilers/powershell/Common/Common.psd1
 Import-Module ./src/compilers/powershell/BloqrCompiler/BloqrCompiler.psd1
-Import-Module ./src/compilers/powershell/AdGuardWebhook/AdGuardWebhook.psd1
 
 # Compile filter rules
-Invoke-BloqrCompiler
+Invoke-BloqrCompiler                                          # Use default config
+Invoke-BloqrCompiler -ConfigPath config.yaml -CopyToRules      # YAML config, copy to rules
 
 # Run Pester tests
 Invoke-Pester -Path ./src/compilers/powershell -Recurse
@@ -237,11 +224,13 @@ pytest --cov=bloqr_compiler               # With coverage
 
 ### Rust (cargo test)
 ```bash
-cd src/compilers/rust
-cargo test                                # Run all tests
-cargo test -- --nocapture                 # With output
-cargo test test_count_rules               # Specific test
-cargo test config::                       # Tests in module
+# From the repo root - bloqr-compiler-core (src/compilers/rust/core) and
+# bloqr-compiler (src/compilers/rust/cli) are separate workspace members.
+cargo test -p bloqr-compiler-core                          # Run all library tests
+cargo test -p bloqr-compiler-core -- --nocapture            # With output
+cargo test -p bloqr-compiler-core test_count_rules          # Specific test
+cargo test -p bloqr-compiler-core config::                  # Tests in module
+cargo test -p bloqr-compiler                                # CLI crate's own tests (config discovery)
 ```
 
 ## Architecture
@@ -271,12 +260,6 @@ cargo test config::                       # Tests in module
 - Key classes: `BloqrCompiler`, `BloqrCompilerBuilder`, `ConfigurationBuilder`, `ConsoleApplication`
 - Uses Deno's built-in testing framework
 
-### Shell Scripts (`src/compilers/shell/`)
-- Cross-platform shell scripts for filter compilation
-- `bash/compile.sh` - Bash script for Linux/macOS
-- `zsh/compile.zsh` - Zsh script with native zsh features (zparseopts, EPOCHREALTIME)
-- Supports JSON, YAML, TOML via external tools (yq, Python)
-
 ### Common .NET Library (`src/common/dotnet/`)
 - Its own independent .NET solution (`CompilerCommon.slnx`), isolated from `CompilerDotnet.slnx` and `BloqrDashboard.slnx` — every in-repo .NET consumer reaches it via `<ProjectReference>` across directories, not via shared solution membership
 - `Bloqr.Compiler.Abstractions` - Interfaces, event-args, and model/DTO types shared across the compiler stack
@@ -304,20 +287,25 @@ cargo test config::                       # Tests in module
 - Tools: pytest, mypy, ruff
 
 ### Bloqr Compiler - Rust (`src/compilers/rust/`)
-- High-performance Rust library and CLI for filter compilation
+- High-performance Rust library and CLI for filter compilation, split into a
+  core lib crate + thin CLI crate (#173), mirroring `src/validation`'s own
+  `core`/`cli` split — both are members of the repo-root Cargo workspace
 - Supports JSON, YAML, and TOML configuration formats
-- `src/config.rs` - Configuration structs and parsing
-- `src/compiler.rs` - `BloqrCompiler` struct and `compile_rules()` function
-- `src/main.rs` - clap-based CLI with argument parsing
-- `src/error.rs` - `CompilerError` enum with thiserror
+- **`core/`** (published as `bloqr-compiler-core`, lib name `bloqr_compiler`) - the library:
+  - `core/src/config.rs` - Configuration structs and parsing
+  - `core/src/compiler.rs` - `BloqrCompiler` struct and `compile_rules()` function
+  - `core/src/error.rs` - `CompilerError` enum with thiserror
+  - `core/src/events.rs`, `core/src/chunking.rs` - event dispatch and chunked/parallel compilation
+- **`cli/`** (published as `bloqr-compiler`, unchanged binary name/CLI surface) - the CLI:
+  - `cli/src/main.rs` - clap-based CLI with argument parsing, depends on `core/` via a path+version dependency
 - Single binary distribution with zero runtime dependencies (except hostlist-compiler)
 - Key structs: `BloqrCompiler`, `CompilerConfiguration`, `CompilerResult`, `VersionInfo`
 - LTO optimization enabled for small binary size
 
 ### PowerShell Toolkit (`src/compilers/powershell/`)
+- The sole cross-platform scripting-language compiler (PowerShell 7+ runs on Windows/Linux/macOS) - the earlier separate bash/zsh scripts under `src/compilers/shell/` were retired in favor of it
 - **Common** (`Common/`) - Shared `CompilerLogger` and `CompilerResult` classes used by other modules
 - **BloqrCompiler** (`BloqrCompiler/`) - Class-based rules compiler module (`CompilerConfiguration`, `CompilerResult`, `CompilerLogger`)
-- **AdGuardWebhook** (`AdGuardWebhook/`) - Class-based webhook invocation module (`WebhookConfiguration`, `WebhookInvoker`, `WebhookStatistics`)
 - Each module ships its own `.psd1` manifest and `Tests/` Pester suite
 
 ### Validation Library (`src/validation/`)
@@ -376,7 +364,7 @@ GitHub Actions workflows validate:
 - `.github/workflows/typescript.yml` - Deno 2.x for the TypeScript rules compiler
 - `.github/workflows/rust-clippy.yml` - Builds, tests, formats, and lints the Rust workspace (rules compiler, validation library)
 - `.github/workflows/python.yml` - Builds and tests the Python rules compiler across supported Python versions
-- `.github/workflows/powershell.yml` - Pester tests and PSScriptAnalyzer for both PowerShell trees
+- `.github/workflows/powershell.yml` - Pester tests and PSScriptAnalyzer for the PowerShell toolkit
 - `.github/workflows/build-scripts-tests.yml` - Exercises the root `build.sh`/`build.ps1` launcher scripts
 - `.github/workflows/gatsby.yml` - Builds the `website` documentation site
 - `.github/workflows/security.yml` - Consolidated security scanning (CodeQL, DevSkim, PSScriptAnalyzer)

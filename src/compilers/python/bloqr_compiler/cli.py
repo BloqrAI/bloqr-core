@@ -129,6 +129,16 @@ Examples:
     )
 
     parser.add_argument(
+        "--allow-unvalidated-output",
+        action="store_true",
+        help=(
+            "Explicit opt-out of the mandatory rules-validator syntax check on "
+            "compiled output. Security-relevant: leave this off in production. "
+            "Use only for deliberate debugging of unvalidated output."
+        ),
+    )
+
+    parser.add_argument(
         "--check-files",
         action="store_true",
         help="Check if local source files exist (use with --validate)",
@@ -574,6 +584,7 @@ def main(args: list[str] | None = None) -> int:
             format=config_format,
             validate=should_validate,
             fail_on_warnings=fail_on_warnings,
+            allow_unvalidated_output=opts.allow_unvalidated_output,
         )
 
         if result.success:

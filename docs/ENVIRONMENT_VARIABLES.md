@@ -1,22 +1,22 @@
 # Environment Variables Reference
 
-Comprehensive guide to environment variables actually read by Bloqr Core's shell/PowerShell wrappers and .NET apps today. Each section below is verified against the code that reads it — nothing here is aspirational.
+Comprehensive guide to environment variables actually read by Bloqr Core's PowerShell wrapper and .NET apps today. Each section below is verified against the code that reads it — nothing here is aspirational.
 
 ## Overview
 
-Environment variables give the shell/PowerShell wrappers and .NET apps configuration without editing files, useful for:
+Environment variables give the PowerShell wrapper and .NET apps configuration without editing files, useful for:
 - CI/CD integration
 - Containerized deployments
 - User-specific defaults
 - Cross-platform consistency
 
 **There is no single unified naming scheme across languages.** Each surface uses its own prefix, for historical reasons:
-- The bash/zsh/PowerShell rules-compiler wrappers use `ADGUARD_COMPILER_*` — a naming holdover from before the Bloqr rebrand. It's accurate to what's in code today, but is a real, known inconsistency with the rest of the `Bloqr.*`/`BLOQR_*` naming this repo otherwise uses (flagging for the repo owner rather than unilaterally renaming vars real scripts/CI depend on).
+- The PowerShell rules-compiler wrapper uses `ADGUARD_COMPILER_*` — a naming holdover from before the Bloqr rebrand. It's accurate to what's in code today, but is a real, known inconsistency with the rest of the `Bloqr.*`/`BLOQR_*` naming this repo otherwise uses (flagging for the repo owner rather than unilaterally renaming vars real scripts/CI depend on).
 - The .NET compiler and Dashboard each bind a whole environment-variable prefix into `IConfiguration` (`BLOQR_COMPILER_` and `BLOQR_DASHBOARD_` respectively), following ASP.NET Core's standard double-underscore-for-nesting convention, rather than documenting one variable per setting.
 
-## Rules Compiler (Shell/PowerShell wrappers)
+## Rules Compiler (PowerShell wrapper)
 
-Read by `src/compilers/shell/bash/compile.sh`, `src/compilers/shell/zsh/compile.zsh`, and `src/compilers/powershell/BloqrCompiler/Public/Invoke-BloqrCompiler.ps1`.
+Read by `src/compilers/powershell/BloqrCompiler/Public/Invoke-BloqrCompiler.ps1` — the sole cross-platform scripting-language compiler (PowerShell 7+ runs on Windows/Linux/macOS); the earlier bash/zsh wrappers have been retired.
 
 ### ADGUARD_COMPILER_CONFIG
 **Description**: Configuration file path
@@ -45,7 +45,7 @@ export ADGUARD_COMPILER_FORMAT="json"
 
 ### ADGUARD_COMPILER_VERBOSE
 **Description**: Enable verbose logging
-**Type**: Boolean (`true`/`1` to enable — bash/PowerShell check for either; zsh's boolean check is case-insensitive)
+**Type**: Boolean (`true`/`1` to enable)
 **Default**: unset (disabled)
 **Example**:
 ```bash
@@ -100,7 +100,7 @@ export BLOQR_COMPILER_Logging__LogLevel__Default="Warning"
 ## Common (multiple languages)
 
 ### DEBUG
-**Description**: Enable debug-level output. Recognized by the shell/PowerShell wrappers and the TypeScript compiler (`@bloqr/compiler-core`)
+**Description**: Enable debug-level output. Recognized by the PowerShell wrapper and the TypeScript compiler (`@bloqr/compiler-core`)
 **Type**: presence-based (any value enables it) or boolean depending on the reader — see each wrapper's own `--help`
 **Example**:
 ```bash
@@ -126,15 +126,6 @@ $env:ADGUARD_COMPILER_CONFIG = "compiler-config.json"
 [System.Environment]::SetEnvironmentVariable('ADGUARD_COMPILER_CONFIG', 'compiler-config.json', 'User')
 ```
 
-### Bash/Zsh (Linux/macOS)
-```bash
-# Set for current session
-export ADGUARD_COMPILER_CONFIG="compiler-config.json"
-
-# Set permanently — add to ~/.bashrc or ~/.zshrc
-echo 'export ADGUARD_COMPILER_CONFIG="compiler-config.json"' >> ~/.bashrc
-```
-
 ### Docker
 ```dockerfile
 ENV ADGUARD_COMPILER_CONFIG=/app/compiler-config.json \
@@ -151,7 +142,7 @@ env:
 steps:
   - name: Compile rules
     run: |
-      ./src/compilers/shell/bash/compile.sh -r
+      pwsh -Command "Import-Module ./src/compilers/powershell/BloqrCompiler/BloqrCompiler.psd1; Invoke-BloqrCompiler -CopyToRules"
 ```
 
 ## Priority Order
@@ -166,30 +157,22 @@ When multiple configuration sources are available, later overrides earlier:
 ## Troubleshooting
 
 ### Check if a variable is set
-```bash
-# Bash/Zsh
-echo $ADGUARD_COMPILER_CONFIG
-
-# PowerShell
+```powershell
 $env:ADGUARD_COMPILER_CONFIG
 
 # Show all ADGUARD_COMPILER_* variables
-env | grep ADGUARD_COMPILER  # Bash/Zsh
-Get-ChildItem env: | Where-Object Name -like "ADGUARD_COMPILER*"  # PowerShell
+Get-ChildItem env: | Where-Object Name -like "ADGUARD_COMPILER*"
 ```
 
 ### Clear a variable
-```bash
-# Bash/Zsh
-unset ADGUARD_COMPILER_CONFIG
-
-# PowerShell
+```powershell
 Remove-Item env:ADGUARD_COMPILER_CONFIG
 ```
 
 ### Debug mode
-```bash
-DEBUG=1 ./compile.sh
+```powershell
+$env:DEBUG = "1"
+Invoke-BloqrCompiler
 ```
 
 ## API clients and Linear import tool
@@ -199,6 +182,5 @@ The AdGuard DNS API clients (.NET, TypeScript, Rust, PowerShell) and the Linear 
 ## See Also
 
 - [PowerShell Modules README](../src/compilers/powershell/README.md)
-- [Shell Scripts README](../src/compilers/shell/README.md)
 - [Configuration Reference](./configuration-reference.md)
 - [Dashboard Guide](./guides/dashboard-guide.md)

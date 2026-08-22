@@ -58,8 +58,7 @@ bloqr-core/
 │   ├── compilers/dotnet/      # .NET rules compiler
 │   ├── compilers/python/           # Python rules compiler
 │   ├── compilers/rust/             # Rust rules compiler
-│   ├── compilers/shell/            # Shell scripts (bash, zsh)
-│   ├── compilers/powershell/       # Canonical PowerShell compiler toolkit
+│   ├── compilers/powershell/       # Canonical PowerShell compiler toolkit (sole cross-platform scripting compiler)
 │   ├── validation/                 # Rust validation library (core/) + CLI (cli/)
 │   └── website/                    # Gatsby website
 └── README.md
@@ -125,7 +124,7 @@ cd src/compilers/typescript && npm run compile
    cd src/compilers/python && bloqr-compiler
    
    # Rust
-   cd src/compilers/rust && cargo run --release
+   cd src/compilers/rust/cli && cargo run --release
    ```
 
 2. **Compare SHA-384 hashes** - all must produce identical 96-char hash:
@@ -142,7 +141,7 @@ cd src/compilers/typescript && npm run compile
 - TypeScript: `src/compilers/typescript/src/__tests__/compiler.test.ts`
 - .NET: `src/compilers/dotnet/src/Bloqr.Compiler.Dotnet.Tests/OutputWriterTests.cs`
 - Python: `src/compilers/python/tests/test_compiler.py`
-- Rust: `src/compilers/rust/src/compiler.rs` (integration tests)
+- Rust: `src/compilers/rust/core/src/compiler.rs` (integration tests)
 
 All test suites assert `hash.length === 96` and verify consistent hashing.
 
@@ -195,17 +194,20 @@ bloqr-compiler --help
 **Requirements**: Python 3.9+
 
 ### Rust Rules Compiler (`src/compilers/rust/`)
+Split into a library crate (`core/`, published as `bloqr-compiler-core`) and a
+thin CLI crate (`cli/`, published as `bloqr-compiler`) — run these from the
+repo root with `-p`, or `cd src/compilers/rust/cli` for CLI-only iteration.
 ```bash
-# Build
-cargo build
+# Build (from the repo root)
+cargo build -p bloqr-compiler-core -p bloqr-compiler
 
 # Build optimized release
-cargo build --release
+cargo build --release -p bloqr-compiler-core -p bloqr-compiler
 
 # Run tests
-cargo test
+cargo test -p bloqr-compiler-core -p bloqr-compiler
 
-# Run compiler
+# Run compiler (from src/compilers/rust/cli, or `cargo run -p bloqr-compiler --` from the repo root)
 cargo run -- --help
 ```
 
@@ -431,7 +433,7 @@ cd src/compilers/typescript && npm test
 cd src/compilers/python && pytest
 
 # Run all Rust tests
-cd src/compilers/rust && cargo test
+cargo test -p bloqr-compiler-core -p bloqr-compiler
 ```
 
 ## Integration Points
@@ -486,7 +488,7 @@ cd src/compilers/rust && cargo test
 
 1. **Update version numbers** in project files:
    - `src/compilers/dotnet/src/Bloqr.Compiler.Dotnet.Console/Bloqr.Compiler.Dotnet.Console.csproj`
-   - `src/compilers/rust/Cargo.toml`
+   - `src/compilers/rust/cli/Cargo.toml` (CLI binary version) / `src/compilers/rust/core/Cargo.toml` (library version)
    - `src/compilers/python/pyproject.toml`
 
 2. **Create and push tag**:

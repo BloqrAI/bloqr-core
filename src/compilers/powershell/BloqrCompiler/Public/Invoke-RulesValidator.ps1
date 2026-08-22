@@ -50,7 +50,18 @@ function Invoke-RulesValidator {
     }
 
     try {
-        $stdout = & $binary --json file $Path --hash-db $HashDatabasePath 2>$null
+        $stderrFile = [System.IO.Path]::GetTempFileName()
+        try {
+            $stdout = & $binary --json file $Path --hash-db $HashDatabasePath 2>$stderrFile
+            $exitCode = $LASTEXITCODE
+            $stderrContent = Get-Content -LiteralPath $stderrFile -Raw -ErrorAction SilentlyContinue
+            if (-not [string]::IsNullOrWhiteSpace($stderrContent)) {
+                Write-Verbose "bloqr-validate stderr (exit code ${exitCode}): $stderrContent"
+            }
+        }
+        finally {
+            Remove-Item -LiteralPath $stderrFile -ErrorAction SilentlyContinue
+        }
     }
     catch {
         Write-Verbose "bloqr-validate invocation failed, skipping syntax validation: $_"

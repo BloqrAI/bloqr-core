@@ -1,6 +1,6 @@
 # PowerShell Modules
 
-Consolidated location for all PowerShell modules in the ad-blocking repository.
+Consolidated location for all PowerShell modules in the ad-blocking repository — the sole cross-platform scripting-language compiler (PowerShell 7+ runs on Windows/Linux/macOS); the earlier separate bash/zsh scripts have been retired.
 
 ## Structure
 
@@ -12,15 +12,10 @@ src/compilers/powershell/
 │   ├── Common.psd1
 │   ├── Classes/       # CompilerLogger, CompilerResult
 │   └── Tests/
-├── BloqrCompiler/      # Rules compilation module
-│   ├── BloqrCompiler.psm1
-│   ├── BloqrCompiler.psd1
-│   ├── Classes/       # CompilerConfiguration, etc.
-│   └── Tests/
-└── AdGuardWebhook/    # Webhook invocation module
-    ├── AdGuardWebhook.psm1
-    ├── AdGuardWebhook.psd1
-    ├── Classes/       # WebhookConfiguration, etc.
+└── BloqrCompiler/      # Rules compilation module
+    ├── BloqrCompiler.psm1
+    ├── BloqrCompiler.psd1
+    ├── Classes/       # CompilerConfiguration, etc.
     └── Tests/
 ```
 
@@ -56,29 +51,12 @@ Import-Module ./src/compilers/powershell/BloqrCompiler/BloqrCompiler.psd1
 Invoke-BloqrCompiler -ConfigPath config.json
 ```
 
-### AdGuardWebhook
-Webhook invocation module with statistics tracking.
-
-**Features:**
-- WebhookConfiguration class
-- WebhookStatistics tracking
-- Retry logic with exponential backoff
-- Multiple output formats
-
-**Usage:**
-```powershell
-Import-Module ./src/compilers/powershell/AdGuardWebhook/AdGuardWebhook.psd1
-Invoke-AdGuardWebhook -WebhookUrl "https://api.adguard-dns.io/webhook/xxx"
-```
-
 ## Environment Variables
 
 | Variable | Module | Description |
 |----------|--------|-------------|
 | `ADGUARD_COMPILER_CONFIG` | BloqrCompiler | Default config file path |
 | `ADGUARD_COMPILER_OUTPUT` | BloqrCompiler | Output directory |
-| `ADGUARD_WEBHOOK_URL` | AdGuardWebhook | Webhook endpoint URL |
-| `ADGUARD_WEBHOOK_WAIT_TIME` | AdGuardWebhook | Wait time between calls (ms) |
 | `DEBUG` | All | Enable debug logging |
 
 ## Testing
@@ -113,7 +91,6 @@ These modules follow modern PowerShell best practices:
 
 ## Related Documentation
 
-- [Shell Scripts](../shell/README.md) - Shell script alternatives
 - [Main README](../../../README.md) - General usage
 
 ## Support

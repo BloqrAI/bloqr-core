@@ -7,14 +7,16 @@ use dialoguer::{theme::ColorfulTheme, Confirm, Input, Select};
 use std::path::PathBuf;
 use std::process::ExitCode;
 
-use bloqr_compiler::{
-    read_config, BloqrCompiler, CompileOptions, ConfigFormat, VersionInfo, VERSION,
-};
+use bloqr_compiler::{read_config, BloqrCompiler, CompileOptions, ConfigFormat, VersionInfo};
 
 /// AdGuard Filter Rules Compiler - Rust CLI
 #[derive(Parser, Debug)]
 #[command(name = "bloqr-compiler")]
-#[command(version = VERSION)]
+// This crate's own CARGO_PKG_VERSION, not bloqr_compiler::VERSION (the
+// bloqr-compiler-core library crate's version) - #173 split them into
+// separately-versioned crates, so `--version` should report the CLI's own
+// version rather than the library's.
+#[command(version = env!("CARGO_PKG_VERSION"))]
 #[command(about = "Compile AdGuard filter rules using hostlist-compiler")]
 #[command(
     long_about = "A high-performance Rust CLI for compiling AdGuard filter rules.\n\n\
@@ -73,6 +75,13 @@ enum Commands {
         /// Fail compilation on validation warnings
         #[arg(long)]
         fail_on_warnings: bool,
+
+        /// Explicitly opt out of the mandatory rules-validator syntax check on compiled
+        /// output. Security-relevant: leave this off in production - compiled output is
+        /// validated and compilation fails closed by default. Use only for deliberate
+        /// debugging of unvalidated output.
+        #[arg(long)]
+        allow_unvalidated_output: bool,
     },
     /// Show configuration details without compiling
     Config,
@@ -328,12 +337,21 @@ fn run_compile(
     debug: bool,
     validate: bool,
     fail_on_warnings: bool,
+    allow_unvalidated_output: bool,
 ) -> ExitCode {
     let options = CompileOptions::new()
         .with_copy_to_rules(copy_to_rules)
         .with_debug(debug)
         .with_validation(validate)
-        .with_fail_on_warnings(fail_on_warnings);
+        .with_fail_on_warnings(fail_on_warnings)
+        .with_allow_unvalidated_output(allow_unvalidated_output);
+
+    if allow_unvalidated_output {
+        eprintln!(
+            "  [WARN] --allow-unvalidated-output set: compiled output will NOT be checked \
+             by rules-validator. Not recommended outside deliberate debugging."
+        );
+    }
 
     let options = if let Some(path) = output {
         options.with_output(path)
@@ -563,6 +581,7 @@ fn run_interactive_menu(initial_config: Option<PathBuf>) -> ExitCode {
                         false,
                         validate,
                         fail_on_warnings,
+                        false,
                     );
                 } else {
                     eprintln!("  No configuration file selected.");
@@ -652,6 +671,7 @@ fn main() -> ExitCode {
         Some(Commands::Compile {
             validate,
             fail_on_warnings,
+            allow_unvalidated_output,
         }) => {
             let config_path = match cli.config.or_else(find_default_config) {
                 Some(path) => path,
@@ -669,6 +689,7 @@ fn main() -> ExitCode {
                 cli.debug,
                 validate,
                 fail_on_warnings,
+                allow_unvalidated_output,
             )
         }
         None => {
@@ -686,6 +707,7 @@ fn main() -> ExitCode {
                 cli.copy_to_rules,
                 format,
                 cli.debug,
+                false,
                 false,
                 false,
             )

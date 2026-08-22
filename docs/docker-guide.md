@@ -20,7 +20,6 @@ ARG RUST_VERSION=stable
 # - Python 3.12 with pip
 # - Rust stable toolchain
 # - PowerShell 7
-# - yq (YAML processor)
 # - @bloqr/compiler-core (via Deno JSR integration)
 
 WORKDIR /workspace
@@ -36,7 +35,6 @@ WORKDIR /workspace
 | Rust | Stable | Rust compiler |
 | PowerShell | 7.x | PowerShell scripts and modules |
 | Git | Latest | Version control |
-| yq | Latest | YAML processing for shell scripts |
 | @bloqr/compiler-core | 1.0.0 | Via Deno JSR integration; the .NET/Python/Rust compilers all shell out to it (`deno run jsr:@bloqr/compiler-core/cli`) |
 | Ubuntu | 24.04 (Noble) | Base OS |
 
@@ -175,9 +173,8 @@ dotnet restore CompilerDotnet.slnx
 cd /workspace/src/compilers/python
 pip install -e ".[dev]"
 
-# Rust compiler
-cd /workspace/src/compilers/rust
-cargo build
+# Rust compiler (core lib + CLI crate)
+cargo build -p bloqr-compiler-core -p bloqr-compiler
 ```
 
 ### Compiling Filter Rules
@@ -196,11 +193,8 @@ cd /workspace/src/compilers/python
 bloqr-compiler
 
 # Rust
-cd /workspace/src/compilers/rust
+cd /workspace/src/compilers/rust/cli
 cargo run --release
-
-# Shell (Bash)
-/workspace/src/compilers/shell/bash/compile.sh
 
 # PowerShell
 cd /workspace
@@ -222,9 +216,8 @@ dotnet test CompilerDotnet.slnx
 cd /workspace/src/compilers/python
 pytest
 
-# Rust tests
-cd /workspace/src/compilers/rust
-cargo test
+# Rust tests (from repo root - core and cli are separate workspace members)
+cargo test -p bloqr-compiler-core -p bloqr-compiler
 
 # PowerShell tests
 cd /workspace
@@ -298,7 +291,7 @@ jobs:
           docker run --rm \
             -v ${{ github.workspace }}:/workspace \
             ad-blocking-dev \
-            bash -c "cd /workspace/src/compilers/rust && cargo test"
+            bash -c "cd /workspace && cargo test -p bloqr-compiler-core -p bloqr-compiler"
 ```
 
 ## Troubleshooting
@@ -343,9 +336,9 @@ If Rust compilation fails:
 
 ```bash
 docker run -it -v $(pwd):/workspace ad-blocking-dev bash -c "
-  cd /workspace/src/compilers/rust
-  cargo clean
-  cargo build
+  cd /workspace
+  cargo clean -p bloqr-compiler-core -p bloqr-compiler
+  cargo build -p bloqr-compiler-core -p bloqr-compiler
 "
 ```
 

@@ -94,10 +94,15 @@ CMD ["bloqr-compiler"]
 
 **Rust:**
 ```dockerfile
-FROM rust:1.70 AS builder
+FROM rust:1.86 AS builder
 WORKDIR /app
-COPY src/compilers/rust/ .
-RUN cargo build --release
+# bloqr-compiler-core (src/compilers/rust/core) depends on bloqr-validator-core
+# (src/validation/core) via a workspace path dependency, so the whole
+# workspace - not just src/compilers/rust/ - needs to be in the build context.
+COPY Cargo.toml Cargo.lock ./
+COPY src/compilers/rust/ src/compilers/rust/
+COPY src/validation/ src/validation/
+RUN cargo build --release -p bloqr-compiler
 
 FROM debian:bookworm-slim
 COPY --from=builder /app/target/release/bloqr-compiler /usr/local/bin/
@@ -330,9 +335,7 @@ jobs:
       
       - name: Test Rust
         if: matrix.component == 'rust'
-        run: |
-          cd src/compilers/rust
-          cargo test
+        run: cargo test -p bloqr-compiler-core -p bloqr-compiler
 
   build:
     needs: test
@@ -456,10 +459,9 @@ test:python:
 
 test:rust:
   stage: test
-  image: rust:1.70
+  image: rust:1.86
   script:
-    - cd src/compilers/rust
-    - cargo test
+    - cargo test -p bloqr-compiler-core -p bloqr-compiler
 
 build:
   stage: build
@@ -519,8 +521,7 @@ pipeline {
                 stage('Rust') {
                     steps {
                         sh '''
-                            cd src/compilers/rust
-                            cargo test
+                            cargo test -p bloqr-compiler-core -p bloqr-compiler
                         '''
                     }
                 }

@@ -12,20 +12,15 @@ try {
     $scriptRoot = Split-Path -Parent $PSScriptRoot
     Import-Module $scriptRoot\src\compilers\powershell\Common\Common.psd1 -ErrorAction Stop
     Import-Module $scriptRoot\src\compilers\powershell\BloqrCompiler\BloqrCompiler.psd1 -ErrorAction Stop
-    Import-Module $scriptRoot\src\compilers\powershell\AdGuardWebhook\AdGuardWebhook.psd1 -ErrorAction Stop
     Write-Host '   ✓ All modules loaded successfully' -ForegroundColor Green
     Write-Host ''
 
     # Test 2: Verify Functions
     Write-Host '2. Verifying Exported Functions...' -ForegroundColor Yellow
     $rulesCommands = Get-Command -Module BloqrCompiler | Select-Object -ExpandProperty Name
-    $webhookCommands = Get-Command -Module Webhook-Manifest | Select-Object -ExpandProperty Name
     Write-Host '   BloqrCompiler: ' -NoNewline -ForegroundColor Gray
     Write-Host $rulesCommands.Count -NoNewline -ForegroundColor White
     Write-Host ' functions' -ForegroundColor Gray
-    Write-Host '   Webhook: ' -NoNewline -ForegroundColor Gray
-    Write-Host $webhookCommands.Count -NoNewline -ForegroundColor White
-    Write-Host ' function(s)' -ForegroundColor Gray
     Write-Host '   ✓ All functions exported correctly' -ForegroundColor Green
     Write-Host ''
 
@@ -34,7 +29,6 @@ try {
     $allModules = Get-Module
     $commonLoaded = $allModules | Where-Object Name -eq 'Common'
     $rulesLoaded = $allModules | Where-Object Name -like '*BloqrCompiler*'
-    $webhookLoaded = $allModules | Where-Object Name -like '*Webhook*'
     Write-Host "   Modules loaded: $($allModules.Count)" -ForegroundColor Cyan
     Write-Host '   ✓ Common module dependency resolved' -ForegroundColor Green
     Write-Host '   ✓ Module dependency chain verified' -ForegroundColor Green
@@ -44,10 +38,8 @@ try {
     Write-Host '4. Verifying Module Versions...' -ForegroundColor Yellow
     $commonModule = Get-Module Common
     $rulesModule = Get-Module BloqrCompiler -ListAvailable | Where-Object Path -Like "*src/compilers/powershell*" | Select-Object -First 1
-    $webhookModule = Get-Module AdGuardWebhook
     Write-Host "   Common: v$($commonModule.Version)" -ForegroundColor Cyan
     Write-Host "   BloqrCompiler: v$($rulesModule.Version)" -ForegroundColor Cyan
-    Write-Host "   AdGuardWebhook: v$($webhookModule.Version)" -ForegroundColor Cyan
     Write-Host '   ✓ All versions verified' -ForegroundColor Green
     Write-Host ''
 

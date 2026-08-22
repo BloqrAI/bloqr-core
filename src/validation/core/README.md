@@ -58,9 +58,16 @@ CI enforces, on every PR touching this crate:
 
 - `cargo clippy -D clippy::all -D clippy::correctness -D clippy::suspicious` (a hard gate, not just warnings)
 - `cargo deny check` (`deny.toml` at the repo root) — dependency license compliance, `RUSTSEC` advisory/yanked-crate checks, and source-registry pinning
-- A 60-second smoke-fuzz run (via `cargo-fuzz`/libFuzzer) of each target in `fuzz/fuzz_targets/` against the syntax-validation, `ValidationConfig` JSON, and `HashDatabase` JSON parsing paths — the untrusted-input surfaces this crate exposes (including across the FFI boundary from other-language callers)
 
-To fuzz locally for longer than the CI smoke test: `cd fuzz && cargo +nightly fuzz run fuzz_syntax_content -- -max_total_time=600` (swap the target name for `fuzz_config_json` or `fuzz_hash_database_json`).
+Fuzzing (`fuzz/fuzz_targets/` — the syntax-validation, `ValidationConfig`
+JSON, and `HashDatabase` JSON parsing paths, the untrusted-input surfaces
+this crate exposes, including across the FFI boundary from other-language
+callers) is **on-demand only**, not run automatically on every PR: trigger
+it by hand from the Actions tab (Rust CI -> Run workflow) when you want it
+exercised, e.g. before a release or after touching untrusted-input parsing
+code.
+
+To fuzz locally: `cd fuzz && cargo +nightly fuzz run fuzz_syntax_content -- -max_total_time=600` (swap the target name for `fuzz_config_json` or `fuzz_hash_database_json`).
 
 ## More context
 

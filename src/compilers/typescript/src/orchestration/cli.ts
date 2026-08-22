@@ -122,6 +122,9 @@ export function parseArgs(args: string[]): CliOptions {
       case '--fail-on-warnings':
         options.failOnWarnings = true;
         break;
+      case '--allow-unvalidated-output':
+        options.allowUnvalidatedOutput = true;
+        break;
       case '--enable-chunking':
         options.enableChunking = true;
         break;
@@ -513,6 +516,7 @@ export async function main(
       timeoutMs: options.timeout,
       validateConfig: options.validateConfig,
       failOnWarnings: options.failOnWarnings,
+      allowUnvalidatedOutput: options.allowUnvalidatedOutput,
       enableChunking: options.enableChunking,
       chunkSize: options.chunkSize,
       maxParallel: options.maxParallel,
