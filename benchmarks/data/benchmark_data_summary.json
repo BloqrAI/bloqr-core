@@ -4,7 +4,7 @@
   "filter_files": [
     {
       "name": "small",
-      "path": "C:\\Users\\jayson.knight\\.claude-worktrees\\ad-blocking\\reverent-lehmann\\benchmarks\\data\\small.txt",
+      "path": "benchmarks/data/small.txt",
       "rules": 10000,
       "lines": 10551,
       "size_bytes": 244857,
@@ -13,7 +13,7 @@
     },
     {
       "name": "medium",
-      "path": "C:\\Users\\jayson.knight\\.claude-worktrees\\ad-blocking\\reverent-lehmann\\benchmarks\\data\\medium.txt",
+      "path": "benchmarks/data/medium.txt",
       "rules": 50000,
       "lines": 52541,
       "size_bytes": 1222046,
@@ -22,7 +22,7 @@
     },
     {
       "name": "large",
-      "path": "C:\\Users\\jayson.knight\\.claude-worktrees\\ad-blocking\\reverent-lehmann\\benchmarks\\data\\large.txt",
+      "path": "benchmarks/data/large.txt",
       "rules": 200000,
       "lines": 210125,
       "size_bytes": 4885288,
@@ -31,7 +31,7 @@
     },
     {
       "name": "xlarge",
-      "path": "C:\\Users\\jayson.knight\\.claude-worktrees\\ad-blocking\\reverent-lehmann\\benchmarks\\data\\xlarge.txt",
+      "path": "benchmarks/data/xlarge.txt",
       "rules": 500000,
       "lines": 525228,
       "size_bytes": 12217006,
