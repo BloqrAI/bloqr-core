@@ -65,7 +65,7 @@ The AdGuard DNS API clients (and their generated API reference docs) moved to [`
 | .NET Compiler | [src/compilers/dotnet/README.md](../src/compilers/dotnet/README.md) |
 | Python Compiler | [src/compilers/python/README.md](../src/compilers/python/README.md) |
 | Rust Compiler | [src/compilers/rust/README.md](../src/compilers/rust/README.md) |
-| Shell Scripts | [src/compilers/shell/README.md](../src/compilers/shell/README.md) |
+| PowerShell Toolkit | [src/compilers/powershell/README.md](../src/compilers/powershell/README.md) |
 | AdGuard DNS API Clients (.NET, TypeScript, Rust, PowerShell) | [`BloqrAI/bloqr-apiclients`](https://github.com/BloqrAI/bloqr-apiclients) |
 
 ### Development

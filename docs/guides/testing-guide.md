@@ -353,7 +353,7 @@ mod tests {
 ```powershell
 cd src/compilers/powershell
 
-# Run all tests (Common, BloqrCompiler, AdGuardWebhook modules)
+# Run all tests (Common, BloqrCompiler modules)
 Invoke-Pester -Path . -Recurse
 
 # Run with detailed output

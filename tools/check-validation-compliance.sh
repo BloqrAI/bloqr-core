@@ -160,29 +160,6 @@ check_powershell_integration() {
     fi
 }
 
-# Function to check Shell (bash/zsh) script integration
-check_shell_integration() {
-    echo ""
-    echo "→ Checking Shell (bash/zsh) script integration..."
-
-    local shell_dir="$REPO_ROOT/src/compilers/shell"
-
-    if [ ! -d "$shell_dir" ]; then
-        echo -e "${YELLOW}⚠ Shell scripts not found${NC}"
-        WARNINGS=$((WARNINGS + 1))
-        return 0
-    fi
-
-    # Both compile.sh and compile.zsh shell out to the
-    # bloqr-validate CLI (run_rules_validator/find_rules_validate_binary, #361).
-    if grep -rq "run_rules_validator\|find_rules_validate_binary" "$shell_dir/bash" "$shell_dir/zsh" 2>/dev/null; then
-        echo -e "${GREEN}✓ Shell: Validation library integrated (#361)${NC}"
-    else
-        echo -e "${YELLOW}⚠ Shell: Validation library not yet integrated${NC}"
-        WARNINGS=$((WARNINGS + 1))
-    fi
-}
-
 # Function to check if validation library builds
 check_validation_library_builds() {
     echo ""
@@ -222,7 +199,6 @@ check_dotnet_integration
 check_python_integration
 check_rust_integration
 check_powershell_integration
-check_shell_integration
 
 # Summary
 echo ""

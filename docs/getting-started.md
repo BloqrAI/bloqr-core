@@ -93,12 +93,6 @@ Import-Module ./src/compilers/powershell/BloqrCompiler/BloqrCompiler.psd1
 Invoke-BloqrCompiler
 ```
 
-#### Bash/Shell
-
-```bash
-./src/compilers/shell/bash/compile.sh
-```
-
 ## First Compilation
 
 ### 1. Create a Configuration File
@@ -208,10 +202,10 @@ deno run --allow-read --allow-write --allow-env --allow-net --allow-run jsr:@blo
 
 ### Permission denied on Linux/macOS
 
-Make shell scripts executable:
+Make the root build/launcher scripts executable:
 
 ```bash
-chmod +x src/compilers/shell/bash/compile.sh
+chmod +x build.sh launcher.sh
 ```
 
 ### Python package not found

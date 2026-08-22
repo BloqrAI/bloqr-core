@@ -5,7 +5,7 @@ Guide for migrating between different compiler implementations and SDK versions 
 ## Overview
 
 This guide helps you migrate between:
-- Different rules compiler implementations (TypeScript, .NET, Python, Rust, PowerShell, Shell)
+- Different rules compiler implementations (TypeScript, .NET, Python, Rust, PowerShell)
 - API SDK implementations (TypeScript, .NET, Rust)
 - Versions within the same implementation
 - Configuration format changes
@@ -100,7 +100,6 @@ dotnet run --project src/Bloqr.Compiler.Dotnet.Console
 
 | Current | Migrate To | Reason | Difficulty |
 |---------|------------|--------|------------|
-| Shell Scripts | TypeScript | Better error handling, testing | Easy |
 | TypeScript | .NET | Library API, validation, DI | Easy |
 | Any | Rust | Performance, single binary | Easy |
 | .NET | Python | Lighter weight, scripting | Easy |

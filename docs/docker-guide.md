@@ -20,7 +20,6 @@ ARG RUST_VERSION=stable
 # - Python 3.12 with pip
 # - Rust stable toolchain
 # - PowerShell 7
-# - yq (YAML processor)
 # - @bloqr/compiler-core (via Deno JSR integration)
 
 WORKDIR /workspace
@@ -36,7 +35,6 @@ WORKDIR /workspace
 | Rust | Stable | Rust compiler |
 | PowerShell | 7.x | PowerShell scripts and modules |
 | Git | Latest | Version control |
-| yq | Latest | YAML processing for shell scripts |
 | @bloqr/compiler-core | 1.0.0 | Via Deno JSR integration; the .NET/Python/Rust compilers all shell out to it (`deno run jsr:@bloqr/compiler-core/cli`) |
 | Ubuntu | 24.04 (Noble) | Base OS |
 
@@ -198,9 +196,6 @@ bloqr-compiler
 # Rust
 cd /workspace/src/compilers/rust
 cargo run --release
-
-# Shell (Bash)
-/workspace/src/compilers/shell/bash/compile.sh
 
 # PowerShell
 cd /workspace

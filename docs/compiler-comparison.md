@@ -4,16 +4,16 @@ This guide helps you choose the right rules compiler for your use case. All comp
 
 ## Quick Comparison
 
-| Feature | TypeScript | .NET | Python | Rust | PowerShell | Shell |
-|---------|------------|------|--------|------|------------|-------|
-| Language | TypeScript | C# | Python | Rust | PowerShell | Bash/PS1 |
-| Runtime | Deno 2.0+ | .NET 10 | Python 3.9+ | None | PowerShell 7+ | Bash/PowerShell |
-| Config Formats | JSON/JSONC | JSON/JSONC | JSON | JSON | JSON | JSON |
-| Library API | Yes | Yes | Yes | Yes | Yes | No |
-| CLI | Yes | Yes | Yes | Yes | Yes | Yes |
-| Interactive Mode | Yes | Yes | No | No | Yes | No |
-| Tests | Deno test | xUnit | pytest | cargo test | Pester | No |
-| Binary Distribution | No | No | No | Yes | No | No |
+| Feature | TypeScript | .NET | Python | Rust | PowerShell |
+|---------|------------|------|--------|------|------------|
+| Language | TypeScript | C# | Python | Rust | PowerShell |
+| Runtime | Deno 2.0+ | .NET 10 | Python 3.9+ | None | PowerShell 7+ |
+| Config Formats | JSON/JSONC | JSON/JSONC | JSON | JSON | JSON |
+| Library API | Yes | Yes | Yes | Yes | Yes |
+| CLI | Yes | Yes | Yes | Yes | Yes |
+| Interactive Mode | Yes | Yes | No | No | Yes |
+| Tests | Deno test | xUnit | pytest | cargo test | Pester |
+| Binary Distribution | No | No | No | Yes | No |
 
 ## Detailed Comparison
 
@@ -227,31 +227,6 @@ Invoke-BloqrCompiler -CopyToRules
 Get-CompilerVersion | Format-List
 ```
 
-### Shell Scripts
-
-**Best for**: Simple automation, CI/CD, Unix environments
-
-```bash
-./src/compilers/shell/bash/compile.sh -c config.json -r
-```
-
-**Pros**:
-- No additional runtime (just Bash or PowerShell)
-- Simple and portable
-- Easy to customize
-
-**Cons**:
-- Limited error handling
-- No library API
-
-**Scripts**:
-
-| Script | Platform |
-|--------|----------|
-| `compile.sh` | Linux/macOS (Bash) |
-| `compile-rules.ps1` | Cross-platform (PowerShell Core) |
-| `compile-rules.cmd` | Windows (Batch) |
-
 ## Performance Comparison
 
 | Compiler | Startup Time | Memory Usage | Build Time |
@@ -261,7 +236,6 @@ Get-CompilerVersion | Format-List
 | Python | Medium | Low | Fast (pip install) |
 | Rust | Fast | Low | Slow (cargo build) |
 | PowerShell | Fast | Medium | None |
-| Shell | Fast | Low | None |
 
 *Note: Actual compilation time depends on `@bloqr/compiler-core` (the shared engine all four compilers dogfood), which is the same for all.*
 
@@ -292,16 +266,10 @@ Get-CompilerVersion | Format-List
 - You're embedding in a Rust application
 
 ### Choose PowerShell if:
-- You're on Windows
-- You need automation scripts
+- You need cross-platform automation scripts (Windows, Linux, or macOS — PowerShell 7+ runs on all three)
 - You want interactive testing
 - Your team uses PowerShell
-
-### Choose Shell Scripts if:
-- You need simplicity
-- You're in a Unix environment
-- You want easy customization
-- You're setting up CI/CD
+- You need simple CI/CD scripting without a language runtime to install
 
 ## Feature Matrix
 

@@ -12,12 +12,8 @@ This repository is a comprehensive multi-language toolkit for ad-blocking, netwo
 - **Python 3.9+** (`src/compilers/python/`) - pip-installable package with CLI and API
 - **Rust** (`src/compilers/rust/`) - High-performance single binary with zero runtime deps
 
-### Shell Scripts (`src/compilers/shell/`)
-- **Bash** (`src/compilers/shell/bash/compile.sh`) - Linux/macOS
-- **Zsh** (`src/compilers/shell/zsh/compile.zsh`) - macOS/Linux with zsh-specific features
-
 ### PowerShell Modules
-- **BloqrCompiler Toolkit** (`src/compilers/powershell/`) - Canonical, actively-developed modular PowerShell toolkit (class-based `Common`, `BloqrCompiler`, `AdGuardWebhook` modules with Pester tests)
+- **BloqrCompiler Toolkit** (`src/compilers/powershell/`) - the sole cross-platform scripting-language compiler (PowerShell 7+ runs on Windows/Linux/macOS, so the earlier separate bash/zsh scripts under `src/compilers/shell/` were retired in favor of it) - canonical, actively-developed modular PowerShell toolkit (class-based `Common`/`BloqrCompiler` modules with Pester tests)
 
 ### Common .NET Library
 - **`Bloqr.Compiler.Abstractions`/`Bloqr.Compiler.Core`** (`src/common/dotnet/`) - Shared .NET library (own solution, `CompilerCommon.slnx`) consumed by the .NET rules compiler and Dashboard via `<ProjectReference>`; not part of either consumer's solution
@@ -45,7 +41,7 @@ A fully-featured Docker environment with all compilers and tools:
 # Dockerfile.warp
 FROM mcr.microsoft.com/dotnet/sdk:10.0-noble
 # Includes: .NET 10 SDK, Deno 2.x, Python 3.12, Rust stable, PowerShell 7
-# Pre-installed: hostlist-compiler (via Deno), yq, pytest, ruff, clippy, Pester
+# Pre-installed: hostlist-compiler (via Deno), pytest, ruff, clippy, Pester
 ```
 
 Build and run:
@@ -89,19 +85,6 @@ deno task start -- --interactive            # Force interactive mode
 deno task start -- --validate -c config.yaml  # Validate only
 deno run --allow-read --allow-write --allow-env --allow-run src/mod.ts --help
 deno run --allow-read --allow-write --allow-env --allow-run src/mod.ts --version
-```
-
-### Shell Scripts (`src/compilers/shell/`)
-```bash
-# Bash (Linux/macOS)
-./src/compilers/shell/bash/compile.sh                    # Use default config
-./src/compilers/shell/bash/compile.sh -c config.yaml -r  # YAML config, copy to rules
-./src/compilers/shell/bash/compile.sh -v                 # Show version
-
-# Zsh (macOS/Linux)
-./src/compilers/shell/zsh/compile.zsh                    # Use default config
-./src/compilers/shell/zsh/compile.zsh -c config.yaml -r  # YAML config, copy to rules
-./src/compilers/shell/zsh/compile.zsh -v                 # Show version
 ```
 
 ### Common .NET Library (`src/common/dotnet/`)
@@ -184,10 +167,10 @@ cargo run -- --help                      # Show help
 # Import the modules
 Import-Module ./src/compilers/powershell/Common/Common.psd1
 Import-Module ./src/compilers/powershell/BloqrCompiler/BloqrCompiler.psd1
-Import-Module ./src/compilers/powershell/AdGuardWebhook/AdGuardWebhook.psd1
 
 # Compile filter rules
-Invoke-BloqrCompiler
+Invoke-BloqrCompiler                                          # Use default config
+Invoke-BloqrCompiler -ConfigPath config.yaml -CopyToRules      # YAML config, copy to rules
 
 # Run Pester tests
 Invoke-Pester -Path ./src/compilers/powershell -Recurse
@@ -271,12 +254,6 @@ cargo test config::                       # Tests in module
 - Key classes: `BloqrCompiler`, `BloqrCompilerBuilder`, `ConfigurationBuilder`, `ConsoleApplication`
 - Uses Deno's built-in testing framework
 
-### Shell Scripts (`src/compilers/shell/`)
-- Cross-platform shell scripts for filter compilation
-- `bash/compile.sh` - Bash script for Linux/macOS
-- `zsh/compile.zsh` - Zsh script with native zsh features (zparseopts, EPOCHREALTIME)
-- Supports JSON, YAML, TOML via external tools (yq, Python)
-
 ### Common .NET Library (`src/common/dotnet/`)
 - Its own independent .NET solution (`CompilerCommon.slnx`), isolated from `CompilerDotnet.slnx` and `BloqrDashboard.slnx` — every in-repo .NET consumer reaches it via `<ProjectReference>` across directories, not via shared solution membership
 - `Bloqr.Compiler.Abstractions` - Interfaces, event-args, and model/DTO types shared across the compiler stack
@@ -315,9 +292,9 @@ cargo test config::                       # Tests in module
 - LTO optimization enabled for small binary size
 
 ### PowerShell Toolkit (`src/compilers/powershell/`)
+- The sole cross-platform scripting-language compiler (PowerShell 7+ runs on Windows/Linux/macOS) - the earlier separate bash/zsh scripts under `src/compilers/shell/` were retired in favor of it
 - **Common** (`Common/`) - Shared `CompilerLogger` and `CompilerResult` classes used by other modules
 - **BloqrCompiler** (`BloqrCompiler/`) - Class-based rules compiler module (`CompilerConfiguration`, `CompilerResult`, `CompilerLogger`)
-- **AdGuardWebhook** (`AdGuardWebhook/`) - Class-based webhook invocation module (`WebhookConfiguration`, `WebhookInvoker`, `WebhookStatistics`)
 - Each module ships its own `.psd1` manifest and `Tests/` Pester suite
 
 ### Validation Library (`src/validation/`)
@@ -376,7 +353,7 @@ GitHub Actions workflows validate:
 - `.github/workflows/typescript.yml` - Deno 2.x for the TypeScript rules compiler
 - `.github/workflows/rust-clippy.yml` - Builds, tests, formats, and lints the Rust workspace (rules compiler, validation library)
 - `.github/workflows/python.yml` - Builds and tests the Python rules compiler across supported Python versions
-- `.github/workflows/powershell.yml` - Pester tests and PSScriptAnalyzer for both PowerShell trees
+- `.github/workflows/powershell.yml` - Pester tests and PSScriptAnalyzer for the PowerShell toolkit
 - `.github/workflows/build-scripts-tests.yml` - Exercises the root `build.sh`/`build.ps1` launcher scripts
 - `.github/workflows/gatsby.yml` - Builds the `website` documentation site
 - `.github/workflows/security.yml` - Consolidated security scanning (CodeQL, DevSkim, PSScriptAnalyzer)
