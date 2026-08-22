@@ -76,6 +76,12 @@ jobs:
             target/release/bloqr-validate
           retention-days: 7
 
+  # Runs tools/check-validation-compliance.sh for real, gating the job on its
+  # exit code - the previous version of this job duplicated a much weaker set
+  # of inline grep checks (checked deno.json instead of TypeScript source,
+  # checked a requirements.txt that doesn't exist so Python was permanently
+  # "pending", never checked PowerShell at all) that could never fail the
+  # build regardless of outcome. That script is the source of truth now.
   integration-status:
     name: Integration Status
     runs-on: ubuntu-latest
@@ -83,40 +89,31 @@ jobs:
     steps:
       - uses: actions/checkout@v7
 
-      - name: Check integration status
+      - name: Setup Rust
+        uses: actions-rust-lang/setup-rust-toolchain@v1
+        with:
+          toolchain: stable
+
+      - name: Cache Cargo
+        uses: actions/cache@v6
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: ${{ runner.os }}-cargo-validation-compliance-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: ${{ runner.os }}-cargo-validation-compliance-
+
+      - name: Run validation compliance check
         run: |
-          echo "# Integration Status Summary" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "| Compiler | Status |" >> $GITHUB_STEP_SUMMARY
-          echo "|----------|--------|" >> $GITHUB_STEP_SUMMARY
-
-          # TypeScript
-          if grep -rq "rules.*validator" src/compilers/typescript/deno.json 2>/dev/null; then
-            echo "| TypeScript | integrated |" >> $GITHUB_STEP_SUMMARY
-          else
-            echo "| TypeScript | pending |" >> $GITHUB_STEP_SUMMARY
-          fi
-
-          # .NET
-          if grep -rq "bloqr_validator" src/compilers/dotnet src/common/dotnet 2>/dev/null; then
-            echo "| .NET | integrated |" >> $GITHUB_STEP_SUMMARY
-          else
-            echo "| .NET | pending |" >> $GITHUB_STEP_SUMMARY
-          fi
-
-          # Python
-          if [ -f src/compilers/python/requirements.txt ] && grep -q "bloqr-validator" src/compilers/python/requirements.txt 2>/dev/null; then
-            echo "| Python | integrated |" >> $GITHUB_STEP_SUMMARY
-          else
-            echo "| Python | pending |" >> $GITHUB_STEP_SUMMARY
-          fi
-
-          # Rust
-          if grep -q "bloqr-validator" src/compilers/rust/Cargo.toml 2>/dev/null; then
-            echo "| Rust | integrated |" >> $GITHUB_STEP_SUMMARY
-          else
-            echo "| Rust | pending |" >> $GITHUB_STEP_SUMMARY
-          fi
-
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "**Note**: 'pending' status is expected during migration." >> $GITHUB_STEP_SUMMARY
+          set -euo pipefail
+          {
+            echo "# Validation Library Compliance"
+            echo ""
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+          # pipefail (set above) ensures the step fails on the script's exit
+          # code, not tee's - a bare `| tee` would otherwise mask a non-zero
+          # exit from check-validation-compliance.sh.
+          ./tools/check-validation-compliance.sh | tee -a "$GITHUB_STEP_SUMMARY"
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
