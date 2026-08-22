@@ -11,7 +11,7 @@ members of the repo-root Cargo workspace:
 | Crate | Directory | Published as | Contains |
 |-------|-----------|---------------|----------|
 | Library | [`core/`](core/) | [`bloqr-compiler-core`](https://crates.io/crates/bloqr-compiler-core) | `BloqrCompiler`, config reading, chunked compilation, events - everything under "Library Usage" below |
-| CLI | [`cli/`](cli/) | [`bloqr-compiler`](https://crates.io/crates/bloqr-compiler) | The `bloqr-compiler` binary (clap-based args, interactive menu, benchmark mode) |
+| CLI | [`cli/`](cli/) | [`bloqr-compiler`](https://crates.io/crates/bloqr-compiler) | The `bloqr-compiler` binary (clap-based args, interactive menu, `benchmark` subcommand) |
 
 The library's Rust import name is unchanged (`use bloqr_compiler::...`) even
 though the published crate is `bloqr-compiler-core` - only the CLI kept the
@@ -304,6 +304,36 @@ cargo test -p bloqr-compiler-core -- --nocapture
 cargo test -p bloqr-compiler-core test_count_rules
 cargo test -p bloqr-compiler                # CLI crate's own tests (config discovery)
 ```
+
+## Benchmarking
+
+`bloqr-compiler benchmark` compiles the canned `benchmarks/data/{small,medium,large,xlarge}.txt`
+datasets through the real `compile_rules()`/`compile_chunks_async()` pipeline - not a
+simulation - once unchunked and once chunked, and reports the actual elapsed time for both.
+Part of [epic #415](https://github.com/BloqrAI/bloqr-core/issues/415)'s per-compiler
+benchmark work; see that issue's other sub-issues for the equivalent subcommand/switch in
+each of the other four language wrappers.
+
+```bash
+# Benchmark all four canned dataset sizes, chunked vs unchunked (auto-discovers benchmarks/data)
+bloqr-compiler benchmark
+
+# Just one size, with 8 duplicated sources and 8 parallel workers for the chunked run
+bloqr-compiler benchmark --size large --sources 8 --max-parallel 8
+
+# Machine-readable output for the root comparison script (see benchmarks/)
+bloqr-compiler benchmark --json
+
+# Point at a benchmarks/data directory explicitly (e.g. when not run from a repo checkout)
+bloqr-compiler benchmark --data-dir /path/to/benchmarks/data
+```
+
+Both runs cover the same total workload (`--sources` identical copies of the dataset file, so
+the only intended variable is the chunking strategy), but see
+[#424](https://github.com/BloqrAI/bloqr-core/issues/424): today the unchunked and chunked
+paths shell out to two different underlying compilers (Deno + `@bloqr/compiler-core` vs.
+`hostlist-compiler`/`npx`), so part of any timing delta may reflect that rather than chunking
+overhead alone, and each side needs its own tool on `PATH` to succeed.
 
 ## Performance
 

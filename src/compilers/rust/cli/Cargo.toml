@@ -32,8 +32,15 @@ bloqr_compiler = { path = "../core", package = "bloqr-compiler-core", version = 
 clap = { workspace = true }
 dialoguer = { workspace = true }
 
-# Random number generation (for the --benchmark synthetic demo)
-rand = "0.10"
+# Serialization (for `benchmark --json`)
+serde = { workspace = true }
+serde_json = { workspace = true }
+
+# Async runtime (for the chunked/parallel path exercised by `benchmark`)
+tokio = { workspace = true }
+
+# Temp file naming (for `benchmark`'s temp config/output files)
+uuid = { workspace = true }
 
 [dev-dependencies]
 tempfile = { workspace = true }
