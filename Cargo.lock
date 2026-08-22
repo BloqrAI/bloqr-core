@@ -937,9 +937,9 @@ dependencies = [
 
 [[package]]
 name = "psl"
-version = "2.1.224"
+version = "2.1.225"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d6fd4be744906217175e617ecbaff30e1d4574954e5ab2ad6ac0fead0e9abc3a"
+checksum = "3d71c4a0dab830345e50e8d0dc881bf219d0a9ff261dd2500d36e7cd24427d1e"
 dependencies = [
  "psl-types",
 ]
@@ -1710,9 +1710,9 @@ checksum = "06abde3611657adf66d383f00b093d7faecc7fa57071cce2578660c9f1010821"
 
 [[package]]
 name = "uuid"
-version = "1.24.0"
+version = "1.24.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "bf3923a6f5c4c6382e0b653c4117f48d631ea17f38ed86e2a828e6f7412f5239"
+checksum = "2cefc03fd367c0c6d4305de1b312cf00248c4114f4a0418ce6a6af769e3b0bd9"
 dependencies = [
  "getrandom 0.4.3",
  "js-sys",
