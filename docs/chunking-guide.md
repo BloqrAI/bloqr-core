@@ -452,97 +452,70 @@ pub fn estimate_speedup(total_rules: usize, options: &ChunkingOptions) -> f64;
 
 ## Benchmarking
 
-The repository includes a comprehensive benchmark suite to measure chunking performance.
+Every one of this repo's five language wrappers has a native `benchmark` command that
+compiles the same canned `benchmarks/data/{small,medium,large,xlarge}.txt` datasets
+through its real compilation pipeline - not a simulation - once unchunked and once
+chunked, and reports the actual elapsed time for both. Part of
+[epic #415](https://github.com/BloqrAI/bloqr-core/issues/415). See
+[`benchmarks/README.md`](../benchmarks/README.md) for the full data/JSON-output contract
+these commands share.
 
-### Quick Synthetic Benchmark
+### Running one language's benchmark directly
 
-Run a quick simulation to see expected speedups on your system:
+```bash
+# Rust
+cargo run -p bloqr-compiler -- benchmark --size small
+
+# .NET
+dotnet run --project src/compilers/dotnet/src/Bloqr.Compiler.Dotnet.Console -- --benchmark --benchmark-size small
+
+# TypeScript
+cd src/compilers/typescript && deno task benchmark
+
+# Python
+bloqr-compiler --benchmark --benchmark-size small
+
+# PowerShell
+Invoke-BloqrCompilerBenchmark -Size small
+```
+
+Each accepts a dataset size (`small`/`medium`/`large`/`xlarge`/`all`), a source count for
+the chunked run, a max-parallel override, and a JSON-output flag - see that language's own
+README (`src/compilers/<language>/README.md`) for its exact flag names.
+
+### Running all five and comparing
+
+`benchmark-all.sh` / `benchmark-all.ps1` at the repo root run every available language's
+native `benchmark` command (skipping any whose toolchain isn't installed), print a
+comparison table, and write a combined JSON summary:
+
+```bash
+./benchmark-all.sh                          # all five languages, all dataset sizes
+./benchmark-all.sh --size small              # just the small dataset
+./benchmark-all.sh --languages rust,python   # a subset
+```
+
+```powershell
+.\benchmark-all.ps1
+.\benchmark-all.ps1 -Size small
+.\benchmark-all.ps1 -Languages rust,python
+```
+
+### Regenerating the canned datasets
 
 ```bash
 cd benchmarks
-
-# Run comparison suite (recommended)
-python quick_benchmark.py --suite
-
-# Run parallel scaling test
-python quick_benchmark.py --scaling
-
-# Custom benchmark
-python quick_benchmark.py --rules 500000 --parallel 8
-
-# Interactive mode
-python quick_benchmark.py --interactive
+python3 generate_synthetic_data.py --all
 ```
 
-Example output:
-```
-======================================================================
-CHUNKING PERFORMANCE COMPARISON SUITE
-======================================================================
-CPU cores available: 8
-Max parallel workers: 8
+### A note on comparing numbers across languages
 
-Size            Sequential      Parallel        Speedup      Efficiency
-----------------------------------------------------------------------
-10K rules       150 ms          70 ms           2.14x        27%
-50K rules       570 ms          130 ms          4.38x        55%
-200K rules      2,350 ms        350 ms          6.71x        84%
-500K rules      5,400 ms        800 ms          6.75x        84%
-----------------------------------------------------------------------
-
-Average speedup: 5.00x
-Maximum speedup: 6.75x
-```
-
-### Full Benchmark with Real Compilation
-
-Generate synthetic test data and run actual compilation benchmarks:
-
-```bash
-cd benchmarks
-
-# Generate test data (small, medium, large, xlarge filter lists)
-python generate_synthetic_data.py --all
-
-# Run benchmarks across all compilers
-python run_benchmarks.py
-
-# Run specific compiler only
-python run_benchmarks.py --compiler python --iterations 5
-
-# Run specific size only
-python run_benchmarks.py --size large
-```
-
-### Expected Performance
-
-Based on synthetic benchmarks:
-
-| Rule Count | Sequential | 4 Workers | 8 Workers | Speedup (8w) |
-|------------|-----------|-----------|-----------|--------------|
-| 10,000 | ~150ms | ~60ms | ~40ms | 3.75x |
-| 50,000 | ~600ms | ~200ms | ~120ms | 5.0x |
-| 200,000 | ~2.5s | ~800ms | ~400ms | 6.25x |
-| 500,000 | ~6s | ~1.8s | ~900ms | 6.67x |
-
-*Actual times vary by hardware, I/O speed, and network latency for remote sources*
-
-### Parallel Scaling
-
-Speedup scales with CPU cores but with diminishing returns:
-
-| Workers | Theoretical Max | Typical Efficiency |
-|---------|-----------------|-------------------|
-| 2 | 2.0x | 90-100% |
-| 4 | 4.0x | 85-95% |
-| 8 | 8.0x | 75-90% |
-| 16 | 16.0x | 60-80% |
-
-Efficiency decreases due to:
-- Process startup overhead
-- Merge/deduplication time
-- Memory bandwidth limits
-- I/O contention
+In Rust, .NET, and Python, the unchunked and chunked paths currently shell out to two
+*different* underlying compilers (Deno + the JSR `@bloqr/compiler-core` package vs.
+`hostlist-compiler`/`npx` directly - see
+[#424](https://github.com/BloqrAI/bloqr-core/issues/424)), so part of any timing delta
+there may reflect that difference rather than chunking overhead alone. TypeScript and
+PowerShell don't have this gap - both paths use the same underlying compiler in both.
 
 ## Future Enhancements
 

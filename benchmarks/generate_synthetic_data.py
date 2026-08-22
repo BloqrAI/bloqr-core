@@ -386,8 +386,8 @@ def main():
     print(f"  With 8 sources: ~{min(8, speedups['system_info']['cpu_cores'])}x faster")
     print()
     print("Next steps:")
-    print("  1. Run: python run_benchmarks.py")
-    print("  2. Compare sequential vs chunked compilation times")
+    print("  1. Run: ../benchmark-all.sh (or ..\\benchmark-all.ps1 on Windows)")
+    print("  2. Compare unchunked vs chunked compilation times")
     print("  3. Review results in benchmarks/results/")
 
 

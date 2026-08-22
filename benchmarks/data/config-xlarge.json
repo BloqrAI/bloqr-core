@@ -7,7 +7,7 @@
   "sources": [
     {
       "name": "xlarge-source",
-      "source": "C:/Users/jayson.knight/.claude-worktrees/ad-blocking/reverent-lehmann/benchmarks/data/xlarge.txt",
+      "source": "xlarge.txt",
       "type": "adblock"
     }
   ],

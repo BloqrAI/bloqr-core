@@ -5,12 +5,12 @@
   "sources": [
     {
       "name": "source-1",
-      "source": "C:/Users/jayson.knight/.claude-worktrees/ad-blocking/reverent-lehmann/benchmarks/data/medium.txt",
+      "source": "medium.txt",
       "type": "adblock"
     },
     {
       "name": "source-2",
-      "source": "C:/Users/jayson.knight/.claude-worktrees/ad-blocking/reverent-lehmann/benchmarks/data/medium.txt",
+      "source": "medium.txt",
       "type": "adblock"
     }
   ],
