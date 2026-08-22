@@ -1,4 +1,5 @@
 #Requires -Modules Pester
+using module ..\Classes\RulesValidatorResult.psm1
 
 <#
 .SYNOPSIS
@@ -48,6 +49,27 @@ exit $ExitCode
             & chmod +x $scriptPath
         }
         return $scriptPath
+    }
+
+    function New-ValidRulesValidatorResult {
+        param([string[]]$Messages = @())
+        $result = [RulesValidatorResult]::new()
+        $result.IsValid = $true
+        $result.Format = 'Adblock'
+        $result.ValidRules = 2
+        $result.InvalidRules = 0
+        $result.Messages = $Messages
+        return $result
+    }
+
+    function New-InvalidRulesValidatorResult {
+        $result = [RulesValidatorResult]::new()
+        $result.IsValid = $false
+        $result.Format = 'Adblock'
+        $result.ValidRules = 1
+        $result.InvalidRules = 1
+        $result.Messages = @('bad rule at line 2')
+        return $result
     }
 
     function New-TestConfig {
@@ -113,7 +135,7 @@ Describe 'Invoke-BloqrCompiler' {
         $outputPath = Join-Path $script:tempDir 'output.txt'
         $fakeCompiler = New-FakeHostlistCompiler -Directory $script:tempDir
         Mock -ModuleName BloqrCompiler Get-BloqrCompilerCommand { @{ Executable = $fakeCompiler; Arguments = @() } }.GetNewClosure()
-        Mock -ModuleName BloqrCompiler Invoke-RulesValidator { $null }
+        Mock -ModuleName BloqrCompiler Invoke-RulesValidator { New-ValidRulesValidatorResult }
 
         $result = Invoke-BloqrCompiler -ConfigPath $configPath -OutputPath $outputPath
 
@@ -137,13 +159,76 @@ Describe 'Invoke-BloqrCompiler' {
         $result.ErrorMessage | Should -Match 'hostlist-compiler exited with code 1'
     }
 
+    It 'Fails closed by default when bloqr-validate could not run' {
+        $configPath = New-TestConfig -Directory $script:tempDir
+        $outputPath = Join-Path $script:tempDir 'output.txt'
+        $fakeCompiler = New-FakeHostlistCompiler -Directory $script:tempDir
+        Mock -ModuleName BloqrCompiler Get-BloqrCompilerCommand { @{ Executable = $fakeCompiler; Arguments = @() } }.GetNewClosure()
+        Mock -ModuleName BloqrCompiler Invoke-RulesValidator { $null }
+
+        $result = Invoke-BloqrCompiler -ConfigPath $configPath -OutputPath $outputPath
+
+        $result.Success | Should -Be $false
+        $result.ErrorMessage | Should -Match 'bloqr-validate could not run'
+    }
+
+    It 'Succeeds when bloqr-validate could not run but -AllowUnvalidatedOutput is set' {
+        $configPath = New-TestConfig -Directory $script:tempDir
+        $outputPath = Join-Path $script:tempDir 'output.txt'
+        $fakeCompiler = New-FakeHostlistCompiler -Directory $script:tempDir
+        Mock -ModuleName BloqrCompiler Get-BloqrCompilerCommand { @{ Executable = $fakeCompiler; Arguments = @() } }.GetNewClosure()
+        Mock -ModuleName BloqrCompiler Invoke-RulesValidator { $null }
+
+        $result = Invoke-BloqrCompiler -ConfigPath $configPath -OutputPath $outputPath -AllowUnvalidatedOutput
+
+        $result.Success | Should -Be $true
+    }
+
+    It 'Fails closed by default when bloqr-validate reports invalid syntax' {
+        $configPath = New-TestConfig -Directory $script:tempDir
+        $outputPath = Join-Path $script:tempDir 'output.txt'
+        $fakeCompiler = New-FakeHostlistCompiler -Directory $script:tempDir
+        Mock -ModuleName BloqrCompiler Get-BloqrCompilerCommand { @{ Executable = $fakeCompiler; Arguments = @() } }.GetNewClosure()
+        Mock -ModuleName BloqrCompiler Invoke-RulesValidator { New-InvalidRulesValidatorResult }
+
+        $result = Invoke-BloqrCompiler -ConfigPath $configPath -OutputPath $outputPath
+
+        $result.Success | Should -Be $false
+        $result.ErrorMessage | Should -Match 'bad rule at line 2'
+    }
+
+    It 'Succeeds when bloqr-validate reports invalid syntax but -AllowUnvalidatedOutput is set' {
+        $configPath = New-TestConfig -Directory $script:tempDir
+        $outputPath = Join-Path $script:tempDir 'output.txt'
+        $fakeCompiler = New-FakeHostlistCompiler -Directory $script:tempDir
+        Mock -ModuleName BloqrCompiler Get-BloqrCompilerCommand { @{ Executable = $fakeCompiler; Arguments = @() } }.GetNewClosure()
+        Mock -ModuleName BloqrCompiler Invoke-RulesValidator { New-InvalidRulesValidatorResult }
+
+        $result = Invoke-BloqrCompiler -ConfigPath $configPath -OutputPath $outputPath -AllowUnvalidatedOutput
+
+        $result.Success | Should -Be $true
+    }
+
+    It 'Fails when bloqr-validate reports warnings and -FailOnWarnings is set' {
+        $configPath = New-TestConfig -Directory $script:tempDir
+        $outputPath = Join-Path $script:tempDir 'output.txt'
+        $fakeCompiler = New-FakeHostlistCompiler -Directory $script:tempDir
+        Mock -ModuleName BloqrCompiler Get-BloqrCompilerCommand { @{ Executable = $fakeCompiler; Arguments = @() } }.GetNewClosure()
+        Mock -ModuleName BloqrCompiler Invoke-RulesValidator { New-ValidRulesValidatorResult -Messages @('suspicious rule at line 1') }
+
+        $result = Invoke-BloqrCompiler -ConfigPath $configPath -OutputPath $outputPath -FailOnWarnings
+
+        $result.Success | Should -Be $false
+        $result.ErrorMessage | Should -Match 'warnings'
+    }
+
     It 'Copies to the rules directory when -CopyToRules is set' {
         $configPath = New-TestConfig -Directory $script:tempDir
         $outputPath = Join-Path $script:tempDir 'output.txt'
         $rulesDir = Join-Path $script:tempDir 'rules'
         $fakeCompiler = New-FakeHostlistCompiler -Directory $script:tempDir
         Mock -ModuleName BloqrCompiler Get-BloqrCompilerCommand { @{ Executable = $fakeCompiler; Arguments = @() } }.GetNewClosure()
-        Mock -ModuleName BloqrCompiler Invoke-RulesValidator { $null }
+        Mock -ModuleName BloqrCompiler Invoke-RulesValidator { New-ValidRulesValidatorResult }
 
         $result = Invoke-BloqrCompiler -ConfigPath $configPath -OutputPath $outputPath -CopyToRules -RulesDirectory $rulesDir
 

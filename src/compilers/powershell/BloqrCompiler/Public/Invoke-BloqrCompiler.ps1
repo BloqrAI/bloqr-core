@@ -11,9 +11,15 @@ function Invoke-BloqrCompiler {
         class, shells out to hostlist-compiler (native binary or `npx
         @adguard/hostlist-compiler`) to produce the compiled rules file, counts
         rules and computes a SHA-384 hash of the output, runs the bloqr-validate
-        syntax check via Invoke-RulesValidator (informational findings only - see
-        that function's help for details), and optionally copies the result into
-        a rules directory.
+        syntax check via Invoke-RulesValidator, and optionally copies the result
+        into a rules directory.
+
+        The bloqr-validate check is fail-closed by default: a missing/failed
+        validator, or output it reports as invalid, makes this function return a
+        failure CompilerResult - "could not validate" is not treated the same as
+        "no findings". Pass -AllowUnvalidatedOutput to explicitly opt out (not
+        recommended outside deliberate debugging); pass -FailOnWarnings to also
+        fail on informational findings reported alongside otherwise-valid output.
 
         Only JSON configuration files are compiled today - YAML is parsed by
         CompilerConfiguration for inspection purposes but isn't wired into the
@@ -38,6 +44,16 @@ function Invoke-BloqrCompiler {
         Destination directory for -CopyToRules. Defaults to a `rules/` directory
         at the repository root.
 
+    .PARAMETER AllowUnvalidatedOutput
+        Explicit opt-out of the mandatory bloqr-validate syntax check. Security-
+        relevant: leave this off in production. When off (the default), a missing/
+        failed validator or invalid output fails compilation; there is no silent
+        skip. Use only for deliberate debugging of unvalidated output.
+
+    .PARAMETER FailOnWarnings
+        Also fail compilation when bloqr-validate reports informational findings
+        alongside otherwise-valid output.
+
     .OUTPUTS
         CompilerResult
 
@@ -57,7 +73,13 @@ function Invoke-BloqrCompiler {
         [switch]$CopyToRules,
 
         [Parameter(Mandatory = $false)]
-        [string]$RulesDirectory
+        [string]$RulesDirectory,
+
+        [Parameter(Mandatory = $false)]
+        [switch]$AllowUnvalidatedOutput,
+
+        [Parameter(Mandatory = $false)]
+        [switch]$FailOnWarnings
     )
 
     $startTime = Get-Date
@@ -110,18 +132,38 @@ function Invoke-BloqrCompiler {
     $outputHash = Get-RulesFileHash -Path $OutputPath
     $elapsedMs = [long](((Get-Date) - $startTime).TotalMilliseconds)
 
-    # Rules-validator findings are informational and never fail compilation -
-    # a $null result just means the validator binary wasn't found, which is a
-    # skip, not an error.
+    # Mandatory rules-validator syntax check - fail-closed by default. A $null
+    # result means the validator couldn't run at all (binary not found, invocation
+    # failed, output unparseable) - that tells us nothing about the output's
+    # safety, so it is NOT treated as "no findings" unless -AllowUnvalidatedOutput
+    # is set.
     $validation = Invoke-RulesValidator -Path $OutputPath
-    if ($validation) {
-        if ($validation.IsValid) {
-            Write-Verbose "bloqr-validator: $($validation.ValidRules) valid, $($validation.InvalidRules) invalid rule(s)"
+    if (-not $validation) {
+        if (-not $AllowUnvalidatedOutput) {
+            return [CompilerResult]::CreateFailure(
+                'bloqr-validate could not run against the compiled output (binary not found or invocation failed). ' +
+                'Pass -AllowUnvalidatedOutput to bypass this check (not recommended).'
+            )
         }
-        else {
-            foreach ($message in $validation.Messages) {
-                Write-Warning "bloqr-validator: $message"
-            }
+        Write-Warning 'bloqr-validate could not run; proceeding unvalidated because -AllowUnvalidatedOutput was set.'
+    }
+    elseif ($validation.IsValid) {
+        Write-Verbose "bloqr-validator: $($validation.ValidRules) valid, $($validation.InvalidRules) invalid rule(s)"
+        if ($FailOnWarnings -and $validation.Messages.Count -gt 0 -and -not $AllowUnvalidatedOutput) {
+            $messageText = $validation.Messages -join '; '
+            return [CompilerResult]::CreateFailure("bloqr-validator reported warnings (-FailOnWarnings is set): $messageText")
+        }
+        foreach ($message in $validation.Messages) {
+            Write-Warning "bloqr-validator: $message"
+        }
+    }
+    else {
+        foreach ($message in $validation.Messages) {
+            Write-Warning "bloqr-validator: $message"
+        }
+        if (-not $AllowUnvalidatedOutput) {
+            $messageText = if ($validation.Messages.Count -gt 0) { $validation.Messages -join '; ' } else { "$($validation.InvalidRules) invalid rule(s) of $($validation.ValidRules + $validation.InvalidRules)" }
+            return [CompilerResult]::CreateFailure("Output file failed bloqr-validator syntax validation: $messageText")
         }
     }
 
