@@ -81,8 +81,7 @@ bloqr-compiler
 #### Rust
 
 ```bash
-cd src/compilers/rust
-cargo build --release
+cargo build --release -p bloqr-compiler
 ./target/release/bloqr-compiler
 ```
 

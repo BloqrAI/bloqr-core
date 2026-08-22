@@ -57,7 +57,7 @@ jobs:
 
       - name: Check formatting
         run: |
-          cargo fmt -p bloqr-compiler -p bloqr-validator-core -p bloqr-validator-core-cli -- --check
+          cargo fmt -p bloqr-compiler -p bloqr-compiler-core -p bloqr-validator-core -p bloqr-validator-core-cli -- --check
 
       - name: Build workspace
         run: cargo build --workspace --all-features
@@ -67,7 +67,7 @@ jobs:
 
       - name: Run clippy
         run: |
-          cargo clippy --no-deps -p bloqr-compiler -p bloqr-validator-core -p bloqr-validator-core-cli \
+          cargo clippy --no-deps -p bloqr-compiler -p bloqr-compiler-core -p bloqr-validator-core -p bloqr-validator-core-cli \
             --all-features -- -D clippy::all -D clippy::correctness -D clippy::suspicious
 
       - name: Install cargo-deny
@@ -109,7 +109,7 @@ jobs:
 
       - name: Run clippy for security analysis
         run: |
-          cargo clippy --no-deps -p bloqr-compiler -p bloqr-validator-core -p bloqr-validator-core-cli \
+          cargo clippy --no-deps -p bloqr-compiler -p bloqr-compiler-core -p bloqr-validator-core -p bloqr-validator-core-cli \
             --all-features --message-format=json | clippy-sarif | tee rust-clippy-results.sarif | sarif-fmt
         continue-on-error: true
 

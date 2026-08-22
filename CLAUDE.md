@@ -139,18 +139,22 @@ bloqr-compiler --help                    # Show help
 ```
 
 ### Rust Rules Compiler (`src/compilers/rust/`)
+Split into a library crate (`core/`, published as `bloqr-compiler-core`) and a
+thin CLI crate (`cli/`, published as `bloqr-compiler`, unchanged binary name)
+mirroring `src/validation`'s `core`/`cli` split (#173) - both are members of
+the repo-root Cargo workspace, so build/test commands run from the repo root
+with `-p`, or `cd` straight into `cli/` for CLI-only iteration.
 ```bash
-cd src/compilers/rust
-
-# Build
-cargo build              # Debug build
-cargo build --release    # Release build (optimized)
+# Build (from repo root)
+cargo build -p bloqr-compiler -p bloqr-compiler-core              # Debug build
+cargo build --release -p bloqr-compiler -p bloqr-compiler-core    # Release build (optimized)
 
 # Run tests
-cargo test
-cargo test -- --nocapture  # With output
+cargo test -p bloqr-compiler -p bloqr-compiler-core
+cargo test -p bloqr-compiler -p bloqr-compiler-core -- --nocapture  # With output
 
-# CLI usage
+# CLI usage (from src/compilers/rust/cli, or `cargo run -p bloqr-compiler --` from the repo root)
+cd src/compilers/rust/cli
 cargo run -- -c config.yaml              # Specific config
 cargo run -- -c config.json -r           # Compile and copy to rules
 cargo run -- -c config.toml -o out.txt   # Custom output
@@ -158,7 +162,7 @@ cargo run -- -V                          # Show version info
 cargo run -- -d                          # Debug output
 cargo run -- --help                      # Show help
 
-# Release binary
+# Release binary (built to the workspace-root target/ dir regardless of which member you built)
 ./target/release/bloqr-compiler -c config.yaml
 ```
 
@@ -220,11 +224,13 @@ pytest --cov=bloqr_compiler               # With coverage
 
 ### Rust (cargo test)
 ```bash
-cd src/compilers/rust
-cargo test                                # Run all tests
-cargo test -- --nocapture                 # With output
-cargo test test_count_rules               # Specific test
-cargo test config::                       # Tests in module
+# From the repo root - bloqr-compiler-core (src/compilers/rust/core) and
+# bloqr-compiler (src/compilers/rust/cli) are separate workspace members.
+cargo test -p bloqr-compiler-core                          # Run all library tests
+cargo test -p bloqr-compiler-core -- --nocapture            # With output
+cargo test -p bloqr-compiler-core test_count_rules          # Specific test
+cargo test -p bloqr-compiler-core config::                  # Tests in module
+cargo test -p bloqr-compiler                                # CLI crate's own tests (config discovery)
 ```
 
 ## Architecture
@@ -281,12 +287,17 @@ cargo test config::                       # Tests in module
 - Tools: pytest, mypy, ruff
 
 ### Bloqr Compiler - Rust (`src/compilers/rust/`)
-- High-performance Rust library and CLI for filter compilation
+- High-performance Rust library and CLI for filter compilation, split into a
+  core lib crate + thin CLI crate (#173), mirroring `src/validation`'s own
+  `core`/`cli` split — both are members of the repo-root Cargo workspace
 - Supports JSON, YAML, and TOML configuration formats
-- `src/config.rs` - Configuration structs and parsing
-- `src/compiler.rs` - `BloqrCompiler` struct and `compile_rules()` function
-- `src/main.rs` - clap-based CLI with argument parsing
-- `src/error.rs` - `CompilerError` enum with thiserror
+- **`core/`** (published as `bloqr-compiler-core`, lib name `bloqr_compiler`) - the library:
+  - `core/src/config.rs` - Configuration structs and parsing
+  - `core/src/compiler.rs` - `BloqrCompiler` struct and `compile_rules()` function
+  - `core/src/error.rs` - `CompilerError` enum with thiserror
+  - `core/src/events.rs`, `core/src/chunking.rs` - event dispatch and chunked/parallel compilation
+- **`cli/`** (published as `bloqr-compiler`, unchanged binary name/CLI surface) - the CLI:
+  - `cli/src/main.rs` - clap-based CLI with argument parsing, depends on `core/` via a path+version dependency
 - Single binary distribution with zero runtime dependencies (except hostlist-compiler)
 - Key structs: `BloqrCompiler`, `CompilerConfiguration`, `CompilerResult`, `VersionInfo`
 - LTO optimization enabled for small binary size

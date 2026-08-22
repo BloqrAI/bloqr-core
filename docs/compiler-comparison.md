@@ -148,8 +148,7 @@ result = compiler.compile("config.json", output_path="output.txt")
 **Best for**: Performance-critical use, single-binary deployment, systems integration
 
 ```bash
-cd src/compilers/rust
-cargo build --release
+cargo build --release -p bloqr-compiler
 ./target/release/bloqr-compiler -c config.json
 ```
 

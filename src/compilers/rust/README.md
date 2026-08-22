@@ -2,6 +2,22 @@
 
 Rust API for compiling AdGuard filter rules.
 
+## Crate layout
+
+Split into a library crate and a thin CLI crate, mirroring
+[`src/validation`](../../validation/)'s own `core`/`cli` split — both are
+members of the repo-root Cargo workspace:
+
+| Crate | Directory | Published as | Contains |
+|-------|-----------|---------------|----------|
+| Library | [`core/`](core/) | [`bloqr-compiler-core`](https://crates.io/crates/bloqr-compiler-core) | `BloqrCompiler`, config reading, chunked compilation, events - everything under "Library Usage" below |
+| CLI | [`cli/`](cli/) | [`bloqr-compiler`](https://crates.io/crates/bloqr-compiler) | The `bloqr-compiler` binary (clap-based args, interactive menu, benchmark mode) |
+
+The library's Rust import name is unchanged (`use bloqr_compiler::...`) even
+though the published crate is `bloqr-compiler-core` - only the CLI kept the
+pre-split registry name `bloqr-compiler`, so `cargo install bloqr-compiler`
+and the `bloqr-compiler` binary itself are unaffected by the split.
+
 ## Features
 
 - Fast, single-binary CLI tool
@@ -19,32 +35,28 @@ Rust API for compiling AdGuard filter rules.
 
 ## Installation
 
-Published to [crates.io](https://crates.io/crates/bloqr-compiler) as both a library and the `bloqr-compiler` binary:
-
 ```bash
-# Install the CLI
+# Install the CLI (published to crates.io as bloqr-compiler)
 cargo install bloqr-compiler
 
-# Or add the library to a Cargo.toml
-cargo add bloqr-compiler
+# Or add the library to a Cargo.toml (published as bloqr-compiler-core;
+# the import name is still `bloqr_compiler`)
+cargo add bloqr-compiler-core
 ```
 
 ## Building (from a clone of this repository)
 
 ```bash
-cd src/compilers/rust
+# From the repo root - core and cli are separate workspace members
+cargo build -p bloqr-compiler-core -p bloqr-compiler
+cargo build --release -p bloqr-compiler-core -p bloqr-compiler
 
-# Debug build
-cargo build
+# Run all tests for both crates
+cargo test -p bloqr-compiler-core -p bloqr-compiler
 
-# Release build (optimized)
-cargo build --release
-
-# Run tests
-cargo test
-
-# Run with debug output
-cargo run -- -d -c ../typescript/compiler-config.json
+# Run the CLI with debug output
+cd cli
+cargo run -- -d -c ../../typescript/compiler-config.json
 ```
 
 ## CLI Usage
@@ -120,7 +132,12 @@ Add to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-bloqr-compiler = { path = "../rust" }
+# From crates.io - the import name is `bloqr_compiler` even though the
+# published package is bloqr-compiler-core.
+bloqr_compiler = { package = "bloqr-compiler-core", version = "1" }
+
+# Or, from a clone of this repository:
+# bloqr_compiler = { package = "bloqr-compiler-core", path = "../rust/core" }
 ```
 
 ### Basic Usage
@@ -265,7 +282,7 @@ type = "adblock"
 |------|--------|
 | `ConfigFormat` | `Json`, `Yaml`, `Toml` (`Yaml`/`Toml` supported for backward compatibility only) |
 | `SourceType` | `Adblock`, `Hosts` |
-| `CompilerError` | Various error types (see [`src/error.rs`](src/error.rs)) |
+| `CompilerError` | Various error types (see [`core/src/error.rs`](core/src/error.rs)) |
 
 ### Functions
 
@@ -281,16 +298,11 @@ type = "adblock"
 ## Running Tests
 
 ```bash
-cd src/compilers/rust
-
-# Run all tests
-cargo test
-
-# Run with output
-cargo test -- --nocapture
-
-# Run specific test
-cargo test test_count_rules
+# From the repo root
+cargo test -p bloqr-compiler-core           # Library tests
+cargo test -p bloqr-compiler-core -- --nocapture
+cargo test -p bloqr-compiler-core test_count_rules
+cargo test -p bloqr-compiler                # CLI crate's own tests (config discovery)
 ```
 
 ## Performance
@@ -315,16 +327,16 @@ To fuzz locally for longer than the CI smoke test: `cd fuzz && cargo +nightly fu
 
 ## Cross-Compilation
 
-Build for other platforms:
+Build the CLI binary for other platforms:
 
 ```bash
 # Add target
 rustup target add x86_64-pc-windows-gnu
 rustup target add aarch64-apple-darwin
 
-# Cross-compile
-cargo build --release --target x86_64-pc-windows-gnu
-cargo build --release --target aarch64-apple-darwin
+# Cross-compile (from the repo root, or from cli/ without -p)
+cargo build --release -p bloqr-compiler --target x86_64-pc-windows-gnu
+cargo build --release -p bloqr-compiler --target aarch64-apple-darwin
 ```
 
 ## License

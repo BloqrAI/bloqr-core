@@ -27,9 +27,9 @@ Python – rules compiler (src/compilers/python)
 - Test: pytest
 - Lint/type-check: ruff check .; mypy .
 
-Rust – rules compiler (src/compilers/rust)
-- Build/test: cd src/compilers/rust && cargo build && cargo test
-- Run: cargo run -- -c config.json
+Rust – rules compiler (src/compilers/rust/core lib + src/compilers/rust/cli CLI)
+- Build/test: cargo build -p bloqr-compiler-core -p bloqr-compiler && cargo test -p bloqr-compiler-core -p bloqr-compiler
+- Run: cd src/compilers/rust/cli && cargo run -- -c config.json
 
 PowerShell scripts (src/compilers/powershell)
 - Static analysis (same as CI): Invoke-ScriptAnalyzer -Path src/compilers/powershell -Recurse

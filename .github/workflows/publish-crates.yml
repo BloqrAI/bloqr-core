@@ -1,14 +1,20 @@
 name: Publish Rust Crates to crates.io
 
-# Publishes three crates to crates.io whenever any of them change on main,
+# Publishes four crates to crates.io whenever any of them change on main,
 # or on demand: src/validation's bloqr-validator-core (library) and
 # bloqr-validator-core-cli (the bloqr-validate binary, installable via
-# `cargo install`), and src/compilers/rust's bloqr-compiler (library +
-# the bloqr-compiler binary). Mirrors publish-jsr.yml's pattern:
-# path-filtered push trigger, independent of the repo-wide binary release
-# in release.yml, so a change to any one of these doesn't have to wait for
-# (or force) a full multi-language binary release to reach crates.io. See
-# docs/architecture/versioning-strategy.md.
+# `cargo install`), and src/compilers/rust's bloqr-compiler-core (library)
+# and bloqr-compiler (the bloqr-compiler binary, also installable via
+# `cargo install`). The compiler crate was split into a core lib + thin CLI
+# crate mirroring the validator's core/cli split (#173) - the CLI package
+# keeps the pre-split name `bloqr-compiler` so `cargo install bloqr-compiler`
+# keeps working unchanged; the library was carved out under the new name
+# `bloqr-compiler-core` (see src/compilers/rust/README.md's "Library usage"
+# section for the resulting `cargo add bloqr-compiler-core` instructions).
+# Mirrors publish-jsr.yml's pattern: path-filtered push trigger, independent
+# of the repo-wide binary release in release.yml, so a change to any one of
+# these doesn't have to wait for (or force) a full multi-language binary
+# release to reach crates.io. See docs/architecture/versioning-strategy.md.
 #
 # bloqr-compiler was originally descoped from crates.io publishing (#365)
 # as having no external library consumer; that decision was revisited and
@@ -22,8 +28,8 @@ name: Publish Rust Crates to crates.io
 # rust-lang/crates-io-auth-action - no long-lived CARGO_REGISTRY_TOKEN
 # secret needed. Requires a Trusted Publisher entry configured on
 # crates.io for each of bloqr-validator-core, bloqr-validator-core-cli,
-# and bloqr-compiler (crate settings page -> Trusted Publishing -> GitHub
-# -> owner BloqrAI, repo bloqr-core, workflow filename
+# bloqr-compiler-core, and bloqr-compiler (crate settings page -> Trusted
+# Publishing -> GitHub -> owner BloqrAI, repo bloqr-core, workflow filename
 # publish-crates.yml). The workflow needs `permissions: id-token: write`
 # for the OIDC token exchange.
 #
@@ -48,7 +54,10 @@ name: Publish Rust Crates to crates.io
 #
 # bloqr-validator-core-cli depends on bloqr-validator-core via the registry
 # (see its Cargo.toml's `version` alongside `path`), so publish-cli always
-# runs after publish-core.
+# runs after publish-core. Same pattern for the compiler crates: bloqr-compiler
+# (CLI) depends on bloqr-compiler-core (library) via the registry, so
+# publish-compiler-cli always runs after publish-compiler-core, which itself
+# runs after publish-core (bloqr-compiler-core depends on bloqr-validator-core).
 
 on:
   push:
@@ -211,11 +220,11 @@ jobs:
           echo "::error::crates.io publish failed. Check bloqr-validator-core-cli's Trusted Publisher entry on crates.io points at BloqrAI/bloqr-core, workflow publish-crates.yml, and that the enterprise custom-OIDC-issuer setting is still disabled."
           exit 1
 
-  publish-compiler:
-    name: Publish bloqr-compiler
+  publish-compiler-core:
+    name: Publish bloqr-compiler-core
     # Depends on bloqr-validator-core (not bloqr-validator-core-cli) since
-    # that's the crate bloqr-compiler's Cargo.toml actually depends on -
-    # see src/compilers/rust/Cargo.toml's `bloqr_validator` dependency.
+    # that's the crate bloqr-compiler-core's Cargo.toml actually depends on -
+    # see src/compilers/rust/core/Cargo.toml's `bloqr_validator` dependency.
     needs: publish-core
     runs-on: ubuntu-latest
     permissions:
@@ -243,7 +252,90 @@ jobs:
       # A brand-new bloqr-validator-core version published moments ago by the
       # publish-core job above may not be visible on the registry index yet
       # (crates.io propagation isn't instant) - retry the dry-run a few times
-      # rather than failing immediately if bloqr-compiler's version
+      # rather than failing immediately if bloqr-compiler-core's version
+      # requirement can't yet be resolved against it.
+      - name: Dry-run publish (validates the package before the real push)
+        run: |
+          for attempt in 1 2 3 4 5; do
+            if cargo publish -p bloqr-compiler-core --dry-run --locked; then
+              exit 0
+            fi
+            echo "Dry-run failed (attempt ${attempt}/5) - registry index may not have propagated bloqr-validator-core's latest version yet. Retrying in 15s..."
+            sleep 15
+            cargo update -p bloqr-validator-core --precise "$(cargo pkgid -p bloqr-validator-core | sed 's/.*@//')" 2>/dev/null || true
+          done
+          echo "::error::cargo publish --dry-run kept failing for bloqr-compiler-core after 5 attempts."
+          exit 1
+
+      - name: Check if this version is already published
+        id: check
+        run: |
+          pkgid=$(cargo pkgid -p bloqr-compiler-core)
+          version="${pkgid##*@}"
+          echo "version=${version}" >> "$GITHUB_OUTPUT"
+          status=$(curl -s -o /dev/null -w "%{http_code}" -A "bloqr-core-ci (https://github.com/BloqrAI/bloqr-core)" "https://crates.io/api/v1/crates/bloqr-compiler-core/${version}")
+          if [ "$status" = "200" ]; then
+            echo "Version ${version} is already published - skipping (idempotent re-run)."
+            echo "already_published=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "already_published=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      # Exchanges this workflow run's OIDC identity for a short-lived
+      # crates.io token (auto-revoked when the job ends) - requires the
+      # Trusted Publisher entry on bloqr-compiler-core's crates.io settings
+      # page to reference this exact repo + workflow filename.
+      - name: Authenticate with crates.io
+        id: auth
+        if: steps.check.outputs.already_published == 'false'
+        uses: rust-lang/crates-io-auth-action@v1
+
+      - name: Publish bloqr-compiler-core to crates.io
+        id: publish
+        if: steps.check.outputs.already_published == 'false'
+        env:
+          CARGO_REGISTRY_TOKEN: ${{ steps.auth.outputs.token }}
+        run: cargo publish -p bloqr-compiler-core --locked
+
+      - name: Report publish failure
+        if: failure() && steps.publish.outcome == 'failure'
+        run: |
+          echo "::error::crates.io publish failed. Check bloqr-compiler-core's Trusted Publisher entry on crates.io points at BloqrAI/bloqr-core, workflow publish-crates.yml, and that the enterprise custom-OIDC-issuer setting is still disabled."
+          exit 1
+
+  publish-compiler-cli:
+    name: Publish bloqr-compiler
+    # Depends on bloqr-compiler-core (the library it wraps), not directly on
+    # bloqr-validator-core - see src/compilers/rust/cli/Cargo.toml's
+    # `bloqr_compiler` dependency.
+    needs: publish-compiler-core
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Install Rust toolchain
+        uses: actions-rust-lang/setup-rust-toolchain@v1
+        with:
+          toolchain: stable
+
+      - name: Cache Cargo
+        uses: actions/cache@v6
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: ${{ runner.os }}-cargo-publish-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: ${{ runner.os }}-cargo-publish-
+
+      # A brand-new bloqr-compiler-core version published moments ago by the
+      # publish-compiler-core job above may not be visible on the registry
+      # index yet (crates.io propagation isn't instant) - retry the dry-run a
+      # few times rather than failing immediately if bloqr-compiler's version
       # requirement can't yet be resolved against it.
       - name: Dry-run publish (validates the package before the real push)
         run: |
@@ -251,9 +343,9 @@ jobs:
             if cargo publish -p bloqr-compiler --dry-run --locked; then
               exit 0
             fi
-            echo "Dry-run failed (attempt ${attempt}/5) - registry index may not have propagated bloqr-validator-core's latest version yet. Retrying in 15s..."
+            echo "Dry-run failed (attempt ${attempt}/5) - registry index may not have propagated bloqr-compiler-core's latest version yet. Retrying in 15s..."
             sleep 15
-            cargo update -p bloqr-validator-core --precise "$(cargo pkgid -p bloqr-validator-core | sed 's/.*@//')" 2>/dev/null || true
+            cargo update -p bloqr-compiler --precise "$(cargo pkgid -p bloqr-compiler-core | sed 's/.*@//')" 2>/dev/null || true
           done
           echo "::error::cargo publish --dry-run kept failing for bloqr-compiler after 5 attempts."
           exit 1

@@ -141,7 +141,7 @@ mod tests {
 
     #[test]
     fn test_name_constant() {
-        assert_eq!(NAME, "bloqr-compiler");
+        assert_eq!(NAME, "bloqr-compiler-core");
     }
 
     #[test]

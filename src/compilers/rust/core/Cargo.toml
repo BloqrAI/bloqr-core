@@ -1,0 +1,71 @@
+[package]
+name = "bloqr-compiler-core"
+# Independent version, not workspace-inherited - see
+# docs/architecture/versioning-strategy.md. Starts at 1.0.0: this is a new
+# crate name (carved out of the combined bloqr-compiler 1.0.0 lib+CLI crate
+# so the library and the CLI can version and publish independently, mirroring
+# bloqr-validator-core/-cli), not a republish of anything previously on
+# crates.io under this name.
+version = "1.0.0"
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+rust-version.workspace = true
+description = "Bloqr's Rust library for compiling AdGuard filter rules using hostlist-compiler. Part of the bloqr-core toolkit (github.com/BloqrAI/bloqr-core). See bloqr-compiler for the CLI."
+readme = "README.md"
+keywords = ["bloqr", "adguard", "filter", "adblock", "compiler"]
+categories = ["web-programming"]
+
+[lib]
+# Import name kept as `bloqr_compiler` (unchanged from the pre-split combined
+# crate) even though the published package is now `bloqr-compiler-core` -
+# existing `use bloqr_compiler::...` call sites don't need to change.
+name = "bloqr_compiler"
+path = "src/lib.rs"
+
+[dependencies]
+# Rules validation (workspace sibling - no registry involved)
+bloqr_validator = { path = "../../../validation/core", package = "bloqr-validator-core", version = "1" }
+
+# Async runtime
+tokio = { workspace = true, features = ["fs", "process", "io-util"] }
+
+# Serialization
+serde = { workspace = true }
+serde_json = { workspace = true }
+serde_yaml = { workspace = true }
+toml = { workspace = true }
+
+# Error handling
+thiserror = { workspace = true }
+
+# Hashing
+sha2 = { workspace = true }
+hex = { workspace = true }
+
+# Cross-platform
+which = { workspace = true }
+
+# Async utilities
+futures = { workspace = true }
+
+# Logging/tracing
+tracing = { workspace = true }
+
+# Time
+chrono = { workspace = true }
+
+# UUID for temp files
+uuid = { workspace = true }
+
+# Rust version at runtime
+rustc_version_runtime = { workspace = true }
+
+# Platform-specific file locking (Unix only - Windows uses open file handles)
+[target.'cfg(unix)'.dependencies]
+libc = "0.2"
+
+[dev-dependencies]
+tempfile = { workspace = true }
+tokio = { workspace = true, features = ["test-util", "macros"] }

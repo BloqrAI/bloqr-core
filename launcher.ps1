@@ -267,7 +267,7 @@ function Show-RulesMenu {
                     -InstallAction { winget install --id Rustlang.Rustup -e }
                 if ($ready) {
                     Invoke-SafeCommand {
-                        Push-Location "$Script:RootDir\src\compilers\rust"
+                        Push-Location "$Script:RootDir\src\compilers\rust\cli"
                         try {
                             cargo run --release
                         }
@@ -309,7 +309,7 @@ function Show-RulesMenu {
                         Push-Location "$Script:RootDir\src\compilers\typescript"
                         try { deno task test } finally { Pop-Location }
                     }
-                    "2" { cargo test -p rules-compiler }
+                    "2" { cargo test -p bloqr-compiler -p bloqr-compiler-core }
                     "3" {
                         Push-Location "$Script:RootDir\src\compilers\dotnet"
                         try { dotnet test CompilerDotnet.slnx } finally { Pop-Location }

@@ -59,8 +59,7 @@ cd src/compilers/python
 pip install -e .
 
 # Rust
-cd src/compilers/rust
-cargo build --release
+cargo build --release -p bloqr-compiler
 
 # PowerShell
 # Already installed if using PowerShell 7+

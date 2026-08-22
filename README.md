@@ -70,10 +70,10 @@ pytest
 Also published on [crates.io](https://crates.io/crates/bloqr-compiler) — `cargo install bloqr-compiler` installs the CLI directly, no clone needed.
 
 ```bash
-cd src/compilers/rust
+cd src/compilers/rust/cli
 cargo build --release
 cargo run -- -c config.json
-cargo test
+cargo test -p bloqr-compiler -p bloqr-compiler-core
 ```
 
 ### PowerShell
@@ -151,8 +151,7 @@ The TypeScript compiler is the only one that implements compilation logic direct
 cd src/compilers/typescript && deno task test
 cd src/compilers/dotnet && dotnet test CompilerDotnet.slnx
 cd src/compilers/python && pytest
-cd src/compilers/rust && cargo test
-cargo test --workspace   # bloqr-compiler + validation
+cargo test --workspace   # bloqr-compiler/-core + validation
 Invoke-Pester -Path ./src/compilers/powershell -Recurse
 ```
 

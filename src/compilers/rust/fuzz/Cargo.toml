@@ -20,8 +20,12 @@ serde_json = "1.0"
 serde_yaml = "0.9"
 toml = "1.1"
 
-[dependencies.bloqr-compiler]
-path = ".."
+[dependencies.bloqr_compiler]
+# Fuzzes the library's config-parsing and chunk-merging logic, not the CLI -
+# points at the bloqr-compiler-core lib crate (see ../core), not the
+# bloqr-compiler CLI crate (../cli) this used to live alongside as one crate.
+package = "bloqr-compiler-core"
+path = "../core"
 
 [[bin]]
 name = "fuzz_compiler_config"

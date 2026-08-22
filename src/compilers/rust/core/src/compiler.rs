@@ -691,9 +691,11 @@ fn validate_output_with_events<P: AsRef<Path>>(
             && (!validation_args.passed() || (fail_on_warnings && has_warnings)));
 
     if should_abort {
-        Some(validation_args.abort_reason.unwrap_or_else(|| {
-            format!("rules-validator validation failed for {}", path.display())
-        }))
+        Some(
+            validation_args.abort_reason.unwrap_or_else(|| {
+                format!("rules-validator validation failed for {}", path.display())
+            }),
+        )
     } else {
         None
     }
@@ -1421,16 +1423,14 @@ mod tests {
 
         // A validator that couldn't run tells us nothing about the output's safety, so
         // fail-closed treats that the same as a failed check, not a silent skip.
-        assert!(
-            validate_output_with_events(
-                "/nonexistent/output.txt",
-                &dispatcher,
-                &config,
-                false,
-                false
-            )
-            .is_some()
-        );
+        assert!(validate_output_with_events(
+            "/nonexistent/output.txt",
+            &dispatcher,
+            &config,
+            false,
+            false
+        )
+        .is_some());
     }
 
     #[test]

@@ -213,7 +213,7 @@ All new features and bug fixes must include appropriate tests:
 cd src/compilers/typescript && deno task test
 cd src/compilers/dotnet && dotnet test
 cd src/compilers/python && pytest
-cd src/compilers/rust && cargo test
+cargo test -p bloqr-compiler-core -p bloqr-compiler
 cd src/compilers/powershell && Invoke-Pester
 ```
 

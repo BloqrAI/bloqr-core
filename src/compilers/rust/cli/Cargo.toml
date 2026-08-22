@@ -1,0 +1,39 @@
+[package]
+name = "bloqr-compiler"
+# Independent version, not workspace-inherited - see
+# docs/architecture/versioning-strategy.md. Bumped to 1.1.0 (from the
+# pre-split combined lib+CLI crate's 1.0.0): the package now depends on the
+# separately-published bloqr-compiler-core instead of embedding the library
+# directly, but `cargo install bloqr-compiler` and the `bloqr-compiler`
+# binary's CLI surface are unchanged - see the core/cli split note in
+# src/compilers/rust/README.md.
+version = "1.1.0"
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+rust-version.workspace = true
+description = "Bloqr's CLI for compiling AdGuard filter rules using hostlist-compiler. Part of the bloqr-core toolkit (github.com/BloqrAI/bloqr-core). See bloqr-compiler-core for the library."
+readme = "README.md"
+keywords = ["bloqr", "adguard", "filter", "adblock", "cli"]
+categories = ["command-line-utilities"]
+
+[[bin]]
+name = "bloqr-compiler"
+path = "src/main.rs"
+
+[dependencies]
+# `version` is required alongside `path` so `cargo publish` can rewrite this
+# into a registry dependency (path deps aren't resolvable outside this
+# checkout) - see docs/architecture/versioning-strategy.md.
+bloqr_compiler = { path = "../core", package = "bloqr-compiler-core", version = "1" }
+
+# CLI
+clap = { workspace = true }
+dialoguer = { workspace = true }
+
+# Random number generation (for the --benchmark synthetic demo)
+rand = "0.10"
+
+[dev-dependencies]
+tempfile = { workspace = true }

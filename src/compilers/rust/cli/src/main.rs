@@ -7,14 +7,16 @@ use dialoguer::{theme::ColorfulTheme, Confirm, Input, Select};
 use std::path::PathBuf;
 use std::process::ExitCode;
 
-use bloqr_compiler::{
-    read_config, BloqrCompiler, CompileOptions, ConfigFormat, VersionInfo, VERSION,
-};
+use bloqr_compiler::{read_config, BloqrCompiler, CompileOptions, ConfigFormat, VersionInfo};
 
 /// AdGuard Filter Rules Compiler - Rust CLI
 #[derive(Parser, Debug)]
 #[command(name = "bloqr-compiler")]
-#[command(version = VERSION)]
+// This crate's own CARGO_PKG_VERSION, not bloqr_compiler::VERSION (the
+// bloqr-compiler-core library crate's version) - #173 split them into
+// separately-versioned crates, so `--version` should report the CLI's own
+// version rather than the library's.
+#[command(version = env!("CARGO_PKG_VERSION"))]
 #[command(about = "Compile AdGuard filter rules using hostlist-compiler")]
 #[command(
     long_about = "A high-performance Rust CLI for compiling AdGuard filter rules.\n\n\

@@ -17,7 +17,7 @@ There is no separate wrapper function, signature, or audit-log format.
 Enforcement lives directly in each compiler's own compilation pipeline, at
 the point where output is about to be reported as successful:
 
-- **Rust**: `compile_rules()` in `src/compilers/rust/src/compiler.rs` — the
+- **Rust**: `compile_rules()` in `src/compilers/rust/core/src/compiler.rs` — the
   function the shipped `bloqr-compiler` CLI calls — runs the validator
   against the just-written output before returning `Ok`.
 - **.NET**: `BloqrCompilerService.RunAsyncCore` in

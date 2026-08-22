@@ -111,16 +111,24 @@ dependencies = [
 
 [[package]]
 name = "bloqr-compiler"
+version = "1.1.0"
+dependencies = [
+ "bloqr-compiler-core",
+ "clap",
+ "dialoguer",
+ "rand",
+ "tempfile",
+]
+
+[[package]]
+name = "bloqr-compiler-core"
 version = "1.0.0"
 dependencies = [
  "bloqr-validator-core",
  "chrono",
- "clap",
- "dialoguer",
  "futures",
  "hex",
  "libc",
- "rand",
  "rustc_version_runtime",
  "serde",
  "serde_json",

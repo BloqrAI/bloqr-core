@@ -84,7 +84,7 @@ in all five languages:
 
 ### Integration points
 
-**Rust** (`src/compilers/rust/src/compiler.rs`): `compile_rules()` — the
+**Rust** (`src/compilers/rust/core/src/compiler.rs`): `compile_rules()` — the
 function the shipped `bloqr-compiler` CLI actually calls — runs
 `validate_output_with_events()` against `bloqr-validator-core` directly after
 writing output, before returning success.

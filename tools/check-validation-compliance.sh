@@ -164,8 +164,11 @@ check_rust_integration() {
     fi
 
     # Rust depends on bloqr-validator-core directly as a Cargo workspace path
-    # dependency (#361) - same language, no FFI/shellout needed.
-    if grep -q "bloqr-validator\|bloqr_validator" "$rust_dir/Cargo.toml" 2>/dev/null; then
+    # dependency (#361) - same language, no FFI/shellout needed. Since #173
+    # split the compiler into a core lib crate + thin CLI crate (mirroring
+    # the validator's own core/cli split), that dependency now lives on
+    # $rust_dir/core/Cargo.toml rather than a single top-level Cargo.toml.
+    if grep -q "bloqr-validator\|bloqr_validator" "$rust_dir/core/Cargo.toml" 2>/dev/null; then
         echo -e "${GREEN}✓ Rust: Validation library integrated (#361)${NC}"
     else
         echo -e "${RED}✗ Rust: Validation library not integrated${NC}"
@@ -177,8 +180,10 @@ check_rust_integration() {
     # opt-out on the plain compile_rules() path (not just the extended
     # compile_rules_with_events() API) - its presence proves the validator is
     # actually invoked from the entrypoint the shipped CLI uses, and that the
-    # default is enforced, not skipped.
-    if grep -rq "allow_unvalidated_output" "$rust_dir/src" 2>/dev/null; then
+    # default is enforced, not skipped. Spans both crates post-#173: the field
+    # lives in core/src/compiler.rs, the --allow-unvalidated-output CLI flag
+    # that sets it lives in cli/src/main.rs.
+    if grep -rq "allow_unvalidated_output" "$rust_dir/core/src" "$rust_dir/cli/src" 2>/dev/null; then
         echo -e "${GREEN}✓ Rust: rules-validator enforcement is fail-closed${NC}"
     else
         echo -e "${RED}✗ Rust: rules-validator enforcement is not fail-closed (missing allow_unvalidated_output opt-out)${NC}"
