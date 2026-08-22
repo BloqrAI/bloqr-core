@@ -46,4 +46,60 @@
     </EmbeddedResource>
   </ItemGroup>
 
+  <!--
+    bloqr_validator native library, part 1: NuGet packaging.
+    IBloqrValidatorService P/Invokes "bloqr_validator" (see BloqrValidatorNativeMethods.cs),
+    but this package never shipped that native library itself - callers building from source
+    or consuming this package via NuGet got no native lib at all, silently degrading to
+    IBloqrValidatorService.IsAvailable == false. CI (publish-nuget.yml) builds
+    bloqr-validator-core's cdylib for win-x64/linux-x64/osx-x64 and passes their staging
+    directory via -p:BloqrValidatorNativeLibsDir=<dir containing {rid}/<libname> subfolders>,
+    which packs them as standard NuGet runtime assets so `dotnet publish`/`dotnet run` picks
+    the right one up automatically for the target RID.
+  -->
+  <ItemGroup Condition="'$(BloqrValidatorNativeLibsDir)' != ''">
+    <None Include="$(BloqrValidatorNativeLibsDir)/win-x64/bloqr_validator.dll"
+          Condition="Exists('$(BloqrValidatorNativeLibsDir)/win-x64/bloqr_validator.dll')"
+          Pack="true" PackagePath="runtimes/win-x64/native/" />
+    <None Include="$(BloqrValidatorNativeLibsDir)/linux-x64/libbloqr_validator.so"
+          Condition="Exists('$(BloqrValidatorNativeLibsDir)/linux-x64/libbloqr_validator.so')"
+          Pack="true" PackagePath="runtimes/linux-x64/native/" />
+    <None Include="$(BloqrValidatorNativeLibsDir)/osx-x64/libbloqr_validator.dylib"
+          Condition="Exists('$(BloqrValidatorNativeLibsDir)/osx-x64/libbloqr_validator.dylib')"
+          Pack="true" PackagePath="runtimes/osx-x64/native/" />
+  </ItemGroup>
+
+  <!--
+    bloqr_validator native library, part 2: local-dev convenience.
+    If bloqr-validator-core's cdylib has been built locally (`cargo build -p
+    bloqr-validator-core`, matching the `target/{release,debug}` fallback convention the
+    TypeScript/Python/PowerShell/Bash wrappers already use to find `bloqr-validate`), copy it
+    into the output directory of whatever app ultimately references this library - a `None`
+    item's CopyToOutputDirectory propagates transitively through ProjectReference to the
+    final consuming executable's output (Console, Tests, Dashboard), not just this project's
+    own bin dir - so IBloqrValidatorService.IsAvailable works for local `dotnet build`/`dotnet
+    test` without a separate packaging step. Prefers a release build over debug if both exist.
+  -->
+  <PropertyGroup>
+    <_BloqrValidatorRepoRoot>$(MSBuildThisFileDirectory)../../../../../</_BloqrValidatorRepoRoot>
+  </PropertyGroup>
+  <PropertyGroup Condition="$([MSBuild]::IsOSPlatform('Windows'))">
+    <_BloqrValidatorNativeLibName>bloqr_validator.dll</_BloqrValidatorNativeLibName>
+  </PropertyGroup>
+  <PropertyGroup Condition="$([MSBuild]::IsOSPlatform('OSX'))">
+    <_BloqrValidatorNativeLibName>libbloqr_validator.dylib</_BloqrValidatorNativeLibName>
+  </PropertyGroup>
+  <PropertyGroup Condition="$([MSBuild]::IsOSPlatform('Linux'))">
+    <_BloqrValidatorNativeLibName>libbloqr_validator.so</_BloqrValidatorNativeLibName>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(_BloqrValidatorNativeLibName)' != '' and Exists('$(_BloqrValidatorRepoRoot)target/release/$(_BloqrValidatorNativeLibName)')">
+    <_BloqrValidatorNativeLibPath>$(_BloqrValidatorRepoRoot)target/release/$(_BloqrValidatorNativeLibName)</_BloqrValidatorNativeLibPath>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(_BloqrValidatorNativeLibPath)' == '' and '$(_BloqrValidatorNativeLibName)' != '' and Exists('$(_BloqrValidatorRepoRoot)target/debug/$(_BloqrValidatorNativeLibName)')">
+    <_BloqrValidatorNativeLibPath>$(_BloqrValidatorRepoRoot)target/debug/$(_BloqrValidatorNativeLibName)</_BloqrValidatorNativeLibPath>
+  </PropertyGroup>
+  <ItemGroup Condition="'$(_BloqrValidatorNativeLibPath)' != ''">
+    <None Include="$(_BloqrValidatorNativeLibPath)" Link="$(_BloqrValidatorNativeLibName)" CopyToOutputDirectory="PreserveNewest" Pack="false" />
+  </ItemGroup>
+
 </Project>
