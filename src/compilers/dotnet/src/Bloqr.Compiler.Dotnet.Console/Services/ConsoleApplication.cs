@@ -27,8 +27,7 @@ public class ConsoleApplication
 {
     private readonly ILogger<ConsoleApplication> _logger;
     private readonly IBloqrCompilerService _compilerService;
-    private readonly IChunkingService _chunkingService;
-    private readonly IConfigurationReader _configurationReader;
+    private readonly IBenchmarkService _benchmarkService;
     private readonly IConfiguration _configuration;
 
     /// <summary>
@@ -36,20 +35,17 @@ public class ConsoleApplication
     /// </summary>
     /// <param name="logger">The logger instance.</param>
     /// <param name="compilerService">The compiler service.</param>
-    /// <param name="chunkingService">The chunking service, used by <c>--benchmark</c>'s chunked run.</param>
-    /// <param name="configurationReader">The configuration reader, used to serialize benchmark configs to temp files.</param>
+    /// <param name="benchmarkService">The benchmark service backing <c>--benchmark</c>.</param>
     /// <param name="configuration">The application configuration.</param>
     public ConsoleApplication(
         ILogger<ConsoleApplication> logger,
         IBloqrCompilerService compilerService,
-        IChunkingService chunkingService,
-        IConfigurationReader configurationReader,
+        IBenchmarkService benchmarkService,
         IConfiguration configuration)
     {
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         _compilerService = compilerService ?? throw new ArgumentNullException(nameof(compilerService));
-        _chunkingService = chunkingService ?? throw new ArgumentNullException(nameof(chunkingService));
-        _configurationReader = configurationReader ?? throw new ArgumentNullException(nameof(configurationReader));
+        _benchmarkService = benchmarkService ?? throw new ArgumentNullException(nameof(benchmarkService));
         _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
     }
 
@@ -319,185 +315,12 @@ public class ConsoleApplication
         }
     }
 
-    private static readonly string[] BenchmarkSizes = ["small", "medium", "large", "xlarge"];
-
-    private static readonly string[] BenchmarkTransformations = ["Deduplicate", "RemoveEmptyLines", "TrimLines"];
-
-    /// <summary>
-    /// Result of benchmarking one canned dataset size, unchunked vs chunked.
-    /// </summary>
-    private sealed class BenchmarkRunResult
-    {
-        [JsonPropertyName("size")]
-        public string Size { get; set; } = string.Empty;
-
-        [JsonPropertyName("sources")]
-        public int Sources { get; set; }
-
-        [JsonPropertyName("maxParallel")]
-        public int MaxParallel { get; set; }
-
-        [JsonPropertyName("unchunkedSuccess")]
-        public bool UnchunkedSuccess { get; set; }
-
-        [JsonPropertyName("unchunkedMs")]
-        public long UnchunkedMs { get; set; }
-
-        [JsonPropertyName("unchunkedRuleCount")]
-        public int UnchunkedRuleCount { get; set; }
-
-        [JsonPropertyName("chunkedSuccess")]
-        public bool ChunkedSuccess { get; set; }
-
-        [JsonPropertyName("chunkedMs")]
-        public long ChunkedMs { get; set; }
-
-        [JsonPropertyName("chunkedRuleCount")]
-        public int ChunkedRuleCount { get; set; }
-
-        [JsonPropertyName("speedup")]
-        public double? Speedup { get; set; }
-
-        [JsonPropertyName("error")]
-        public string? Error { get; set; }
-    }
-
-    /// <summary>
-    /// Locates the repo's <c>benchmarks/data</c> directory by walking up from the current
-    /// directory, mirroring configuration-file discovery.
-    /// </summary>
-    private static string? FindBenchmarkDataDir()
-    {
-        var dir = new DirectoryInfo(Directory.GetCurrentDirectory());
-
-        while (dir is not null)
-        {
-            var candidate = Path.Combine(dir.FullName, "benchmarks", "data");
-            if (Directory.Exists(candidate))
-            {
-                return candidate;
-            }
-
-            dir = dir.Parent;
-        }
-
-        return null;
-    }
-
-    /// <summary>
-    /// Builds a <see cref="CompilerConfiguration"/> with <paramref name="numSources"/>
-    /// identical sources, all pointing at <paramref name="dataPath"/> - the same "N copies
-    /// of one file" shape the (otherwise unusable, machine-specific-path) canned
-    /// <c>benchmarks/data/config-multi-Nsources.json</c> fixtures use. Identical sources
-    /// keep the unchunked and chunked runs directly comparable: same total workload, same
-    /// total rule count after dedup, only the chunking strategy differs.
-    /// </summary>
-    private static CompilerConfiguration BuildBenchmarkConfiguration(string size, string dataPath, int numSources)
-    {
-        var config = new CompilerConfiguration
-        {
-            Name = $"Benchmark - {size}",
-            Description = $"Real-pipeline benchmark of the '{size}' canned dataset",
-            Version = "1.0.0",
-            Transformations = [.. BenchmarkTransformations]
-        };
-
-        for (var i = 0; i < Math.Max(1, numSources); i++)
-        {
-            config.Sources.Add(new FilterSource
-            {
-                Name = $"source-{i + 1}",
-                Source = dataPath,
-                Type = "adblock"
-            });
-        }
-
-        return config;
-    }
-
-    /// <summary>
-    /// Runs the unchunked path: writes <paramref name="config"/> to a temp JSON file and
-    /// compiles it through the real <see cref="IBloqrCompilerService"/> pipeline (a single
-    /// compiler invocation covering all of <paramref name="config"/>'s sources).
-    /// </summary>
-    private async Task<(bool Success, long ElapsedMs, int RuleCount, string? Error)> RunUnchunkedAsync(
-        CompilerConfiguration config)
-    {
-        var tempConfigPath = Path.Combine(Path.GetTempPath(), $"benchmark-config-{Guid.NewGuid()}.json");
-        var tempOutputPath = Path.Combine(Path.GetTempPath(), $"benchmark-output-{Guid.NewGuid()}.txt");
-
-        try
-        {
-            var json = _configurationReader.ToJson(config);
-            await File.WriteAllTextAsync(tempConfigPath, json);
-
-            var options = new CompilerOptions
-            {
-                ConfigPath = tempConfigPath,
-                OutputPath = tempOutputPath,
-                ValidateConfig = false
-            };
-
-            var result = await _compilerService.RunAsync(options);
-            return (result.Success, result.ElapsedMs, result.RuleCount, result.Success ? null : result.ErrorMessage);
-        }
-        catch (Exception ex)
-        {
-            return (false, 0, 0, ex.Message);
-        }
-        finally
-        {
-            if (File.Exists(tempConfigPath)) { try { File.Delete(tempConfigPath); } catch { /* ignore */ } }
-            if (File.Exists(tempOutputPath)) { try { File.Delete(tempOutputPath); } catch { /* ignore */ } }
-        }
-    }
-
-    /// <summary>
-    /// Runs the chunked path: splits <paramref name="config"/> into one chunk per source
-    /// (the only implemented chunking strategy) and compiles the chunks in parallel through
-    /// the real <see cref="IChunkingService"/> pipeline, up to <paramref name="maxParallel"/>
-    /// at a time.
-    /// </summary>
-    private async Task<(bool Success, long ElapsedMs, int RuleCount, string? Error)> RunChunkedAsync(
-        CompilerConfiguration config,
-        int maxParallel)
-    {
-        var chunkingOptions = new ChunkingOptions
-        {
-            Enabled = true,
-            MaxParallel = Math.Max(1, maxParallel),
-            Strategy = ChunkingStrategy.Source
-        };
-
-        try
-        {
-            var chunks = _chunkingService.SplitIntoChunks(config, chunkingOptions);
-            var options = new CompilerOptions { ValidateConfig = false };
-            var result = await _chunkingService.CompileChunksAsync(chunks, options, chunkingOptions);
-
-            var error = result.Success ? null : string.Join("; ", result.Errors);
-            return (result.Success, result.TotalElapsedMs, result.FinalRuleCount, error);
-        }
-        catch (Exception ex)
-        {
-            return (false, 0, 0, ex.Message);
-        }
-    }
-
     /// <summary>
     /// Benchmarks real compilation performance (chunked vs unchunked) across the requested
-    /// canned dataset size(s), using the same <see cref="IBloqrCompilerService"/>/
-    /// <see cref="IChunkingService"/> pipeline the <c>compile</c> command uses - not a
-    /// synthetic simulation.
+    /// canned dataset size(s), via the shared <see cref="IBenchmarkService"/> (#423) - not a
+    /// synthetic simulation. Purely a rendering layer: all benchmarking logic lives in
+    /// <see cref="IBenchmarkService"/> so the Dashboard's Diagnostics menu can reuse it too.
     /// </summary>
-    /// <remarks>
-    /// The unchunked and chunked paths currently shell out to two different underlying
-    /// compilers (see #424): <see cref="IBloqrCompilerService"/> uses Deno + the JSR
-    /// <c>@bloqr/compiler-core</c> package, <see cref="IChunkingService"/> uses
-    /// <c>hostlist-compiler</c>/<c>npx</c> directly. Part of any timing delta may reflect
-    /// that difference rather than chunking overhead alone, and each side needs its own
-    /// tool installed to succeed.
-    /// </remarks>
     private async Task<int> RunBenchmarkAsync(
         string size,
         string? dataDir,
@@ -505,106 +328,53 @@ public class ConsoleApplication
         int maxParallel,
         bool jsonOutput)
     {
-        var sizes = size.Equals("all", StringComparison.OrdinalIgnoreCase)
-            ? BenchmarkSizes
-            : [size];
+        List<BenchmarkRunResult> results;
 
-        var invalidSize = sizes.FirstOrDefault(s => !BenchmarkSizes.Contains(s, StringComparer.OrdinalIgnoreCase));
-        if (invalidSize is not null)
+        try
         {
-            AnsiConsole.MarkupLine(
-                $"[red]Unknown benchmark size '{Markup.Escape(invalidSize)}'. Expected one of: {string.Join(", ", BenchmarkSizes)}, or 'all'.[/]");
-            return 1;
-        }
-
-        var resolvedDataDir = dataDir ?? FindBenchmarkDataDir();
-        if (resolvedDataDir is null)
-        {
-            AnsiConsole.MarkupLine("[red]Could not find a benchmarks/data directory.[/]");
-            AnsiConsole.MarkupLine("[grey]Pass --benchmark-data-dir to point at one explicitly, or run this[/]");
-            AnsiConsole.MarkupLine("[grey]from within a clone of BloqrAI/bloqr-core.[/]");
-            return 1;
-        }
-
-        if (!jsonOutput)
-        {
-            AnsiConsole.WriteLine();
-            AnsiConsole.Write(new Rule("[green]Chunking Performance Benchmark (real compiler pipeline)[/]").RuleStyle("grey"));
-            AnsiConsole.WriteLine();
-            AnsiConsole.MarkupLine($"[grey]Data directory:[/] {Markup.Escape(resolvedDataDir)}");
-            AnsiConsole.MarkupLine($"[grey]Sources per dataset:[/] {numSources} (identical copies, one per chunk)");
-            AnsiConsole.MarkupLine($"[grey]Max parallel workers:[/] {maxParallel}");
-            AnsiConsole.WriteLine();
-        }
-
-        var results = new List<BenchmarkRunResult>();
-
-        foreach (var s in sizes)
-        {
-            var dataPath = Path.Combine(resolvedDataDir, $"{s}.txt");
-            if (!File.Exists(dataPath))
-            {
-                var missingMsg = $"dataset file not found: {dataPath}";
-                if (!jsonOutput)
-                {
-                    AnsiConsole.MarkupLine($"[yellow]SKIP {s}:[/] {Markup.Escape(missingMsg)}");
-                }
-
-                results.Add(new BenchmarkRunResult
-                {
-                    Size = s,
-                    Sources = numSources,
-                    MaxParallel = maxParallel,
-                    Error = missingMsg
-                });
-                continue;
-            }
-
-            var config = BuildBenchmarkConfiguration(s, dataPath, numSources);
-
-            (bool Success, long ElapsedMs, int RuleCount, string? Error) unchunked = default;
-            (bool Success, long ElapsedMs, int RuleCount, string? Error) chunked = default;
-
             if (jsonOutput)
             {
-                unchunked = await RunUnchunkedAsync(config);
-                chunked = await RunChunkedAsync(config, maxParallel);
+                results = await _benchmarkService.RunBenchmarkAsync(size, dataDir, numSources, maxParallel);
             }
             else
             {
-                await AnsiConsole.Status()
-                    .StartAsync($"Benchmarking '{s}' ({numSources} sources)...", async ctx =>
+                var resolvedDataDir = dataDir ?? _benchmarkService.FindBenchmarkDataDir();
+                AnsiConsole.WriteLine();
+                AnsiConsole.Write(new Rule("[green]Chunking Performance Benchmark (real compiler pipeline)[/]").RuleStyle("grey"));
+                AnsiConsole.WriteLine();
+                AnsiConsole.MarkupLine($"[grey]Data directory:[/] {Markup.Escape(resolvedDataDir ?? "(not found)")}");
+                AnsiConsole.MarkupLine($"[grey]Sources per dataset:[/] {numSources} (identical copies, one per chunk)");
+                AnsiConsole.MarkupLine($"[grey]Max parallel workers:[/] {maxParallel}");
+                AnsiConsole.WriteLine();
+
+                results = await AnsiConsole.Status()
+                    .StartAsync(
+                        $"Benchmarking (size: {size}, {numSources} sources)...",
+                        _ => _benchmarkService.RunBenchmarkAsync(size, dataDir, numSources, maxParallel));
+
+                foreach (var r in results)
+                {
+                    if (!r.UnchunkedSuccess && !r.ChunkedSuccess)
                     {
-                        unchunked = await RunUnchunkedAsync(config);
-                        chunked = await RunChunkedAsync(config, maxParallel);
-                    });
+                        AnsiConsole.MarkupLine($"[yellow]SKIP {r.Size}:[/] {Markup.Escape(r.Error ?? "unknown")}");
+                        continue;
+                    }
+
+                    var speedupText = r.Speedup.HasValue ? $", {r.Speedup.Value:F2}x" : string.Empty;
+                    AnsiConsole.MarkupLine(
+                        $"[green]✓[/] {Markup.Escape(r.Size)}: unchunked {r.UnchunkedMs}ms, chunked {r.ChunkedMs}ms{speedupText}");
+                }
             }
-
-            double? speedup = unchunked.Success && chunked.Success && chunked.ElapsedMs > 0
-                ? (double)unchunked.ElapsedMs / chunked.ElapsedMs
-                : null;
-
-            if (!jsonOutput)
-            {
-                var speedupText = speedup.HasValue ? $", {speedup.Value:F2}x" : string.Empty;
-                AnsiConsole.MarkupLine(
-                    $"[green]✓[/] {Markup.Escape(s)}: unchunked {unchunked.ElapsedMs}ms, chunked {chunked.ElapsedMs}ms{speedupText}");
-            }
-
-            results.Add(new BenchmarkRunResult
-            {
-                Size = s,
-                Sources = numSources,
-                MaxParallel = maxParallel,
-                UnchunkedSuccess = unchunked.Success,
-                UnchunkedMs = unchunked.ElapsedMs,
-                UnchunkedRuleCount = unchunked.RuleCount,
-                ChunkedSuccess = chunked.Success,
-                ChunkedMs = chunked.ElapsedMs,
-                ChunkedRuleCount = chunked.RuleCount,
-                Speedup = speedup,
-                Error = unchunked.Error ?? chunked.Error
-            });
+        }
+        catch (ArgumentException ex)
+        {
+            AnsiConsole.MarkupLine($"[red]{Markup.Escape(ex.Message)}[/]");
+            return 1;
+        }
+        catch (DirectoryNotFoundException ex)
+        {
+            AnsiConsole.MarkupLine($"[red]{Markup.Escape(ex.Message)}[/]");
+            return 1;
         }
 
         if (jsonOutput)

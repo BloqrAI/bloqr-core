@@ -41,6 +41,7 @@ public static class ServiceCollectionExtensions
         services.TryAddSingleton<IOutputPublisher, OutputPublisher>();
         services.TryAddSingleton<IBloqrValidatorService, BloqrValidatorService>();
         services.TryAddSingleton<IBloqrCompilerService, BloqrCompilerService>();
+        services.TryAddSingleton<IBenchmarkService, BenchmarkService>();
 
         // Register extensibility services
         services.TryAddSingleton<IPluginManager, PluginManager>();

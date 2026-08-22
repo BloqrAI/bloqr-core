@@ -11,6 +11,7 @@ namespace Bloqr.Dashboard.Core.Services;
 public sealed class DashboardService : IDashboardService
 {
     private readonly IBloqrCompilerService _compilerService;
+    private readonly IBenchmarkService _benchmarkService;
     private readonly IDashboardConfigurationStore _configStore;
     private readonly IProfileManager _profileManager;
 
@@ -19,10 +20,12 @@ public sealed class DashboardService : IDashboardService
     /// </summary>
     public DashboardService(
         IBloqrCompilerService compilerService,
+        IBenchmarkService benchmarkService,
         IDashboardConfigurationStore configStore,
         IProfileManager profileManager)
     {
         _compilerService = compilerService ?? throw new ArgumentNullException(nameof(compilerService));
+        _benchmarkService = benchmarkService ?? throw new ArgumentNullException(nameof(benchmarkService));
         _configStore = configStore ?? throw new ArgumentNullException(nameof(configStore));
         _profileManager = profileManager ?? throw new ArgumentNullException(nameof(profileManager));
     }
@@ -80,4 +83,13 @@ public sealed class DashboardService : IDashboardService
 
         return profile.CompilerConfigs;
     }
+
+    /// <inheritdoc/>
+    public Task<List<BenchmarkRunResult>> RunBenchmarkAsync(
+        string size = "all",
+        string? dataDir = null,
+        int numSources = 4,
+        int maxParallel = 4,
+        CancellationToken cancellationToken = default)
+        => _benchmarkService.RunBenchmarkAsync(size, dataDir, numSources, maxParallel, cancellationToken);
 }
