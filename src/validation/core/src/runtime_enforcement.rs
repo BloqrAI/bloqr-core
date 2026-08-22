@@ -1,7 +1,17 @@
-//! Runtime enforcement wrapper for validation library.
+//! Early prototype of a "mandatory wrapper" runtime-enforcement design.
 //!
-//! This module provides runtime enforcement that ensures validation is always performed.
-//! All compilers must use these wrapper functions instead of calling hostlist-compiler directly.
+//! **This module is deprecated and unused.** None of the five compiler
+//! wrappers in `bloqr-core` (Rust, .NET, TypeScript, Python, PowerShell) call
+//! anything in this module — [`compile_internal`] never grew past its
+//! placeholder implementation, and each wrapper instead enforces validation
+//! directly in its own compilation pipeline (a fail-closed check against a
+//! [`crate::validator::Validator`] result, invoked either in-process (Rust),
+//! via the [`crate::ffi`] P/Invoke surface (.NET), or via the `bloqr-validate`
+//! CLI (TypeScript/Python/PowerShell)). See `docs/VALIDATION_ENFORCEMENT.md`
+//! and `docs/RUNTIME_ENFORCEMENT.md` in the `bloqr-core` repository for the
+//! real, currently-implemented mechanism. Kept only for source
+//! compatibility with any existing consumer of this crate's public API;
+//! do not build new integrations against it.
 
 use serde::{Deserialize, Serialize};
 use std::path::{Path, PathBuf};
@@ -99,19 +109,22 @@ impl Default for CompilationOptions {
     }
 }
 
-/// **MANDATORY WRAPPER**: Compile with enforced validation.
+/// Prototype wrapper combining validation, a placeholder compile step, and
+/// archiving into one call.
 ///
-/// This function MUST be used by all compilers. It ensures that:
-/// 1. All local files are validated for syntax and hash integrity
-/// 2. All remote URLs are validated for security
-/// 3. Validation metadata is included in the result
-/// 4. Archiving is performed if enabled
-///
-/// **DO NOT** bypass this function to call hostlist-compiler directly.
+/// Not used by any compiler in `bloqr-core` — [`compile_internal`] never
+/// grew past writing a placeholder output file, so this never drove a real
+/// compilation. Each language's own wrapper enforces validation directly in
+/// its own pipeline instead; see the module-level docs above.
 ///
 /// # Errors
 ///
-/// Returns an error if validation fails or compilation fails.
+/// Returns an error if validation fails or the placeholder compile step
+/// fails.
+#[deprecated(
+    since = "1.1.0",
+    note = "unused prototype; each bloqr-core compiler enforces validation directly in its own pipeline. See docs/VALIDATION_ENFORCEMENT.md."
+)]
 pub fn compile_with_validation(
     input: CompilationInput,
     options: CompilationOptions,
@@ -168,8 +181,7 @@ pub fn compile_with_validation(
 
     metadata.hash_database_entries = validator.hash_database().len();
 
-    // STEP 3: Call actual compilation (this would call @adguard/hostlist-compiler)
-    // For now, this is a placeholder - actual implementation would integrate here
+    // STEP 3: Call actual compilation - never implemented, see compile_internal.
     let output_path = compile_internal(&input, &options)?;
 
     // STEP 4: Compute output hash
@@ -210,13 +222,19 @@ pub fn compile_with_validation(
     })
 }
 
-/// Verify that a compilation result was produced with proper validation.
+/// Checks an [`EnforcedCompilationResult`]'s metadata for internal
+/// consistency (non-zero counts, a version string, a well-formed signature).
 ///
-/// This can be used to verify that results from other compilers include validation.
+/// Only meaningful for results produced by [`compile_with_validation`],
+/// which nothing in `bloqr-core` calls; see the module-level docs above.
 ///
 /// # Errors
 ///
 /// Returns an error if validation metadata is missing or invalid.
+#[deprecated(
+    since = "1.1.0",
+    note = "unused prototype; each bloqr-core compiler enforces validation directly in its own pipeline. See docs/VALIDATION_ENFORCEMENT.md."
+)]
 pub fn verify_compilation_was_validated(result: &EnforcedCompilationResult) -> Result<()> {
     // Check that validation was actually performed
     if result.validation_metadata.local_files_validated == 0
@@ -249,17 +267,13 @@ pub fn verify_compilation_was_validated(result: &EnforcedCompilationResult) -> R
     Ok(())
 }
 
-/// Internal compilation function (placeholder).
+/// Placeholder compilation step — never grew into a real implementation.
 ///
-/// In actual implementation, this would call @adguard/hostlist-compiler
+/// Just concatenates local input files into `options.output_path`; it does
+/// not fetch remote sources, apply transformations, or handle conflicts.
+/// Exists only so [`compile_with_validation`]'s tests have something to
+/// exercise end-to-end.
 fn compile_internal(input: &CompilationInput, options: &CompilationOptions) -> Result<PathBuf> {
-    // Placeholder: actual implementation would:
-    // 1. Convert input to hostlist-compiler format
-    // 2. Call hostlist-compiler
-    // 3. Handle file conflicts using options.validation_config.output.conflict_strategy
-    // 4. Return final output path
-
-    // For now, create a dummy output file for testing
     if let Some(parent) = options.output_path.parent() {
         if !parent.exists() {
             std::fs::create_dir_all(parent)?;
@@ -294,6 +308,7 @@ fn count_rules<P: AsRef<Path>>(path: P) -> Result<usize> {
 }
 
 #[cfg(test)]
+#[allow(deprecated)]
 mod tests {
     use super::*;
 

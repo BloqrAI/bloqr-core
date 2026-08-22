@@ -397,30 +397,22 @@ Action required:
 
 ### Q: How do I know validation is actually running?
 
-**A: Multiple ways:**
+**A: A few concrete ways — see `docs/VALIDATION_ENFORCEMENT.md` for the full picture:**
 
-1. **Validation metadata in output**:
-   ```json
-   {
-     "validation_metadata": {
-       "validation_timestamp": "2024-12-27T10:30:00Z",
-       "local_files_validated": 5,
-       "remote_urls_validated": 3,
-       "hash_database_entries": 8,
-       "validation_library_version": "1.0.0",
-       "signature": "abc123..."
-     }
-   }
-   ```
+1. **It's fail-closed by default.** If the validator can't be found or run,
+   or reports an Error/Critical finding, compilation aborts. It doesn't
+   silently continue — you'll see the failure. Bypassing that requires an
+   explicit, loudly-logged `allow_unvalidated_output`-style opt-out.
 
-2. **CI/CD enforcement**: GitHub Actions workflow fails if validation is bypassed
+2. **CI enforcement**: `tools/check-validation-compliance.sh`
+   (`.github/workflows/validation-compliance.yml`) fails the build if any
+   compiler's fail-closed opt-out symbol is missing — i.e. if enforcement
+   were ever quietly reverted to informational-only.
 
-3. **Verification function**:
-   ```typescript
-   verify_compilation_was_validated(result);  // Throws if validation missing
-   ```
-
-4. **Audit logs**: All validations are logged with timestamps
+3. **Verbose/handler output**: registering a `CompilationEventHandler` (or
+   running with `--verbose`) surfaces each `ValidationEvent`/
+   `ValidationEventArgs` — pass/fail counts, severity, and messages — for
+   every compilation.
 
 ### Q: Is validation overkill for personal use?
 

@@ -1,6 +1,12 @@
 //! Integration tests for the validation library.
 //!
 //! These tests verify end-to-end functionality across all modules.
+//!
+//! `compile_with_validation`/`verify_compilation_was_validated` are the
+//! deprecated `runtime_enforcement` prototype (see that module's docs) -
+//! `#![allow(deprecated)]` below just keeps testing them from being noisy.
+
+#![allow(deprecated)]
 
 use bloqr_validator::{
     compile_with_validation, create_archive, resolve_conflict, validate_syntax,
