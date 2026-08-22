@@ -271,27 +271,44 @@ interface RulesValidateFileResult {
 
 /**
  * Shells out to the `bloqr-validate` CLI to syntax-check compiled output and
- * fires `callbacks.onValidation` with the result. Findings are informational
- * by default; only a handler that explicitly sets `event.abort = true` stops
- * compilation (mirroring the Rust/.NET/Python bloqr-validator wiring).
+ * fires `callbacks.onValidation` with the result.
  *
- * A missing/unusable binary or malformed output is treated as a skip, not a
- * failure, so this check degrades gracefully wherever the CLI hasn't been
- * built or installed.
+ * Fail-closed by default: any Error/Critical finding (`!event.passed`) aborts
+ * compilation, and so does a missing binary, a failed invocation, or
+ * unparseable output - a validator we couldn't run tells us nothing about the
+ * output's safety, so it can't be treated as "no findings". `failOnWarnings`
+ * additionally escalates Warning findings to abort. A handler may still set
+ * `event.abort`/`event.abortReason` explicitly for custom logic, but no
+ * handler is required for the default checks to hold.
+ *
+ * Pass `allowUnvalidated: true` to revert to the legacy, opt-in-only behavior
+ * (silently skip on a run failure; only an explicit handler-set `abort`
+ * counts) - use only for deliberate debugging of unvalidated output.
  * @param outputPath - Path to the compiled output file
  * @param callbacks - Optional validation callbacks
  * @param logger - Logger instance
- * @throws {Error} If a handler sets `event.abort = true`
+ * @param allowUnvalidated - Explicit opt-out of the fail-closed default
+ * @param failOnWarnings - Also abort on Warning-severity findings
+ * @throws {Error} If validation could not run, reported invalid output, or a
+ * handler set `event.abort = true` - unless `allowUnvalidated` is set
  */
 export async function runRulesValidator(
   outputPath: string,
   callbacks?: ValidationCallbacks,
   logger: Logger = defaultLogger,
+  allowUnvalidated = false,
+  failOnWarnings = false,
 ): Promise<void> {
   const binary = findRulesValidateBinary();
   if (!binary) {
-    logger.debug('bloqr-validate binary not found; skipping syntax validation');
-    return;
+    if (allowUnvalidated) {
+      logger.debug('bloqr-validate binary not found; skipping syntax validation');
+      return;
+    }
+    throw new Error(
+      'bloqr-validate binary not found; cannot validate compiled output. ' +
+        'Pass allowUnvalidatedOutput to bypass this check (not recommended).',
+    );
   }
 
   const hashDbPath = join(dirname(outputPath), '.hashes.json');
@@ -308,20 +325,29 @@ export async function runRulesValidator(
     }
     stdout = spawnResult.stdout ?? '';
   } catch (error) {
-    logger.debug(
-      `bloqr-validate invocation failed, skipping syntax validation: ${
-        error instanceof Error ? error.message : String(error)
-      }`,
+    const message = error instanceof Error ? error.message : String(error);
+    if (allowUnvalidated) {
+      logger.debug(`bloqr-validate invocation failed, skipping syntax validation: ${message}`);
+      return;
+    }
+    throw new Error(
+      `bloqr-validate invocation failed: ${message}. ` +
+        'Pass allowUnvalidatedOutput to bypass this check (not recommended).',
     );
-    return;
   }
 
   let parsed: RulesValidateFileResult;
   try {
     parsed = JSON.parse(stdout);
   } catch {
-    logger.debug('bloqr-validate produced non-JSON output; skipping syntax validation');
-    return;
+    if (allowUnvalidated) {
+      logger.debug('bloqr-validate produced non-JSON output; skipping syntax validation');
+      return;
+    }
+    throw new Error(
+      'bloqr-validate produced non-JSON output; cannot validate compiled output. ' +
+        'Pass allowUnvalidatedOutput to bypass this check (not recommended).',
+    );
   }
 
   const findings: ValidationFinding[] = [];
@@ -350,8 +376,12 @@ export async function runRulesValidator(
     await Promise.resolve(callbacks.onValidation(event));
   }
 
-  if (event.abort) {
-    throw new Error(event.abortReason ?? 'Rules validation aborted by handler');
+  const hasWarnings = findings.some((f) => f.severity === 'warning');
+  const shouldAbort = event.abort ||
+    (!allowUnvalidated && (!event.passed || (failOnWarnings && hasWarnings)));
+
+  if (shouldAbort) {
+    throw new Error(event.abortReason ?? 'Rules validation aborted: bloqr-validate reported invalid output');
   }
 }
 
@@ -437,6 +467,13 @@ export interface ExtendedCompileOptions extends CompileOptions {
   hashCallbacks?: HashVerificationCallbacks;
   /** Rules-validator syntax-validation callbacks */
   validationCallbacks?: ValidationCallbacks;
+  /**
+   * Explicit opt-out of the mandatory rules-validator syntax check on compiled
+   * output. Security-relevant: leave this `false` (the default) in production -
+   * compiled output is validated and compilation fails closed by default. Use
+   * only for deliberate debugging of unvalidated output.
+   */
+  allowUnvalidatedOutput?: boolean;
 }
 
 /**
@@ -573,8 +610,16 @@ export async function runCompiler(options: ExtendedCompileOptions): Promise<Comp
 
     logger.debug(`Hash: ${result.outputHash}`);
 
-    // Run the bloqr-validator syntax check; findings are informational unless a handler aborts
-    await runRulesValidator(result.outputPath, options.validationCallbacks, logger);
+    // Mandatory bloqr-validator syntax check - fail-closed by default (see
+    // runRulesValidator doc comment); handlers may still customize via the
+    // callback, but nothing has to be registered for the default checks to hold.
+    await runRulesValidator(
+      result.outputPath,
+      options.validationCallbacks,
+      logger,
+      options.allowUnvalidatedOutput ?? false,
+      options.failOnWarnings ?? false,
+    );
 
     // Copy to rules directory if requested
     if (options.copyToRules) {
