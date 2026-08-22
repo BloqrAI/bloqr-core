@@ -159,23 +159,45 @@ Examples:
     parser.add_argument(
         "--benchmark",
         action="store_true",
-        help="Run synthetic benchmark to show expected chunking speedups",
+        help=(
+            "Benchmark real compilation performance, chunked vs unchunked, against the "
+            "canned benchmarks/data/ datasets"
+        ),
     )
 
     parser.add_argument(
-        "--benchmark-rules",
+        "--benchmark-size",
+        default="all",
+        metavar="SIZE",
+        help="Dataset size to benchmark: small, medium, large, xlarge, or all (default: all)",
+    )
+
+    parser.add_argument(
+        "--benchmark-data-dir",
+        metavar="PATH",
+        help="Directory containing the canned benchmark data (default: auto-discovered)",
+    )
+
+    parser.add_argument(
+        "--benchmark-sources",
         type=int,
-        default=200_000,
+        default=4,
         metavar="COUNT",
-        help="Number of rules to simulate in benchmark (default: 200000)",
+        help="Number of identical duplicated sources for the chunked run (default: 4)",
     )
 
     parser.add_argument(
-        "--benchmark-parallel",
+        "--benchmark-max-parallel",
         type=int,
         default=None,
         metavar="WORKERS",
-        help="Max parallel workers for benchmark (default: CPU count, max 8)",
+        help="Max parallel workers for the chunked run (default: CPU count, max 8)",
+    )
+
+    parser.add_argument(
+        "--benchmark-json",
+        action="store_true",
+        help="Emit machine-readable JSON instead of a human-readable table",
     )
 
     return parser
@@ -204,113 +226,82 @@ def show_version() -> None:
     print()
 
 
-def run_benchmark(rule_count: int, max_parallel: int | None = None) -> int:
-    """Run a synthetic benchmark to demonstrate chunking speedup."""
-    import os
-    import random
-    import string
-    import time
-    from concurrent.futures import ThreadPoolExecutor, as_completed
+def run_benchmark(
+    size: str = "all",
+    data_dir: str | None = None,
+    num_sources: int = 4,
+    max_parallel: int | None = None,
+    json_output: bool = False,
+) -> int:
+    """
+    Benchmark real compilation performance (chunked vs unchunked) against the canned
+    `benchmarks/data/{small,medium,large,xlarge}.txt` datasets, through the real
+    `BloqrCompiler.compile()`/`compile_chunks_async()` pipeline - not a simulation. See
+    `bloqr_compiler.benchmark` for the implementation and the #424 divergent-compiler
+    caveat.
+    """
+    import json as json_module
 
-    if max_parallel is None:
-        max_parallel = min(os.cpu_count() or 4, 8)
+    from bloqr_compiler.benchmark import find_benchmark_data_dir
+    from bloqr_compiler.benchmark import run_benchmark as run_benchmark_impl
 
-    print()
-    print("=" * 70)
-    print("CHUNKING PERFORMANCE BENCHMARK")
-    print("=" * 70)
-    print(f"CPU cores available: {os.cpu_count()}")
-    print(f"Max parallel workers: {max_parallel}")
-    print(f"Simulating {rule_count:,} rules")
-    print()
+    resolved_data_dir = Path(data_dir) if data_dir else find_benchmark_data_dir()
+    if resolved_data_dir is None:
+        print("[ERROR] Could not find a benchmarks/data directory.", file=sys.stderr)
+        print(
+            "        Pass --benchmark-data-dir to point at one explicitly, or run this",
+            file=sys.stderr,
+        )
+        print("        from within a clone of BloqrAI/bloqr-core.", file=sys.stderr)
+        return 1
 
-    # Generate synthetic rules
-    print("Generating synthetic rules...", end=" ", flush=True)
-    rules = []
-    tlds = ["com", "net", "org", "io", "co"]
-    words = ["ad", "ads", "track", "pixel", "banner", "promo", "click"]
-    for _ in range(rule_count):
-        word = random.choice(words)
-        suffix = ''.join(random.choices(string.ascii_lowercase, k=4))
-        tld = random.choice(tlds)
-        rules.append(f"||{word}{suffix}.{tld}^")
-    print("done")
+    if not json_output:
+        print()
+        print("=" * 70)
+        print("CHUNKING PERFORMANCE BENCHMARK (real compiler pipeline)")
+        print("=" * 70)
+        print(f"Data directory:       {resolved_data_dir}")
+        print(f"Sources per dataset:  {num_sources} (identical copies, one per chunk)")
+        print()
 
-    # Simulate sequential processing
-    def simulate_processing(rule_list: list, chunk_id: int = 0) -> tuple[int, float]:
-        """Simulate processing rules with realistic timing."""
-        fixed_overhead_ms = 50
-        per_rule_ms = 0.01  # 10ms per 1000 rules
+    try:
+        results = run_benchmark_impl(
+            size=size,
+            data_dir=resolved_data_dir,
+            num_sources=num_sources,
+            max_parallel=max_parallel,
+        )
+    except ValueError as e:
+        print(f"[ERROR] {e}", file=sys.stderr)
+        return 1
 
-        processing_time = fixed_overhead_ms + (len(rule_list) * per_rule_ms)
-        variation = random.uniform(0.95, 1.15)
-        processing_time *= variation
+    if json_output:
+        print(json_module.dumps([r.to_dict() for r in results], indent=2))
+    else:
+        print("-" * 70)
+        print("RESULTS")
+        print("-" * 70)
+        print(f"{'Size':<10} {'Unchunked':<12} {'Chunked':<12} {'Speedup':<10} {'Rules':<10}")
+        print("-" * 70)
+        for r in results:
+            if r.error and not r.unchunked_success and not r.chunked_success:
+                print(f"{r.size:<10} FAILED: {r.error}")
+                continue
+            speedup_str = f"{r.speedup:.2f}x" if r.speedup is not None else "n/a"
+            print(
+                f"{r.size:<10} {f'{r.unchunked_ms}ms':<12} {f'{r.chunked_ms}ms':<12} "
+                f"{speedup_str:<10} {r.chunked_rule_count:<10}"
+            )
+        print("-" * 70)
+        print()
+        print("Note: this exercises the real compiler pipeline, so results depend on this")
+        print("machine's CPU/I-O characteristics. Unchunked needs Deno on PATH; chunked needs")
+        print("hostlist-compiler or npx on PATH - see #424 (they aren't the same underlying")
+        print("compiler today).")
+        print()
 
-        # Scale down for demo (1% of actual time)
-        time.sleep(processing_time / 1000 * 0.01)
-
-        return len(rule_list), processing_time
-
-    print("Running sequential benchmark...", end=" ", flush=True)
-    start = time.perf_counter()
-    _, sequential_time = simulate_processing(rules)
-    print(f"done ({sequential_time:.0f}ms simulated)")
-
-    # Simulate parallel processing
-    print(f"Running parallel benchmark ({max_parallel} workers)...", end=" ", flush=True)
-    chunk_size = (len(rules) + max_parallel - 1) // max_parallel
-    chunks = [rules[i:i + chunk_size] for i in range(0, len(rules), chunk_size)]
-
-    start = time.perf_counter()
-    chunk_times = []
-
-    with ThreadPoolExecutor(max_workers=max_parallel) as executor:
-        futures = [executor.submit(simulate_processing, chunk, i) for i, chunk in enumerate(chunks)]
-        for future in as_completed(futures):
-            _, chunk_time = future.result()
-            chunk_times.append(chunk_time)
-
-    parallel_time = max(chunk_times)  # Parallel time is the slowest chunk
-    print(f"done ({parallel_time:.0f}ms simulated)")
-
-    # Calculate results
-    speedup = sequential_time / parallel_time if parallel_time > 0 else 1.0
-    efficiency = speedup / max_parallel
-    time_saved = sequential_time - parallel_time
-
-    print()
-    print("-" * 70)
-    print("RESULTS")
-    print("-" * 70)
-    print(f"Sequential time:     {sequential_time:,.0f} ms")
-    print(f"Parallel time:       {parallel_time:,.0f} ms")
-    print(f"Speedup:             {speedup:.2f}x")
-    print(f"Efficiency:          {efficiency:.1%}")
-    print(f"Time saved:          {time_saved:,.0f} ms")
-    print()
-
-    # Show scaling table
-    print("Expected speedups at different scales:")
-    print("-" * 50)
-    print(f"{'Rules':<15} {'Sequential':<15} {'Parallel':<15} {'Speedup'}")
-    print("-" * 50)
-
-    test_sizes = [10_000, 50_000, 200_000, 500_000]
-    for size in test_sizes:
-        seq = 50 + (size * 0.01)  # Simulated time
-        par = 50 + ((size / max_parallel) * 0.01)
-        spd = seq / par
-        print(f"{size:,}".ljust(15) + f"{seq:,.0f} ms".ljust(15) + f"{par:,.0f} ms".ljust(15) + f"{spd:.2f}x")
-
-    print("-" * 50)
-    print()
-    print("Note: Actual speedup depends on:")
-    print("  - Number of CPU cores")
-    print("  - I/O performance (especially for network sources)")
-    print("  - Rule complexity and transformations applied")
-    print()
-
-    return 0
+    any_failed = any(not r.unchunked_success and not r.chunked_success for r in results)
+    return 1 if any_failed else 0
 
 
 def show_transformations() -> None:
@@ -511,7 +502,13 @@ def main(args: list[str] | None = None) -> int:
 
     # Handle benchmark mode
     if opts.benchmark:
-        return run_benchmark(opts.benchmark_rules, opts.benchmark_parallel)
+        return run_benchmark(
+            opts.benchmark_size,
+            opts.benchmark_data_dir,
+            opts.benchmark_sources,
+            opts.benchmark_max_parallel,
+            opts.benchmark_json,
+        )
 
     # Handle interactive mode
     if opts.interactive:

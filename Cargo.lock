@@ -116,8 +116,11 @@ dependencies = [
  "bloqr-compiler-core",
  "clap",
  "dialoguer",
- "rand",
+ "serde",
+ "serde_json",
  "tempfile",
+ "tokio",
+ "uuid",
 ]
 
 [[package]]

@@ -32,7 +32,13 @@ export type {
 } from './types.ts';
 
 // Configuration reader
-export { detectFormat, findDefaultConfig, readConfiguration, toJson } from './config-reader.ts';
+export {
+  detectFormat,
+  findDefaultConfig,
+  readConfiguration,
+  stripInternalMetadata,
+  toJson,
+} from './config-reader.ts';
 export type { ReadConfigurationOptions } from './config-reader.ts';
 
 // Compiler orchestration (chunking, hashing, parallel compilation on top of the core engine)
@@ -49,6 +55,10 @@ export type { CompilerOptions, ExtendedCompileOptions } from './compiler.ts';
 
 // CLI
 export { getVersionInfo, main, parseArgs, showHelp, showVersion } from './cli.ts';
+
+// Benchmark (real chunked-vs-unchunked timing against the canned benchmarks/data/ datasets)
+export { BENCHMARK_SIZES, findBenchmarkDataDir, runBenchmark } from './benchmark.ts';
+export type { BenchmarkOptions, BenchmarkRunResult, BenchmarkSize } from './benchmark.ts';
 
 // Console (Interactive Mode)
 export {

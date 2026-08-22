@@ -184,10 +184,17 @@ cargo doc -p bloqr-validator-core --open
 
 ### Benchmarking
 
+There is no `[[bench]]`/criterion target in this workspace, so `cargo bench` has nothing to
+run. Real-pipeline chunked-vs-unchunked benchmarking is a `benchmark` subcommand on the CLI
+itself instead:
+
 ```bash
-# Run benchmarks (if available)
-cargo bench
+cargo run -p bloqr-compiler -- benchmark --size small
 ```
+
+See [`benchmarks/README.md`](../benchmarks/README.md) for the shared data/JSON-output
+contract this and the other four language wrappers' `benchmark` commands follow, and the root
+`benchmark-all.sh`/`benchmark-all.ps1` scripts that run all of them and compare results.
 
 ### Clean Build Artifacts
 

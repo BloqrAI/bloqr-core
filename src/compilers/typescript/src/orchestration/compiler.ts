@@ -28,7 +28,7 @@ import type {
   ValidationEvent,
   ValidationFinding,
 } from './types.ts';
-import { readConfiguration } from './config-reader.ts';
+import { readConfiguration, stripInternalMetadata } from './config-reader.ts';
 import { logger as defaultLogger } from './logger.ts';
 import { CompilationError, ErrorCode, isCompilerError } from './errors.ts';
 import { withTimeout } from './timeout.ts';
@@ -421,9 +421,13 @@ export async function compileFilters(
   logger.info('Starting filter compilation...');
 
   try {
-    // Wrap compilation with timeout
+    // Wrap compilation with timeout. `compile()` is the core engine's strict-schema
+    // boundary - it rejects unrecognized properties, so any orchestration-layer metadata
+    // (`_sourceFormat`/`_sourcePath`, added by readConfiguration()) must be stripped
+    // before the config object reaches it, even though `config`'s declared type here is
+    // already the clean `IConfiguration` (the actual object at runtime may carry more).
     const result = await withTimeout(
-      compile(config),
+      compile(stripInternalMetadata(config)),
       resolvedOptions.timeoutMs ?? DEFAULT_RESOURCE_LIMITS.compilationTimeoutMs,
       { configName: config.name },
     );

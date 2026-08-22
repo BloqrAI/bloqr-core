@@ -227,12 +227,34 @@ export function readConfiguration(
 }
 
 /**
+ * Strips orchestration-layer-only metadata (`_sourceFormat`/`_sourcePath`, added by
+ * {@linkcode readConfiguration}, and `_chunkMetadata`, added by
+ * {@linkcode [chunking].splitIntoChunks}) from a configuration object.
+ *
+ * The core compilation engine's schema validator rejects unrecognized properties, so
+ * anything that hands a configuration object to {@linkcode [index].compile} - not just
+ * {@linkcode toJson} - needs a clean {@linkcode IConfiguration}, not the
+ * {@linkcode ExtendedConfiguration}/`ChunkedConfiguration` the orchestration layer works
+ * with internally.
+ *
+ * @param config - Configuration object, possibly carrying internal metadata.
+ * @returns A shallow copy of `config` with internal metadata fields removed.
+ */
+export function stripInternalMetadata(config: IConfiguration): IConfiguration {
+  const { _sourceFormat, _sourcePath, _chunkMetadata, ...cleanConfig } = config as
+    & ExtendedConfiguration
+    & { _chunkMetadata?: unknown };
+  void _sourceFormat;
+  void _sourcePath;
+  void _chunkMetadata;
+  return cleanConfig;
+}
+
+/**
  * Converts configuration to JSON string (removes internal metadata)
  * @param config - Configuration object
  * @returns JSON string
  */
 export function toJson(config: IConfiguration): string {
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const { _sourceFormat, _sourcePath, ...cleanConfig } = config as ExtendedConfiguration;
-  return JSON.stringify(cleanConfig, null, 2);
+  return JSON.stringify(stripInternalMetadata(config), null, 2);
 }

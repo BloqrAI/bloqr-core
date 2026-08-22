@@ -8,6 +8,7 @@ import type { Logger } from './types.ts';
 import type { ChunkedConfiguration } from './chunking.ts';
 import { logger as defaultLogger } from './logger.ts';
 import { CompilationError, ErrorCode } from './errors.ts';
+import { stripInternalMetadata } from './config-reader.ts';
 
 /**
  * Worker message types
@@ -32,7 +33,11 @@ interface WorkerResponse {
  */
 export async function compileChunk(config: IConfiguration): Promise<string[]> {
   try {
-    const result = await compile(config);
+    // `compile()` is the core engine's strict-schema boundary - it rejects unrecognized
+    // properties, so the `_sourceFormat`/`_sourcePath`/`_chunkMetadata` orchestration-layer
+    // metadata a chunk config carries (from readConfiguration()/splitIntoChunks()) must be
+    // stripped first.
+    const result = await compile(stripInternalMetadata(config));
     return result;
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Unknown error';
