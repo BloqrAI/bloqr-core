@@ -381,7 +381,9 @@ export async function runRulesValidator(
     (!allowUnvalidated && (!event.passed || (failOnWarnings && hasWarnings)));
 
   if (shouldAbort) {
-    throw new Error(event.abortReason ?? 'Rules validation aborted: bloqr-validate reported invalid output');
+    throw new Error(
+      event.abortReason ?? 'Rules validation aborted: bloqr-validate reported invalid output',
+    );
   }
 }
 
