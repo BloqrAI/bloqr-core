@@ -97,6 +97,14 @@ Each accepts a dataset size (`small`/`medium`/`large`/`xlarge`/`all`), a data di
 override, a source count, and a max-parallel override - see that language's own README
 (`src/compilers/<language>/README.md`) for its exact flag names.
 
+## Dashboard integration
+
+The Dashboard's Diagnostics menu ("Run benchmark (.NET compiler)") calls the same
+`Bloqr.Compiler.Dotnet` benchmark logic in-process via `IDashboardService`/`IBenchmarkService`
+(#423) - not a subprocess, and not synthetic. Per the epic's scope decision, the Dashboard only
+benchmarks the .NET compiler; use `benchmark-all.sh`/`.ps1` or the root Launcher's "Benchmark
+Compilers" menu to compare across all five languages.
+
 ## Running all of them and comparing
 
 `benchmark-all.sh` / `benchmark-all.ps1` at the repo root run every available language's

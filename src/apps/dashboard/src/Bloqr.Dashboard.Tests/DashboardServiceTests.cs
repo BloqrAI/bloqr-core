@@ -5,13 +5,14 @@ namespace Bloqr.Dashboard.Tests;
 public sealed class DashboardServiceTests
 {
     private readonly FakeBloqrCompilerService _compilerService = new();
+    private readonly FakeBenchmarkService _benchmarkService = new();
     private readonly FakeDashboardConfigurationStore _configStore = new();
     private readonly ProfileManager _profileManager = new();
     private readonly DashboardService _service;
 
     public DashboardServiceTests()
     {
-        _service = new DashboardService(_compilerService, _configStore, _profileManager);
+        _service = new DashboardService(_compilerService, _benchmarkService, _configStore, _profileManager);
     }
 
     [Fact]
@@ -95,6 +96,42 @@ public sealed class DashboardServiceTests
         var configs = await _service.GetActiveProfileCompilerConfigsAsync();
 
         Assert.Equal(["a.json", "b.json"], configs);
+    }
+
+    [Fact]
+    public async Task RunBenchmarkAsync_DelegatesToBenchmarkService()
+    {
+        _benchmarkService.Result = [new BenchmarkRunResult { Size = "small", UnchunkedSuccess = true }];
+
+        var results = await _service.RunBenchmarkAsync("small", numSources: 2, maxParallel: 1);
+
+        Assert.Equal("small", _benchmarkService.LastSize);
+        Assert.Equal(2, _benchmarkService.LastNumSources);
+        Assert.Equal(1, _benchmarkService.LastMaxParallel);
+        Assert.Single(results);
+        Assert.Equal("small", results[0].Size);
+    }
+
+    private sealed class FakeBenchmarkService : IBenchmarkService
+    {
+        public List<BenchmarkRunResult> Result { get; set; } = [];
+        public string? LastSize { get; private set; }
+        public int LastNumSources { get; private set; }
+        public int LastMaxParallel { get; private set; }
+
+        public IReadOnlyList<string> BenchmarkSizes => ["small", "medium", "large", "xlarge"];
+
+        public string? FindBenchmarkDataDir() => null;
+
+        public Task<List<BenchmarkRunResult>> RunBenchmarkAsync(
+            string size, string? dataDir, int numSources, int maxParallel,
+            CancellationToken cancellationToken = default)
+        {
+            LastSize = size;
+            LastNumSources = numSources;
+            LastMaxParallel = maxParallel;
+            return Task.FromResult(Result);
+        }
     }
 
     private sealed class FakeBloqrCompilerService : IBloqrCompilerService

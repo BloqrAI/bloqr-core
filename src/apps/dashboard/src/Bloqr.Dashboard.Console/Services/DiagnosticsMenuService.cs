@@ -26,6 +26,7 @@ public sealed class DiagnosticsMenuService : MenuServiceBase
     private readonly IDashboardPaths _paths;
     private readonly IDashboardConfigurationStore _configStore;
     private readonly IBloqrValidatorService _rulesValidatorService;
+    private readonly IDashboardService _dashboardService;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="DiagnosticsMenuService"/> class.
@@ -37,6 +38,7 @@ public sealed class DiagnosticsMenuService : MenuServiceBase
         IDashboardPaths paths,
         IDashboardConfigurationStore configStore,
         IBloqrValidatorService rulesValidatorService,
+        IDashboardService dashboardService,
         ILogger<DiagnosticsMenuService> logger)
         : base(renderer, prompter, logger)
     {
@@ -44,6 +46,7 @@ public sealed class DiagnosticsMenuService : MenuServiceBase
         _paths = paths;
         _configStore = configStore;
         _rulesValidatorService = rulesValidatorService;
+        _dashboardService = dashboardService;
     }
 
     /// <inheritdoc />
@@ -57,7 +60,7 @@ public sealed class DiagnosticsMenuService : MenuServiceBase
         ["Check configuration health"] = CheckConfigurationHealthAsync,
         ["Validate a filter file"] = ValidateFilterFileAsync,
         ["Check AdGuard API configuration"] = CheckAdGuardApiConfigurationAsync,
-        ["Run quick benchmark (synthetic)"] = RunQuickBenchmarkAsync,
+        ["Run benchmark (.NET compiler)"] = RunBenchmarkAsync,
     };
 
     private Task CheckExternalToolsAsync()
@@ -212,65 +215,66 @@ public sealed class DiagnosticsMenuService : MenuServiceBase
             TextStyle.Warning);
     }
 
-    private async Task RunQuickBenchmarkAsync()
+    private static readonly string[] BenchmarkSizeChoices = ["all", "small", "medium", "large", "xlarge"];
+
+    private async Task RunBenchmarkAsync()
     {
-        var pythonPath = _commandHelper.FindCommand("python3") ?? _commandHelper.FindCommand("python");
-        if (pythonPath is null)
+        var size = Prompter.Select("Dataset size to benchmark", BenchmarkSizeChoices);
+
+        List<BenchmarkRunResult> results;
+        try
         {
-            Renderer.WriteStyled(
-                "python3 not found on PATH - see 'Check external tools' for remediation.",
-                TextStyle.Error);
+            results = await Renderer
+                .StatusAsync(
+                    $"Benchmarking .NET compiler (size: {size})...",
+                    () => _dashboardService.RunBenchmarkAsync(size))
+                .ConfigureAwait(false);
+        }
+        catch (ArgumentException ex)
+        {
+            Renderer.WriteStyled(ex.Message, TextStyle.Error);
             return;
         }
-
-        var benchmarksDir = FindBenchmarksDirectory();
-        if (benchmarksDir is null)
+        catch (DirectoryNotFoundException ex)
         {
             Renderer.WriteStyled(
-                "benchmarks/quick_benchmark.py not found. This action only works from a full "
-                + "source checkout (not a binary-only release) - see docs/architecture/"
-                + "release-packaging-strategy.md.",
+                $"{ex.Message} This action only works from a full source checkout (not a "
+                + "binary-only release) - see docs/architecture/release-packaging-strategy.md.",
                 TextStyle.Warning);
             return;
         }
 
-        var (exitCode, stdOut, stdErr) = await Renderer
-            .StatusAsync(
-                "Running synthetic chunking benchmark...",
-                () => _commandHelper.ExecuteAsync(pythonPath, "quick_benchmark.py", benchmarksDir))
-            .ConfigureAwait(false);
+        var table = new ConsoleTable { Title = "Benchmark Results (real .NET compiler pipeline)" };
+        table.AddColumn("Size");
+        table.AddColumn("Unchunked");
+        table.AddColumn("Chunked");
+        table.AddColumn("Speedup");
+        table.AddColumn("Rules");
+
+        foreach (var r in results)
+        {
+            if (!r.UnchunkedSuccess && !r.ChunkedSuccess)
+            {
+                table.AddRow(r.Size, $"FAILED: {r.Error ?? "unknown"}", "", "", "");
+                continue;
+            }
+
+            table.AddRow(
+                r.Size,
+                $"{r.UnchunkedMs:N0} ms",
+                $"{r.ChunkedMs:N0} ms",
+                r.Speedup.HasValue ? $"{r.Speedup.Value:F2}x" : "n/a",
+                r.ChunkedRuleCount.ToString("N0", CultureInfo.InvariantCulture));
+        }
+
+        Renderer.RenderTable(table);
 
         Renderer.WriteLine();
-        if (!string.IsNullOrWhiteSpace(stdOut))
-        {
-            Renderer.WriteLine(stdOut);
-        }
-
-        if (exitCode != 0)
-        {
-            Renderer.WriteStyled($"quick_benchmark.py exited with code {exitCode}.", TextStyle.Error);
-            if (!string.IsNullOrWhiteSpace(stdErr))
-            {
-                Renderer.WriteLine(stdErr);
-            }
-        }
-    }
-
-    // Walks up from the current directory looking for benchmarks/quick_benchmark.py. Only
-    // relevant in source-checkout mode - a binary-only release (#277) doesn't bundle it, so
-    // this returning null there is expected, not an error.
-    private static string? FindBenchmarksDirectory()
-    {
-        var current = new DirectoryInfo(Directory.GetCurrentDirectory());
-        for (var depth = 0; current is not null && depth < 6; depth++, current = current.Parent)
-        {
-            var candidate = Path.Combine(current.FullName, "benchmarks", "quick_benchmark.py");
-            if (File.Exists(candidate))
-            {
-                return Path.Combine(current.FullName, "benchmarks");
-            }
-        }
-
-        return null;
+        Renderer.WriteStyled(
+            "Note: this exercises the real compiler pipeline, so results depend on this "
+            + "machine's CPU/I-O characteristics. Unchunked needs Deno on PATH; chunked needs "
+            + "hostlist-compiler or npx on PATH - see #424 (they aren't the same underlying "
+            + "compiler today).",
+            TextStyle.Info);
     }
 }

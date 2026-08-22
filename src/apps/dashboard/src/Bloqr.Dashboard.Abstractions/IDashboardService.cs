@@ -55,4 +55,33 @@ public interface IDashboardService
     /// <param name="cancellationToken">Cancellation token.</param>
     /// <returns>The active profile's compiler config paths, or an empty list if no profile is active.</returns>
     Task<IReadOnlyList<string>> GetActiveProfileCompilerConfigsAsync(CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Benchmarks real .NET compiler performance (chunked vs unchunked) against the canned
+    /// <c>benchmarks/data/</c> datasets, identical to what the <c>Bloqr.Compiler.Dotnet.Console</c>
+    /// <c>--benchmark</c> CLI mode does (#417) - not a synthetic simulation. Backs the
+    /// Diagnostics menu's benchmark action (#423). Only benchmarks the .NET compiler; unlike the
+    /// root Launcher, the Dashboard doesn't shell out to the other four language compilers.
+    /// </summary>
+    /// <param name="size">A canned dataset size ("small", "medium", "large", "xlarge"), or "all".</param>
+    /// <param name="dataDir">
+    /// Directory containing the canned datasets. Auto-discovered from the current directory when
+    /// <c>null</c>.
+    /// </param>
+    /// <param name="numSources">Number of identical duplicated sources to compile per size.</param>
+    /// <param name="maxParallel">Maximum parallel chunk workers for the chunked run.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>One result per benchmarked size.</returns>
+    /// <exception cref="ArgumentException">
+    /// <paramref name="size"/> is not a recognized size or "all".
+    /// </exception>
+    /// <exception cref="DirectoryNotFoundException">
+    /// No data directory was given or could be found (e.g. a binary-only release checkout).
+    /// </exception>
+    Task<List<BenchmarkRunResult>> RunBenchmarkAsync(
+        string size = "all",
+        string? dataDir = null,
+        int numSources = 4,
+        int maxParallel = 4,
+        CancellationToken cancellationToken = default);
 }
