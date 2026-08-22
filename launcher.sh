@@ -62,19 +62,25 @@ show_menu_dialog() {
 }
 
 # Function to show menu without dialog
+#
+# Every caller invokes this via `choice=$(show_menu ...)`, so anything this
+# function writes to its own stdout gets folded into $choice instead of shown
+# on screen - the rendered menu itself (title/options) must go to stderr, or
+# every numeric case-statement branch downstream silently stops matching
+# (falls through to the default/"Invalid choice" case on every real choice).
 show_menu_simple() {
     local title="$1"
     shift
     local menu_items=("$@")
-    
-    echo -e "${BLUE}═══ $title ═══${NC}"
-    echo ""
+
+    echo -e "${BLUE}═══ $title ═══${NC}" >&2
+    echo "" >&2
     local i=1
     for item in "${menu_items[@]}"; do
-        echo -e "  ${GREEN}$i.${NC} $item"
+        echo -e "  ${GREEN}$i.${NC} $item" >&2
         ((i++))
     done
-    echo ""
+    echo "" >&2
     read -p "Enter your choice [1-$((i-1))]: " choice
     echo "$choice"
 }
@@ -148,6 +154,7 @@ main_menu() {
             "🔨 Build Tools" \
             "⚙️  Compile Filter Rules" \
             "🖥️  Bloqr Dashboard" \
+            "⏱️  Benchmark Compilers" \
             "🔍 Validation & Testing" \
             "📦 Project Management" \
             "ℹ️  System Information" \
@@ -157,10 +164,11 @@ main_menu() {
             1) build_menu ;;
             2) rules_menu ;;
             3) run_dashboard ;;
-            4) validation_menu ;;
-            5) project_menu ;;
-            6) system_info ;;
-            7|"") exit 0 ;;
+            4) benchmark_menu ;;
+            5) validation_menu ;;
+            6) project_menu ;;
+            7) system_info ;;
+            8|"") exit 0 ;;
             *) echo "Invalid choice" ;;
         esac
     done
@@ -306,6 +314,38 @@ run_dashboard() {
 
 # AdGuard API Clients have moved to BloqrAI/bloqr-apiclients; this launcher
 # no longer manages them.
+
+# Benchmark Compilers Menu (#422)
+benchmark_menu() {
+    while true; do
+        show_banner
+        echo -e "${MAGENTA}Benchmark Compilers${NC}"
+        echo ""
+        echo -e "${CYAN}Compiles the canned benchmarks/data/ datasets through each compiler's real${NC}"
+        echo -e "${CYAN}pipeline, chunked vs unchunked - see benchmarks/README.md.${NC}"
+        echo ""
+
+        local choice
+        choice=$(show_menu "Benchmark Which Compiler(s)?" \
+            "All installed compilers" \
+            "Rust" \
+            ".NET" \
+            "TypeScript" \
+            "Python" \
+            "PowerShell" \
+            "← Back to Main Menu")
+
+        case $choice in
+            1) ./benchmark-all.sh; pause ;;
+            2) ./benchmark-all.sh --languages rust; pause ;;
+            3) ./benchmark-all.sh --languages dotnet; pause ;;
+            4) ./benchmark-all.sh --languages typescript; pause ;;
+            5) ./benchmark-all.sh --languages python; pause ;;
+            6) ./benchmark-all.sh --languages powershell; pause ;;
+            7|"") return ;;
+        esac
+    done
+}
 
 # Validation & Testing Menu
 validation_menu() {
