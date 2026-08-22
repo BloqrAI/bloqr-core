@@ -195,7 +195,7 @@ pub fn validate_url(url_str: &str, expected_hash: Option<&str>) -> Result<UrlVal
     // SSRF guard on every hop - see hardened_redirect_policy().
     let client = Client::builder()
         .timeout(Duration::from_secs(30))
-        .user_agent("AdGuard-Validation/1.0")
+        .user_agent("Bloqr-Validator/1.0")
         .redirect(hardened_redirect_policy())
         .build()
         .map_err(|e| ValidationError::url_validation(url_str, format!("HTTP client error: {e}")))?;
