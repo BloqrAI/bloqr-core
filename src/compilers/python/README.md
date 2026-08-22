@@ -62,7 +62,46 @@ bloqr-compiler -c config.json --fail-on-warnings
 | `--validate-config` | | Enable configuration validation before compilation (default: true) |
 | `--no-validate-config` | | Disable configuration validation before compilation |
 | `--fail-on-warnings` | | Fail compilation if configuration has validation warnings |
+| `--benchmark` | | Benchmark real compilation performance, chunked vs unchunked - see [Benchmarking](#benchmarking) |
 | `--help` | `-h` | Show help message |
+
+## Benchmarking
+
+`--benchmark` compiles the canned `benchmarks/data/{small,medium,large,xlarge}.txt` datasets
+through the real `BloqrCompiler.compile()`/`compile_chunks_async()` pipeline - not a simulation
+- once unchunked and once chunked, and reports the actual elapsed time for both. Part of
+[epic #415](https://github.com/BloqrAI/bloqr-core/issues/415)'s per-compiler benchmark work; see
+that issue's other sub-issues for the equivalent subcommand/switch in each of the other four
+language wrappers.
+
+```bash
+# Benchmark all four canned dataset sizes, chunked vs unchunked (auto-discovers benchmarks/data)
+bloqr-compiler --benchmark
+
+# Just one size, with 8 duplicated sources and 8 parallel workers for the chunked run
+bloqr-compiler --benchmark --benchmark-size large --benchmark-sources 8 --benchmark-max-parallel 8
+
+# Machine-readable output for the root comparison script (see benchmarks/)
+bloqr-compiler --benchmark --benchmark-json
+
+# Point at a benchmarks/data directory explicitly (e.g. when not run from a repo checkout)
+bloqr-compiler --benchmark --benchmark-data-dir /path/to/benchmarks/data
+```
+
+| Option | Description |
+|--------|-------------|
+| `--benchmark-size` | Dataset size to benchmark: `small`, `medium`, `large`, `xlarge`, or `all` (default: `all`) |
+| `--benchmark-data-dir` | Directory containing the canned benchmark data (default: auto-discovered) |
+| `--benchmark-sources` | Number of identical duplicated sources for the chunked run (default: 4) |
+| `--benchmark-max-parallel` | Max parallel workers for the chunked run (default: CPU count, max 8) |
+| `--benchmark-json` | Emit machine-readable JSON instead of a human-readable table |
+
+Both runs cover the same total workload (`--benchmark-sources` identical copies of the dataset
+file, so the only intended variable is the chunking strategy), but see
+[#424](https://github.com/BloqrAI/bloqr-core/issues/424): today the unchunked and chunked paths
+shell out to two different underlying compilers (Deno + `@bloqr/compiler-core` vs.
+`hostlist-compiler`/`npx`), so part of any timing delta may reflect that rather than chunking
+overhead alone, and each side needs its own tool on `PATH` to succeed.
 
 ## Python API
 
