@@ -40,6 +40,8 @@ Modern OOP-based rules compiler module.
 **Features:**
 - CompilerConfiguration class
 - `Invoke-BloqrCompiler`: shells out to `hostlist-compiler` (or `npx @adguard/hostlist-compiler`), computes a SHA-384 hash, and runs `Invoke-RulesValidator`'s syntax check (informational findings only)
+- `Invoke-BloqrCompilerChunked`: splits a configuration's sources into up to `-MaxParallel` chunks and compiles them in parallel via `ForEach-Object -Parallel`, merging/deduplicating the results - see [Benchmarking](#benchmarking)
+- `Invoke-BloqrCompilerBenchmark`: benchmarks real compilation performance, chunked vs unchunked - see [Benchmarking](#benchmarking)
 - `Invoke-RulesValidator`: shells out to the `bloqr-validate` CLI ([src/validation/](../../validation/)) for standalone syntax validation
 - Type-safe configuration
 - Comprehensive error handling
@@ -50,6 +52,51 @@ Modern OOP-based rules compiler module.
 Import-Module ./src/compilers/powershell/BloqrCompiler/BloqrCompiler.psd1
 Invoke-BloqrCompiler -ConfigPath config.json
 ```
+
+### Benchmarking
+
+`Invoke-BloqrCompilerBenchmark` compiles the canned `benchmarks/data/{small,medium,large,xlarge}.txt`
+datasets through the real `Invoke-BloqrCompiler` (unchunked) and `Invoke-BloqrCompilerChunked`
+(chunked) pipelines - not a simulation - and reports the actual elapsed time for both. Part of
+[epic #415](https://github.com/BloqrAI/bloqr-core/issues/415)'s per-compiler benchmark work;
+see that issue's other sub-issues for the equivalent subcommand/switch in each of the other
+four language wrappers.
+
+Unlike the Rust/.NET/Python wrappers (see [#424](https://github.com/BloqrAI/bloqr-core/issues/424)),
+both paths here shell out to the exact same `hostlist-compiler`/`npx` binary
+(`Invoke-BloqrCompilerChunked` was built alongside the benchmark, deliberately reusing the
+same compiler as `Invoke-BloqrCompiler` rather than a second tool), so there is no
+divergent-compiler risk - any timing delta reflects chunking overhead alone.
+
+```powershell
+Import-Module ./src/compilers/powershell/BloqrCompiler/BloqrCompiler.psd1
+
+# Benchmark all four canned dataset sizes, chunked vs unchunked (auto-discovers benchmarks/data)
+Invoke-BloqrCompilerBenchmark
+
+# Just one size, with 8 duplicated sources and 8 parallel workers for the chunked run
+Invoke-BloqrCompilerBenchmark -Size large -Sources 8 -MaxParallel 8
+
+# Machine-readable output for the root comparison script (see benchmarks/)
+Invoke-BloqrCompilerBenchmark -AsJson
+
+# Point at a benchmarks/data directory explicitly (e.g. when not run from a repo checkout)
+Invoke-BloqrCompilerBenchmark -DataDirectory /path/to/benchmarks/data
+```
+
+| Parameter | Description |
+|-----------|-------------|
+| `-Size` | Dataset size to benchmark: `small`, `medium`, `large`, `xlarge`, or `all` (default: `all`) |
+| `-DataDirectory` | Directory containing the canned benchmark data (default: auto-discovered) |
+| `-Sources` | Number of identical duplicated sources for the chunked run (default: 4) |
+| `-MaxParallel` | Max parallel workers for the chunked run (default: CPU count, max 8) |
+| `-AsJson` | Emit a JSON string (camelCase keys, matching the other four language wrappers) instead of returning result objects |
+
+Both runs cover the same total workload (`-Sources` identical copies of the dataset file, one
+per chunk), so chunking strategy is the only intended variable. `Invoke-BloqrCompiler`'s
+mandatory `bloqr-validate` syntax check still applies to the unchunked run by default - a
+missing `bloqr-validate` binary or an invalid dataset fails that run closed, same as any other
+`Invoke-BloqrCompiler` invocation.
 
 ## Environment Variables
 
