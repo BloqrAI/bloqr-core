@@ -138,6 +138,43 @@ deno task start -- --enable-chunking --chunk-size 50000 --max-parallel 4
 - Very large individual sources (1M+ rules)
 - Multi-core systems with available CPU resources
 
+### Benchmarking
+
+`--benchmark` compiles the canned `benchmarks/data/{small,medium,large,xlarge}.txt` datasets
+through the real `runCompiler()` pipeline - not a simulation - once unchunked and once
+chunked, and reports the actual elapsed time for both. This is the reference implementation
+every other language wrapper shells out to, so its numbers matter most for interpreting the
+others' overhead. Part of
+[epic #415](https://github.com/BloqrAI/bloqr-core/issues/415)'s per-compiler benchmark work.
+
+```bash
+# Benchmark all four canned dataset sizes, chunked vs unchunked (auto-discovers benchmarks/data)
+deno task benchmark
+
+# Just one size, with 8 duplicated sources and 8 parallel workers for the chunked run
+deno task start -- --benchmark --benchmark-size large --benchmark-sources 8 --benchmark-max-parallel 8
+
+# Machine-readable output for the root comparison script (see benchmarks/)
+deno task start -- --benchmark --benchmark-json
+
+# Point at a benchmarks/data directory explicitly (e.g. when not run from a repo checkout)
+deno task start -- --benchmark --benchmark-data-dir /path/to/benchmarks/data
+```
+
+| Option | Description |
+|--------|-------------|
+| `--benchmark-size` | Dataset size to benchmark: `small`, `medium`, `large`, `xlarge`, or `all` (default: `all`) |
+| `--benchmark-data-dir` | Directory containing the canned benchmark data (default: auto-discovered) |
+| `--benchmark-sources` | Number of identical duplicated sources for the chunked run (default: 4) |
+| `--benchmark-max-parallel` | Max parallel workers for the chunked run (default: CPU count, max 8) |
+| `--benchmark-json` | Emit machine-readable JSON instead of a human-readable table |
+
+Both runs cover the same total workload (`--benchmark-sources` identical copies of the dataset
+file, one per chunk), so chunking strategy is the only intended variable - unlike the Rust and
+.NET wrappers (see [#424](https://github.com/BloqrAI/bloqr-core/issues/424)), there's no risk of
+the two runs silently using different compilers under the hood: `runCompiler()` always drives
+both paths through the same `compile()` core engine.
+
 ### Bun (Supported)
 
 [Bun](https://bun.sh/) is supported as an alternative runtime target. As a library, `import { compile } from '@bloqr/compiler-core'` works under Bun with no setup beyond installing the package. The CLI/interactive layer (`src/orchestration/`, `src/console/`) additionally depends on a few JSR and npm packages that Bun — unlike Deno — can't resolve from `deno.json`'s import map, so populate `node_modules` first, from a local clone of this package:
@@ -178,6 +215,7 @@ This creates `.d.ts` files in the `dist/` directory that re-export types from th
 - `deno task start` - Run the compiler
 - `deno task interactive` - Run in interactive mode
 - `deno task compile` - Compile from default config
+- `deno task benchmark` - Benchmark real compilation performance, chunked vs unchunked (see [Benchmarking](#benchmarking))
 - `deno task test` - Run tests
 - `deno task check` - Type check the code
 - `deno task lint` - Lint the code

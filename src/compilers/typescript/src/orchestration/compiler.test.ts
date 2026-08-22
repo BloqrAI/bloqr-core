@@ -17,7 +17,8 @@ import { chmodSync, existsSync, mkdtempSync, rmSync, writeFileSync } from 'node:
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { runRulesValidator, writeOutput } from './compiler.ts';
+import { compileFilters, runRulesValidator, writeOutput } from './compiler.ts';
+import { readConfiguration } from './config-reader.ts';
 import { createLogger } from './logger.ts';
 import type { ValidationEvent } from './types.ts';
 
@@ -286,4 +287,38 @@ Deno.test({
       assertEquals(events[0].itemsValidated, 1);
     });
   },
+});
+
+// Regression coverage for #427: readConfiguration() tags its returned config object with
+// `_sourceFormat`/`_sourcePath` orchestration-layer metadata. compileFilters() must strip
+// that before handing the config to the core engine's compile() (which validates against a
+// strict schema that rejects unrecognized properties) - a real file-read-then-compile,
+// exercising the exact interaction that was broken, not just each layer in isolation.
+Deno.test('compileFilters - accepts a readConfiguration()-produced config (readConfiguration + compile integration)', async () => {
+  await withTempDir(async (dir) => {
+    const sourcePath = join(dir, 'source.txt');
+    writeFileSync(sourcePath, '||example.com^\n||duplicate.com^\n||duplicate.com^\n');
+
+    const configPath = join(dir, 'config.json');
+    writeFileSync(
+      configPath,
+      JSON.stringify({
+        name: 'Regression Test',
+        sources: [{ name: 'source-1', source: sourcePath, type: 'adblock' }],
+        transformations: ['Deduplicate'],
+      }),
+    );
+
+    const config = readConfiguration(configPath, undefined, logger);
+    // readConfiguration() must have tagged this object - otherwise the regression this test
+    // guards against can't be exercised at all.
+    assertEquals(Object.hasOwn(config, '_sourceFormat'), true);
+    assertEquals(Object.hasOwn(config, '_sourcePath'), true);
+
+    const rules = await compileFilters(config, logger);
+
+    assertEquals(rules.includes('||example.com^'), true);
+    assertEquals(rules.includes('||duplicate.com^'), true);
+    assertEquals(rules.filter((r) => r === '||duplicate.com^').length, 1);
+  });
 });
