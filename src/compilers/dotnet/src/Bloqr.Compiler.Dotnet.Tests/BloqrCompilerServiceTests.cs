@@ -35,10 +35,14 @@ public sealed class BloqrCompilerServiceTests : IDisposable
             .Setup(w => w.CountRulesAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(3);
 
-        // Unavailable by default (as it would be wherever the native library isn't deployed
-        // alongside the test binaries) so existing tests exercise the pipeline's graceful
-        // degradation path rather than needing real bloqr-validator behavior.
-        _rulesValidatorService.Setup(v => v.IsAvailable).Returns(false);
+        // Available and reporting valid syntax by default, so tests unrelated to
+        // rules-validator behavior don't need to think about it - validation is fail-closed
+        // now (see BloqrCompilerServiceTests' rules-validator-specific tests below), so a
+        // blanket "unavailable" default here would fail every other test in this file.
+        _rulesValidatorService.Setup(v => v.IsAvailable).Returns(true);
+        _rulesValidatorService
+            .Setup(v => v.ValidateLocalFileAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new SyntaxValidationResult { IsValid = true, Format = "Adblock", ValidRules = 1, InvalidRules = 0 });
 
         _service = new BloqrCompilerService(
             new Mock<ILogger<BloqrCompilerService>>().Object,
@@ -254,13 +258,34 @@ public sealed class BloqrCompilerServiceTests : IDisposable
     }
 
     [Fact]
-    public async Task RunAsync_WhenRulesValidatorUnavailable_SkipsValidationAndStillSucceeds()
+    public async Task RunAsync_WhenRulesValidatorUnavailable_FailsClosedByDefault()
     {
         SetUpConfiguration(new CompilerConfiguration { Name = "Test", Sources = [new FilterSource { Source = "x" }] });
         SetUpSuccessfulCompilation();
         _rulesValidatorService.Setup(v => v.IsAvailable).Returns(false);
 
         var result = await _service.RunAsync(new CompilerOptions { ConfigPath = _configPath, ValidateConfig = false });
+
+        Assert.False(result.Success);
+        _rulesValidatorService.Verify(
+            v => v.ValidateLocalFileAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
+        _eventDispatcher.Verify(
+            d => d.RaiseValidationAsync(It.IsAny<ValidationEventArgs>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task RunAsync_WhenRulesValidatorUnavailableAndAllowUnvalidatedOutputSet_SkipsValidationAndStillSucceeds()
+    {
+        SetUpConfiguration(new CompilerConfiguration { Name = "Test", Sources = [new FilterSource { Source = "x" }] });
+        SetUpSuccessfulCompilation();
+        _rulesValidatorService.Setup(v => v.IsAvailable).Returns(false);
+
+        var result = await _service.RunAsync(new CompilerOptions
+        {
+            ConfigPath = _configPath,
+            ValidateConfig = false,
+            AllowUnvalidatedOutput = true,
+        });
 
         Assert.True(result.Success);
         _rulesValidatorService.Verify(
@@ -320,7 +345,7 @@ public sealed class BloqrCompilerServiceTests : IDisposable
     }
 
     [Fact]
-    public async Task RunAsync_WhenRulesValidatorFindsInvalidSyntaxButHandlerDoesNotAbort_StillSucceeds()
+    public async Task RunAsync_WhenRulesValidatorFindsInvalidSyntaxWithNoHandler_FailsClosedByDefault()
     {
         SetUpConfiguration(new CompilerConfiguration { Name = "Test", Sources = [new FilterSource { Source = "x" }] });
         SetUpSuccessfulCompilation();
@@ -331,7 +356,57 @@ public sealed class BloqrCompilerServiceTests : IDisposable
 
         var result = await _service.RunAsync(new CompilerOptions { ConfigPath = _configPath, ValidateConfig = false });
 
+        // Fail-closed by default: an Error finding aborts even though no handler was
+        // registered to explicitly set Abort - this is the gap the fail-closed rewrite closes.
+        Assert.False(result.Success);
+    }
+
+    [Fact]
+    public async Task RunAsync_WhenRulesValidatorFindsInvalidSyntaxAndAllowUnvalidatedOutputSet_StillSucceeds()
+    {
+        SetUpConfiguration(new CompilerConfiguration { Name = "Test", Sources = [new FilterSource { Source = "x" }] });
+        SetUpSuccessfulCompilation();
+        _rulesValidatorService.Setup(v => v.IsAvailable).Returns(true);
+        _rulesValidatorService
+            .Setup(v => v.ValidateLocalFileAsync(_compiledPath, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new SyntaxValidationResult { IsValid = false, Format = "Adblock", ValidRules = 2, InvalidRules = 1 });
+
+        var result = await _service.RunAsync(new CompilerOptions
+        {
+            ConfigPath = _configPath,
+            ValidateConfig = false,
+            AllowUnvalidatedOutput = true,
+        });
+
+        // Explicit opt-out reverts to legacy behavior: only a handler-set Abort counts.
         Assert.True(result.Success);
+    }
+
+    [Fact]
+    public async Task RunAsync_WhenRulesValidatorFindsWarningsAndFailOnWarningsSet_FailsCompilation()
+    {
+        SetUpConfiguration(new CompilerConfiguration { Name = "Test", Sources = [new FilterSource { Source = "x" }] });
+        SetUpSuccessfulCompilation();
+        _rulesValidatorService.Setup(v => v.IsAvailable).Returns(true);
+        _rulesValidatorService
+            .Setup(v => v.ValidateLocalFileAsync(_compiledPath, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new SyntaxValidationResult
+            {
+                IsValid = true,
+                Format = "Adblock",
+                ValidRules = 3,
+                InvalidRules = 0,
+                Messages = ["suspicious but syntactically valid rule at line 2"],
+            });
+
+        var result = await _service.RunAsync(new CompilerOptions
+        {
+            ConfigPath = _configPath,
+            ValidateConfig = false,
+            FailOnWarnings = true,
+        });
+
+        Assert.False(result.Success);
     }
 
     [Fact]

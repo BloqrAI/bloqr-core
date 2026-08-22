@@ -54,6 +54,19 @@ public class CompilerOptions
     public bool FailOnWarnings { get; set; }
 
     /// <summary>
+    /// Gets or sets an explicit opt-out of the mandatory rules-validator syntax check on
+    /// compiled output.
+    /// </summary>
+    /// <remarks>
+    /// Security-relevant: leave this <c>false</c> (the default) in production. When
+    /// <c>false</c>, compiled output is validated via <c>IBloqrValidatorService</c> and
+    /// compilation fails closed - both an unavailable/failed validator and an
+    /// invalid/error/critical finding stop compilation; there is no silent skip. Set this
+    /// to <c>true</c> only for deliberate debugging of unvalidated output.
+    /// </remarks>
+    public bool AllowUnvalidatedOutput { get; set; }
+
+    /// <summary>
     /// Gets or sets the chunking options for parallel compilation.
     /// </summary>
     /// <remarks>
