@@ -26,7 +26,7 @@
     )
 
     # Functions to export
-    FunctionsToExport = @('Invoke-BloqrCompiler', 'Invoke-RulesValidator')
+    FunctionsToExport = @('Invoke-BloqrCompiler', 'Invoke-RulesValidator', 'Invoke-BloqrCompilerChunked', 'Invoke-BloqrCompilerBenchmark')
     CmdletsToExport = @()
     VariablesToExport = @()
     AliasesToExport = @()
