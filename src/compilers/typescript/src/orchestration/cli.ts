@@ -32,6 +32,8 @@ import { initializeShutdownHandler } from './shutdown.ts';
 import type { ShutdownHandler } from './shutdown.ts';
 import { isCompilerError } from './errors.ts';
 import { runInteractive } from '../console/app.ts';
+import { runBenchmark } from './benchmark.ts';
+import type { BenchmarkRunResult } from './benchmark.ts';
 
 /** Package version */
 const VERSION = '1.0.0';
@@ -172,6 +174,7 @@ Modes:
   -i, --interactive     Run in interactive menu mode (default when no args)
   --compile             Run in CLI mode (compile and exit)
   --validate            Validate configuration only
+  --benchmark           Benchmark real compilation performance, chunked vs unchunked
 
 Options:
   -c, --config PATH     Path to configuration file
@@ -191,6 +194,13 @@ Chunking Options (for large rule lists):
   --enable-chunking     Enable chunked parallel compilation
   --chunk-size N        Number of sources per chunk (applies when using source-based chunking)
   --max-parallel N      Maximum number of chunks to compile in parallel (default: CPU count)
+
+Benchmark Options (with --benchmark):
+  --benchmark-size SIZE        Dataset size: small, medium, large, xlarge, or all (default: all)
+  --benchmark-data-dir PATH    Directory with canned benchmark data (default: auto-discovered)
+  --benchmark-sources N        Identical duplicated sources for the chunked run (default: 4)
+  --benchmark-max-parallel N   Max parallel workers for the chunked run (default: CPU count, max 8)
+  --benchmark-json             Emit machine-readable JSON instead of a table
 
 Production Options:
   --json-logs           Use JSON format for log output (structured logging)
@@ -217,6 +227,9 @@ Examples:
   deno task start --json-logs -c config.yaml  # Production mode
   deno task start --enable-chunking --max-parallel 8  # Parallel chunked compilation
   deno task start --enable-chunking --chunk-size 50000 --max-parallel 4  # Custom chunk settings
+  deno task benchmark                                 # Benchmark all canned dataset sizes
+  deno task start --benchmark --benchmark-size large  # Benchmark just one size
+  deno task start --benchmark --benchmark-json        # Machine-readable output
 `);
 }
 
@@ -328,6 +341,18 @@ interface ExtendedCliOptions extends CliOptions {
   jsonLogs: boolean;
   /** Compilation timeout in milliseconds */
   timeout?: number;
+  /** Run a real chunked-vs-unchunked compilation benchmark instead of compiling */
+  benchmark: boolean;
+  /** Dataset size to benchmark: small, medium, large, xlarge, or all (default: all) */
+  benchmarkSize: string;
+  /** Directory containing the canned benchmark data (default: auto-discovered) */
+  benchmarkDataDir?: string;
+  /** Number of identical duplicated sources for the chunked run (default: 4) */
+  benchmarkSources: number;
+  /** Max parallel workers for the chunked run (default: CPU count) */
+  benchmarkMaxParallel?: number;
+  /** Emit machine-readable JSON instead of a human-readable table */
+  benchmarkJson: boolean;
 }
 
 /**
@@ -338,6 +363,10 @@ function parseExtendedArgs(args: string[]): ExtendedCliOptions {
   const extendedOptions: ExtendedCliOptions = {
     ...baseOptions,
     jsonLogs: false,
+    benchmark: false,
+    benchmarkSize: 'all',
+    benchmarkSources: 4,
+    benchmarkJson: false,
   };
 
   for (let i = 0; i < args.length; i++) {
@@ -358,6 +387,50 @@ function parseExtendedArgs(args: string[]): ExtendedCliOptions {
         }
         i++;
         break;
+      case '--benchmark':
+        extendedOptions.benchmark = true;
+        break;
+      case '--benchmark-size':
+        if (!nextArg) {
+          throw new Error('Benchmark size value is required');
+        }
+        extendedOptions.benchmarkSize = nextArg;
+        i++;
+        break;
+      case '--benchmark-data-dir':
+        if (!nextArg) {
+          throw new Error('Benchmark data dir value is required');
+        }
+        extendedOptions.benchmarkDataDir = nextArg;
+        i++;
+        break;
+      case '--benchmark-sources':
+        if (!nextArg) {
+          throw new Error('Benchmark sources value is required');
+        }
+        extendedOptions.benchmarkSources = parseInt(nextArg, 10);
+        if (isNaN(extendedOptions.benchmarkSources) || extendedOptions.benchmarkSources <= 0) {
+          throw new Error(`Invalid benchmark sources: ${nextArg}. Must be a positive integer.`);
+        }
+        i++;
+        break;
+      case '--benchmark-max-parallel':
+        if (!nextArg) {
+          throw new Error('Benchmark max parallel value is required');
+        }
+        extendedOptions.benchmarkMaxParallel = parseInt(nextArg, 10);
+        if (
+          isNaN(extendedOptions.benchmarkMaxParallel) || extendedOptions.benchmarkMaxParallel <= 0
+        ) {
+          throw new Error(
+            `Invalid benchmark max parallel: ${nextArg}. Must be a positive integer.`,
+          );
+        }
+        i++;
+        break;
+      case '--benchmark-json':
+        extendedOptions.benchmarkJson = true;
+        break;
     }
   }
 
@@ -372,6 +445,7 @@ function shouldUseCLIMode(options: ExtendedCliOptions): boolean {
   if (options.interactive) return false;
   if (options.compile) return true;
   if (options.validate) return true;
+  if (options.benchmark) return true;
 
   // If config path provided, use CLI mode
   if (options.configPath) return true;
@@ -427,6 +501,94 @@ async function runValidationMode(
 }
 
 /**
+ * Prints benchmark results as a human-readable table.
+ * @param results - Results from {@linkcode runBenchmark}
+ */
+function printBenchmarkTable(results: BenchmarkRunResult[]): void {
+  console.log('');
+  console.log('----------------------------------------------------------------------');
+  console.log('RESULTS');
+  console.log('----------------------------------------------------------------------');
+  console.log(
+    `${'Size'.padEnd(10)}${'Unchunked'.padEnd(12)}${'Chunked'.padEnd(12)}${
+      'Speedup'.padEnd(10)
+    }Rules`,
+  );
+  console.log('----------------------------------------------------------------------');
+
+  for (const r of results) {
+    if (!r.unchunkedSuccess && !r.chunkedSuccess) {
+      console.log(`${r.size.padEnd(10)}FAILED: ${r.error ?? 'unknown'}`);
+      continue;
+    }
+
+    const speedupText = r.speedup !== null ? `${r.speedup.toFixed(2)}x` : 'n/a';
+    console.log(
+      `${r.size.padEnd(10)}${`${r.unchunkedMs}ms`.padEnd(12)}${`${r.chunkedMs}ms`.padEnd(12)}${
+        speedupText.padEnd(10)
+      }${r.chunkedRuleCount.toLocaleString()}`,
+    );
+  }
+
+  console.log('----------------------------------------------------------------------');
+  console.log('');
+  console.log('Note: this exercises the real hostlist-compiler pipeline, so results');
+  console.log("depend on this machine's CPU/I-O characteristics - see --help for");
+  console.log('--benchmark-data-dir, --benchmark-sources, --benchmark-max-parallel,');
+  console.log('and --benchmark-json.');
+  console.log('');
+}
+
+/**
+ * Runs `--benchmark` mode: compiles the canned datasets through the real compilation
+ * pipeline, chunked vs unchunked, and prints or returns the results.
+ * @param options - Parsed CLI options
+ * @param logger - Logger for progress output
+ * @returns Exit code (1 if any requested size failed both runs, 0 otherwise)
+ */
+async function runBenchmarkMode(
+  options: ExtendedCliOptions,
+  logger: ReturnType<typeof createLogger>,
+): Promise<number> {
+  const maxParallel = options.benchmarkMaxParallel ??
+    Math.min(navigator.hardwareConcurrency || 4, 8);
+
+  if (!options.benchmarkJson) {
+    console.log('');
+    console.log('======================================================================');
+    console.log('CHUNKING PERFORMANCE BENCHMARK (real compiler pipeline)');
+    console.log('======================================================================');
+    console.log(
+      `Sources per dataset:  ${options.benchmarkSources} (identical copies, one per chunk)`,
+    );
+    console.log(`Max parallel workers: ${maxParallel}`);
+    console.log('');
+  }
+
+  let results: BenchmarkRunResult[];
+  try {
+    results = await runBenchmark({
+      size: options.benchmarkSize,
+      dataDir: options.benchmarkDataDir,
+      sources: options.benchmarkSources,
+      maxParallel,
+      logger,
+    });
+  } catch (error) {
+    console.error(`[ERROR] ${error instanceof Error ? error.message : String(error)}`);
+    return 1;
+  }
+
+  if (options.benchmarkJson) {
+    console.log(JSON.stringify(results, null, 2));
+  } else {
+    printBenchmarkTable(results);
+  }
+
+  return results.some((r) => !r.unchunkedSuccess && !r.chunkedSuccess) ? 1 : 0;
+}
+
+/**
  * Main CLI entry point
  * @param args - Command line arguments
  * @returns Exit code
@@ -467,6 +629,12 @@ export async function main(
 
     // Initialize graceful shutdown handler
     shutdownHandler = initializeShutdownHandler({ logger });
+
+    // Benchmark mode - doesn't need a user-supplied config path, so it's handled before
+    // config-path resolution below.
+    if (options.benchmark) {
+      return await runBenchmarkMode(options, logger);
+    }
 
     // Determine config path
     let configPath: string;
