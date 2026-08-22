@@ -22,10 +22,11 @@ toml = "1.1"
 
 [dependencies.bloqr_compiler]
 # Fuzzes the library's config-parsing and chunk-merging logic, not the CLI -
-# points at the bloqr-compiler-core lib crate (see ../core), not the
-# bloqr-compiler CLI crate (../cli) this used to live alongside as one crate.
+# points at the bloqr-compiler-core lib crate (this fuzz/ dir lives inside
+# core/, one level up, mirroring src/validation/core/fuzz's layout - see
+# that crate's Cargo.toml), not the bloqr-compiler CLI crate (../../cli).
 package = "bloqr-compiler-core"
-path = "../core"
+path = ".."
 
 [[bin]]
 name = "fuzz_compiler_config"

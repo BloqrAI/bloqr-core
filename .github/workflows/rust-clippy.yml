@@ -26,6 +26,10 @@ on:
       - '.github/workflows/rust-clippy.yml'
   schedule:
     - cron: '24 0 * * 6'  # Weekly security scan on Saturday
+  # Lets fuzz-smoke-test (on-demand only, see that job's `if:`) be run by hand
+  # without waiting for Saturday - see that job's comment for why it isn't
+  # on push/pull_request any more.
+  workflow_dispatch: {}
 
 env:
   CARGO_TERM_COLOR: always
@@ -119,35 +123,19 @@ jobs:
           sarif_file: rust-clippy-results.sarif
           wait-for-processing: true
 
+  # On-demand only (workflow_dispatch), not on every push/pull_request or the
+  # weekly schedule - fuzzing was adding meaningful time and CI-minutes cost
+  # to every PR for a smoke-test-level signal. Trigger by hand from the
+  # Actions tab (Rust CI -> Run workflow) when you want the fuzz targets
+  # exercised, e.g. before a release or after touching untrusted-input
+  # parsing code. Always fuzzes every target (no change-detection needed
+  # any more, since this never runs unattended).
   fuzz-smoke-test:
     name: Fuzz Smoke Test
     runs-on: ubuntu-latest
+    if: github.event_name == 'workflow_dispatch'
     steps:
       - uses: actions/checkout@v7
-
-      # Only fuzz a crate whose own files (or a workspace-level manifest, or
-      # this workflow file itself - a workflow change should self-validate
-      # against both) actually changed - most PRs touch one of the two
-      # fuzzed crates, not both, and there's no value in re-fuzzing the
-      # untouched one on every push. Always treated as "everything changed"
-      # on the weekly scheduled run below (no base ref to diff against, and
-      # that run is the one place a full sweep is actually wanted).
-      - name: Detect changed crates
-        if: github.event_name != 'schedule'
-        id: filter
-        uses: dorny/paths-filter@v3
-        with:
-          filters: |
-            validator:
-              - 'src/validation/**'
-              - 'Cargo.toml'
-              - 'Cargo.lock'
-              - '.github/workflows/rust-clippy.yml'
-            compiler:
-              - 'src/compilers/rust/**'
-              - 'Cargo.toml'
-              - 'Cargo.lock'
-              - '.github/workflows/rust-clippy.yml'
 
       - name: Install nightly Rust toolchain
         uses: actions-rust-lang/setup-rust-toolchain@v1
@@ -161,42 +149,43 @@ jobs:
             ~/.cargo/registry
             ~/.cargo/git
             src/validation/core/fuzz/target
-            src/compilers/rust/fuzz/target
-          key: ${{ runner.os }}-cargo-fuzz-${{ hashFiles('src/validation/core/fuzz/Cargo.lock', 'src/compilers/rust/fuzz/Cargo.lock') }}
+            src/compilers/rust/core/fuzz/target
+          key: ${{ runner.os }}-cargo-fuzz-${{ hashFiles('src/validation/core/fuzz/Cargo.lock', 'src/compilers/rust/core/fuzz/Cargo.lock') }}
           restore-keys: ${{ runner.os }}-cargo-fuzz-
 
       - name: Install cargo-fuzz
         run: cargo +nightly install cargo-fuzz --locked
 
       # Short, bounded runs (not continuous fuzzing) - enough to catch build
-      # breaks and any trivially-reachable panic/crash on every PR, without
-      # turning ordinary CI into a fuzzing farm. Corpus/crash artifacts
+      # breaks and any trivially-reachable panic/crash, without turning a
+      # manual run into a full fuzzing campaign. Corpus/crash artifacts
       # aren't persisted between runs; a real fuzzing campaign against an
       # accumulated corpus is a separate, opt-in exercise. 20s/target (not
       # 60s) for the same reason - this is a smoke test, not a campaign.
       - name: Fuzz fuzz_syntax_content (20s)
-        if: github.event_name == 'schedule' || steps.filter.outputs.validator == 'true'
         working-directory: src/validation/core
         run: cargo +nightly fuzz run fuzz_syntax_content -- -max_total_time=20
 
       - name: Fuzz fuzz_config_json (20s)
-        if: github.event_name == 'schedule' || steps.filter.outputs.validator == 'true'
         working-directory: src/validation/core
         run: cargo +nightly fuzz run fuzz_config_json -- -max_total_time=20
 
       - name: Fuzz fuzz_hash_database_json (20s)
-        if: github.event_name == 'schedule' || steps.filter.outputs.validator == 'true'
         working-directory: src/validation/core
         run: cargo +nightly fuzz run fuzz_hash_database_json -- -max_total_time=20
 
+      # fuzz/ lives inside core/ here (src/compilers/rust/core/fuzz), mirroring
+      # src/validation/core/fuzz above - cargo-fuzz resolves the fuzz crate
+      # relative to the nearest ancestor Cargo.toml from the working
+      # directory, so it must be run from core/ (a real package), not from
+      # src/compilers/rust/ itself, which has no Cargo.toml of its own since
+      # the core/cli split (#173).
       - name: Fuzz fuzz_compiler_config (20s)
-        if: github.event_name == 'schedule' || steps.filter.outputs.compiler == 'true'
-        working-directory: src/compilers/rust
+        working-directory: src/compilers/rust/core
         run: cargo +nightly fuzz run fuzz_compiler_config -- -max_total_time=20
 
       - name: Fuzz fuzz_merge_chunks (20s)
-        if: github.event_name == 'schedule' || steps.filter.outputs.compiler == 'true'
-        working-directory: src/compilers/rust
+        working-directory: src/compilers/rust/core
         run: cargo +nightly fuzz run fuzz_merge_chunks -- -max_total_time=20
 
       - name: Upload crash artifacts (if any)
@@ -206,5 +195,5 @@ jobs:
           name: fuzz-crash-artifacts
           path: |
             src/validation/core/fuzz/artifacts/
-            src/compilers/rust/fuzz/artifacts/
+            src/compilers/rust/core/fuzz/artifacts/
           if-no-files-found: ignore

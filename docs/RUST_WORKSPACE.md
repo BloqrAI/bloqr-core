@@ -119,7 +119,8 @@ bloqr-core/
     ├── validation/
     │   ├── core/
     │   │   ├── Cargo.toml
-    │   │   └── src/
+    │   │   ├── src/
+    │   │   └── fuzz/
     │   └── cli/
     │       ├── Cargo.toml
     │       └── src/
@@ -127,11 +128,11 @@ bloqr-core/
         └── rust/
             ├── core/
             │   ├── Cargo.toml
-            │   └── src/
-            ├── cli/
-            │   ├── Cargo.toml
-            │   └── src/
-            └── fuzz/
+            │   ├── src/
+            │   └── fuzz/
+            └── cli/
+                ├── Cargo.toml
+                └── src/
 ```
 
 ## Workspace Benefits
