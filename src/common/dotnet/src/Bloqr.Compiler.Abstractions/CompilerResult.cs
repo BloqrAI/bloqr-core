@@ -74,4 +74,20 @@ public class CompilerResult
     /// Gets or sets the standard error from the compiler.
     /// </summary>
     public string StandardError { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Gets or sets the path to the browser-syntax artifact, present only when the
+    /// configuration mixed DNS and browser-syntax sources (producing two artifacts).
+    /// </summary>
+    public string? BrowserOutputPath { get; set; }
+
+    /// <summary>
+    /// Gets or sets the SHA-384 hash of the browser-syntax artifact, when present.
+    /// </summary>
+    public string? BrowserOutputHash { get; set; }
+
+    /// <summary>
+    /// Gets or sets the number of rules in the browser-syntax artifact, when present.
+    /// </summary>
+    public int? BrowserRuleCount { get; set; }
 }

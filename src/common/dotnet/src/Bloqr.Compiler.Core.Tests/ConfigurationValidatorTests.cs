@@ -246,4 +246,70 @@ public class ConfigurationValidatorTests
         Assert.True(result.IsValid); // Warnings don't make it invalid
         Assert.NotEmpty(result.Warnings);
     }
+
+    [Theory]
+    [InlineData("dns")]
+    [InlineData("browser")]
+    [InlineData(null)]
+    public void Validate_AcceptsValidDefaultEngine(string? engine)
+    {
+        var config = new CompilerConfiguration
+        {
+            Name = "Test",
+            Sources = [new FilterSource { Source = "test.txt" }],
+            DefaultEngine = engine,
+        };
+
+        var result = ConfigurationValidator.Validate(config);
+
+        Assert.True(result.IsValid);
+    }
+
+    [Fact]
+    public void Validate_ReturnsError_WhenDefaultEngineInvalid()
+    {
+        var config = new CompilerConfiguration
+        {
+            Name = "Test",
+            Sources = [new FilterSource { Source = "test.txt" }],
+            DefaultEngine = "server",
+        };
+
+        var result = ConfigurationValidator.Validate(config);
+
+        Assert.False(result.IsValid);
+        Assert.Contains(result.Errors, e => e.Field == "defaultEngine");
+    }
+
+    [Theory]
+    [InlineData("dns")]
+    [InlineData("browser")]
+    [InlineData(null)]
+    public void Validate_AcceptsValidSourceEngine(string? engine)
+    {
+        var config = new CompilerConfiguration
+        {
+            Name = "Test",
+            Sources = [new FilterSource { Source = "test.txt", Engine = engine }],
+        };
+
+        var result = ConfigurationValidator.Validate(config);
+
+        Assert.True(result.IsValid);
+    }
+
+    [Fact]
+    public void Validate_ReturnsError_WhenSourceEngineInvalid()
+    {
+        var config = new CompilerConfiguration
+        {
+            Name = "Test",
+            Sources = [new FilterSource { Source = "test.txt", Engine = "server" }],
+        };
+
+        var result = ConfigurationValidator.Validate(config);
+
+        Assert.False(result.IsValid);
+        Assert.Contains(result.Errors, e => e.Field == "sources[0].engine");
+    }
 }

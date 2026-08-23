@@ -154,13 +154,25 @@ public class CommandHelper
     /// <param name="configPath">Path to the JSON config file to compile.</param>
     /// <param name="outputPath">Path to write the compiled output to.</param>
     /// <param name="verbose">Whether to pass <c>--verbose</c> to the compiler.</param>
+    /// <param name="engine">
+    /// Optional engine override (<c>"auto"</c>/<c>"dns"</c>/<c>"browser"</c>), passed
+    /// through as <c>--engine</c> when set. Omit (or pass <c>"auto"</c>) for the CLI's
+    /// own default per-source detection.
+    /// </param>
+    /// <param name="browserOutputPath">
+    /// Optional explicit output path for the browser-syntax artifact, passed through as
+    /// <c>--browser-output</c> when set. Only meaningful for a mixed-engine
+    /// configuration; ignored (by the CLI) otherwise.
+    /// </param>
     /// <returns>
     /// The command and its arguments, or <c>null</c> if <c>deno</c> isn't found on PATH.
     /// </returns>
     public virtual (string Command, string Args)? GetBloqrCompilerCoreCommand(
         string configPath,
         string outputPath,
-        bool verbose = false)
+        bool verbose = false,
+        string? engine = null,
+        string? browserOutputPath = null)
     {
         var denoPath = FindCommand(DenoCommand);
         if (denoPath is null)
@@ -169,8 +181,14 @@ public class CommandHelper
         }
 
         var verboseFlag = verbose ? " --verbose" : string.Empty;
+        var engineFlag = !string.IsNullOrWhiteSpace(engine) && !string.Equals(engine, "auto", StringComparison.OrdinalIgnoreCase)
+            ? $" --engine \"{engine}\""
+            : string.Empty;
+        var browserOutputFlag = !string.IsNullOrWhiteSpace(browserOutputPath)
+            ? $" --browser-output \"{browserOutputPath}\""
+            : string.Empty;
         return (denoPath,
             $"run --allow-read --allow-write --allow-env --allow-net --allow-run {JsrPackageSpecifier} " +
-            $"--config \"{configPath}\" --output \"{outputPath}\"{verboseFlag}");
+            $"--config \"{configPath}\" --output \"{outputPath}\"{verboseFlag}{engineFlag}{browserOutputFlag}");
     }
 }
