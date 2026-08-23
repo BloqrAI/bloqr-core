@@ -272,9 +272,8 @@ public sealed class DiagnosticsMenuService : MenuServiceBase
         Renderer.WriteLine();
         Renderer.WriteStyled(
             "Note: this exercises the real compiler pipeline, so results depend on this "
-            + "machine's CPU/I-O characteristics. Unchunked needs Deno on PATH; chunked needs "
-            + "hostlist-compiler or npx on PATH - see #424 (they aren't the same underlying "
-            + "compiler today).",
+            + "machine's CPU/I-O characteristics. Both unchunked and chunked runs need Deno "
+            + "on PATH - both paths invoke the same underlying compiler (see #424).",
             TextStyle.Info);
     }
 }

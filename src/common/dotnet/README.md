@@ -34,6 +34,27 @@ In-repo consumers reference the projects directly rather than through a package 
 
 Out-of-repo consumers (a future .NET MAUI host, or this library becoming its own repo) can instead take it as a NuGet package — see [Publishing](#publishing) below.
 
+```mermaid
+flowchart BT
+    Abstractions["Bloqr.Compiler.Abstractions"]
+    Core["Bloqr.Compiler.Core"]
+    Core --> Abstractions
+
+    CompilerDotnet["Bloqr.Compiler.Dotnet\n(src/compilers/dotnet)"]
+    CompilerDotnet --> Abstractions
+    CompilerDotnet --> Core
+
+    DashAbstractions["Bloqr.Dashboard.Abstractions"]
+    DashCore["Bloqr.Dashboard.Core"]
+    DashAbstractions --> Abstractions
+    DashCore --> Core
+
+    Validation["bloqr-validator-core\n(src/validation, FFI via CommandHelper)"]
+    Core -.->|extern C P/Invoke| Validation
+```
+
+`Bloqr.Compiler.Dotnet` references both projects directly. On the Dashboard side, `Bloqr.Dashboard.Abstractions` references only `Bloqr.Compiler.Abstractions` (keeping the embeddable-library API boundary free of implementation dependencies), while `Bloqr.Dashboard.Core` references `Bloqr.Compiler.Core` for the actual compile/validate operations.
+
 ## API Reference
 
 ### Interfaces (`Bloqr.Compiler.Abstractions`)

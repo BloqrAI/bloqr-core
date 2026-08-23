@@ -22,26 +22,17 @@ Both crates are published to crates.io independently — see each subdirectory's
 
 ## Architecture
 
-```
-┌───────────────────────────────────────────────────────────────┐
-│  Compiler frontends (TypeScript, .NET, Python, Rust,          │
-│  PowerShell, bash/zsh)                                        │
-└───────────────────────────────┬─────────────────────────────── ┘
-                                 │
-              ┌──────────────────┴──────────────────┐
-              │                                      │
-              ▼                                      ▼
-   Rust: Cargo path dependency          Non-Rust: cli/ (bloqr-validate)
-   .NET: extern "C" FFI (P/Invoke)      shelled out as a subprocess
-              │                                      │
-              └──────────────────┬──────────────────┘
-                                 ▼
-                    core/ (bloqr-validator-core)
-                    - URL security validation
-                    - Hash verification (at-rest & in-flight)
-                    - Syntax validation
-                    - File conflict handling
-                    - Archiving logic
+```mermaid
+flowchart TD
+    Frontends["Compiler frontends\n(TypeScript, .NET, Python, Rust, PowerShell, bash/zsh)"]
+    Rust["Rust: Cargo path dependency\n.NET: extern C FFI (P/Invoke)"]
+    NonRust["Non-Rust: cli/ (bloqr-validate)\nshelled out as a subprocess"]
+    Core["core/ (bloqr-validator-core)\nURL security validation\nHash verification (at-rest & in-flight)\nSyntax validation\nFile conflict handling\nArchiving logic"]
+
+    Frontends --> Rust
+    Frontends --> NonRust
+    Rust --> Core
+    NonRust --> Core
 ```
 
 ## Building

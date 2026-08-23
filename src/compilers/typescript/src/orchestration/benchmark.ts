@@ -2,10 +2,10 @@
  * Real-pipeline compilation benchmark: chunked vs unchunked timing against the canned
  * `benchmarks/data/{small,medium,large,xlarge}.txt` datasets.
  *
- * Unlike the Rust and .NET wrappers (see #424), this module has no unchunked-vs-chunked
- * compiler-divergence risk: {@linkcode runCompiler} always drives both paths through the
- * same underlying {@linkcode compileFilters}/`compile()` pipeline, so a benchmark run here
- * measures chunking overhead alone.
+ * This module has never had the unchunked-vs-chunked compiler-divergence bug that Rust,
+ * .NET, and Python did (see #424, now fixed in all three): {@linkcode runCompiler} always
+ * drives both paths through the same underlying {@linkcode compileFilters}/`compile()`
+ * pipeline, so a benchmark run here measures chunking overhead alone.
  *
  * @module orchestration/benchmark
  */
