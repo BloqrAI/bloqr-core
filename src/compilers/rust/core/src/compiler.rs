@@ -571,8 +571,13 @@ pub fn verify_hash_with_events<P: AsRef<Path>>(
     }
 }
 
-/// Get compiler command and arguments.
-fn get_compiler_command(config_path: &str, output_path: &str) -> Result<(String, Vec<String>)> {
+/// Get compiler command and arguments. Shared by the unchunked (`compile_rules()`) and
+/// chunked (`chunking::compile_single_chunk_async()`) compile paths so both invoke the same
+/// underlying compiler for the same config - see #424.
+pub(crate) fn get_compiler_command(
+    config_path: &str,
+    output_path: &str,
+) -> Result<(String, Vec<String>)> {
     if let Some(deno_path) = find_command("deno") {
         let mut args: Vec<String> = DENO_PERMISSIONS.iter().map(|s| s.to_string()).collect();
         args.push(JSR_PACKAGE_SPECIFIER.to_string());

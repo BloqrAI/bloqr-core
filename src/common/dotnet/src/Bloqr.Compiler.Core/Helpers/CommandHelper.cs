@@ -7,6 +7,9 @@ public class CommandHelper
 {
     private readonly ILogger<CommandHelper> _logger;
 
+    private const string DenoCommand = "deno";
+    private const string JsrPackageSpecifier = "jsr:@bloqr/compiler-core/cli";
+
     /// <summary>
     /// Initializes a new instance of the <see cref="CommandHelper"/> class.
     /// </summary>
@@ -138,5 +141,36 @@ public class CommandHelper
         }
 
         return null;
+    }
+
+    /// <summary>
+    /// Builds the command and arguments to invoke <c>@bloqr/compiler-core</c>'s CLI (published
+    /// on JSR) via Deno. Shared by every consumer that needs to actually run the compiler -
+    /// both the unchunked (<c>FilterCompiler</c>) and chunked (<c>ChunkingService</c>) compile
+    /// paths call this instead of each resolving their own compiler binary, so a chunked and
+    /// unchunked compile of the same config always invoke the same underlying compiler; see
+    /// #424.
+    /// </summary>
+    /// <param name="configPath">Path to the JSON config file to compile.</param>
+    /// <param name="outputPath">Path to write the compiled output to.</param>
+    /// <param name="verbose">Whether to pass <c>--verbose</c> to the compiler.</param>
+    /// <returns>
+    /// The command and its arguments, or <c>null</c> if <c>deno</c> isn't found on PATH.
+    /// </returns>
+    public virtual (string Command, string Args)? GetBloqrCompilerCoreCommand(
+        string configPath,
+        string outputPath,
+        bool verbose = false)
+    {
+        var denoPath = FindCommand(DenoCommand);
+        if (denoPath is null)
+        {
+            return null;
+        }
+
+        var verboseFlag = verbose ? " --verbose" : string.Empty;
+        return (denoPath,
+            $"run --allow-read --allow-write --allow-env --allow-net --allow-run {JsrPackageSpecifier} " +
+            $"--config \"{configPath}\" --output \"{outputPath}\"{verboseFlag}");
     }
 }

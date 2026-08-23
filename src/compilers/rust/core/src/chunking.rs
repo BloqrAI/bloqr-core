@@ -462,8 +462,9 @@ async fn compile_single_chunk_async(
             )
         })?;
 
-    // Get compiler command
-    let (cmd, args) = get_compiler_command(
+    // Get compiler command - shared with the unchunked path (crate::compiler) so both invoke
+    // the same underlying compiler for the same config; see #424.
+    let (cmd, args) = crate::compiler::get_compiler_command(
         temp_config_path.to_str().unwrap_or(""),
         temp_output_path.to_str().unwrap_or(""),
     )?;
@@ -531,35 +532,6 @@ async fn compile_single_chunk_async(
     );
 
     Ok((rules, metadata))
-}
-
-fn get_compiler_command(config_path: &str, output_path: &str) -> Result<(String, Vec<String>)> {
-    if let Ok(compiler_path) = which::which("hostlist-compiler") {
-        return Ok((
-            compiler_path.display().to_string(),
-            vec![
-                "--config".to_string(),
-                config_path.to_string(),
-                "--output".to_string(),
-                output_path.to_string(),
-            ],
-        ));
-    }
-
-    if let Ok(npx_path) = which::which("npx") {
-        return Ok((
-            npx_path.display().to_string(),
-            vec![
-                "@adguard/hostlist-compiler".to_string(),
-                "--config".to_string(),
-                config_path.to_string(),
-                "--output".to_string(),
-                output_path.to_string(),
-            ],
-        ));
-    }
-
-    Err(CompilerError::CompilerNotFound)
 }
 
 #[cfg(test)]

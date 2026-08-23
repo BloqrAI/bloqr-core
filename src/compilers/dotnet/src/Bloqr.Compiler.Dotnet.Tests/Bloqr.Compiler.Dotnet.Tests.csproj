@@ -24,6 +24,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Bloqr.Compiler.Dotnet\Bloqr.Compiler.Dotnet.csproj" />
+    <ProjectReference Include="..\Bloqr.Compiler.Dotnet.Console\Bloqr.Compiler.Dotnet.Console.csproj" />
   </ItemGroup>
 
 </Project>

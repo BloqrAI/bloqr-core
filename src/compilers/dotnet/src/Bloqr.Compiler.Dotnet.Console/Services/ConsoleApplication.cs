@@ -65,22 +65,16 @@ public class ConsoleApplication
         var verbose = _configuration.GetValue<bool>("verbose");
         var validateOnly = _configuration.GetValue<bool>("validate");
 
-        // Check for benchmark mode - parsed directly from raw args, not IConfiguration.
-        // IConfiguration's default CommandLineConfigurationProvider unconditionally treats
-        // the token right after any "--flag" as that flag's value - even when the next
-        // token is itself another "--flag" - so "--benchmark --benchmark-size small" sets
-        // config["benchmark"] = "--benchmark-size" and silently drops "small" (and every
-        // subsequent --key/value pair shifts out of alignment the same way). "--benchmark"
-        // is a bare boolean switch with nothing of its own to consume, so it corrupts
-        // parsing of every flag that follows it. Bypassing IConfiguration for the whole
-        // benchmark option group sidesteps this rather than relying on flag order. This is
-        // a real, pre-existing bug affecting the rest of the CLI's flags too - see #426.
-        var runBenchmark = args.Contains("--benchmark", StringComparer.OrdinalIgnoreCase);
-        var benchmarkSize = GetArgValue(args, "--benchmark-size") ?? "all";
-        var benchmarkDataDir = GetArgValue(args, "--benchmark-data-dir");
-        _ = int.TryParse(GetArgValue(args, "--benchmark-sources"), out var benchmarkSources);
-        _ = int.TryParse(GetArgValue(args, "--benchmark-max-parallel"), out var benchmarkMaxParallel);
-        var benchmarkJson = args.Contains("--benchmark-json", StringComparer.OrdinalIgnoreCase);
+        // Check for benchmark mode. Program.BuildConfiguration() pre-strips bare boolean
+        // flags like --benchmark/--benchmark-json before handing the rest to
+        // IConfiguration's CommandLineConfigurationProvider, so reading everything through
+        // _configuration here is safe regardless of flag order - see #426.
+        var runBenchmark = _configuration.GetValue<bool>("benchmark");
+        var benchmarkSize = _configuration["benchmark-size"] ?? "all";
+        var benchmarkDataDir = _configuration["benchmark-data-dir"];
+        _ = int.TryParse(_configuration["benchmark-sources"], out var benchmarkSources);
+        _ = int.TryParse(_configuration["benchmark-max-parallel"], out var benchmarkMaxParallel);
+        var benchmarkJson = _configuration.GetValue<bool>("benchmark-json");
 
         // Parse validation options
         var validateConfig = ParseValidateConfigOption();
@@ -238,18 +232,6 @@ public class ConsoleApplication
                         .Border(BoxBorder.Rounded));
                 }
             });
-    }
-
-    /// <summary>
-    /// Returns the value immediately following <paramref name="name"/> in <paramref name="args"/>,
-    /// or <c>null</c> if the flag isn't present. See the comment on <c>runBenchmark</c> in
-    /// <see cref="RunAsync"/> for why the benchmark option group is parsed this way instead
-    /// of via <see cref="IConfiguration"/>.
-    /// </summary>
-    private static string? GetArgValue(string[] args, string name)
-    {
-        var index = Array.FindIndex(args, a => string.Equals(a, name, StringComparison.OrdinalIgnoreCase));
-        return index >= 0 && index + 1 < args.Length ? args[index + 1] : null;
     }
 
     /// <summary>
