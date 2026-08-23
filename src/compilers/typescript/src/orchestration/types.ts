@@ -60,6 +60,20 @@ export interface CliOptions {
   chunkSize?: number;
   /** Maximum number of chunks to process in parallel */
   maxParallel?: number;
+  /**
+   * Which compilation engine to route sources through. `auto` (the default)
+   * detects per-source; `dns` or `browser` forces every source through that
+   * engine regardless of its declared/detected type.
+   */
+  engine?: 'auto' | 'dns' | 'browser';
+  /**
+   * Output path for the browser-syntax artifact when a configuration mixes
+   * DNS and browser-syntax sources. Defaults to `outputPath` with its
+   * extension replaced by `.browser.txt` (or that suffix appended, if
+   * `outputPath` has no `.txt` extension). Ignored for single-engine
+   * configurations, which always produce exactly one artifact at `outputPath`.
+   */
+  browserOutputPath?: string;
 }
 
 /**
@@ -92,6 +106,15 @@ export interface CompilerResult {
   errorMessage?: string;
   /** Error code if failed (from CompilerError) */
   errorCode?: string;
+  /**
+   * Path to the browser-syntax artifact, present only when the configuration
+   * mixed DNS and browser-syntax sources (producing two artifacts).
+   */
+  browserOutputPath?: string;
+  /** SHA-384 hash of the browser-syntax artifact, when present. */
+  browserOutputHash?: string;
+  /** Number of rules in the browser-syntax artifact, when present. */
+  browserRuleCount?: number;
 }
 
 /**
@@ -230,6 +253,18 @@ export interface CompileOptions {
   chunkSize?: number;
   /** Maximum number of chunks to process in parallel */
   maxParallel?: number;
+  /**
+   * Which compilation engine to route sources through. `auto` (the default)
+   * detects per-source; `dns` or `browser` forces every source through that
+   * engine regardless of its declared/detected type.
+   */
+  engine?: 'auto' | 'dns' | 'browser';
+  /**
+   * Output path for the browser-syntax artifact when a configuration mixes
+   * DNS and browser-syntax sources. See {@link CliOptions.browserOutputPath}
+   * for the default-derivation rule.
+   */
+  browserOutputPath?: string;
 }
 
 /**
