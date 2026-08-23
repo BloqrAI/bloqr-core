@@ -460,6 +460,21 @@ section h2 {
   font-size: 0.85rem;
 }
 
+.mermaid-diagram {
+  background-color: var(--code-bg);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border-color);
+  padding: 1.25rem;
+  margin: 1.25rem 0;
+  overflow-x: auto;
+  text-align: center;
+}
+
+.mermaid-diagram svg {
+  max-width: 100%;
+  height: auto;
+}
+
 .doc-content blockquote {
   border-left: 3px solid var(--primary-color);
   padding: 0.25rem 1rem;
