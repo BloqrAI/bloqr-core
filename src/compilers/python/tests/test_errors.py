@@ -147,11 +147,18 @@ class TestCompilerNotFoundError:
     def test_basic_error(self) -> None:
         error = CompilerNotFoundError()
         assert error.code == ErrorCode.COMPILER_NOT_FOUND
-        assert "hostlist-compiler" in str(error).lower()
+        assert "deno" in str(error).lower()
 
     def test_with_searched(self) -> None:
-        error = CompilerNotFoundError(["hostlist-compiler", "npx"])
-        assert error.searched_commands == ["hostlist-compiler", "npx"]
+        error = CompilerNotFoundError(["deno"])
+        assert error.searched_commands == ["deno"]
+
+    def test_message_reflects_searched_commands(self) -> None:
+        # Regression test: the message must be built from searched_commands, not
+        # hardcoded to a tool that may not be the one actually being looked for - see #424.
+        error = CompilerNotFoundError(["some-other-tool"])
+        assert "some-other-tool" in str(error)
+        assert "hostlist-compiler" not in str(error).lower()
 
 
 class TestCompilationError:

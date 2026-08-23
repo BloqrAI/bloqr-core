@@ -140,12 +140,18 @@ class ValidationError(CompilerError):
 
 
 class CompilerNotFoundError(CompilerError):
-    """Raised when hostlist-compiler is not installed."""
+    """Raised when the underlying compiler (Deno, running @bloqr/compiler-core) is not
+    installed. The message is built from searched_commands rather than hardcoded, so it
+    stays accurate no matter which command(s) the caller actually searched for."""
 
     def __init__(self, searched_commands: list[str] | None = None):
-        searched = searched_commands or ["hostlist-compiler", "npx"]
+        searched = searched_commands or ["deno"]
+        if searched == ["deno"]:
+            message = "deno not found on PATH. Install from: https://deno.com/"
+        else:
+            message = f"None of {searched} found on PATH."
         super().__init__(
-            "hostlist-compiler not found. Install with: npm install -g @adguard/hostlist-compiler",
+            message,
             code=ErrorCode.COMPILER_NOT_FOUND,
             context={"searched_commands": searched},
         )

@@ -12,7 +12,6 @@ import asyncio
 import json
 import logging
 import os
-import shutil
 import tempfile
 import time
 from dataclasses import dataclass, field
@@ -20,12 +19,12 @@ from enum import Enum
 from pathlib import Path
 from typing import Any
 
+import bloqr_compiler.compiler as compiler_module
 from bloqr_compiler.config import (
     CompilerConfiguration,
     FilterSource,
     to_json,
 )
-from bloqr_compiler.errors import CompilerNotFoundError
 
 logger = logging.getLogger(__name__)
 
@@ -420,8 +419,9 @@ async def _compile_single_chunk_async(
         with open(temp_config_path, "w", encoding="utf-8") as f:
             f.write(to_json(config))
 
-        # Get compiler command
-        cmd = _get_compiler_command(temp_config_path, temp_output_path)
+        # Get compiler command - shared with the unchunked path (bloqr_compiler.compiler) so
+        # both invoke the same underlying compiler for the same config; see #424.
+        cmd, _cwd = compiler_module._get_compiler_command(temp_config_path, temp_output_path)
 
         if debug:
             logger.debug("Running: %s", " ".join(cmd))
@@ -487,28 +487,3 @@ async def _compile_single_chunk_async(
                 except Exception:
                     pass
 
-
-def _get_compiler_command(config_path: str, output_path: str) -> list[str]:
-    """
-    Get the compiler command.
-
-    Args:
-        config_path: Path to the config file.
-        output_path: Path to the output file.
-
-    Returns:
-        Command arguments list.
-
-    Raises:
-        CompilerNotFoundError: If the compiler is not found.
-    """
-    compiler_path = shutil.which("hostlist-compiler")
-
-    if compiler_path:
-        return [compiler_path, "--config", config_path, "--output", output_path]
-
-    npx_path = shutil.which("npx")
-    if npx_path:
-        return [npx_path, "@adguard/hostlist-compiler", "--config", config_path, "--output", output_path]
-
-    raise CompilerNotFoundError(["hostlist-compiler", "npx"])
