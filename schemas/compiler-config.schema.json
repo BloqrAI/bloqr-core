@@ -99,6 +99,11 @@
         }
       }
     },
+    "defaultEngine": {
+      "type": "string",
+      "description": "Default compilation engine/grammar for sources that don't set 'engine' explicitly and whose content can't be confidently auto-detected. Defaults to 'dns'.",
+      "enum": ["dns", "browser"]
+    },
     "sources": {
       "type": "array",
       "description": "Filter sources (required)",
@@ -122,6 +127,11 @@
             "description": "Source type",
             "enum": ["adblock", "hosts"],
             "default": "adblock"
+          },
+          "engine": {
+            "type": "string",
+            "description": "Compilation engine/grammar this source uses. Overrides auto-detection when set; unset sources fall back to content sniffing, then defaultEngine, then 'dns'.",
+            "enum": ["dns", "browser"]
           },
           "transformations": {
             "type": "array",

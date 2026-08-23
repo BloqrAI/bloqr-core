@@ -40,6 +40,15 @@ export {
 // Types
 export * from './types/index.ts';
 
+// Engine detection (dual-engine: DNS vs browser-syntax)
+export {
+  classifyLine,
+  detectEngineFromLines,
+  detectSourceEngine,
+  groupSourcesByEngine,
+} from './engines/index.ts';
+export type { EngineDetectorOptions, GroupedSources, LineEngineSignal } from './engines/index.ts';
+
 // Utils
 export { RuleUtils, StringUtils, TldUtils, Wildcard } from './utils/index.ts';
 export type { BenchmarkResult, CompilationMetrics, ParsedHost } from './utils/index.ts';

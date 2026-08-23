@@ -93,6 +93,33 @@ Deno.test('SourceSchema - should reject non-boolean useBrowser', () => {
   assertEquals(result.success, false);
 });
 
+Deno.test('SourceSchema - should accept engine: dns', () => {
+  const source = { source: 'https://example.com/list.txt', engine: 'dns' };
+  const result = SourceSchema.safeParse(source);
+  assertEquals(result.success, true);
+  if (result.success) assertEquals(result.data.engine, 'dns');
+});
+
+Deno.test('SourceSchema - should accept engine: browser', () => {
+  const source = { source: 'https://example.com/list.txt', engine: 'browser' };
+  const result = SourceSchema.safeParse(source);
+  assertEquals(result.success, true);
+  if (result.success) assertEquals(result.data.engine, 'browser');
+});
+
+Deno.test('SourceSchema - should accept source without engine (defaults to undefined)', () => {
+  const source = { source: 'https://example.com/list.txt' };
+  const result = SourceSchema.safeParse(source);
+  assertEquals(result.success, true);
+  if (result.success) assertEquals(result.data.engine, undefined);
+});
+
+Deno.test('SourceSchema - should reject invalid engine value', () => {
+  const source = { source: 'https://example.com/list.txt', engine: 'server' };
+  const result = SourceSchema.safeParse(source);
+  assertEquals(result.success, false);
+});
+
 // ConfigurationSchema tests
 Deno.test('ConfigurationSchema - should validate minimal configuration', () => {
   const config = {
@@ -101,6 +128,35 @@ Deno.test('ConfigurationSchema - should validate minimal configuration', () => {
   };
   const result = ConfigurationSchema.safeParse(config);
   assertEquals(result.success, true);
+});
+
+Deno.test('ConfigurationSchema - should validate configuration using engine and defaultEngine', () => {
+  const config = {
+    name: 'Test Config',
+    defaultEngine: 'browser',
+    sources: [
+      { source: 'https://example.com/dns-list.txt', engine: 'dns' },
+      { source: 'https://example.com/browser-list.txt', engine: 'browser' },
+      { source: 'https://example.com/sniffed-list.txt' },
+    ],
+  };
+  const result = ConfigurationSchema.safeParse(config);
+  assertEquals(result.success, true);
+  if (result.success) {
+    assertEquals(result.data.defaultEngine, 'browser');
+    assertEquals(result.data.sources[0].engine, 'dns');
+    assertEquals(result.data.sources[1].engine, 'browser');
+  }
+});
+
+Deno.test('ConfigurationSchema - should reject invalid defaultEngine value', () => {
+  const config = {
+    name: 'Test Config',
+    defaultEngine: 'server',
+    sources: [{ source: 'https://example.com/list.txt' }],
+  };
+  const result = ConfigurationSchema.safeParse(config);
+  assertEquals(result.success, false);
 });
 
 Deno.test('ConfigurationSchema - should reject empty sources', () => {
