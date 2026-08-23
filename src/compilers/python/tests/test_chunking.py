@@ -3,8 +3,8 @@
 import os
 import pytest
 
-import bloqr_compiler.chunking as chunking_module
 import bloqr_compiler.compiler as compiler_module
+from bloqr_compiler import chunking as chunking_module
 from bloqr_compiler.chunking import (
     ChunkingOptions,
     ChunkingStrategy,
