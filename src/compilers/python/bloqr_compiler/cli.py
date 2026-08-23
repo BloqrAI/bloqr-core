@@ -237,8 +237,7 @@ def run_benchmark(
     Benchmark real compilation performance (chunked vs unchunked) against the canned
     `benchmarks/data/{small,medium,large,xlarge}.txt` datasets, through the real
     `BloqrCompiler.compile()`/`compile_chunks_async()` pipeline - not a simulation. See
-    `bloqr_compiler.benchmark` for the implementation and the #424 divergent-compiler
-    caveat.
+    `bloqr_compiler.benchmark` for the implementation.
     """
     import json as json_module
 
@@ -295,9 +294,8 @@ def run_benchmark(
         print("-" * 70)
         print()
         print("Note: this exercises the real compiler pipeline, so results depend on this")
-        print("machine's CPU/I-O characteristics. Unchunked needs Deno on PATH; chunked needs")
-        print("hostlist-compiler or npx on PATH - see #424 (they aren't the same underlying")
-        print("compiler today).")
+        print("machine's CPU/I-O characteristics. Both unchunked and chunked runs need Deno")
+        print("on PATH - both paths invoke the same underlying compiler (see #424).")
         print()
 
     any_failed = any(not r.unchunked_success and not r.chunked_success for r in results)

@@ -16,55 +16,39 @@ The event pipeline provides hooks into every stage of the compilation process, e
 
 The compilation pipeline consists of these stages:
 
-```
-┌─────────────────────────────────────────────────────────────┐
-│                    COMPILATION PIPELINE                      │
-├─────────────────────────────────────────────────────────────┤
-│                                                              │
-│  ┌─────────────────┐     ┌─────────────────┐                │
-│  │ CompilationStart│────▶│ ConfigurationLoad│               │
-│  │   (Cancelable)  │     │                  │               │
-│  └─────────────────┘     └────────┬─────────┘               │
-│                                   │                          │
-│  ┌──────────────────────────────▼──────────────────────┐   │
-│  │              VALIDATION CHECKPOINT                    │   │
-│  │  - Configuration validation                           │   │
-│  │  - Source URL/path validation                         │   │
-│  │  - Zero-trust checks (abort on critical findings)     │   │
-│  └──────────────────────────────┬──────────────────────┘   │
-│                                   │                          │
-│  ┌──────────────────────────────▼──────────────────────┐   │
-│  │              SOURCE LOADING (per source)              │   │
-│  │  ┌─────────────────┐     ┌─────────────────┐         │   │
-│  │  │ SourceLoading   │────▶│ SourceLoaded    │         │   │
-│  │  │ (Lock acquired) │     │ (Hash computed) │         │   │
-│  │  └─────────────────┘     └─────────────────┘         │   │
-│  └──────────────────────────────┬──────────────────────┘   │
-│                                   │                          │
-│  ┌──────────────────────────────▼──────────────────────┐   │
-│  │              CHUNKED COMPILATION (if enabled)         │   │
-│  │  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐   │   │
-│  │  │ ChunkStarted│  │ ChunkStarted│  │ ChunkStarted│   │   │
-│  │  └──────┬──────┘  └──────┬──────┘  └──────┬──────┘   │   │
-│  │         │                │                │           │   │
-│  │  ┌──────▼──────┐  ┌──────▼──────┐  ┌──────▼──────┐   │   │
-│  │  │ChunkComplete│  │ChunkComplete│  │ChunkComplete│   │   │
-│  │  └─────────────┘  └─────────────┘  └─────────────┘   │   │
-│  │         │                │                │           │   │
-│  │         └────────────────┼────────────────┘           │   │
-│  │                          │                             │   │
-│  │  ┌──────────────────────▼──────────────────────────┐ │   │
-│  │  │ ChunksMerging ────▶ ChunksMerged                 │ │   │
-│  │  │ (Deduplication, hash verification)               │ │   │
-│  │  └──────────────────────────────────────────────────┘ │   │
-│  └──────────────────────────────┬──────────────────────┘   │
-│                                   │                          │
-│  ┌──────────────────────────────▼──────────────────────┐   │
-│  │         CompilationCompleted OR CompilationError      │   │
-│  │         (Lock released, final validation)             │   │
-│  └──────────────────────────────────────────────────────┘   │
-│                                                              │
-└─────────────────────────────────────────────────────────────┘
+```mermaid
+flowchart TD
+    Start["CompilationStarting\n(Cancelable)"] --> ConfigLoad["ConfigurationLoaded"]
+    ConfigLoad --> Validate
+
+    subgraph Validate["VALIDATION CHECKPOINT"]
+        direction TB
+        V1["Configuration validation"]
+        V2["Source URL/path validation"]
+        V3["Zero-trust checks\n(abort on critical findings)"]
+    end
+
+    Validate --> SourceLoad
+
+    subgraph SourceLoad["SOURCE LOADING (per source)"]
+        direction LR
+        SL1["SourceLoading\n(Lock acquired)"] --> SL2["SourceLoaded\n(Hash computed)"]
+    end
+
+    SourceLoad --> Chunked
+
+    subgraph Chunked["CHUNKED COMPILATION (if enabled)"]
+        direction TB
+        CS1["ChunkStarted"] --> CC1["ChunkCompleted"]
+        CS2["ChunkStarted"] --> CC2["ChunkCompleted"]
+        CS3["ChunkStarted"] --> CC3["ChunkCompleted"]
+        CC1 --> Merge
+        CC2 --> Merge
+        CC3 --> Merge
+        Merge["ChunksMerging → ChunksMerged\n(Deduplication, hash verification)"]
+    end
+
+    Chunked --> Done["CompilationCompleted OR CompilationError\n(Lock released, final validation)"]
 ```
 
 ## Event Types
@@ -162,18 +146,12 @@ The event pipeline implements zero-trust principles at each stage boundary:
 
 ### Validation Findings
 
-```
-┌────────────────────────────────────────────────────┐
-│               VALIDATION SEVERITY LEVELS            │
-├────────────────────────────────────────────────────┤
-│                                                     │
-│  INFO      │ Informational message, no action      │
-│  WARNING   │ Potential issue, continue compilation │
-│  ERROR     │ Problem found, compilation may fail   │
-│  CRITICAL  │ Security issue, MUST abort            │
-│                                                     │
-└────────────────────────────────────────────────────┘
-```
+| Severity | Meaning |
+|----------|---------|
+| `INFO` | Informational message, no action |
+| `WARNING` | Potential issue, continue compilation |
+| `ERROR` | Problem found, compilation may fail |
+| `CRITICAL` | Security issue, MUST abort |
 
 ### Built-in Validation Codes
 

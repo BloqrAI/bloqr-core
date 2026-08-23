@@ -16,45 +16,26 @@ The hash verification system provides **cryptographic proof** that files are not
 
 ### Compilation Stages with Hash Verification
 
-```
-┌─────────────────────────────────────────────────────────────┐
-│ 1. Configuration File Loading                               │
-│    ├─ Hash computed: config_file                           │
-│    └─ Event fired: HashComputed                            │
-└─────────────────────────────────────────────────────────────┘
-                         │
-                         ▼
-┌─────────────────────────────────────────────────────────────┐
-│ 2. Source Files Loading (Local & Remote)                    │
-│    ├─ Hash computed: input_file / downloaded_source        │
-│    ├─ Event fired: HashComputed                            │
-│    └─ Optional verification against expected hash          │
-│         ├─ Match → Event: HashVerified                     │
-│         └─ Mismatch → Event: HashMismatch (can abort)      │
-└─────────────────────────────────────────────────────────────┘
-                         │
-                         ▼
-┌─────────────────────────────────────────────────────────────┐
-│ 3. Compilation (via @bloqr/compiler-core)                │
-│    └─ (No hash events - external tool)                     │
-└─────────────────────────────────────────────────────────────┘
-                         │
-                         ▼
-┌─────────────────────────────────────────────────────────────┐
-│ 4. Output File Writing                                      │
-│    ├─ Hash computed: output_file                           │
-│    └─ Event fired: HashComputed                            │
-└─────────────────────────────────────────────────────────────┘
-                         │
-                         ▼
-┌─────────────────────────────────────────────────────────────┐
-│ 5. Rules File Copying (if requested)                        │
-│    ├─ Hash computed: copied_rules_file                     │
-│    ├─ Event fired: HashComputed                            │
-│    └─ Can verify against output hash                       │
-│         ├─ Match → Event: HashVerified                     │
-│         └─ Mismatch → Event: HashMismatch                  │
-└─────────────────────────────────────────────────────────────┘
+```mermaid
+flowchart TD
+    S1["1. Configuration File Loading\nHash computed: config_file\nEvent fired: HashComputed"]
+    S2["2. Source Files Loading (Local & Remote)\nHash computed: input_file / downloaded_source\nEvent fired: HashComputed\nOptional verification against expected hash"]
+    S2Match["Match → HashVerified"]
+    S2Mismatch["Mismatch → HashMismatch (can abort)"]
+    S3["3. Compilation (via @bloqr/compiler-core)\n(No hash events - external tool)"]
+    S4["4. Output File Writing\nHash computed: output_file\nEvent fired: HashComputed"]
+    S5["5. Rules File Copying (if requested)\nHash computed: copied_rules_file\nEvent fired: HashComputed\nCan verify against output hash"]
+    S5Match["Match → HashVerified"]
+    S5Mismatch["Mismatch → HashMismatch"]
+
+    S1 --> S2
+    S2 --> S2Match
+    S2 --> S2Mismatch
+    S2 --> S3
+    S3 --> S4
+    S4 --> S5
+    S5 --> S5Match
+    S5 --> S5Mismatch
 ```
 
 ## Event Types

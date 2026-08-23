@@ -123,6 +123,46 @@ bloqr-core/
 
 The TypeScript compiler is the only one that implements compilation logic directly — it *is* `@bloqr/compiler-core`. The .NET, Python, and Rust compilers are thin wrappers that shell out to it via Deno, so behavior and output stay identical across languages; the PowerShell toolkit calls whichever compiler is available. `src/validation/` provides the shared hash-verification and syntax-validation layer that all of them rely on for security.
 
+### Component relationships and dependencies
+
+```mermaid
+flowchart TB
+    Core["@bloqr/compiler-core\n(src/compilers/typescript/)\nJSR — canonical compilation engine"]
+
+    subgraph Wrappers["Thin wrappers — shell out to Core via Deno"]
+        direction LR
+        DotnetCompiler["compilers/dotnet"]
+        PythonCompiler["compilers/python"]
+        RustCompiler["compilers/rust"]
+        PowerShellCompiler["compilers/powershell\n(calls whichever compiler is available)"]
+    end
+
+    DotnetCompiler -->|Deno subprocess| Core
+    PythonCompiler -->|Deno subprocess| Core
+    RustCompiler -->|Deno subprocess| Core
+    PowerShellCompiler -.->|Deno subprocess, or delegates| Core
+
+    Common["common/dotnet\nBloqr.Compiler.Abstractions / .Core"]
+    Common -->|ProjectReference| DotnetCompiler
+    Common -->|ProjectReference| Dashboard
+
+    Dashboard["apps/dashboard\nBloqr Dashboard (.NET console app)"]
+    Dashboard -->|Deno subprocess| Core
+
+    Validation["validation/\nbloqr-validator-core + cli\n(hash verification, syntax/URL validation)"]
+    RustCompiler -->|Cargo path dependency| Validation
+    DotnetCompiler -->|extern C FFI, P/Invoke| Validation
+    PythonCompiler -->|subprocess: bloqr-validate| Validation
+    PowerShellCompiler -->|subprocess: bloqr-validate| Validation
+    Core -->|subprocess: bloqr-validate| Validation
+
+    Website["website/\nGatsby 5 docs site"]
+    Docs["docs/"] --> Website
+    README["README.md"] --> Website
+```
+
+`common/dotnet` is a separate solution (`CompilerCommon.slnx`) consumed by both `compilers/dotnet` and `apps/dashboard` via `<ProjectReference>` — it isn't part of either consumer's own solution. `validation/` is reached differently per language: Rust links `bloqr-validator-core` as a Cargo path dependency, .NET P/Invokes the same code through an `extern "C"` FFI surface, and every other wrapper (TypeScript, Python, PowerShell, and the Rust/`.NET` compilers' own compiled output) shells out to the `bloqr-validate` CLI as a subprocess.
+
 `@bloqr/compiler-core` is deliberately separate from Bloqr's commercial `@bloqr/compiler` product ([`BloqrAI/bloqr-compiler`](https://github.com/BloqrAI/bloqr-compiler)), which layers AST tooling, linting, plugins, and Cloudflare Workers deployment on top of this open-source engine — see [`src/compilers/typescript/README.md`](src/compilers/typescript/README.md#architecture) for the full relationship.
 
 ## Related repositories

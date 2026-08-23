@@ -8,63 +8,24 @@ AdGuard.ConsoleUI is a menu-driven console application that provides a user-frie
 
 ## Architecture Diagram
 
-```
-┌─────────────────────────────────────────────────────────────┐
-│                        Program.cs                           │
-│  ┌─────────────────────────────────────────────────────┐   │
-│  │                  Main Entry Point                    │   │
-│  │  - BuildConfiguration()                              │   │
-│  │  - ConfigureServices()                               │   │
-│  │  - Runs ConsoleApplication                           │   │
-│  └─────────────────────────────────────────────────────┘   │
-└─────────────────────────────────────────────────────────────┘
-                              │
-                              ▼
-┌─────────────────────────────────────────────────────────────┐
-│                   ConsoleApplication                        │
-│  ┌─────────────────────────────────────────────────────┐   │
-│  │  - Displays welcome banner                           │   │
-│  │  - Handles API key configuration                     │   │
-│  │  - Main menu loop                                    │   │
-│  │  - Routes to menu services                           │   │
-│  └─────────────────────────────────────────────────────┘   │
-└─────────────────────────────────────────────────────────────┘
-                              │
-              ┌───────────────┼───────────────┐
-              │               │               │
-              ▼               ▼               ▼
-┌──────────────────┐ ┌───────────────┐ ┌──────────────────┐
-│ DeviceMenuService│ │DnsServerMenu  │ │StatisticsMenu    │
-│                  │ │Service        │ │Service           │
-│ - List devices   │ │               │ │                  │
-│ - View details   │ │ - List servers│ │ - 24h stats      │
-│ - Create device  │ │ - View details│ │ - 7d stats       │
-│ - Delete device  │ │ - Create      │ │ - 30d stats      │
-│                  │ │ - Delete      │ │ - Custom range   │
-└──────────────────┘ └───────────────┘ └──────────────────┘
-              │               │               │
-              └───────────────┼───────────────┘
-                              │
-                              ▼
-┌─────────────────────────────────────────────────────────────┐
-│                     ApiClientFactory                        │
-│  ┌─────────────────────────────────────────────────────┐   │
-│  │  - Manages API configuration                         │   │
-│  │  - Creates API client instances                      │   │
-│  │  - Tests API connectivity                            │   │
-│  └─────────────────────────────────────────────────────┘   │
-└─────────────────────────────────────────────────────────────┘
-                              │
-                              ▼
-┌─────────────────────────────────────────────────────────────┐
-│                   AdGuard.ApiClient                         │
-│  ┌─────────────────────────────────────────────────────┐   │
-│  │  - AccountApi      - DevicesApi                      │   │
-│  │  - DNSServersApi   - StatisticsApi                   │   │
-│  │  - QueryLogApi     - FilterListsApi                  │   │
-│  │  - WebServicesApi  - DedicatedIPAddressesApi         │   │
-│  └─────────────────────────────────────────────────────┘   │
-└─────────────────────────────────────────────────────────────┘
+```mermaid
+flowchart TD
+    Program["Program.cs (Main Entry Point)\nBuildConfiguration()\nConfigureServices()\nRuns ConsoleApplication"]
+    App["ConsoleApplication\nDisplays welcome banner\nHandles API key configuration\nMain menu loop\nRoutes to menu services"]
+    Device["DeviceMenuService\nList/view/create/delete devices"]
+    DnsServer["DnsServerMenuService\nList/view/create/delete servers"]
+    Stats["StatisticsMenuService\n24h/7d/30d/custom-range stats"]
+    Factory["ApiClientFactory\nManages API configuration\nCreates API client instances\nTests API connectivity"]
+    ApiClient["AdGuard.ApiClient\nAccountApi, DevicesApi, DNSServersApi,\nStatisticsApi, QueryLogApi, FilterListsApi,\nWebServicesApi, DedicatedIPAddressesApi"]
+
+    Program --> App
+    App --> Device
+    App --> DnsServer
+    App --> Stats
+    Device --> Factory
+    DnsServer --> Factory
+    Stats --> Factory
+    Factory --> ApiClient
 ```
 
 ## Design Patterns
@@ -185,20 +146,19 @@ Each service handles a specific domain:
 
 ## Configuration Flow
 
-```
-┌─────────────────┐    ┌──────────────────┐    ┌─────────────────┐
-│ appsettings.json│ ─► │ ConfigurationBuilder│ ─► │ IConfiguration  │
-└─────────────────┘    │                    │    │                 │
-                       │ AddJsonFile()      │    │ ["AdGuard:ApiKey"]
-┌─────────────────┐    │ AddEnvironment()   │    │                 │
-│ Environment Vars│ ─► │                    │    └─────────────────┘
-│ ADGUARD_*       │    └──────────────────┘              │
-└─────────────────┘                                       ▼
-                                               ┌─────────────────┐
-                                               │ ApiClientFactory │
-                                               │                 │
-                                               │ ConfigureFrom() │
-                                               └─────────────────┘
+```mermaid
+flowchart LR
+    Json["appsettings.json"] --> Builder
+    Env["Environment Vars\nADGUARD_*"] --> Builder
+
+    subgraph Builder["ConfigurationBuilder"]
+        direction TB
+        B1["AddJsonFile()"]
+        B2["AddEnvironment()"]
+    end
+
+    Builder --> Config["IConfiguration\n(AdGuard:ApiKey)"]
+    Config --> Factory["ApiClientFactory\nConfigureFrom()"]
 ```
 
 ## UI Library: Spectre.Console
