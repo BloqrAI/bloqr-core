@@ -45,6 +45,17 @@ export enum SourceType {
 }
 
 /**
+ * Which compilation engine/grammar a source or configuration uses.
+ *
+ * - `dns` — the existing DNS/hosts-style grammar (domains, `||domain^`, hosts-file
+ *   syntax) consumed by DNS resolvers (AdGuard Home/DNS, Pi-hole).
+ * - `browser` — AdGuard's browser-syntax grammar (network rules with URL/resource
+ *   modifiers, cosmetic/element-hiding rules, extended CSS, scriptlets) consumed by
+ *   browser extensions.
+ */
+export type EngineKind = 'dns' | 'browser';
+
+/**
  * Common interface for filterable entities
  * Follows Interface Segregation Principle - shared filter properties
  */
@@ -78,6 +89,13 @@ export interface ISource extends IFilterable, ITransformable {
   name?: string;
   /** Type of the source (adblock or hosts) */
   type?: SourceType;
+  /**
+   * Which compilation engine/grammar this source uses. When set, this overrides
+   * syntax auto-detection ({@link EngineKind}). When unset, the engine is
+   * auto-detected from the source content, falling back to
+   * `IConfiguration.defaultEngine`, falling back to `'dns'`.
+   */
+  engine?: EngineKind;
   /**
    * When `true`, the source is fetched via Cloudflare Browser Run
    * instead of a plain HTTP request.
@@ -115,6 +133,12 @@ export interface IConfiguration extends IFilterable, ITransformable {
   version?: string;
   /** Array of filter list sources (required) */
   sources: ISource[];
+  /**
+   * Default engine/grammar for sources that don't set {@link ISource.engine}
+   * explicitly and whose content can't be confidently auto-detected.
+   * Defaults to `'dns'` — existing configurations are unaffected.
+   */
+  defaultEngine?: EngineKind;
   /** Extensible key-value pairs for custom configuration metadata */
   extensions?: Record<string, unknown>;
 }

@@ -5,6 +5,7 @@
 
 import { z } from 'zod';
 import {
+  type EngineKind,
   type IConfiguration,
   type ISource,
   type LogLevelType,
@@ -137,6 +138,11 @@ const TransformableSchema: z.ZodObject<{
 const SourceTypeSchema: z.ZodEnum<typeof SourceType> = z.nativeEnum(SourceType);
 
 /**
+ * Schema for engine kind validation (dns vs browser-syntax).
+ */
+const EngineKindSchema: z.ZodType<EngineKind> = z.enum(['dns', 'browser']);
+
+/**
  * Reusable schema for preFetchedContent fields.
  * Keys are arbitrary source identifiers mapped to their pre-fetched content.
  */
@@ -190,6 +196,9 @@ export const SourceSchema: z.ZodType<ISource> = z.object({
     'Human-readable name for the source',
   ),
   type: SourceTypeSchema.optional().describe('Source format type'),
+  engine: EngineKindSchema.optional().describe(
+    'Compilation engine/grammar this source uses. Overrides auto-detection when set.',
+  ),
   useBrowser: z.boolean().optional().describe(
     'When true, fetch via Cloudflare Browser Run instead of plain HTTP (WorkerCompiler only)',
   ),
@@ -217,6 +226,9 @@ export const ConfigurationSchema: z.ZodType<IConfiguration> = z.object({
     .optional().describe('Version string following semver format (e.g. 1.0.0)'),
   sources: z.array(SourceSchema).nonempty('sources is required and must be a non-empty array')
     .describe('Array of source configurations (must not be empty)'),
+  defaultEngine: EngineKindSchema.optional().describe(
+    "Default engine/grammar for sources that don't set `engine` explicitly. Defaults to 'dns'.",
+  ),
   extensions: z.record(z.string(), z.unknown()).optional().describe(
     'Extensible key-value pairs for custom configuration metadata',
   ),
