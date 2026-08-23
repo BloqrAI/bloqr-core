@@ -76,12 +76,13 @@ one object per benchmarked dataset size:
 | `error` | string \| null | Error message if either run failed, else `null` |
 
 Both runs within one result cover the same total workload (`sources` identical copies of
-the dataset file, one per chunk) - chunking strategy is the only intended variable. See
-[#424](https://github.com/BloqrAI/bloqr-core/issues/424): in Rust, .NET, and Python the
-unchunked and chunked paths currently shell out to two *different* underlying compilers,
-so part of any timing delta there may reflect that rather than chunking overhead alone.
-TypeScript and PowerShell don't have this gap - both paths use the same underlying
-compiler in both languages.
+the dataset file, one per chunk) - chunking strategy is the only intended variable. All
+five wrappers' unchunked and chunked paths resolve their compiler command through one
+shared function per language, so both paths always invoke the same underlying compiler
+for the same config. Rust, .NET, and Python had a real bug here (a second,
+independently-implemented lookup on the chunked path that fell back to
+`hostlist-compiler`/`npx` instead of Deno) - all three are now fixed; TypeScript and
+PowerShell never had it. See [#424](https://github.com/BloqrAI/bloqr-core/issues/424).
 
 ## Per-language `benchmark` commands
 

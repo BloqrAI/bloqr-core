@@ -3,6 +3,8 @@
 import os
 import pytest
 
+import bloqr_compiler.compiler as compiler_module
+from bloqr_compiler import chunking as chunking_module
 from bloqr_compiler.chunking import (
     ChunkingOptions,
     ChunkingStrategy,
@@ -14,6 +16,20 @@ from bloqr_compiler.chunking import (
     estimate_speedup,
 )
 from bloqr_compiler.config import CompilerConfiguration, FilterSource
+
+
+class TestGetCompilerCommand:
+    """Regression tests for #424: chunked and unchunked paths must resolve the same
+    underlying compiler command, not two independently-implemented lookups."""
+
+    def test_chunking_reuses_compiler_modules_command_resolver(self):
+        # chunking.py must not define its own "_get_compiler_command" - it should call
+        # straight through to compiler.py's, so both paths always agree on which
+        # compiler binary they invoke for a given config.
+        assert not hasattr(chunking_module, "_get_compiler_command")
+        assert chunking_module.compiler_module._get_compiler_command is (
+            compiler_module._get_compiler_command
+        )
 
 
 class TestChunkingOptions:

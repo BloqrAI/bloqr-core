@@ -510,12 +510,14 @@ python3 generate_synthetic_data.py --all
 
 ### A note on comparing numbers across languages
 
-In Rust, .NET, and Python, the unchunked and chunked paths currently shell out to two
-*different* underlying compilers (Deno + the JSR `@bloqr/compiler-core` package vs.
-`hostlist-compiler`/`npx` directly - see
-[#424](https://github.com/BloqrAI/bloqr-core/issues/424)), so part of any timing delta
-there may reflect that difference rather than chunking overhead alone. TypeScript and
-PowerShell don't have this gap - both paths use the same underlying compiler in both.
+All five wrappers' unchunked and chunked paths resolve their compiler command through one
+shared function per language, so both paths always invoke the same underlying compiler
+(Deno + the JSR `@bloqr/compiler-core` package) for the same config - a benchmark's
+speedup number measures chunking overhead alone, not a difference in which compiler ran.
+Rust, .NET, and Python had a real bug here (a second, independently-implemented lookup on
+the chunked path that fell back to `hostlist-compiler`/`npx` instead) - all three are now
+fixed; TypeScript and PowerShell never had it. See
+[#424](https://github.com/BloqrAI/bloqr-core/issues/424).
 
 ## Future Enhancements
 

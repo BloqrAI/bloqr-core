@@ -16,6 +16,25 @@ later reconciliation. One deliberate departure is called out below.
 | `Bloqr.Dashboard.Console` | Abstractions, Core, `Bloqr.Compiler.Dotnet` | The executable: `Program.cs`, the Spectre.Console-backed `IConsoleRenderer`/`IConsolePrompter` implementations, `DashboardApplication`'s main loop, and the menu services. |
 | `Bloqr.Dashboard.Tests` | Abstractions, Core | xunit tests for the Core layer. |
 
+```mermaid
+flowchart BT
+    Abstractions["Bloqr.Dashboard.Abstractions\n(interfaces, models, IDashboardService)"]
+    Core["Bloqr.Dashboard.Core\n(DashboardConfigurationStore, ProfileManager,\nDashboardService, structured logging)"]
+    Console["Bloqr.Dashboard.Console\n(executable: Program.cs, Spectre.Console UI,\nDashboardApplication, menu services)"]
+    Tests["Bloqr.Dashboard.Tests\n(xunit tests for Core)"]
+    CompilerCommon["Bloqr.Compiler.Abstractions / .Core\n(src/common/dotnet, CompilerCommon.slnx)"]
+    CompilerDotnet["Bloqr.Compiler.Dotnet\n(src/compilers/dotnet)"]
+
+    Core --> Abstractions
+    Console --> Abstractions
+    Console --> Core
+    Console --> CompilerDotnet
+    Tests --> Abstractions
+    Tests --> Core
+    Core -.->|IBloqrCompilerService| CompilerCommon
+    CompilerDotnet --> CompilerCommon
+```
+
 ## Design patterns
 
 ### Dependency Injection

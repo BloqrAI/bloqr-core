@@ -329,11 +329,10 @@ bloqr-compiler benchmark --data-dir /path/to/benchmarks/data
 ```
 
 Both runs cover the same total workload (`--sources` identical copies of the dataset file, so
-the only intended variable is the chunking strategy), but see
-[#424](https://github.com/BloqrAI/bloqr-core/issues/424): today the unchunked and chunked
-paths shell out to two different underlying compilers (Deno + `@bloqr/compiler-core` vs.
-`hostlist-compiler`/`npx`), so part of any timing delta may reflect that rather than chunking
-overhead alone, and each side needs its own tool on `PATH` to succeed.
+the only intended variable is the chunking strategy). Both the unchunked and chunked paths
+resolve their compiler command through the same `compiler::get_compiler_command()` (Deno +
+`@bloqr/compiler-core`), so a benchmark's speedup number measures chunking overhead alone —
+see [#424](https://github.com/BloqrAI/bloqr-core/issues/424), fixed for this wrapper.
 
 ## Performance
 

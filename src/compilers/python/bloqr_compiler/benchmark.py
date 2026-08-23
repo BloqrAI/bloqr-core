@@ -8,11 +8,10 @@ real `compile_rules()`/`compile_chunks_async()` pipeline - not a simulation - on
 and once chunked (the same sources split one-per-chunk and compiled in parallel), so the two
 runs cover identical total workloads and the chunking strategy is the intended variable.
 
-Caveat (see #424): the unchunked and chunked paths currently shell out to two different
-underlying compilers - `compile_rules()` uses Deno + the JSR `@bloqr/compiler-core` package,
-`compile_chunks_async()` uses `hostlist-compiler`/`npx` directly. Part of any timing delta
-may reflect that difference rather than chunking overhead alone, and each side needs its own
-tool installed to succeed.
+Both `compile_rules()` and `compile_chunks_async()` resolve their compiler command through
+the same `compiler._get_compiler_command()` (Deno + the JSR `@bloqr/compiler-core` package),
+so a benchmark's speedup number measures chunking overhead alone - see #424, fixed for this
+wrapper.
 """
 
 from __future__ import annotations

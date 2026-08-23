@@ -170,10 +170,10 @@ deno task start -- --benchmark --benchmark-data-dir /path/to/benchmarks/data
 | `--benchmark-json` | Emit machine-readable JSON instead of a human-readable table |
 
 Both runs cover the same total workload (`--benchmark-sources` identical copies of the dataset
-file, one per chunk), so chunking strategy is the only intended variable - unlike the Rust and
-.NET wrappers (see [#424](https://github.com/BloqrAI/bloqr-core/issues/424)), there's no risk of
-the two runs silently using different compilers under the hood: `runCompiler()` always drives
-both paths through the same `compile()` core engine.
+file, one per chunk), so chunking strategy is the only intended variable - this wrapper has
+never had the divergent-compiler bug that Rust, .NET, and Python did (see
+[#424](https://github.com/BloqrAI/bloqr-core/issues/424), now fixed in all three):
+`runCompiler()` always drives both paths through the same `compile()` core engine.
 
 ### Bun (Supported)
 
