@@ -40,14 +40,26 @@ export {
 // Types
 export * from './types/index.ts';
 
-// Engine detection (dual-engine: DNS vs browser-syntax)
+// Engine detection and compilation (dual-engine: DNS vs browser-syntax)
 export {
+  BROWSER_SAFE_TRANSFORMATIONS,
+  BrowserSyntaxCompiler,
   classifyLine,
   detectEngineFromLines,
   detectSourceEngine,
+  filterToBrowserSafe,
   groupSourcesByEngine,
+  MultiEngineCompiler,
 } from './engines/index.ts';
-export type { EngineDetectorOptions, GroupedSources, LineEngineSignal } from './engines/index.ts';
+export type {
+  BrowserSyntaxCompilerDependencies,
+  BrowserSyntaxCompilerOptions,
+  EngineDetectorOptions,
+  GroupedSources,
+  LineEngineSignal,
+  MultiEngineCompilationResult,
+  MultiEngineCompilerOptions,
+} from './engines/index.ts';
 
 // Utils
 export { RuleUtils, StringUtils, TldUtils, Wildcard } from './utils/index.ts';

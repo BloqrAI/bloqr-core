@@ -1,0 +1,6 @@
+! Test browser-syntax rules
+||example.com^$script,third-party
+||ads.example.org^$image
+example.com##.ad-banner
+tracker.com#@#.allowed-banner
+||example.com^$script,third-party

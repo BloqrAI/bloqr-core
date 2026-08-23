@@ -35,6 +35,8 @@ import { withTimeout } from './timeout.ts';
 import { checkFileSize, DEFAULT_RESOURCE_LIMITS } from './validation.ts';
 import { mergeChunks, shouldEnableChunking, splitIntoChunks } from './chunking.ts';
 import { compileChunksInParallel } from './parallel-compiler.ts';
+import { detectSourceEngine, MultiEngineCompiler } from '../engines/index.ts';
+import type { EngineKind } from '../engines/index.ts';
 
 /**
  * Writes compiled rules to an output file
@@ -462,6 +464,19 @@ function generateOutputFilename(): string {
 }
 
 /**
+ * Derives the default output path for the browser-syntax artifact from the
+ * DNS/primary output path: `.txt` is replaced with `.browser.txt`; any other
+ * extension (or none) has `.browser.txt` appended.
+ * @param outputPath - The primary (DNS) output path.
+ * @returns The derived browser-syntax output path.
+ */
+function deriveBrowserOutputPath(outputPath: string): string {
+  return outputPath.endsWith('.txt')
+    ? `${outputPath.slice(0, -'.txt'.length)}.browser.txt`
+    : `${outputPath}.browser.txt`;
+}
+
+/**
  * Extended compile options with resource limits
  */
 export interface ExtendedCompileOptions extends CompileOptions {
@@ -552,80 +567,189 @@ export async function runCompiler(options: ExtendedCompileOptions): Promise<Comp
     const outputPath = options.outputPath ?? defaultOutputPath;
     result.outputPath = resolve(outputPath);
 
-    // Determine if chunking should be used
-    const chunkingConfig = {
-      enabled: options.enableChunking ?? config.chunking?.enabled,
-      chunkSize: options.chunkSize ?? config.chunking?.chunkSize,
-      maxParallel: options.maxParallel ?? config.chunking?.maxParallel,
-      strategy: config.chunking?.strategy,
-    };
+    // Dual-engine routing: resolve declaratively (explicit source.engine,
+    // legacy SourceType.Hosts, or configuration.defaultEngine) which engine
+    // each source belongs to, without downloading anything. This is
+    // deliberately the *only* new branch point in this function: an
+    // all-DNS configuration - the default, and every configuration that
+    // existed before this feature - takes the untouched chunked/unchunked
+    // compileFilters() path below unmodified, guaranteeing byte-identical
+    // output to pre-dual-engine behavior.
+    const forceEngine: EngineKind | undefined = options.engine && options.engine !== 'auto'
+      ? options.engine
+      : undefined;
+    const hasBrowserSources = config.sources.some((source) =>
+      (forceEngine ?? detectSourceEngine(source, [], config.defaultEngine)) === 'browser'
+    );
 
-    const useChunking = shouldEnableChunking(config, chunkingConfig, logger);
+    if (hasBrowserSources) {
+      const hasDnsSources = config.sources.some((source) =>
+        (forceEngine ?? detectSourceEngine(source, [], config.defaultEngine)) === 'dns'
+      );
 
-    let rules: string[];
+      logger.info(
+        `Using multi-engine compilation (dns=${hasDnsSources}, browser=${hasBrowserSources})`,
+      );
 
-    if (useChunking) {
-      logger.info('Using chunked parallel compilation');
+      // Note: orchestration's `Logger` (used throughout this file) is a
+      // narrower interface than the compiler-core `ILogger` the engine
+      // classes expect (no `trace`), so - mirroring how `compileFilters()`
+      // below already lets `compile()` fall back to compiler-core's own
+      // default logger rather than threading this one through - engine
+      // compilation logging uses its own default logger too.
+      const multiEngineCompiler = new MultiEngineCompiler({ forceEngine });
+      // Mirrors compileFilters()'s stripInternalMetadata() call: the strict-schema
+      // validators inside FilterCompiler/BrowserSyntaxCompiler reject unrecognized
+      // properties, so readConfiguration()'s orchestration-layer metadata
+      // (_sourceFormat/_sourcePath) must not reach them.
+      const multiResult = await multiEngineCompiler.compile(stripInternalMetadata(config));
 
-      // Split configuration into chunks
-      const chunks = splitIntoChunks(config, chunkingConfig, logger);
+      // Both buckets present: dns writes to the primary output path, browser
+      // writes to its own (default-derived or explicit) path. Only one
+      // bucket present: it alone writes to the primary output path - a
+      // browser-only or forced-dns configuration still produces exactly one
+      // artifact, matching single-engine behavior.
+      if (multiResult.dns) {
+        writeOutput(result.outputPath, multiResult.dns.rules, logger);
+      }
+      if (multiResult.browser) {
+        const browserOutputPath = multiResult.dns
+          ? resolve(options.browserOutputPath ?? deriveBrowserOutputPath(result.outputPath))
+          : result.outputPath;
+        writeOutput(browserOutputPath, multiResult.browser.rules, logger);
+        if (multiResult.dns) {
+          result.browserOutputPath = browserOutputPath;
+        }
+      }
 
-      if (chunks.length === 1) {
-        // Only one chunk, compile directly
-        logger.info('Only one chunk created, compiling directly');
+      const maxOutputSize = options.maxOutputSize ?? DEFAULT_RESOURCE_LIMITS.maxOutputFileSize;
+
+      if (multiResult.dns) {
+        const outputStats = statSync(result.outputPath);
+        checkFileSize(outputStats.size, maxOutputSize, 'output file');
+        result.ruleCount = countRules(result.outputPath);
+        result.outputHash = options.hashCallbacks
+          ? await computeHashWithCallbacks(result.outputPath, 'output_file', options.hashCallbacks)
+          : computeHash(result.outputPath);
+
+        await runRulesValidator(
+          result.outputPath,
+          options.validationCallbacks,
+          logger,
+          options.allowUnvalidatedOutput ?? false,
+          options.failOnWarnings ?? false,
+        );
+      }
+
+      if (multiResult.browser) {
+        const browserPath = result.browserOutputPath ?? result.outputPath;
+        const outputStats = statSync(browserPath);
+        checkFileSize(outputStats.size, maxOutputSize, 'browser output file');
+        const browserRuleCount = countRules(browserPath);
+        const browserOutputHash = options.hashCallbacks
+          ? await computeHashWithCallbacks(
+            browserPath,
+            'browser_output_file',
+            options.hashCallbacks,
+          )
+          : computeHash(browserPath);
+
+        await runRulesValidator(
+          browserPath,
+          options.validationCallbacks,
+          logger,
+          options.allowUnvalidatedOutput ?? false,
+          options.failOnWarnings ?? false,
+        );
+
+        if (multiResult.dns) {
+          result.browserRuleCount = browserRuleCount;
+          result.browserOutputHash = browserOutputHash;
+        } else {
+          // Browser-only compilation: report through the primary result
+          // fields, matching single-engine (dns-only) behavior.
+          result.ruleCount = browserRuleCount;
+          result.outputHash = browserOutputHash;
+        }
+      }
+
+      logger.debug(`Hash: ${result.outputHash}`);
+    } else {
+      // Determine if chunking should be used
+      const chunkingConfig = {
+        enabled: options.enableChunking ?? config.chunking?.enabled,
+        chunkSize: options.chunkSize ?? config.chunking?.chunkSize,
+        maxParallel: options.maxParallel ?? config.chunking?.maxParallel,
+        strategy: config.chunking?.strategy,
+      };
+
+      const useChunking = shouldEnableChunking(config, chunkingConfig, logger);
+
+      let rules: string[];
+
+      if (useChunking) {
+        logger.info('Using chunked parallel compilation');
+
+        // Split configuration into chunks
+        const chunks = splitIntoChunks(config, chunkingConfig, logger);
+
+        if (chunks.length === 1) {
+          // Only one chunk, compile directly
+          logger.info('Only one chunk created, compiling directly');
+          rules = await compileFilters(config, logger, {
+            timeoutMs: options.timeoutMs,
+            maxOutputSize: options.maxOutputSize,
+          });
+        } else {
+          // Compile chunks in parallel
+          const maxParallel = chunkingConfig.maxParallel ?? 4;
+          const compiledChunks = await compileChunksInParallel(chunks, maxParallel, logger);
+
+          // Merge chunks back together
+          rules = mergeChunks(compiledChunks, logger);
+        }
+      } else {
+        logger.info('Using standard single-threaded compilation');
+        // Standard compilation (no chunking)
         rules = await compileFilters(config, logger, {
           timeoutMs: options.timeoutMs,
           maxOutputSize: options.maxOutputSize,
         });
-      } else {
-        // Compile chunks in parallel
-        const maxParallel = chunkingConfig.maxParallel ?? 4;
-        const compiledChunks = await compileChunksInParallel(chunks, maxParallel, logger);
-
-        // Merge chunks back together
-        rules = mergeChunks(compiledChunks, logger);
       }
-    } else {
-      logger.info('Using standard single-threaded compilation');
-      // Standard compilation (no chunking)
-      rules = await compileFilters(config, logger, {
-        timeoutMs: options.timeoutMs,
-        maxOutputSize: options.maxOutputSize,
-      });
-    }
 
-    // Write output
-    writeOutput(result.outputPath, rules, logger);
+      // Write output
+      writeOutput(result.outputPath, rules, logger);
 
-    // Check output file size
-    const outputStats = statSync(result.outputPath);
-    const maxOutputSize = options.maxOutputSize ?? DEFAULT_RESOURCE_LIMITS.maxOutputFileSize;
-    checkFileSize(outputStats.size, maxOutputSize, 'output file');
+      // Check output file size
+      const outputStats = statSync(result.outputPath);
+      const maxOutputSize = options.maxOutputSize ?? DEFAULT_RESOURCE_LIMITS.maxOutputFileSize;
+      checkFileSize(outputStats.size, maxOutputSize, 'output file');
 
-    // Calculate statistics - use callbacks if provided
-    result.ruleCount = countRules(result.outputPath);
-    if (options.hashCallbacks) {
-      result.outputHash = await computeHashWithCallbacks(
+      // Calculate statistics - use callbacks if provided
+      result.ruleCount = countRules(result.outputPath);
+      if (options.hashCallbacks) {
+        result.outputHash = await computeHashWithCallbacks(
+          result.outputPath,
+          'output_file',
+          options.hashCallbacks,
+        );
+      } else {
+        result.outputHash = computeHash(result.outputPath);
+      }
+
+      logger.debug(`Hash: ${result.outputHash}`);
+
+      // Mandatory bloqr-validator syntax check - fail-closed by default (see
+      // runRulesValidator doc comment); handlers may still customize via the
+      // callback, but nothing has to be registered for the default checks to hold.
+      await runRulesValidator(
         result.outputPath,
-        'output_file',
-        options.hashCallbacks,
+        options.validationCallbacks,
+        logger,
+        options.allowUnvalidatedOutput ?? false,
+        options.failOnWarnings ?? false,
       );
-    } else {
-      result.outputHash = computeHash(result.outputPath);
     }
-
-    logger.debug(`Hash: ${result.outputHash}`);
-
-    // Mandatory bloqr-validator syntax check - fail-closed by default (see
-    // runRulesValidator doc comment); handlers may still customize via the
-    // callback, but nothing has to be registered for the default checks to hold.
-    await runRulesValidator(
-      result.outputPath,
-      options.validationCallbacks,
-      logger,
-      options.allowUnvalidatedOutput ?? false,
-      options.failOnWarnings ?? false,
-    );
 
     // Copy to rules directory if requested
     if (options.copyToRules) {

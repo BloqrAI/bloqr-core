@@ -150,6 +150,20 @@ export function parseArgs(args: string[]): CliOptions {
         }
         i++;
         break;
+      case '--engine':
+        if (!nextArg || !['auto', 'dns', 'browser'].includes(nextArg)) {
+          throw new Error(`Invalid engine: ${nextArg}. Must be auto, dns, or browser.`);
+        }
+        options.engine = nextArg as 'auto' | 'dns' | 'browser';
+        i++;
+        break;
+      case '--browser-output':
+        if (!nextArg) {
+          throw new Error('Browser output path value is required');
+        }
+        options.browserOutputPath = nextArg;
+        i++;
+        break;
       default:
         // Allow positional config path
         if (arg && !arg.startsWith('-') && !options.configPath) {
@@ -194,6 +208,18 @@ Chunking Options (for large rule lists):
   --enable-chunking     Enable chunked parallel compilation
   --chunk-size N        Number of sources per chunk (applies when using source-based chunking)
   --max-parallel N      Maximum number of chunks to compile in parallel (default: CPU count)
+
+Dual-Engine Options (server-side/DNS vs client-side/browser-syntax):
+  --engine ENGINE       auto (default), dns, or browser - forces every source through
+                         ENGINE when not auto, bypassing per-source detection
+  --browser-output PATH Output path for the browser-syntax artifact when a config mixes
+                         DNS and browser-syntax sources (default: PATH with its extension
+                         replaced by .browser.txt). Ignored for single-engine configs,
+                         which always produce exactly one artifact at --output.
+                         NOTE: until browser-syntax validation lands (tracked separately),
+                         compiling any browser-syntax source requires
+                         --allow-unvalidated-output, because bloqr-validate currently
+                         rejects all cosmetic rules.
 
 Benchmark Options (with --benchmark):
   --benchmark-size SIZE        Dataset size: small, medium, large, xlarge, or all (default: all)
@@ -688,6 +714,8 @@ export async function main(
       enableChunking: options.enableChunking,
       chunkSize: options.chunkSize,
       maxParallel: options.maxParallel,
+      engine: options.engine,
+      browserOutputPath: options.browserOutputPath,
     });
 
     if (result.success) {
@@ -698,6 +726,11 @@ export async function main(
       console.log(`  Rule Count:   ${result.ruleCount.toLocaleString()}`);
       console.log(`  Output Path:  ${result.outputPath}`);
       console.log(`  Hash:         ${result.outputHash.slice(0, 32)}...`);
+      if (result.browserOutputPath) {
+        console.log(`  Browser Out:  ${result.browserOutputPath}`);
+        console.log(`  Browser Hash: ${(result.browserOutputHash ?? '').slice(0, 32)}...`);
+        console.log(`  Browser Rules:${result.browserRuleCount?.toLocaleString() ?? 0}`);
+      }
       console.log(`  Elapsed:      ${result.elapsedMs}ms`);
 
       if (result.copiedToRules) {
