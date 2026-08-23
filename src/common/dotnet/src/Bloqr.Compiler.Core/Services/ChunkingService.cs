@@ -10,9 +10,6 @@ public class ChunkingService : IChunkingService
     private readonly CommandHelper _commandHelper;
     private readonly ICompilationEventDispatcher _eventDispatcher;
 
-    private const string CompilerCommand = "hostlist-compiler";
-    private const string NpxCommand = "npx";
-
     /// <summary>
     /// Initializes a new instance of the <see cref="ChunkingService"/> class.
     /// </summary>
@@ -307,13 +304,17 @@ public class ChunkingService : IChunkingService
             var jsonContent = _configurationReader.ToJson(config);
             await File.WriteAllTextAsync(tempConfigPath, jsonContent, cancellationToken);
 
-            // Get compiler command
-            var (command, args) = GetCompilerCommand(tempConfigPath, tempOutputPath, options.Verbose);
+            // Get compiler command - shared with the unchunked path (FilterCompiler) via
+            // CommandHelper so both invoke the same underlying compiler; see #424.
+            var compilerCommand = _commandHelper.GetBloqrCompilerCoreCommand(
+                tempConfigPath, tempOutputPath, options.Verbose);
 
-            if (string.IsNullOrEmpty(command))
+            if (compilerCommand is null)
             {
-                throw new InvalidOperationException("hostlist-compiler not found");
+                throw new InvalidOperationException("deno not found. Install from: https://deno.com/");
             }
+
+            var (command, args) = compilerCommand.Value;
 
             // Execute compiler
             var (exitCode, stdOut, stdErr) = await _commandHelper.ExecuteAsync(
@@ -348,30 +349,6 @@ public class ChunkingService : IChunkingService
                 try { File.Delete(tempOutputPath); } catch { /* ignore */ }
             }
         }
-    }
-
-    private (string Command, string Args) GetCompilerCommand(
-        string configPath,
-        string outputPath,
-        bool verbose)
-    {
-        var verboseFlag = verbose ? " --verbose" : "";
-
-        // Try global hostlist-compiler first
-        var compilerPath = _commandHelper.FindCommand(CompilerCommand);
-        if (compilerPath != null)
-        {
-            return (compilerPath, $"--config \"{configPath}\" --output \"{outputPath}\"{verboseFlag}");
-        }
-
-        // Fall back to npx
-        var npxPath = _commandHelper.FindCommand(NpxCommand);
-        if (npxPath != null)
-        {
-            return (npxPath, $"@adguard/hostlist-compiler --config \"{configPath}\" --output \"{outputPath}\"{verboseFlag}");
-        }
-
-        return (string.Empty, string.Empty);
     }
 
     /// <inheritdoc/>

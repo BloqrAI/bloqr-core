@@ -45,11 +45,16 @@ public class Program
     /// <returns>The built configuration.</returns>
     private static IConfiguration BuildConfiguration(string[] args)
     {
+        // See CommandLineArgumentHelper.SplitBareBooleanFlags for why bare boolean flags need
+        // to be pre-stripped before AddCommandLine sees the rest of args - see #426.
+        var (booleanFlags, remainingArgs) = CommandLineArgumentHelper.SplitBareBooleanFlags(args);
+
         return new ConfigurationBuilder()
             .SetBasePath(Directory.GetCurrentDirectory())
             .AddJsonFile("appsettings.json", optional: true, reloadOnChange: true)
             .AddEnvironmentVariables("BLOQR_COMPILER_")
-            .AddCommandLine(args)
+            .AddCommandLine(remainingArgs)
+            .AddInMemoryCollection(booleanFlags)
             .Build();
     }
 

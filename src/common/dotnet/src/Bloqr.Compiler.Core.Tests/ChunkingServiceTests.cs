@@ -197,10 +197,12 @@ public class ChunkingServiceTests
     [Fact]
     public async Task CompileChunksAsync_RaisesChunkStartedAndChunkCompletedForEachChunk()
     {
-        // No hostlist-compiler/npx on PATH in this deterministic test environment ->
-        // CompileSingleChunkAsync always throws, exercising the failure branch of the
-        // newly-wired ChunkStarted/ChunkCompleted events without depending on real file I/O.
-        _commandHelperMock.Setup(c => c.FindCommand(It.IsAny<string>())).Returns((string?)null);
+        // No deno on PATH in this deterministic test environment -> CompileSingleChunkAsync
+        // always throws, exercising the failure branch of the newly-wired
+        // ChunkStarted/ChunkCompleted events without depending on real file I/O.
+        _commandHelperMock
+            .Setup(c => c.GetBloqrCompilerCoreCommand(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<bool>()))
+            .Returns(((string, string)?)null);
 
         var chunks = new List<(CompilerConfiguration Config, ChunkMetadata Metadata)>
         {

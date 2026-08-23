@@ -113,8 +113,7 @@ public class FilterCompiler : IFilterCompiler
             result.OutputPath = actualOutputPath;
 
             // Find compiler command
-            var (command, args) = await GetCompilerCommandAsync(
-                configToUse, actualOutputPath, options.Verbose, cancellationToken);
+            var (command, args) = GetCompilerCommand(configToUse, actualOutputPath, options.Verbose);
 
             if (string.IsNullOrEmpty(command))
             {
@@ -221,23 +220,15 @@ public class FilterCompiler : IFilterCompiler
         return denoPath != null;
     }
 
-    private async Task<(string Command, string Args)> GetCompilerCommandAsync(
+    private (string Command, string Args) GetCompilerCommand(
         string configPath,
         string outputPath,
-        bool verbose,
-        CancellationToken cancellationToken)
+        bool verbose)
     {
-        var verboseFlag = verbose ? " --verbose" : "";
-
-        var denoPath = _commandHelper.FindCommand(DenoCommand);
-        if (denoPath != null)
-        {
-            return (denoPath,
-                $"run --allow-read --allow-write --allow-env --allow-net --allow-run {JsrPackageSpecifier} " +
-                $"--config \"{configPath}\" --output \"{outputPath}\"{verboseFlag}");
-        }
-
-        return (string.Empty, string.Empty);
+        // Shared with the chunked path (ChunkingService) via CommandHelper so both invoke the
+        // same underlying compiler for the same config; see #424.
+        return _commandHelper.GetBloqrCompilerCoreCommand(configPath, outputPath, verbose)
+            ?? (string.Empty, string.Empty);
     }
 
     /// <summary>

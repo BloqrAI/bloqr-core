@@ -63,10 +63,8 @@ pub enum CompilerError {
         source: std::io::Error,
     },
 
-    /// The hostlist-compiler tool was not found.
-    #[error(
-        "hostlist-compiler not found (install with: npm install -g @adguard/hostlist-compiler)"
-    )]
+    /// The Deno runtime (used to invoke the `@bloqr/compiler-core` JSR package) was not found.
+    #[error("deno not found on PATH (install from: https://deno.com/)")]
     CompilerNotFound,
 
     /// Compilation process failed.
