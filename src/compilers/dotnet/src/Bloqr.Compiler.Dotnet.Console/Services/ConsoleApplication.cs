@@ -21,6 +21,8 @@ namespace Bloqr.Compiler.Dotnet.Console.Services;
 ///   <item><description>--benchmark-sources: Number of identical duplicated sources for the chunked run (default: 4)</description></item>
 ///   <item><description>--benchmark-max-parallel: Max parallel workers for the chunked run (default: CPU count, max 8)</description></item>
 ///   <item><description>--benchmark-json: Emit machine-readable JSON instead of a human-readable table</description></item>
+///   <item><description>--engine: auto (default), dns, or browser - forces every source through ENGINE when not auto</description></item>
+///   <item><description>--browser-output: Output path for the browser-syntax artifact of a mixed-engine config (default: derived .browser.txt)</description></item>
 /// </list>
 /// </remarks>
 public class ConsoleApplication
@@ -64,6 +66,8 @@ public class ConsoleApplication
         var showVersion = _configuration.GetValue<bool>("version") || _configuration.GetValue<bool>("v");
         var verbose = _configuration.GetValue<bool>("verbose");
         var validateOnly = _configuration.GetValue<bool>("validate");
+        var engine = _configuration["engine"];
+        var browserOutputPath = _configuration["browser-output"];
 
         // Check for benchmark mode. Program.BuildConfiguration() pre-strips bare boolean
         // flags like --benchmark/--benchmark-json before handing the rest to
@@ -104,7 +108,8 @@ public class ConsoleApplication
         if (compileOnly || !string.IsNullOrEmpty(configPath))
         {
             // Command-line mode
-            return await RunCompilationAsync(configPath, outputPath, copyToRules, verbose, validateConfig, failOnWarnings);
+            return await RunCompilationAsync(
+                configPath, outputPath, copyToRules, verbose, validateConfig, failOnWarnings, engine, browserOutputPath);
         }
 
         // Interactive mode
@@ -257,7 +262,9 @@ public class ConsoleApplication
         return true;
     }
 
-    private async Task<int> RunCompilationAsync(string? configPath, string? outputPath, bool copyToRules, bool verbose, bool validateConfig, bool failOnWarnings)
+    private async Task<int> RunCompilationAsync(
+        string? configPath, string? outputPath, bool copyToRules, bool verbose, bool validateConfig, bool failOnWarnings,
+        string? engine = null, string? browserOutputPath = null)
     {
         try
         {
@@ -273,7 +280,9 @@ public class ConsoleApplication
                         CopyToRules = copyToRules,
                         Verbose = verbose,
                         ValidateConfig = validateConfig,
-                        FailOnWarnings = failOnWarnings
+                        FailOnWarnings = failOnWarnings,
+                        Engine = engine,
+                        BrowserOutputPath = browserOutputPath
                     };
 
                     result = await _compilerService.RunAsync(options);
@@ -641,6 +650,17 @@ public class ConsoleApplication
         table.AddRow("Output Hash", !string.IsNullOrEmpty(result.OutputHash) && result.OutputHash.Length >= 32
             ? result.OutputHash[..32] + "..."
             : result.OutputHash ?? "[grey]N/A[/]");
+
+        if (!string.IsNullOrEmpty(result.BrowserOutputPath))
+        {
+            table.AddRow("Browser Output Path", Markup.Escape(result.BrowserOutputPath));
+            table.AddRow("Browser Rule Count", result.BrowserRuleCount?.ToString("N0") ?? "[grey]N/A[/]");
+            table.AddRow("Browser Output Hash",
+                !string.IsNullOrEmpty(result.BrowserOutputHash) && result.BrowserOutputHash.Length >= 32
+                    ? result.BrowserOutputHash[..32] + "..."
+                    : result.BrowserOutputHash ?? "[grey]N/A[/]");
+        }
+
         table.AddRow("Elapsed Time", $"{result.ElapsedMs:N0} ms");
 
         if (result.CopiedToRules)
