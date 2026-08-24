@@ -76,6 +76,22 @@ public class CompilerOptions
     public ChunkingOptions? Chunking { get; set; }
 
     /// <summary>
+    /// Gets or sets which compilation engine to route sources through: <c>"auto"</c>
+    /// (the default) detects per-source, <c>"dns"</c> or <c>"browser"</c> forces every
+    /// source through that engine regardless of its declared/detected type.
+    /// </summary>
+    public string? Engine { get; set; }
+
+    /// <summary>
+    /// Gets or sets the output path for the browser-syntax artifact when a
+    /// configuration mixes DNS and browser-syntax sources. When unset, the compiler
+    /// derives a default from <see cref="OutputPath"/> (its extension replaced by
+    /// <c>.browser.txt</c>, or that suffix appended). Ignored for single-engine
+    /// configurations, which always produce exactly one artifact at <see cref="OutputPath"/>.
+    /// </summary>
+    public string? BrowserOutputPath { get; set; }
+
+    /// <summary>
     /// Creates default compiler options.
     /// </summary>
     public static CompilerOptions Default => new()

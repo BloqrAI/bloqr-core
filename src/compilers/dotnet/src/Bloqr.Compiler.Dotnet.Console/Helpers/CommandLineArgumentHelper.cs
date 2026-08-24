@@ -10,6 +10,12 @@ public static class CommandLineArgumentHelper
     /// Every bare boolean CLI switch this app recognizes - i.e. flags with no value of their
     /// own, as opposed to "--key value" pairs like <c>--config</c> or <c>--benchmark-size</c>.
     /// </summary>
+    /// <remarks>
+    /// <c>--engine</c> and <c>--browser-output</c> (#436) are deliberately NOT here: both take
+    /// a value (<c>--engine dns</c>, <c>--browser-output path.txt</c>), so they need
+    /// <c>AddCommandLine</c>'s normal "next token is the value" handling rather than being
+    /// stripped out and fed in as a bare presence flag. Don't add them here reflexively.
+    /// </remarks>
     public static readonly string[] BareBooleanFlags =
     [
         "--compile",

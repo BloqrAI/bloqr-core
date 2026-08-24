@@ -112,8 +112,16 @@ public class FilterCompiler : IFilterCompiler
 
             result.OutputPath = actualOutputPath;
 
+            // A mixed-engine configuration writes a second artifact here (default-derived,
+            // unless the caller passed an explicit path); a single-engine one - all-DNS (the
+            // overwhelming default) or --engine-forced - never does, so this path is byte-for-
+            // -byte the same command line as before this feature existed whenever Engine and
+            // BrowserOutputPath are both unset.
+            var browserOutputPath = options.BrowserOutputPath ?? DeriveBrowserOutputPath(actualOutputPath);
+
             // Find compiler command
-            var (command, args) = GetCompilerCommand(configToUse, actualOutputPath, options.Verbose);
+            var (command, args) = GetCompilerCommand(
+                configToUse, actualOutputPath, options.Verbose, options.Engine, options.BrowserOutputPath);
 
             if (string.IsNullOrEmpty(command))
             {
@@ -152,6 +160,15 @@ public class FilterCompiler : IFilterCompiler
                 result.Success = false;
                 result.ErrorMessage = "Compilation completed but output file was not created";
                 return result;
+            }
+
+            // A browser-syntax artifact only exists when the configuration actually mixed
+            // engines (or --engine browser was forced) - detected by file presence rather than
+            // re-parsing the config, since the CLI is the single source of truth for whether a
+            // source resolved to the browser engine.
+            if (File.Exists(browserOutputPath))
+            {
+                result.BrowserOutputPath = browserOutputPath;
             }
 
             result.Success = true;
@@ -223,12 +240,29 @@ public class FilterCompiler : IFilterCompiler
     private (string Command, string Args) GetCompilerCommand(
         string configPath,
         string outputPath,
-        bool verbose)
+        bool verbose,
+        string? engine = null,
+        string? browserOutputPath = null)
     {
         // Shared with the chunked path (ChunkingService) via CommandHelper so both invoke the
-        // same underlying compiler for the same config; see #424.
-        return _commandHelper.GetBloqrCompilerCoreCommand(configPath, outputPath, verbose)
+        // same underlying compiler for the same config; see #424. Chunked compilation doesn't
+        // support the multi-engine path yet, so it never passes engine/browserOutputPath - only
+        // this (unchunked) call site does.
+        return _commandHelper.GetBloqrCompilerCoreCommand(configPath, outputPath, verbose, engine, browserOutputPath)
             ?? (string.Empty, string.Empty);
+    }
+
+    /// <summary>
+    /// Derives the default output path for the browser-syntax artifact from the DNS/primary
+    /// output path: <c>.txt</c> is replaced with <c>.browser.txt</c>; any other extension (or
+    /// none) has <c>.browser.txt</c> appended. Mirrors the TypeScript CLI's
+    /// <c>deriveBrowserOutputPath</c> so both wrappers agree on the default.
+    /// </summary>
+    private static string DeriveBrowserOutputPath(string outputPath)
+    {
+        return outputPath.EndsWith(".txt", StringComparison.OrdinalIgnoreCase)
+            ? string.Concat(outputPath.AsSpan(0, outputPath.Length - ".txt".Length), ".browser.txt")
+            : outputPath + ".browser.txt";
     }
 
     /// <summary>

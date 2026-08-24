@@ -14,6 +14,7 @@ public static class ConfigurationValidator
     private static readonly string[] ValidConflictStrategies = ["rename", "overwrite", "error"];
     private static readonly string[] ValidHashVerificationModes = ["strict", "warning", "disabled"];
     private static readonly string[] ValidArchivingModes = ["automatic", "interactive", "disabled"];
+    private static readonly string[] ValidEngines = ["dns", "browser"];
 
     /// <summary>
     /// Validates a compiler configuration.
@@ -43,6 +44,7 @@ public static class ConfigurationValidator
         ValidateOutput(config.Output, result);
         ValidateHashVerification(config.HashVerification, result);
         ValidateArchiving(config.Archiving, result);
+        ValidateEngine(config.DefaultEngine, "defaultEngine", result);
 
         // Validate global transformations
         ValidateTransformations(config.Transformations, "transformations", result);
@@ -116,6 +118,20 @@ public static class ConfigurationValidator
         }
     }
 
+    private static void ValidateEngine(string? engine, string path, ValidationResult result)
+    {
+        if (string.IsNullOrEmpty(engine))
+        {
+            return;
+        }
+
+        if (!ValidEngines.Contains(engine, StringComparer.OrdinalIgnoreCase))
+        {
+            result.AddError(path,
+                $"Invalid engine '{engine}'. Valid engines are: {string.Join(", ", ValidEngines)}");
+        }
+    }
+
     private static void ValidateSource(FilterSource source, string path, ValidationResult result)
     {
         if (string.IsNullOrWhiteSpace(source.Source))
@@ -129,6 +145,8 @@ public static class ConfigurationValidator
             result.AddError($"{path}.type",
                 $"Invalid source type '{source.Type}'. Valid types are: {string.Join(", ", SourceTypeHelper.AllSourceTypes)}");
         }
+
+        ValidateEngine(source.Engine, $"{path}.engine", result);
 
         // Validate source-specific transformations
         ValidateTransformations(source.Transformations, $"{path}.transformations", result);
