@@ -31,10 +31,21 @@ public sealed class DashboardService : IDashboardService
     }
 
     /// <inheritdoc/>
-    public Task<CompilerResult> CompileAsync(string compilerConfigPath, CancellationToken cancellationToken = default)
+    public Task<CompilerResult> CompileAsync(
+        string compilerConfigPath,
+        string? engine = null,
+        string? browserOutputPath = null,
+        CancellationToken cancellationToken = default)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(compilerConfigPath);
-        return _compilerService.RunAsync(compilerConfigPath, cancellationToken: cancellationToken);
+        return _compilerService.RunAsync(
+            new CompilerOptions
+            {
+                ConfigPath = compilerConfigPath,
+                Engine = engine,
+                BrowserOutputPath = browserOutputPath,
+            },
+            cancellationToken);
     }
 
     /// <inheritdoc/>

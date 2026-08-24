@@ -16,13 +16,56 @@ public interface IDashboardService
     /// <c>CompileMenuService</c>'s interactive "Compile using a specific config file" action does
     /// minus the live progress display.
     /// </summary>
+    /// <remarks>
+    /// <para><b>Dual-engine shape (#440, Wave 3 of epic #432):</b> this method still returns a
+    /// single <see cref="CompilerResult"/> rather than gaining a "per engine" result type or a
+    /// second overload. <see cref="CompilerResult"/> already carries both artifacts after #436 -
+    /// the primary/DNS fields (<see cref="CompilerResult.OutputPath"/>,
+    /// <see cref="CompilerResult.OutputHash"/>, <see cref="CompilerResult.RuleCount"/>) plus the
+    /// browser ones (<see cref="CompilerResult.BrowserOutputPath"/>,
+    /// <see cref="CompilerResult.BrowserOutputHash"/>, <see cref="CompilerResult.BrowserRuleCount"/>,
+    /// populated only when the config mixed both source types). A future MAUI/WPF host can render
+    /// both artifacts - with their independent hashes and paths - straight off one result, with no
+    /// need to correlate two separate calls or two result objects.
+    /// </para>
+    /// <para>
+    /// What <i>does</i> change is the input: this gained an optional <paramref name="engine"/>
+    /// and <paramref name="browserOutputPath"/> parameter, mirroring
+    /// <c>Bloqr.Compiler.Abstractions.CompilerOptions.Engine</c> and <c>.BrowserOutputPath</c>
+    /// exactly (same type, same semantics) so a caller can force a single engine or override
+    /// where the browser artifact lands, the same way <c>Bloqr.Compiler.Dotnet.Console</c>'s own
+    /// <c>--engine</c>/<c>--browser-output</c> flags do (#436). Both are forwarded to
+    /// <c>IBloqrCompilerService.RunAsync(CompilerOptions, ...)</c> unchanged; leaving them
+    /// <c>null</c> preserves the pre-#440 "auto" behavior byte-for-byte, so this is additive, not
+    /// a breaking change to existing callers.
+    /// </para>
+    /// </remarks>
     /// <param name="compilerConfigPath">Path to the compiler config file.</param>
+    /// <param name="engine">
+    /// Which compilation engine to force: <c>"dns"</c> or <c>"browser"</c>. <c>null</c> or
+    /// <c>"auto"</c> (the default) detects the engine per source.
+    /// </param>
+    /// <param name="browserOutputPath">
+    /// Overrides the output path for the browser-syntax artifact of a mixed-engine config.
+    /// <c>null</c> uses the compiler's own derived default. Ignored for single-engine configs.
+    /// </param>
     /// <param name="cancellationToken">Cancellation token.</param>
-    Task<CompilerResult> CompileAsync(string compilerConfigPath, CancellationToken cancellationToken = default);
+    Task<CompilerResult> CompileAsync(
+        string compilerConfigPath,
+        string? engine = null,
+        string? browserOutputPath = null,
+        CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Validates a compiler config file without compiling it.
     /// </summary>
+    /// <remarks>
+    /// No engine parameter is needed here (#440): validation checks a config's structure and
+    /// sources up front, independent of which engine(s) a later <see cref="CompileAsync"/> call
+    /// would route those sources through - a config with mixed DNS/browser sources validates the
+    /// same way regardless of engine selection, since engine selection only affects compilation
+    /// routing, not config-level validity.
+    /// </remarks>
     /// <param name="compilerConfigPath">Path to the compiler config file.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     Task<ValidationResult> ValidateCompilerConfigAsync(string compilerConfigPath, CancellationToken cancellationToken = default);

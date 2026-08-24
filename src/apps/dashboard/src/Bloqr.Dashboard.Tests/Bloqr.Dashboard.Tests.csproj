@@ -24,6 +24,7 @@
   <ItemGroup>
     <ProjectReference Include="..\Bloqr.Dashboard.Abstractions\Bloqr.Dashboard.Abstractions.csproj" />
     <ProjectReference Include="..\Bloqr.Dashboard.Core\Bloqr.Dashboard.Core.csproj" />
+    <ProjectReference Include="..\Bloqr.Dashboard.Console\Bloqr.Dashboard.Console.csproj" />
   </ItemGroup>
 
 </Project>
