@@ -42,6 +42,22 @@ class SourceType(Enum):
         raise ValueError(f"Unknown source type: {value}. Valid types: adblock, hosts")
 
 
+class EngineKind(Enum):
+    """Which compilation engine/grammar a source or configuration uses."""
+    DNS = "dns"
+    BROWSER = "browser"
+
+    @classmethod
+    def from_string(cls, value: str) -> EngineKind:
+        """Parse engine kind from string (case-insensitive)."""
+        normalized = value.lower().strip()
+        if normalized == "dns":
+            return cls.DNS
+        if normalized == "browser":
+            return cls.BROWSER
+        raise ValueError(f"Unknown engine: {value}. Valid engines: dns, browser")
+
+
 class Transformation(Enum):
     """Available transformations for filter rules.
 
@@ -130,6 +146,7 @@ class FilterSource:
     transformations: list[str] = field(default_factory=list)
     inclusions: list[str] = field(default_factory=list)
     exclusions: list[str] = field(default_factory=list)
+    engine: str | None = None
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> FilterSource:
@@ -141,6 +158,7 @@ class FilterSource:
             transformations=data.get("transformations", []),
             inclusions=data.get("inclusions", []),
             exclusions=data.get("exclusions", []),
+            engine=data.get("engine"),
         )
 
     def to_dict(self) -> dict[str, Any]:
@@ -150,6 +168,8 @@ class FilterSource:
             result["name"] = self.name
         if self.type != "adblock":
             result["type"] = self.type
+        if self.engine is not None:
+            result["engine"] = self.engine
         if self.transformations:
             result["transformations"] = self.transformations
         if self.inclusions:
@@ -268,6 +288,7 @@ class CompilerConfiguration:
     output: OutputSettings | None = None
     hash_verification: HashVerificationSettings | None = None
     archiving: ArchivingSettings | None = None
+    default_engine: str | None = None
 
     # Metadata (not serialized)
     _source_format: ConfigurationFormat | None = field(default=None, repr=False)
@@ -291,6 +312,7 @@ class CompilerConfiguration:
             hash_verification=HashVerificationSettings.from_dict(data["hashVerification"])
             if "hashVerification" in data else None,
             archiving=ArchivingSettings.from_dict(data["archiving"]) if "archiving" in data else None,
+            default_engine=data.get("defaultEngine"),
         )
 
     def to_dict(self) -> dict[str, Any]:
@@ -311,6 +333,8 @@ class CompilerConfiguration:
             result["hashVerification"] = self.hash_verification.to_dict()
         if self.archiving is not None:
             result["archiving"] = self.archiving.to_dict()
+        if self.default_engine is not None:
+            result["defaultEngine"] = self.default_engine
 
         result["sources"] = [s.to_dict() for s in self.sources]
 
@@ -372,6 +396,15 @@ class CompilerConfiguration:
             if self.archiving.retention_days < 1:
                 result.add_error("Retention days must be at least 1")
 
+        if self.default_engine is not None:
+            try:
+                EngineKind.from_string(self.default_engine)
+            except ValueError:
+                result.add_error(
+                    f"Invalid defaultEngine '{self.default_engine}'. "
+                    f"Valid engines: dns, browser"
+                )
+
         # Validate sources
         for i, source in enumerate(self.sources):
             source_id = source.name or f"sources[{i}]"
@@ -387,6 +420,16 @@ class CompilerConfiguration:
                     f"Source '{source_id}' has invalid type '{source.type}'. "
                     f"Valid types: adblock, hosts"
                 )
+
+            # Validate source engine
+            if source.engine is not None:
+                try:
+                    EngineKind.from_string(source.engine)
+                except ValueError:
+                    result.add_error(
+                        f"Source '{source_id}' has invalid engine '{source.engine}'. "
+                        f"Valid engines: dns, browser"
+                    )
 
             # Validate source-specific transformations
             invalid_transforms = Transformation.get_invalid(source.transformations)
@@ -650,7 +693,7 @@ def to_toml(config: CompilerConfiguration) -> str:
 
         # Add top-level fields
         for key in ["name", "description", "homepage", "license", "version"]:
-            if key in data and data[key]:
+            if data.get(key):
                 doc.add(key, data[key])
 
         # Add sources as array of tables
@@ -666,7 +709,7 @@ def to_toml(config: CompilerConfiguration) -> str:
 
         # Add optional arrays
         for key in ["transformations", "inclusions", "exclusions"]:
-            if key in data and data[key]:
+            if data.get(key):
                 doc.add(key, data[key])
 
         return tomlkit.dumps(doc)

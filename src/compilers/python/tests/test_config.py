@@ -8,6 +8,7 @@ import pytest
 from bloqr_compiler.config import (
     CompilerConfiguration,
     ConfigurationFormat,
+    EngineKind,
     FilterSource,
     SourceType,
     Transformation,
@@ -134,6 +135,24 @@ class TestSourceType:
             SourceType.from_string("invalid")
 
 
+class TestEngineKind:
+    """Tests for EngineKind enum."""
+
+    def test_from_string_dns(self) -> None:
+        assert EngineKind.from_string("dns") == EngineKind.DNS
+        assert EngineKind.from_string("DNS") == EngineKind.DNS
+
+    def test_from_string_browser(self) -> None:
+        assert EngineKind.from_string("browser") == EngineKind.BROWSER
+        assert EngineKind.from_string("Browser") == EngineKind.BROWSER
+
+    def test_from_string_invalid(self) -> None:
+        with pytest.raises(ValueError, match="Unknown engine"):
+            EngineKind.from_string("auto")
+        with pytest.raises(ValueError, match="Unknown engine"):
+            EngineKind.from_string("")
+
+
 class TestTransformation:
     """Tests for Transformation enum."""
 
@@ -251,6 +270,19 @@ class TestFilterSource:
         assert data["type"] == "hosts"
         assert data["transformations"] == ["Compress"]
 
+    def test_engine_defaults_to_none(self) -> None:
+        source = FilterSource.from_dict({"source": "./rules.txt"})
+        assert source.engine is None
+
+    def test_engine_roundtrip(self) -> None:
+        source = FilterSource.from_dict({"source": "./rules.txt", "engine": "browser"})
+        assert source.engine == "browser"
+        assert source.to_dict()["engine"] == "browser"
+
+    def test_engine_omitted_from_dict_when_none(self) -> None:
+        source = FilterSource(source="./rules.txt")
+        assert "engine" not in source.to_dict()
+
 
 class TestCompilerConfiguration:
     """Tests for CompilerConfiguration class."""
@@ -325,6 +357,50 @@ class TestCompilerConfiguration:
         result = config.validate()
         assert result.is_valid is True  # Invalid transformations are warnings
         assert len(result.warnings) > 0
+
+    def test_validate_invalid_default_engine(self) -> None:
+        config = CompilerConfiguration(
+            name="Test",
+            sources=[FilterSource(source="./rules.txt")],
+            default_engine="auto",
+        )
+        result = config.validate()
+        assert result.is_valid is False
+        assert any("defaultEngine" in e for e in result.errors)
+
+    def test_validate_invalid_source_engine(self) -> None:
+        config = CompilerConfiguration(
+            name="Test",
+            sources=[FilterSource(source="./rules.txt", engine="invalid")],
+        )
+        result = config.validate()
+        assert result.is_valid is False
+        assert any("engine" in e.lower() for e in result.errors)
+
+    def test_validate_valid_engines(self) -> None:
+        config = CompilerConfiguration(
+            name="Test",
+            sources=[FilterSource(source="./rules.txt", engine="browser")],
+            default_engine="dns",
+        )
+        result = config.validate()
+        assert result.is_valid is True
+
+    def test_default_engine_roundtrip(self) -> None:
+        data = {
+            "name": "Test",
+            "sources": [{"source": "./rules.txt"}],
+            "defaultEngine": "browser",
+        }
+        config = CompilerConfiguration.from_dict(data)
+        assert config.default_engine == "browser"
+        assert config.to_dict()["defaultEngine"] == "browser"
+
+    def test_default_engine_omitted_from_dict_when_none(self) -> None:
+        config = CompilerConfiguration(
+            name="Test", sources=[FilterSource(source="./rules.txt")]
+        )
+        assert "defaultEngine" not in config.to_dict()
 
     def test_local_sources_count(self) -> None:
         config = CompilerConfiguration(

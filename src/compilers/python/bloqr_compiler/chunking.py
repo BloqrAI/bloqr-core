@@ -9,15 +9,12 @@ compilation times for large filter lists.
 from __future__ import annotations
 
 import asyncio
-import json
 import logging
 import os
 import tempfile
 import time
 from dataclasses import dataclass, field
 from enum import Enum
-from pathlib import Path
-from typing import Any
 
 import bloqr_compiler.compiler as compiler_module
 from bloqr_compiler.config import (
@@ -200,6 +197,7 @@ def _split_by_source(
             transformations=config.transformations,
             inclusions=config.inclusions,
             exclusions=config.exclusions,
+            default_engine=config.default_engine,
         )
 
         metadata = ChunkMetadata(
@@ -420,7 +418,11 @@ async def _compile_single_chunk_async(
             f.write(to_json(config))
 
         # Get compiler command - shared with the unchunked path (bloqr_compiler.compiler) so
-        # both invoke the same underlying compiler for the same config; see #424.
+        # both invoke the same underlying compiler for the same config; see #424. Chunked
+        # compilation doesn't support the multi-engine (--engine/--browser-output) path yet
+        # (#438); each chunk's own sources still carry per-source engine/defaultEngine, so
+        # @bloqr/compiler-core continues to auto-detect per-chunk, matching the unchunked
+        # default behavior.
         cmd, _cwd = compiler_module._get_compiler_command(temp_config_path, temp_output_path)
 
         if debug:
@@ -445,7 +447,7 @@ async def _compile_single_chunk_async(
         if not os.path.exists(temp_output_path):
             raise RuntimeError("Output file was not created")
 
-        with open(temp_output_path, "r", encoding="utf-8") as f:
+        with open(temp_output_path, encoding="utf-8") as f:
             rules = f.read().splitlines()
 
         # Update metadata
