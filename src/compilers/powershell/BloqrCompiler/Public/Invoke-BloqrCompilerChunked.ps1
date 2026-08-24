@@ -11,11 +11,11 @@ function Invoke-BloqrCompilerChunked {
         chunking strategy, mirroring the Rust/.NET/TypeScript/Python wrappers'
         chunking modules), compiles each chunk in parallel via
         `ForEach-Object -Parallel` - each chunk shelling out to the same
-        hostlist-compiler/npx binary Invoke-BloqrCompiler itself uses, so unlike
-        the Rust/.NET/Python wrappers (see #424) there is no divergent-compiler
-        risk here - then merges the chunk outputs and deduplicates while
-        preserving order, matching the merge behavior of the other wrappers'
-        chunking implementations.
+        `deno run jsr:@bloqr/compiler-core/cli` invocation Invoke-BloqrCompiler
+        itself uses, so unlike the Rust/.NET/Python wrappers (see #424) there is no
+        divergent-compiler risk here - then merges the chunk outputs and
+        deduplicates while preserving order, matching the merge behavior of the
+        other wrappers' chunking implementations.
 
         Unlike Invoke-BloqrCompiler, this does not run the mandatory bloqr-validate
         syntax check on each chunk's output - none of the other four wrappers'
@@ -23,6 +23,14 @@ function Invoke-BloqrCompilerChunked {
         what ultimately matters and re-validating every intermediate chunk would
         be redundant. Validate the merged output separately (e.g. via
         Invoke-RulesValidator) if needed.
+
+        Chunked compilation doesn't support the multi-engine/dual-artifact path yet
+        (#439, matching the Rust/.NET/Python/TypeScript precedent of deferring this)
+        - there are no -Engine/-BrowserOutputPath parameters here, and each chunk
+        compiles through the default (config-driven) engine resolution only. The
+        underlying configuration's `defaultEngine` is still threaded through to each
+        chunk by Split-BloqrCompilerConfiguration, so per-source engine resolution
+        within a chunk behaves the same as it would unchunked.
 
         Only JSON configuration files are supported, matching Invoke-BloqrCompiler.
 
@@ -72,9 +80,13 @@ function Invoke-BloqrCompilerChunked {
         )
     }
 
+    # Resolve just the executable and base arguments here (no -ConfigPath/-OutputPath) -
+    # each chunk gets its own --config/--output appended below, inside the parallel
+    # block. Multi-engine/dual-artifact support is deferred for chunked compilation
+    # (#439), so -Engine/-BrowserOutputPath are never passed.
     $compilerCommand = Get-BloqrCompilerCommand
     if (-not $compilerCommand) {
-        return [CompilerResult]::CreateFailure('hostlist-compiler not found. Install with: npm install -g @adguard/hostlist-compiler')
+        return [CompilerResult]::CreateFailure('deno not found. Install from https://deno.com, or see the module README for details.')
     }
 
     if (-not $OutputPath) {

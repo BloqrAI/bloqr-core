@@ -6,7 +6,7 @@
 
 .DESCRIPTION
     Like Invoke-BloqrCompiler.Tests.ps1, mocks Get-BloqrCompilerCommand with a small fake
-    script so these tests are deterministic and independent of whether hostlist-compiler is
+    script so these tests are deterministic and independent of whether deno is
     actually installed. The fake script derives its "unique" output rule from the chunk
     config's own source URL (each chunk gets a genuinely distinct source, courtesy of
     Split-BloqrCompilerConfiguration) rather than the shell's own PID - a subprocess PID can
@@ -92,14 +92,14 @@ Describe 'Invoke-BloqrCompilerChunked' {
         $result.ErrorMessage | Should -Match 'Configuration error'
     }
 
-    It 'Fails cleanly when hostlist-compiler cannot be found' {
+    It 'Fails cleanly when deno cannot be found' {
         $configPath = New-TestConfig -Directory $script:tempDir
         Mock -ModuleName BloqrCompiler Get-BloqrCompilerCommand { $null }
 
         $result = Invoke-BloqrCompilerChunked -ConfigPath $configPath -OutputPath (Join-Path $script:tempDir 'output.txt')
 
         $result.Success | Should -Be $false
-        $result.ErrorMessage | Should -Match 'hostlist-compiler not found'
+        $result.ErrorMessage | Should -Match 'deno not found'
     }
 
     It 'Compiles chunks in parallel and merges/dedupes the results' {

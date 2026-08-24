@@ -132,8 +132,48 @@ Describe "CompilerResult Class Tests" {
         }
     }
     
+    Context "Browser artifact properties (#439)" {
+
+        It "Should default browser artifact properties to null" {
+            $result = [CompilerResult]::new()
+
+            $result.BrowserOutputPath | Should -BeNullOrEmpty
+            $result.BrowserOutputHash | Should -BeNullOrEmpty
+            $result.BrowserRuleCount | Should -Be $null
+        }
+
+        It "Should default browser artifact properties to null via CreateSuccess/CreateFailure" {
+            $success = [CompilerResult]::CreateSuccess(100, 'output.txt', 'HASH', 1000)
+            $failure = [CompilerResult]::CreateFailure("Test error")
+
+            $success.BrowserOutputPath | Should -BeNullOrEmpty
+            $failure.BrowserOutputPath | Should -BeNullOrEmpty
+        }
+
+        It "Should allow setting browser artifact properties" {
+            $result = [CompilerResult]::CreateSuccess(100, 'output.txt', 'HASH', 1000)
+            $result.BrowserOutputPath = 'output.browser.txt'
+            $result.BrowserOutputHash = 'BROWSERHASH'
+            $result.BrowserRuleCount = 42
+
+            $result.BrowserOutputPath | Should -Be 'output.browser.txt'
+            $result.BrowserOutputHash | Should -Be 'BROWSERHASH'
+            $result.BrowserRuleCount | Should -Be 42
+        }
+
+        It "Should include browser artifact properties in ToHashtable" {
+            $result = [CompilerResult]::CreateSuccess(100, 'output.txt', 'HASH', 1000)
+            $result.BrowserOutputPath = 'output.browser.txt'
+            $hash = $result.ToHashtable()
+
+            $hash.BrowserOutputPath | Should -Be 'output.browser.txt'
+            $hash.ContainsKey('BrowserOutputHash') | Should -Be $true
+            $hash.ContainsKey('BrowserRuleCount') | Should -Be $true
+        }
+    }
+
     Context "Properties" {
-        
+
         It "Should allow setting ErrorMessage" {
             $result = [CompilerResult]::new()
             $result.ErrorMessage = "Custom error"
