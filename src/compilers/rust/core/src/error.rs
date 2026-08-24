@@ -117,6 +117,10 @@ pub enum CompilerError {
     /// Generic I/O error.
     #[error("I/O error: {0}")]
     Io(#[from] std::io::Error),
+
+    /// An invalid engine value was supplied (must be "dns" or "browser").
+    #[error("invalid engine '{0}'; must be 'dns' or 'browser'")]
+    InvalidEngine(String),
 }
 
 impl CompilerError {
