@@ -25,6 +25,7 @@ class ErrorCode(Enum):
     COPY_FAILED = "COPY_FAILED"
     PROCESS_ERROR = "PROCESS_ERROR"
     TIMEOUT_ERROR = "TIMEOUT_ERROR"
+    INVALID_ENGINE = "INVALID_ENGINE"
 
 
 class CompilerError(Exception):
@@ -90,6 +91,20 @@ class UnknownExtensionError(CompilerError):
         )
         self.extension = extension
         self.supported = supported
+
+
+class InvalidEngineError(CompilerError):
+    """Raised when an unrecognized engine value is supplied (must be 'dns' or 'browser')."""
+
+    def __init__(self, engine: str, valid: list[str] | None = None):
+        valid = valid or ["dns", "browser"]
+        super().__init__(
+            f"Unknown engine: {engine}. Valid engines: {', '.join(valid)}",
+            code=ErrorCode.INVALID_ENGINE,
+            context={"engine": engine, "valid": valid},
+        )
+        self.engine = engine
+        self.valid = valid
 
 
 class ParseError(CompilerError):

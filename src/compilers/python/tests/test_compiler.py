@@ -8,8 +8,11 @@ from bloqr_compiler.compiler import (
     CompilerResult,
     PlatformInfo,
     VersionInfo,
-    count_rules,
+    _derive_browser_output_path,
+    _get_compiler_command,
     compute_hash,
+    count_rules,
+    find_command,
     format_elapsed,
     get_platform_info,
     get_version_info,
@@ -192,3 +195,52 @@ class TestCompilerResult:
 
         empty = CompilerResult(rules_destination=None)
         assert empty.rules_destination_str() is None
+
+    def test_browser_fields_default_to_none(self) -> None:
+        result = CompilerResult()
+        assert result.browser_output_path is None
+        assert result.browser_output_hash is None
+        assert result.browser_rule_count is None
+
+
+class TestDeriveBrowserOutputPath:
+    """Tests for _derive_browser_output_path."""
+
+    def test_txt_suffix(self) -> None:
+        assert _derive_browser_output_path(Path("/out/rules.txt")) == Path(
+            "/out/rules.browser.txt"
+        )
+
+    def test_no_txt_extension(self) -> None:
+        assert _derive_browser_output_path(Path("/out/rules")) == Path(
+            "/out/rules.browser.txt"
+        )
+
+
+class TestGetCompilerCommand:
+    """Tests for _get_compiler_command engine/browser-output pass-through."""
+
+    def test_omits_engine_when_none(self) -> None:
+        if find_command("deno") is None:
+            pytest.skip("deno not installed")
+        cmd, _cwd = _get_compiler_command("config.json", "output.txt")
+        assert "--engine" not in cmd
+        assert "--browser-output" not in cmd
+
+    def test_omits_engine_when_auto(self) -> None:
+        if find_command("deno") is None:
+            pytest.skip("deno not installed")
+        cmd, _cwd = _get_compiler_command("config.json", "output.txt", engine="auto")
+        assert "--engine" not in cmd
+
+    def test_includes_engine_and_browser_output(self) -> None:
+        if find_command("deno") is None:
+            pytest.skip("deno not installed")
+        cmd, _cwd = _get_compiler_command(
+            "config.json", "output.txt", engine="browser",
+            browser_output_path="output.browser.txt",
+        )
+        assert "--engine" in cmd
+        assert cmd[cmd.index("--engine") + 1] == "browser"
+        assert "--browser-output" in cmd
+        assert cmd[cmd.index("--browser-output") + 1] == "output.browser.txt"

@@ -20,7 +20,6 @@ import tempfile
 from dataclasses import dataclass, field, replace
 from datetime import datetime
 from pathlib import Path
-from typing import Any
 
 try:
     import aiofiles
@@ -40,8 +39,10 @@ from bloqr_compiler.errors import (
     CompilerNotFoundError,
     CopyError,
     OutputNotCreatedError,
-    TimeoutError as CompilerTimeoutError,
     ValidationError,
+)
+from bloqr_compiler.errors import (
+    TimeoutError as CompilerTimeoutError,
 )
 from bloqr_compiler.events import (
     EventDispatcher,
@@ -109,6 +110,9 @@ class CompilerResult:
     error_message: str | None = None
     stdout: str = ""
     stderr: str = ""
+    browser_output_path: str | None = None
+    browser_output_hash: str | None = None
+    browser_rule_count: int | None = None
 
     def elapsed_formatted(self) -> str:
         """Get elapsed time in human-readable format."""
@@ -235,7 +239,7 @@ def count_rules(file_path: str | Path) -> int:
         return 0
 
     count = 0
-    with open(path, "r", encoding="utf-8") as f:
+    with open(path, encoding="utf-8") as f:
         for line in f:
             stripped = line.strip()
             if stripped and not stripped.startswith(("!", "#")):
@@ -264,7 +268,7 @@ async def count_rules_async(file_path: str | Path) -> int:
         return 0
 
     count = 0
-    async with aiofiles.open(path, "r", encoding="utf-8") as f:
+    async with aiofiles.open(path, encoding="utf-8") as f:
         async for line in f:
             stripped = line.strip()
             if stripped and not stripped.startswith(("!", "#")):
@@ -561,12 +565,26 @@ _DENO_PERMISSIONS = (
 )
 
 
-def _get_compiler_command(config_path: str, output_path: str) -> tuple[list[str], str]:
+def _get_compiler_command(
+    config_path: str,
+    output_path: str,
+    engine: str | None = None,
+    browser_output_path: str | None = None,
+) -> tuple[list[str], str]:
     """
     Get the compiler command and working directory.
 
     Runs adblock-compiler-core (published as @bloqr/compiler-core on
     JSR) via Deno.
+
+    Args:
+        config_path: Path to the configuration file.
+        output_path: Path to the DNS/primary output file.
+        engine: Optional compilation engine ("dns" or "browser"). Omitted from the
+            command line entirely when None or "auto" (case-insensitive), so the
+            default single-engine command line stays byte-identical to pre-feature
+            behavior.
+        browser_output_path: Optional output path for the browser-syntax artifact.
 
     Returns:
         Tuple of (command args, working directory).
@@ -577,21 +595,33 @@ def _get_compiler_command(config_path: str, output_path: str) -> tuple[list[str]
     deno_path = find_command("deno")
 
     if deno_path:
-        return (
-            [
-                deno_path,
-                "run",
-                *_DENO_PERMISSIONS,
-                _JSR_PACKAGE_SPECIFIER,
-                "--config",
-                config_path,
-                "--output",
-                output_path,
-            ],
-            str(Path(config_path).parent),
-        )
+        cmd = [
+            deno_path,
+            "run",
+            *_DENO_PERMISSIONS,
+            _JSR_PACKAGE_SPECIFIER,
+            "--config",
+            config_path,
+            "--output",
+            output_path,
+        ]
+        if engine is not None and engine.lower() != "auto":
+            cmd += ["--engine", engine]
+        if browser_output_path is not None:
+            cmd += ["--browser-output", browser_output_path]
+        return cmd, str(Path(config_path).parent)
 
     raise CompilerNotFoundError(["deno"])
+
+
+def _derive_browser_output_path(output_path: Path) -> Path:
+    """Derive the default browser-syntax artifact path from the DNS output path,
+    mirroring the .txt -> .browser.txt suffix logic used by the TS CLI, .NET
+    FilterCompiler, and the Rust compiler wrapper."""
+    path_str = str(output_path)
+    if path_str.endswith(".txt"):
+        return Path(f"{path_str[:-len('.txt')]}.browser.txt")
+    return Path(f"{path_str}.browser.txt")
 
 
 class BloqrCompiler:
@@ -627,6 +657,8 @@ class BloqrCompiler:
         fail_on_warnings: bool = False,
         allow_unvalidated_output: bool = False,
         event_dispatcher: EventDispatcher | None = None,
+        engine: str | None = None,
+        browser_output_path: str | Path | None = None,
     ) -> CompilerResult:
         """
         Compile filter rules.
@@ -645,6 +677,12 @@ class BloqrCompiler:
                 compilation fails closed by default. Use only for deliberate
                 debugging of unvalidated output.
             event_dispatcher: Optional dispatcher for hash-verification events.
+            engine: Optional compilation engine ("dns" or "browser"). Omit (or pass
+                "auto") to use the configuration's own defaultEngine/per-source engine
+                resolution.
+            browser_output_path: Optional output path for the browser-syntax artifact,
+                when the configuration mixes engines. Defaults to the DNS output path
+                with a `.browser.txt` suffix.
 
         Returns:
             Compilation result.
@@ -660,6 +698,8 @@ class BloqrCompiler:
             validate=validate,
             fail_on_warnings=fail_on_warnings,
             allow_unvalidated_output=allow_unvalidated_output,
+            engine=engine,
+            browser_output_path=browser_output_path,
         )
 
     def read_config(
@@ -712,6 +752,8 @@ class BloqrCompiler:
         fail_on_warnings: bool = False,
         allow_unvalidated_output: bool = False,
         event_dispatcher: EventDispatcher | None = None,
+        engine: str | None = None,
+        browser_output_path: str | Path | None = None,
     ) -> CompilerResult:
         """
         Asynchronously compile filter rules.
@@ -733,6 +775,12 @@ class BloqrCompiler:
                 compilation fails closed by default. Use only for deliberate
                 debugging of unvalidated output.
             event_dispatcher: Optional dispatcher for hash-verification events.
+            engine: Optional compilation engine ("dns" or "browser"). Omit (or pass
+                "auto") to use the configuration's own defaultEngine/per-source engine
+                resolution.
+            browser_output_path: Optional output path for the browser-syntax artifact,
+                when the configuration mixes engines. Defaults to the DNS output path
+                with a `.browser.txt` suffix.
 
         Returns:
             Compilation result.
@@ -754,6 +802,8 @@ class BloqrCompiler:
             fail_on_warnings=fail_on_warnings,
             allow_unvalidated_output=allow_unvalidated_output,
             event_dispatcher=event_dispatcher,
+            engine=engine,
+            browser_output_path=browser_output_path,
         )
 
 
@@ -768,6 +818,8 @@ def compile_rules(
     fail_on_warnings: bool = False,
     allow_unvalidated_output: bool = False,
     event_dispatcher: EventDispatcher | None = None,
+    engine: str | None = None,
+    browser_output_path: str | Path | None = None,
 ) -> CompilerResult:
     """
     Compile filter rules using adblock-compiler-core (via Deno).
@@ -790,6 +842,11 @@ def compile_rules(
             events at each stage (see docs/HASH_VERIFICATION.md). Hash recording/verification
             against the `.hashes.json` sidecar (config.hash_verification) happens regardless
             of whether a dispatcher is supplied - the dispatcher only adds observability.
+        engine: Optional compilation engine ("dns" or "browser"). Omit (or pass "auto")
+            to use the configuration's own defaultEngine/per-source engine resolution.
+        browser_output_path: Optional output path for the browser-syntax artifact, when
+            the configuration mixes engines. Defaults to the DNS output path with a
+            `.browser.txt` suffix.
 
     Returns:
         Compilation result.
@@ -855,8 +912,23 @@ def compile_rules(
         else:
             compile_config_path = str(config_path)
 
-        # Get compiler command
-        cmd, cwd = _get_compiler_command(compile_config_path, str(actual_output))
+        # Determine the browser-syntax artifact path up front so it can be passed
+        # through to the underlying compiler CLI.
+        resolved_browser_output = (
+            Path(browser_output_path).resolve()
+            if browser_output_path
+            else _derive_browser_output_path(actual_output)
+        )
+
+        # Get compiler command. --browser-output is only passed through explicitly
+        # when the caller requested it, so the default (auto-detected) command line
+        # for all-DNS configurations stays byte-identical to pre-feature behavior.
+        cmd, cwd = _get_compiler_command(
+            compile_config_path,
+            str(actual_output),
+            engine,
+            str(browser_output_path) if browser_output_path else None,
+        )
 
         if debug:
             logger.debug(f"Running: {' '.join(cmd)}")
@@ -949,6 +1021,55 @@ def compile_rules(
             result.error_message = error_message
             return result
 
+        # A browser-syntax artifact only exists when the configuration actually mixed
+        # engines (or --engine browser was forced) - detected by file existence, not
+        # any config field. The already-published DNS artifact is never rolled back
+        # if the browser artifact fails validation; the error names it explicitly.
+        if resolved_browser_output.exists():
+            result.browser_rule_count = count_rules(resolved_browser_output)
+            result.browser_output_hash = compute_hash(resolved_browser_output)
+
+            asyncio.run(_raise_hash_computed(
+                event_dispatcher, str(resolved_browser_output), "browser_output_file",
+                result.browser_output_hash, resolved_browser_output.stat().st_size,
+            ))
+
+            if (
+                config.hash_verification is not None
+                and config.hash_verification.mode.lower() != "disabled"
+                and config.hash_verification.hash_database_path
+            ):
+                hash_database_path = _resolve_relative_to_config(
+                    config.hash_verification.hash_database_path, config_path
+                )
+                can_continue, error_message = asyncio.run(_verify_and_record_hash(
+                    hash_database_path, str(resolved_browser_output), "browser_output_file",
+                    result.browser_output_hash, config.hash_verification, event_dispatcher,
+                ))
+                if not can_continue:
+                    result.success = False
+                    result.error_message = (
+                        f"Browser-syntax artifact validation failed (DNS artifact "
+                        f"already published at {actual_output}): {error_message}"
+                    )
+                    return result
+
+            can_continue, error_message = asyncio.run(
+                _run_rules_validator(
+                    resolved_browser_output, event_dispatcher, allow_unvalidated_output,
+                    fail_on_warnings,
+                )
+            )
+            if not can_continue:
+                result.success = False
+                result.error_message = (
+                    f"Browser-syntax artifact validation failed (DNS artifact "
+                    f"already published at {actual_output}): {error_message}"
+                )
+                return result
+
+            result.browser_output_path = str(resolved_browser_output)
+
         # Copy to rules directory if requested
         if copy_to_rules:
             if rules_directory:
@@ -964,7 +1085,7 @@ def compile_rules(
                 result.rules_destination = str(dest_path)
                 if debug:
                     logger.debug(f"Copied to: {dest_path}")
-            except (OSError, IOError) as e:
+            except OSError as e:
                 raise CopyError(str(actual_output), str(dest_path), str(e))
 
             copied_hash = compute_hash(dest_path)
@@ -1023,6 +1144,8 @@ async def compile_rules_async(
     fail_on_warnings: bool = False,
     allow_unvalidated_output: bool = False,
     event_dispatcher: EventDispatcher | None = None,
+    engine: str | None = None,
+    browser_output_path: str | Path | None = None,
 ) -> CompilerResult:
     """
     Asynchronously compile filter rules using adblock-compiler-core (via Deno).
@@ -1048,6 +1171,11 @@ async def compile_rules_async(
             events at each stage (see docs/HASH_VERIFICATION.md). Hash recording/verification
             against the `.hashes.json` sidecar (config.hash_verification) happens regardless
             of whether a dispatcher is supplied - the dispatcher only adds observability.
+        engine: Optional compilation engine ("dns" or "browser"). Omit (or pass "auto")
+            to use the configuration's own defaultEngine/per-source engine resolution.
+        browser_output_path: Optional output path for the browser-syntax artifact, when
+            the configuration mixes engines. Defaults to the DNS output path with a
+            `.browser.txt` suffix.
 
     Returns:
         Compilation result.
@@ -1113,8 +1241,23 @@ async def compile_rules_async(
         else:
             compile_config_path = str(config_path)
 
-        # Get compiler command
-        cmd, cwd = _get_compiler_command(compile_config_path, str(actual_output))
+        # Determine the browser-syntax artifact path up front so it can be passed
+        # through to the underlying compiler CLI.
+        resolved_browser_output = (
+            Path(browser_output_path).resolve()
+            if browser_output_path
+            else _derive_browser_output_path(actual_output)
+        )
+
+        # Get compiler command. --browser-output is only passed through explicitly
+        # when the caller requested it, so the default (auto-detected) command line
+        # for all-DNS configurations stays byte-identical to pre-feature behavior.
+        cmd, cwd = _get_compiler_command(
+            compile_config_path,
+            str(actual_output),
+            engine,
+            str(browser_output_path) if browser_output_path else None,
+        )
 
         if debug:
             logger.debug(f"Running: {' '.join(cmd)}")
@@ -1214,6 +1357,53 @@ async def compile_rules_async(
             result.error_message = error_message
             return result
 
+        # A browser-syntax artifact only exists when the configuration actually mixed
+        # engines (or --engine browser was forced) - detected by file existence, not
+        # any config field. The already-published DNS artifact is never rolled back
+        # if the browser artifact fails validation; the error names it explicitly.
+        if resolved_browser_output.exists():
+            result.browser_rule_count = await count_rules_async(resolved_browser_output)
+            result.browser_output_hash = await compute_hash_async(resolved_browser_output)
+
+            await _raise_hash_computed(
+                event_dispatcher, str(resolved_browser_output), "browser_output_file",
+                result.browser_output_hash, resolved_browser_output.stat().st_size,
+            )
+
+            if (
+                config.hash_verification is not None
+                and config.hash_verification.mode.lower() != "disabled"
+                and config.hash_verification.hash_database_path
+            ):
+                hash_database_path = _resolve_relative_to_config(
+                    config.hash_verification.hash_database_path, config_path
+                )
+                can_continue, error_message = await _verify_and_record_hash(
+                    hash_database_path, str(resolved_browser_output), "browser_output_file",
+                    result.browser_output_hash, config.hash_verification, event_dispatcher,
+                )
+                if not can_continue:
+                    result.success = False
+                    result.error_message = (
+                        f"Browser-syntax artifact validation failed (DNS artifact "
+                        f"already published at {actual_output}): {error_message}"
+                    )
+                    return result
+
+            can_continue, error_message = await _run_rules_validator(
+                resolved_browser_output, event_dispatcher, allow_unvalidated_output,
+                fail_on_warnings,
+            )
+            if not can_continue:
+                result.success = False
+                result.error_message = (
+                    f"Browser-syntax artifact validation failed (DNS artifact "
+                    f"already published at {actual_output}): {error_message}"
+                )
+                return result
+
+            result.browser_output_path = str(resolved_browser_output)
+
         # Copy to rules directory if requested
         if copy_to_rules:
             if rules_directory:
@@ -1231,7 +1421,7 @@ async def compile_rules_async(
                 result.rules_destination = str(dest_path)
                 if debug:
                     logger.debug(f"Copied to: {dest_path}")
-            except (OSError, IOError) as e:
+            except OSError as e:
                 raise CopyError(str(actual_output), str(dest_path), str(e))
 
             copied_hash = await compute_hash_async(dest_path)

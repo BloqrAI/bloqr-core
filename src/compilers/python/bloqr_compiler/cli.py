@@ -9,7 +9,6 @@ import argparse
 import sys
 from pathlib import Path
 
-from bloqr_compiler import __version__
 from bloqr_compiler.compiler import (
     BloqrCompiler,
     get_version_info,
@@ -60,6 +59,26 @@ Examples:
         "-o", "--output",
         metavar="PATH",
         help="Path to output file (default: output/compiled-TIMESTAMP.txt)",
+    )
+
+    parser.add_argument(
+        "--engine",
+        choices=["auto", "dns", "browser"],
+        default=None,
+        metavar="ENGINE",
+        help=(
+            "Compilation engine/grammar to use. Omit (or 'auto') to use the "
+            "configuration's own defaultEngine/per-source engine resolution."
+        ),
+    )
+
+    parser.add_argument(
+        "--browser-output",
+        metavar="PATH",
+        help=(
+            "Output path for the browser-syntax artifact, when the configuration "
+            "mixes engines. Defaults to the DNS output path with a .browser.txt suffix."
+        ),
     )
 
     parser.add_argument(
@@ -511,7 +530,7 @@ def main(args: list[str] | None = None) -> int:
     # Handle interactive mode
     if opts.interactive:
         from bloqr_compiler.interactive import run_interactive_menu
-        
+
         # Try to determine initial config
         initial_config = None
         if opts.config_path:
@@ -522,7 +541,7 @@ def main(args: list[str] | None = None) -> int:
             found_path = find_default_config()
             if found_path:
                 initial_config = found_path
-        
+
         return run_interactive_menu(initial_config)
 
     # Determine config path (positional or flag)
@@ -580,6 +599,8 @@ def main(args: list[str] | None = None) -> int:
             validate=should_validate,
             fail_on_warnings=fail_on_warnings,
             allow_unvalidated_output=opts.allow_unvalidated_output,
+            engine=opts.engine,
+            browser_output_path=opts.browser_output,
         )
 
         if result.success:
@@ -591,6 +612,15 @@ def main(args: list[str] | None = None) -> int:
             print(f"  Output Path:  {result.output_path}")
             print(f"  Hash:         {result.hash_short()}...")
             print(f"  Elapsed:      {result.elapsed_formatted()}")
+
+            if result.browser_output_path:
+                print()
+                print("Browser-syntax artifact:")
+                print(f"  Output Path:  {result.browser_output_path}")
+                if result.browser_rule_count is not None:
+                    print(f"  Rule Count:   {result.browser_rule_count:,}")
+                if result.browser_output_hash:
+                    print(f"  Hash:         {result.browser_output_hash[:32]}...")
 
             if result.copied_to_rules:
                 print(f"  Copied To:    {result.rules_destination}")
