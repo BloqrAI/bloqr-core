@@ -89,6 +89,59 @@ public sealed class CompilerConfigWizardHelpersTests : IDisposable
         CompilerConfigWizardHelpers.InferLocalSourceType(path).Should().Be("adblock");
     }
 
+    [Fact]
+    public void InferLocalSourceEngine_WithMissingFile_DefaultsToDns()
+    {
+        var path = Path.Combine(_tempDirectory, "does-not-exist.txt");
+
+        CompilerConfigWizardHelpers.InferLocalSourceEngine(path).Should().Be("dns");
+    }
+
+    [Fact]
+    public void InferLocalSourceEngine_WithHostsStyleContent_ReturnsDns()
+    {
+        var path = Path.Combine(_tempDirectory, "hosts.txt");
+        File.WriteAllLines(path, ["0.0.0.0 ads.example.com", "127.0.0.1 tracker.example.com"]);
+
+        CompilerConfigWizardHelpers.InferLocalSourceEngine(path).Should().Be("dns");
+    }
+
+    [Fact]
+    public void InferLocalSourceEngine_WithBareDnsBlocklistLines_ReturnsDns()
+    {
+        var path = Path.Combine(_tempDirectory, "dns-adblock.txt");
+        File.WriteAllLines(path, ["||ads.example.com^", "||tracker.example.com^", "@@||allowed.example.com^"]);
+
+        CompilerConfigWizardHelpers.InferLocalSourceEngine(path).Should().Be("dns");
+    }
+
+    [Fact]
+    public void InferLocalSourceEngine_WithCosmeticRules_ReturnsBrowser()
+    {
+        var path = Path.Combine(_tempDirectory, "cosmetic.txt");
+        File.WriteAllLines(path, ["##.ad-banner", "example.com#@#.allowed-ad", "##div[id^=\"ad-\"]"]);
+
+        CompilerConfigWizardHelpers.InferLocalSourceEngine(path).Should().Be("browser");
+    }
+
+    [Fact]
+    public void InferLocalSourceEngine_WithBrowserOnlyModifiers_ReturnsBrowser()
+    {
+        var path = Path.Combine(_tempDirectory, "browser-modifiers.txt");
+        File.WriteAllLines(path, ["||ads.example.com^$script,csp=default-src 'self'", "||ads.example.com^$elemhide"]);
+
+        CompilerConfigWizardHelpers.InferLocalSourceEngine(path).Should().Be("browser");
+    }
+
+    [Fact]
+    public void InferLocalSourceEngine_WithNoClassifiableLines_FallsBackToDns()
+    {
+        var path = Path.Combine(_tempDirectory, "unclassifiable.txt");
+        File.WriteAllLines(path, ["! just a comment", ""]);
+
+        CompilerConfigWizardHelpers.InferLocalSourceEngine(path).Should().Be("dns");
+    }
+
     [Theory]
     [InlineData("https://example.com/filters/easylist.txt", "easylist")]
     [InlineData("https://example.com/", "example.com")]

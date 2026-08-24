@@ -91,6 +91,119 @@ public static partial class CompilerConfigWizardHelpers
     }
 
     /// <summary>
+    /// Infers a local source file's compilation engine by sampling its content, ported from the
+    /// TypeScript compiler's <c>EngineDetector.classifyLine</c>/<c>detectEngineFromLines</c>
+    /// (<c>src/compilers/typescript/src/engines/EngineDetector.ts</c>, #433) - a majority vote
+    /// over per-line signals: cosmetic/element-hiding separators (<c>##</c>, <c>#@#</c>, etc.) and
+    /// network-rule modifiers meaningful only to a browser (e.g. <c>script</c>, <c>csp</c>,
+    /// <c>elemhide</c>) vote "browser"; hosts-file lines and bare/DNS-only modifier rules vote
+    /// "dns". Ties (including no classifiable lines) fall back to <c>"dns"</c>, matching the
+    /// TypeScript detector's default fallback. Only usable for local files already on disk -
+    /// remote (URL) sources have no content to peek at without fetching them, so the wizard asks
+    /// the user directly for those instead (mirroring <see cref="InferLocalSourceType"/>'s split).
+    /// </summary>
+    /// <param name="localFilePath">Path to a local source file.</param>
+    /// <returns><c>"dns"</c> or <c>"browser"</c>.</returns>
+    public static string InferLocalSourceEngine(string localFilePath)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(localFilePath);
+
+        if (!File.Exists(localFilePath))
+        {
+            return "dns";
+        }
+
+        const int sampleLineCount = 200;
+        var sampled = 0;
+        var dnsVotes = 0;
+        var browserVotes = 0;
+
+        foreach (var rawLine in File.ReadLines(localFilePath))
+        {
+            if (sampled >= sampleLineCount)
+            {
+                break;
+            }
+
+            var line = rawLine.Trim();
+            if (line.Length == 0 || line[0] == '!' || (line[0] == '#' && !ContainsCosmeticSeparator(line)))
+            {
+                continue;
+            }
+
+            var signal = ClassifyLine(line);
+            if (signal is null)
+            {
+                continue;
+            }
+
+            if (signal == "dns")
+            {
+                dnsVotes++;
+            }
+            else
+            {
+                browserVotes++;
+            }
+
+            sampled++;
+        }
+
+        if (dnsVotes == 0 && browserVotes == 0)
+        {
+            return "dns";
+        }
+
+        return browserVotes > dnsVotes ? "browser" : "dns";
+    }
+
+    private static readonly string[] CosmeticSeparators = ["#@#", "#?#", "#$#", "#@$#", "#%#", "#@%#", "##"];
+
+    private static readonly string[] BrowserOnlyModifiers =
+    [
+        "script", "stylesheet", "image", "object", "xmlhttprequest", "subdocument", "ping",
+        "websocket", "webrtc", "document", "elemhide", "generichide", "genericblock", "jsinject",
+        "popup", "csp", "removeparam", "redirect", "replace", "app", "cookie", "permissions",
+    ];
+
+    private static bool ContainsCosmeticSeparator(string line) =>
+        CosmeticSeparators.Any(line.Contains);
+
+    /// <summary>
+    /// Classifies a single trimmed, non-empty, non-comment line as a "dns" signal, a "browser"
+    /// signal, or <see langword="null"/> (no strong signal either way) - a direct port of
+    /// <c>EngineDetector.classifyLine</c>.
+    /// </summary>
+    private static string? ClassifyLine(string line)
+    {
+        if (ContainsCosmeticSeparator(line))
+        {
+            return "browser";
+        }
+
+        if (HostsLine().IsMatch(line))
+        {
+            return "dns";
+        }
+
+        var dollarIndex = line.IndexOf('$');
+        if (dollarIndex != -1 && (line.StartsWith("||", StringComparison.Ordinal) ||
+            line.StartsWith("@@", StringComparison.Ordinal) || line.StartsWith('|')))
+        {
+            var modifiers = line[(dollarIndex + 1)..].ToLowerInvariant();
+            return BrowserOnlyModifiers.Any(modifiers.Contains) ? "browser" : "dns";
+        }
+
+        return DnsAdblockLine().IsMatch(line) ? "dns" : null;
+    }
+
+    [GeneratedRegex(@"^(?:\d{1,3}\.){3}\d{1,3}\s+\S+|^::1?\s+\S+")]
+    private static partial Regex HostsLine();
+
+    [GeneratedRegex(@"^@{0,2}\|{0,2}[a-z0-9*][a-z0-9.*-]*\^?(\$[a-z0-9_,=~-]*)?$", RegexOptions.IgnoreCase)]
+    private static partial Regex DnsAdblockLine();
+
+    /// <summary>
     /// Derives a default source name from its path or URL: the filename without extension for a
     /// local path, or the last non-empty URL path segment (falling back to the host) for a URL.
     /// </summary>
