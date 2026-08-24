@@ -106,6 +106,49 @@ public sealed class CompilerConfigJsoncWriterTests
     }
 
     [Fact]
+    public void Write_WithMixedEngineConfig_EmitsDefaultEngineAndPerSourceEngine_ThatRoundTrips()
+    {
+        var configuration = new CompilerConfiguration
+        {
+            Name = "Mixed Engine List",
+            DefaultEngine = "dns",
+            Sources =
+            [
+                new FilterSource { Name = "Dns Source", Source = "dns.txt", Type = "hosts", Engine = "dns" },
+                new FilterSource { Name = "Browser Source", Source = "browser.txt", Type = "adblock", Engine = "browser" },
+                new FilterSource { Name = "Auto Source", Source = "auto.txt", Type = "adblock" },
+            ],
+        };
+
+        var jsonc = CompilerConfigJsoncWriter.Write(configuration);
+
+        jsonc.Should().Contain("\"defaultEngine\": \"dns\"");
+        var reparsed = JsonSerializer.Deserialize<CompilerConfiguration>(jsonc, JsoncTolerantOptions);
+
+        reparsed.Should().NotBeNull();
+        reparsed!.DefaultEngine.Should().Be("dns");
+        reparsed.Sources.Should().HaveCount(3);
+        reparsed.Sources[0].Engine.Should().Be("dns");
+        reparsed.Sources[1].Engine.Should().Be("browser");
+        reparsed.Sources[2].Engine.Should().BeNull();
+    }
+
+    [Fact]
+    public void Write_WithNoEngineFieldsSet_OmitsThemEntirely()
+    {
+        var configuration = new CompilerConfiguration
+        {
+            Name = "No Engine Fields",
+            Sources = [new FilterSource { Source = "local.txt" }],
+        };
+
+        var jsonc = CompilerConfigJsoncWriter.Write(configuration);
+
+        jsonc.Should().NotContain("\"defaultEngine\"");
+        jsonc.Should().NotContain("\"engine\"");
+    }
+
+    [Fact]
     public void Write_WithEmptySources_ProducesAnEmptyArray()
     {
         var configuration = new CompilerConfiguration { Name = "Empty" };

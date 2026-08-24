@@ -96,6 +96,15 @@ public static class CompilerConfigJsoncWriter
             Blank(sb);
         }
 
+        if (!string.IsNullOrWhiteSpace(configuration.DefaultEngine))
+        {
+            AppendLine(sb, 1, "// Fallback compilation engine/grammar for sources with no explicit \"engine\" of their");
+            AppendLine(sb, 1, "// own and no strong content signal either way: \"dns\" (server-side/hosts-style rules) or");
+            AppendLine(sb, 1, "// \"browser\" (client-side/cosmetic AdGuard syntax). Omit to fall back to \"dns\".");
+            AppendLine(sb, 1, $"\"defaultEngine\": {JsonString(configuration.DefaultEngine)},");
+            Blank(sb);
+        }
+
         AppendLine(sb, 1, "// Filter sources to compile (required, at least one).");
         if (configuration.Sources.Count == 0)
         {
@@ -146,6 +155,13 @@ public static class CompilerConfigJsoncWriter
             AppendLine(sb, level + 1, $"\"name\": {JsonString(source.Name)},");
             AppendLine(sb, level + 1, $"\"source\": {JsonString(source.Source)},");
             AppendLine(sb, level + 1, $"\"type\": {JsonString(source.Type)},");
+            if (!string.IsNullOrWhiteSpace(source.Engine))
+            {
+                // Per-source engine override; unset means "auto-detect from content, falling back
+                // to the config's defaultEngine, falling back to dns" (see FilterSource.Engine).
+                AppendLine(sb, level + 1, $"\"engine\": {JsonString(source.Engine)},");
+            }
+
             AppendLine(sb, level + 1, $"\"transformations\": {JsonStringArray(source.Transformations)},");
             AppendLine(sb, level + 1, $"\"inclusions\": {JsonStringArray(source.Inclusions)},");
             AppendLine(sb, level + 1, $"\"inclusions_sources\": {JsonStringArray(source.InclusionsSources)},");

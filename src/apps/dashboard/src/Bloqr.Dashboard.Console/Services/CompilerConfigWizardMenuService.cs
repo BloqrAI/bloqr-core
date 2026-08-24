@@ -64,6 +64,7 @@ public sealed class CompilerConfigWizardMenuService : CompilerConfigFormMenuServ
         }
 
         config.Archiving = PromptArchiving();
+        config.DefaultEngine = PromptDefaultEngine();
         config.Sources = PromptSources();
         config.Transformations = PromptTransformations("global");
 

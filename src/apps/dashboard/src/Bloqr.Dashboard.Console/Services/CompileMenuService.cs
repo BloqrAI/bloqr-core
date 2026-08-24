@@ -71,16 +71,31 @@ public sealed class CompileMenuService : MenuServiceBase
             return;
         }
 
-        await RunCompilationAsync(configPath).ConfigureAwait(false);
+        var engine = PromptEngine();
+        await RunCompilationAsync(configPath, engine).ConfigureAwait(false);
     }
 
     private async Task CompileSpecificConfigAsync()
     {
         var configPath = Prompter.Prompt("Path to compiler config file");
-        await RunCompilationAsync(configPath).ConfigureAwait(false);
+        var engine = PromptEngine();
+        await RunCompilationAsync(configPath, engine).ConfigureAwait(false);
     }
 
-    private async Task RunCompilationAsync(string configPath)
+    /// <summary>
+    /// Prompts for an optional engine override for this one compile (#441): "auto" (the default -
+    /// detect per source, same as leaving <see cref="CompilerOptions.Engine"/> unset) or a forced
+    /// "dns"/"browser", mirroring <see cref="EngineHelper.AllEngineChoices"/> and the same
+    /// <c>CompilerOptions.Engine</c> string convention <c>--compile --engine</c> uses non-interactively
+    /// (#440/#453).
+    /// </summary>
+    private string? PromptEngine()
+    {
+        var choice = Prompter.Select("Engine (force a single engine, or auto-detect per source)", EngineHelper.AllEngineChoices);
+        return choice == EngineHelper.DefaultEngine.Value ? null : choice;
+    }
+
+    private async Task RunCompilationAsync(string configPath, string? engine = null)
     {
         // Back up the referenced compiler config on a healthy load (or offer recovery on a
         // corrupt/missing one) before handing off to the actual compiler, so a later edit that
@@ -122,7 +137,10 @@ public sealed class CompileMenuService : MenuServiceBase
             _liveProgressSession.Current = ctx;
             try
             {
-                return await _compilerService.RunAsync(configPath).ConfigureAwait(false);
+                return engine is null
+                    ? await _compilerService.RunAsync(configPath).ConfigureAwait(false)
+                    : await _compilerService.RunAsync(
+                        new CompilerOptions { ConfigPath = configPath, Engine = engine }).ConfigureAwait(false);
             }
             finally
             {
@@ -264,16 +282,13 @@ public sealed class CompileMenuService : MenuServiceBase
 
     private void DisplayResult(CompilerResult result)
     {
-        if (result.Success)
+        // CompileResultRenderer (#441) is the single source of truth for this rendering, shared
+        // with a future consumer that wants the same dual-artifact summary DashboardApplication's
+        // --compile CLI branch prints (#440/#453) without a console attached.
+        var style = result.Success ? TextStyle.Success : TextStyle.Error;
+        foreach (var line in CompileResultRenderer.Render(result))
         {
-            Renderer.WriteStyled(
-                $"Compiled '{result.ConfigName}': {result.RuleCount} rules -> {result.OutputPath} " +
-                $"({result.ElapsedMs}ms)",
-                TextStyle.Success);
-        }
-        else
-        {
-            Renderer.WriteStyled($"Compilation failed: {result.ErrorMessage}", TextStyle.Error);
+            Renderer.WriteStyled(line, style);
         }
 
         if (result.CopiedToRules)

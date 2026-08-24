@@ -165,6 +165,15 @@ public sealed class DiagnosticsMenuService : MenuServiceBase
             return;
         }
 
+        // #441/#434: bloqr-validate (src/validation/cli) has no --engine flag yet, so this only
+        // validates against DNS/hosts syntax. Say so up front rather than silently misreporting
+        // valid browser-syntax rules (cosmetic/element-hiding, network-rule modifiers, etc.) as
+        // invalid - the same "don't guess, tell the user what's not supported yet" approach the
+        // AdGuard API check above takes for #272.
+        Renderer.WriteStyled(
+            "Validating as DNS/hosts syntax only; browser-syntax validation lands with #434.",
+            TextStyle.Info);
+
         var result = await Renderer
             .StatusAsync("Validating filter syntax...", () => _rulesValidatorService.ValidateLocalFileAsync(path))
             .ConfigureAwait(false);

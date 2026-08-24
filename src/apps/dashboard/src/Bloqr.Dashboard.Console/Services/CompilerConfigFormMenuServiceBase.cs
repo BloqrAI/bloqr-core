@@ -108,8 +108,9 @@ public abstract class CompilerConfigFormMenuServiceBase : MenuServiceBase
             var sourcePath = PromptRequired("Source path or URL");
             var name = Prompter.Prompt("Source name", CompilerConfigWizardHelpers.DefaultSourceName(sourcePath));
             var type = PromptSourceType(sourcePath);
+            var engine = PromptSourceEngine(sourcePath);
 
-            var source = new FilterSource { Source = sourcePath, Name = name, Type = type };
+            var source = new FilterSource { Source = sourcePath, Name = name, Type = type, Engine = engine };
 
             if (Prompter.Confirm("Apply per-source transformations?", false))
             {
@@ -155,6 +156,38 @@ public abstract class CompilerConfigFormMenuServiceBase : MenuServiceBase
         return Prompter.Confirm($"Inferred type '{inferred}' from the file's content - correct?", true)
             ? inferred
             : Prompter.Select("Source type", SourceTypeHelper.AllSourceTypes);
+    }
+
+    /// <summary>
+    /// Prompts for this source's compilation engine (#441), mirroring <see cref="PromptSourceType"/>'s
+    /// infer-then-confirm UX for a local file (via <see cref="CompilerConfigWizardHelpers.InferLocalSourceEngine"/>,
+    /// the .NET port of the TypeScript compiler's <c>EngineDetector</c>, #433) and its
+    /// can't-infer fallback for a remote URL. Returns <see langword="null"/> when the user leaves
+    /// it at "auto" - the same "unset means auto-detect against <c>defaultEngine</c>, then
+    /// <c>dns</c>" semantics <see cref="FilterSource.Engine"/> already documents, so a config that
+    /// never mixes engines round-trips with no <c>engine</c> field noise.
+    /// </summary>
+    private string? PromptSourceEngine(string sourcePath)
+    {
+        var isRemote = Uri.TryCreate(sourcePath, UriKind.Absolute, out var uri) &&
+            (uri.Scheme == "http" || uri.Scheme == "https");
+
+        string choice;
+        if (isRemote)
+        {
+            // Content isn't available to inspect without fetching it, so ask directly instead
+            // of guessing - same fallback PromptSourceType uses for a remote URL.
+            choice = Prompter.Select("Engine (can't be inferred for a remote URL)", EngineHelper.AllEngineChoices);
+        }
+        else
+        {
+            var inferred = CompilerConfigWizardHelpers.InferLocalSourceEngine(sourcePath);
+            choice = Prompter.Confirm($"Inferred engine '{inferred}' from the file's content - correct?", true)
+                ? inferred
+                : Prompter.Select("Engine", EngineHelper.AllEngineChoices);
+        }
+
+        return choice == EngineHelper.DefaultEngine.Value ? null : choice;
     }
 
     /// <summary>
@@ -299,6 +332,25 @@ public abstract class CompilerConfigFormMenuServiceBase : MenuServiceBase
         Renderer.WriteStyled($"Wrote {lines.Count} pattern(s) to {fullPath}.", TextStyle.Success);
 
         return fileName;
+    }
+
+    /// <summary>
+    /// Prompts for the config-level default engine (#441): the fallback a source's engine
+    /// resolves to when it has no explicit <see cref="FilterSource.Engine"/> of its own and
+    /// content sniffing found no strong signal, per <see cref="CompilerConfiguration.DefaultEngine"/>'s
+    /// documented resolution order. Returns <see langword="null"/> for "auto" (no config-level
+    /// override - each source falls back to the compiler's own "dns" default), so a config that
+    /// doesn't need this round-trips with no <c>defaultEngine</c> field.
+    /// </summary>
+    protected string? PromptDefaultEngine(string? current = null)
+    {
+        var choices = EngineHelper.AllEngineChoices;
+        var defaultChoice = current is null ? EngineHelper.DefaultEngine.Value : current;
+        var choice = Prompter.Select(
+            "Default engine for sources with no explicit engine of their own",
+            WithCurrentFirst([.. choices], defaultChoice));
+
+        return choice == EngineHelper.DefaultEngine.Value ? null : choice;
     }
 
     /// <summary>
