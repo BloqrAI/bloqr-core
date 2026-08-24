@@ -25,6 +25,16 @@ class CompilerResult {
     [string]$ConfigFormat
     [datetime]$Timestamp
 
+    # Path to the browser-syntax artifact, present only when the configuration mixed
+    # DNS and browser-syntax sources (producing two artifacts). $null otherwise.
+    [string]$BrowserOutputPath
+    # SHA-384 hash of the browser-syntax artifact, when present.
+    [string]$BrowserOutputHash
+    # Number of rules in the browser-syntax artifact, when present. $null (unset)
+    # rather than 0 when there is no browser artifact, distinguishing "no second
+    # artifact" from "second artifact had zero rules".
+    [Nullable[int]]$BrowserRuleCount
+
     # Default Constructor
     CompilerResult() {
         $this.Success = $false
@@ -36,6 +46,9 @@ class CompilerResult {
         $this.CompilerOutput = $null
         $this.ConfigFormat = 'json'
         $this.Timestamp = Get-Date
+        $this.BrowserOutputPath = $null
+        $this.BrowserOutputHash = $null
+        $this.BrowserRuleCount = $null
     }
 
     # Constructor with basic parameters
@@ -49,6 +62,9 @@ class CompilerResult {
         $this.CompilerOutput = $null
         $this.ConfigFormat = 'json'
         $this.Timestamp = Get-Date
+        $this.BrowserOutputPath = $null
+        $this.BrowserOutputHash = $null
+        $this.BrowserRuleCount = $null
     }
 
     # Constructor with all parameters
@@ -69,20 +85,26 @@ class CompilerResult {
         $this.CompilerOutput = $null
         $this.ConfigFormat = $configFormat
         $this.Timestamp = Get-Date
+        $this.BrowserOutputPath = $null
+        $this.BrowserOutputHash = $null
+        $this.BrowserRuleCount = $null
     }
 
     # Convert to hashtable (for backward compatibility)
     [hashtable] ToHashtable() {
         return @{
-            Success        = $this.Success
-            RuleCount      = $this.RuleCount
-            OutputPath     = $this.OutputPath
-            Hash           = $this.Hash
-            ElapsedMs      = $this.ElapsedMs
-            ErrorMessage   = $this.ErrorMessage
-            CompilerOutput = $this.CompilerOutput
-            ConfigFormat   = $this.ConfigFormat
-            Timestamp      = $this.Timestamp
+            Success           = $this.Success
+            RuleCount         = $this.RuleCount
+            OutputPath        = $this.OutputPath
+            Hash              = $this.Hash
+            ElapsedMs         = $this.ElapsedMs
+            ErrorMessage      = $this.ErrorMessage
+            CompilerOutput    = $this.CompilerOutput
+            ConfigFormat      = $this.ConfigFormat
+            Timestamp         = $this.Timestamp
+            BrowserOutputPath = $this.BrowserOutputPath
+            BrowserOutputHash = $this.BrowserOutputHash
+            BrowserRuleCount  = $this.BrowserRuleCount
         }
     }
 

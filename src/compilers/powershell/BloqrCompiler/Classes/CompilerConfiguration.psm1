@@ -22,6 +22,14 @@ class CompilerConfiguration {
     [string]$Homepage
     [string]$License
     [PSCustomObject[]]$Sources
+    # Default compilation engine/grammar for sources that don't set their own
+    # 'engine' explicitly and whose content can't be confidently auto-detected.
+    # $null (the default) leaves engine resolution to @bloqr/compiler-core itself,
+    # which falls back to 'dns' - existing configurations are unaffected. Wire key:
+    # camelCase 'defaultEngine', matching the shared JSON Schema
+    # (schemas/compiler-config.schema.json) and the Rust/.NET/Python/TypeScript
+    # wrappers' defaultEngine/DefaultEngine fields.
+    [string]$DefaultEngine
     [string[]]$Transformations
     [string[]]$Inclusions
     [string[]]$Exclusions
@@ -92,6 +100,7 @@ class CompilerConfiguration {
         $this.Homepage = $data.homepage
         $this.License = $data.license
         $this.Sources = $data.sources
+        $this.DefaultEngine = $data.defaultEngine
         $this.Transformations = $data.transformations
         $this.Inclusions = $data.inclusions
         $this.Exclusions = $data.exclusions
@@ -140,13 +149,25 @@ class CompilerConfiguration {
             $errors.Add("Configuration must have at least one source")
         }
         
+        $validEngines = @('dns', 'browser')
+
+        if (-not [string]::IsNullOrWhiteSpace($this.DefaultEngine) -and $this.DefaultEngine -notin $validEngines) {
+            $errors.Add("defaultEngine must be one of: $($validEngines -join ', ') (got '$($this.DefaultEngine)')")
+        }
+
         # Validate each source
         foreach ($source in $this.Sources) {
             if ([string]::IsNullOrWhiteSpace($source.source)) {
                 $errors.Add("Each source must have a 'source' property")
             }
+
+            if ($source.PSObject.Properties.Match('engine').Count -gt 0 -and
+                -not [string]::IsNullOrWhiteSpace($source.engine) -and
+                $source.engine -notin $validEngines) {
+                $errors.Add("Source '$($source.name)': engine must be one of: $($validEngines -join ', ') (got '$($source.engine)')")
+            }
         }
-        
+
         if ($errors.Count -gt 0) {
             throw "Configuration validation failed:`n" + ($errors -join "`n")
         }
@@ -161,6 +182,7 @@ class CompilerConfiguration {
             Homepage        = $this.Homepage
             License         = $this.License
             Sources         = $this.Sources
+            DefaultEngine   = $this.DefaultEngine
             Transformations = $this.Transformations
             Inclusions      = $this.Inclusions
             Exclusions      = $this.Exclusions

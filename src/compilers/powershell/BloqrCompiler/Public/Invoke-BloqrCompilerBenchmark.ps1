@@ -12,8 +12,8 @@ function Invoke-BloqrCompilerBenchmark {
         subcommand/switch in each of the other four language wrappers.
 
         Unlike the Rust/.NET/Python wrappers (see #424), both paths here shell out to
-        the exact same hostlist-compiler/npx binary, so there is no divergent-compiler
-        risk - any timing delta reflects chunking overhead alone.
+        the exact same `deno run jsr:@bloqr/compiler-core/cli` invocation, so there is
+        no divergent-compiler risk - any timing delta reflects chunking overhead alone.
 
         Both runs cover the same total workload (-Sources identical copies of the
         dataset file, one per chunk), so chunking strategy is the only intended

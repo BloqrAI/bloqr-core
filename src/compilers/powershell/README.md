@@ -38,9 +38,9 @@ Import-Module ./src/compilers/powershell/Common/Common.psd1
 Modern OOP-based rules compiler module.
 
 **Features:**
-- CompilerConfiguration class
-- `Invoke-BloqrCompiler`: shells out to `hostlist-compiler` (or `npx @adguard/hostlist-compiler`), computes a SHA-384 hash, and runs `Invoke-RulesValidator`'s syntax check (informational findings only)
-- `Invoke-BloqrCompilerChunked`: splits a configuration's sources into up to `-MaxParallel` chunks and compiles them in parallel via `ForEach-Object -Parallel`, merging/deduplicating the results - see [Benchmarking](#benchmarking)
+- CompilerConfiguration class (now carrying `Engine`/`DefaultEngine` - see [Engine/output resolution decision](#engineoutput-resolution-decision) below)
+- `Invoke-BloqrCompiler`: shells out to `deno run jsr:@bloqr/compiler-core/cli`, computes a SHA-384 hash, and runs `Invoke-RulesValidator`'s syntax check (informational findings only); `-Engine`/`-BrowserOutputPath` produce a second, browser-syntax artifact for mixed-engine configurations
+- `Invoke-BloqrCompilerChunked`: splits a configuration's sources into up to `-MaxParallel` chunks and compiles them in parallel via `ForEach-Object -Parallel`, merging/deduplicating the results - see [Benchmarking](#benchmarking); does not yet support `-Engine`/`-BrowserOutputPath` (deferred, matching the other four wrappers)
 - `Invoke-BloqrCompilerBenchmark`: benchmarks real compilation performance, chunked vs unchunked - see [Benchmarking](#benchmarking)
 - `Invoke-RulesValidator`: shells out to the `bloqr-validate` CLI ([src/validation/](../../validation/)) for standalone syntax validation
 - Type-safe configuration
@@ -51,7 +51,37 @@ Modern OOP-based rules compiler module.
 ```powershell
 Import-Module ./src/compilers/powershell/BloqrCompiler/BloqrCompiler.psd1
 Invoke-BloqrCompiler -ConfigPath config.json
+
+# Mixed DNS/browser-syntax config: -Engine/-BrowserOutputPath pass through to the
+# underlying compiler, and a second (browser-syntax) artifact is hashed/validated
+# alongside the DNS one when the configuration produces it.
+Invoke-BloqrCompiler -ConfigPath config.json -Engine browser -BrowserOutputPath ./output/rules.browser.txt
 ```
+
+### Engine/output resolution decision
+
+As of [#439](https://github.com/BloqrAI/bloqr-core/issues/439) (epic [#432](https://github.com/BloqrAI/bloqr-core/issues/432)),
+this module resolves to `deno run jsr:@bloqr/compiler-core/cli` - the same Deno + JSR
+resolver already used by the Rust, .NET, Python, and TypeScript wrappers (see
+[#424](https://github.com/BloqrAI/bloqr-core/issues/424)) - rather than the
+`hostlist-compiler`/`npx @adguard/hostlist-compiler` resolver it used before.
+
+**Why:** `--engine`/`--browser-output` (dual DNS + AdGuard browser-syntax
+compilation) are `@bloqr/compiler-core` features. Staying on `hostlist-compiler`
+would have left PowerShell as the one wrapper unable to produce a browser-syntax
+artifact, breaking the epic's "one compiler, both engines" goal and this README's
+own prior claim of parity with the other four wrappers. Moving onto the shared
+resolver closes that gap at the cost of a runtime dependency change: **Deno is now
+required** (install from https://deno.com) in place of `hostlist-compiler`/`npx`.
+`Get-BloqrCompilerCommand` returns `$null` (rather than throwing) when `deno` isn't
+found, exactly as it did for the old resolver, so callers get the same "not found"
+failure shape as before - just naming a different binary.
+
+For an all-DNS configuration with no `-Engine`/`-BrowserOutputPath` passed, the
+resolved command line is unaffected by this feature: `--engine` is omitted
+whenever unset or `"auto"`, and `--browser-output` is only emitted when
+`-BrowserOutputPath` is passed explicitly - so single-artifact compiles behave
+identically to before this change.
 
 ### Benchmarking
 
@@ -63,7 +93,7 @@ see that issue's other sub-issues for the equivalent subcommand/switch in each o
 four language wrappers.
 
 Unlike the Rust/.NET/Python wrappers (see [#424](https://github.com/BloqrAI/bloqr-core/issues/424)),
-both paths here shell out to the exact same `hostlist-compiler`/`npx` binary
+both paths here shell out to the exact same `deno run jsr:@bloqr/compiler-core/cli` invocation
 (`Invoke-BloqrCompilerChunked` was built alongside the benchmark, deliberately reusing the
 same compiler as `Invoke-BloqrCompiler` rather than a second tool), so there is no
 divergent-compiler risk - any timing delta reflects chunking overhead alone.

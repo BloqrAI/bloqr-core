@@ -11,10 +11,16 @@ function Split-BloqrCompilerConfiguration {
         (ceiling division) across up to MaxParallel chunks, one config per chunk.
 
         Each returned chunk is a plain hashtable carrying only the fields
-        hostlist-compiler understands (name/description/version/sources/
-        transformations/inclusions/exclusions) - CompilerConfiguration's own
-        ConfigPath/Format bookkeeping is deliberately left out, since neither has
-        any meaning for a synthesized chunk config.
+        @bloqr/compiler-core's config schema understands (name/description/version/
+        sources/defaultEngine/transformations/inclusions/exclusions) -
+        CompilerConfiguration's own ConfigPath/Format bookkeeping is deliberately
+        left out, since neither has any meaning for a synthesized chunk config.
+
+        defaultEngine is threaded through so per-chunk sources that rely on it for
+        engine resolution keep behaving the same as they would unchunked - but the
+        chunked compile path itself never passes -Engine/-BrowserOutputPath (#439,
+        matching the Rust/.NET/Python/TypeScript precedent of deferring multi-engine
+        support for chunked compilation).
 
     .PARAMETER Config
         The configuration to split.
@@ -55,6 +61,7 @@ function Split-BloqrCompilerConfiguration {
             description     = $Config.Description
             version         = $Config.Version
             sources         = $chunkSources
+            defaultEngine   = $Config.DefaultEngine
             transformations = $Config.Transformations
             inclusions      = $Config.Inclusions
             exclusions      = $Config.Exclusions

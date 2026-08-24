@@ -7,7 +7,7 @@ using module ..\Classes\CompilerResult.psm1
 
 .DESCRIPTION
     Mocks Invoke-BloqrCompiler and Invoke-BloqrCompilerChunked directly (rather than the
-    hostlist-compiler binary they shell out to) since the benchmark's own logic - dataset
+    deno/@bloqr/compiler-core binary they shell out to) since the benchmark's own logic - dataset
     discovery, size validation, config synthesis, speedup calculation, JSON shape - is what
     these tests are exercising, not the underlying compile pipeline (already covered by
     Invoke-BloqrCompiler.Tests.ps1 and Invoke-BloqrCompilerChunked.Tests.ps1).
@@ -119,14 +119,14 @@ Describe 'Invoke-BloqrCompilerBenchmark' {
             [CompilerResult]::CreateSuccess(5, $OutputPath, 'deadbeef', 50)
         }
         Mock -ModuleName BloqrCompiler Invoke-BloqrCompilerChunked {
-            [CompilerResult]::CreateFailure('hostlist-compiler not found')
+            [CompilerResult]::CreateFailure('deno not found')
         }
 
         $results = Invoke-BloqrCompilerBenchmark -Size small -DataDirectory $dataDir
 
         $results[0].ChunkedSuccess | Should -Be $false
         $results[0].Speedup | Should -BeNullOrEmpty
-        $results[0].ErrorMessage | Should -Match 'hostlist-compiler not found'
+        $results[0].ErrorMessage | Should -Match 'deno not found'
     }
 
     It 'Emits a JSON array with camelCase keys matching the other language wrappers when -AsJson is set' {
