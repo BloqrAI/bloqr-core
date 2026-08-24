@@ -112,6 +112,11 @@ public sealed class CompilerConfigEditorMenuService : CompilerConfigFormMenuServ
         }
 
         edited.Archiving = PromptArchiving(current.Archiving);
+        // #441: DefaultEngine must be carried through the edit like every other field above -
+        // omitting this line would silently drop it on save (the exact "silent drop... data-loss
+        // bug" the issue calls out), since `edited` starts as a brand-new CompilerConfiguration
+        // with DefaultEngine unset rather than copied from `current`.
+        edited.DefaultEngine = PromptDefaultEngine(current.DefaultEngine);
         edited.Sources = PromptSourcesForEdit(current.Sources);
         edited.Transformations = PromptTransformations("global", current.Transformations);
 
