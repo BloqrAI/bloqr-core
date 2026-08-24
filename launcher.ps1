@@ -58,6 +58,46 @@ function Show-Menu {
     return $choice
 }
 
+# Dual-engine (#432/#442) engine-selection prompt, shared by every "Compile
+# with X" entry in Show-RulesMenu. Write-Host is not captured by `$var = ...`
+# (unlike bash's `$(...)`), so this has no equivalent to show_menu_simple()'s
+# stderr hazard in launcher.sh - but it still returns only the resolved
+# engine value ("dns"/"browser"/"auto"), mirroring launcher.sh's
+# prompt_engine_choice() for wording/option-order parity.
+function Show-EnginePrompt {
+    Write-Host "═══ Compilation Engine ═══" -ForegroundColor Blue
+    Write-Host ""
+    Write-Host "  1." -NoNewline -ForegroundColor Green
+    Write-Host " DNS / hosts (server-side) - default, matches pre-#432 behavior"
+    Write-Host "  2." -NoNewline -ForegroundColor Green
+    Write-Host " Browser (client-side, cosmetic/JS rules)"
+    Write-Host "  3." -NoNewline -ForegroundColor Green
+    Write-Host " Auto - let the configuration's defaultEngine/per-source engine decide"
+    Write-Host ""
+    $engineChoice = Read-Host "Select engine [1-3, Enter = Auto]"
+
+    switch ($engineChoice) {
+        "1" { return "dns" }
+        "2" { return "browser" }
+        "3" { return "auto" }
+        "" { return "auto" }
+        default {
+            Write-Host "Unrecognized choice - defaulting to Auto." -ForegroundColor Yellow
+            return "auto"
+        }
+    }
+}
+
+# Optional explicit --browser-output/-BrowserOutputPath prompt, shared by
+# every "Compile with X" entry. Returns an empty string when the user leaves
+# it blank, so callers only pass -BrowserOutputPath when the user actually
+# asked for a specific path - the wrapper CLIs already derive a sensible
+# default (.browser.txt) on their own when this is omitted. Mirrors
+# launcher.sh's prompt_browser_output_path().
+function Read-BrowserOutputPath {
+    return Read-Host "Browser-syntax output path (Enter = let the compiler derive one)"
+}
+
 # Function to pause
 function Pause {
     Write-Host ""
@@ -236,9 +276,16 @@ function Show-RulesMenu {
                     -Description "Required to run @bloqr/compiler-core, the TypeScript compilation engine." `
                     -InstallAction { winget install --id DenoLand.Deno -e }
                 if ($ready) {
+                    $tsEngine = Show-EnginePrompt
+                    $tsBrowserOutput = Read-BrowserOutputPath
                     Push-Location "$Script:RootDir\src\compilers\typescript"
                     try {
-                        deno task compile
+                        if ($tsBrowserOutput) {
+                            deno task compile --engine $tsEngine --browser-output $tsBrowserOutput
+                        }
+                        else {
+                            deno task compile --engine $tsEngine
+                        }
                     }
                     finally {
                         Pop-Location
@@ -251,10 +298,17 @@ function Show-RulesMenu {
                     -Description "Required to build/run the .NET compiler." `
                     -InstallAction { winget install --id Microsoft.DotNet.SDK.10 -e }
                 if ($ready) {
+                    $dotnetEngine = Show-EnginePrompt
+                    $dotnetBrowserOutput = Read-BrowserOutputPath
                     Invoke-SafeCommand {
                         Push-Location "$Script:RootDir\src\compilers\dotnet"
                         try {
-                            dotnet run --project src\Bloqr.Compiler.Dotnet.Console
+                            if ($dotnetBrowserOutput) {
+                                dotnet run --project src\Bloqr.Compiler.Dotnet.Console -- --compile --engine $dotnetEngine --browser-output $dotnetBrowserOutput
+                            }
+                            else {
+                                dotnet run --project src\Bloqr.Compiler.Dotnet.Console -- --compile --engine $dotnetEngine
+                            }
                         }
                         finally {
                             Pop-Location
@@ -268,10 +322,17 @@ function Show-RulesMenu {
                     -Description "Required to build/run the Rust rules compiler." `
                     -InstallAction { winget install --id Rustlang.Rustup -e }
                 if ($ready) {
+                    $rustEngine = Show-EnginePrompt
+                    $rustBrowserOutput = Read-BrowserOutputPath
                     Invoke-SafeCommand {
                         Push-Location "$Script:RootDir\src\compilers\rust\cli"
                         try {
-                            cargo run --release
+                            if ($rustBrowserOutput) {
+                                cargo run --release -- compile --engine $rustEngine --browser-output $rustBrowserOutput
+                            }
+                            else {
+                                cargo run --release -- compile --engine $rustEngine
+                            }
                         }
                         finally {
                             Pop-Location
@@ -281,10 +342,17 @@ function Show-RulesMenu {
                 Pause
             }
             "4" {
+                $pythonEngine = Show-EnginePrompt
+                $pythonBrowserOutput = Read-BrowserOutputPath
                 if (Get-Command python3 -ErrorAction SilentlyContinue) {
                     Push-Location "$Script:RootDir\src\compilers\python"
                     try {
-                        python3 -m bloqr_compiler
+                        if ($pythonBrowserOutput) {
+                            python3 -m bloqr_compiler --engine $pythonEngine --browser-output $pythonBrowserOutput
+                        }
+                        else {
+                            python3 -m bloqr_compiler --engine $pythonEngine
+                        }
                     }
                     finally {
                         Pop-Location
@@ -293,7 +361,12 @@ function Show-RulesMenu {
                 elseif (Get-Command python -ErrorAction SilentlyContinue) {
                     Push-Location "$Script:RootDir\src\compilers\python"
                     try {
-                        python -m bloqr_compiler
+                        if ($pythonBrowserOutput) {
+                            python -m bloqr_compiler --engine $pythonEngine --browser-output $pythonBrowserOutput
+                        }
+                        else {
+                            python -m bloqr_compiler --engine $pythonEngine
+                        }
                     }
                     finally {
                         Pop-Location
@@ -368,6 +441,9 @@ function Show-BenchmarkMenu {
         Write-Host ""
         Write-Host "Compiles the canned benchmarks/data/ datasets through each compiler's real" -ForegroundColor DarkGray
         Write-Host "pipeline, chunked vs unchunked - see benchmarks/README.md." -ForegroundColor DarkGray
+        Write-Host "Note: per-engine benchmarking is out of scope for #432 (dual-engine). A" -ForegroundColor Yellow
+        Write-Host "compile that produces both a DNS and a browser artifact is still reported" -ForegroundColor Yellow
+        Write-Host "as one benchmark run below, not two." -ForegroundColor Yellow
         Write-Host ""
 
         $choice = Show-Menu -Title "Benchmark Which Compiler(s)?" -Options @(
@@ -407,9 +483,10 @@ function Show-ValidationMenu {
             "Run Build Script Tests"
             "Check Validation Compliance"
             "Run Clippy (Rust Linter)"
+            "Validate a Filter File"
             "← Back to Main Menu"
         )
-        
+
         switch ($choice) {
             "1" { Invoke-SafeCommand { cargo test -p bloqr-validator-core -p bloqr-validator-core-cli } "Running validation tests"; Pause }
             "2" { Invoke-SafeCommand { cargo test --workspace } "Running all Rust tests"; Pause }
@@ -435,7 +512,26 @@ function Show-ValidationMenu {
                 Pause
             }
             "6" { Invoke-SafeCommand { cargo clippy --workspace --all-features -- -W clippy::all } "Running clippy"; Pause }
-            "7" { return }
+            "7" {
+                # bloqr-validate (src/validation/cli) has no --engine flag yet -
+                # native browser-syntax validation is tracked separately as #434
+                # and hasn't landed. Rather than silently running every browser-
+                # syntax/cosmetic rule through the DNS/hosts grammar and
+                # misreporting it as invalid, say so up front (#442).
+                Write-Host "Note: bloqr-validate currently only understands DNS/hosts syntax." -ForegroundColor Yellow
+                Write-Host "This will validate your file as DNS/hosts syntax; browser-syntax" -ForegroundColor Yellow
+                Write-Host "validation lands with #434." -ForegroundColor Yellow
+                Write-Host ""
+                $validatePath = Read-Host "Path to filter file to validate"
+                if ($validatePath) {
+                    cargo run -p bloqr-validator-core-cli --bin bloqr-validate -- file $validatePath
+                }
+                else {
+                    Write-Host "No path given." -ForegroundColor Red
+                }
+                Pause
+            }
+            "8" { return }
             default { Write-Host "Invalid choice" -ForegroundColor Red; Start-Sleep -Seconds 1 }
         }
     }

@@ -94,6 +94,44 @@ show_menu() {
     fi
 }
 
+# Dual-engine (#432/#442) engine-selection prompt, shared by every "Compile
+# with X" entry in rules_menu. Every caller invokes this via
+# `engine=$(prompt_engine_choice)`, so - exactly like show_menu_simple() above
+# (the #428 fix) - the rendered prompt must go to stderr and only the
+# resolved engine value ("dns", "browser", or "auto") may reach stdout.
+prompt_engine_choice() {
+    echo -e "${BLUE}═══ Compilation Engine ═══${NC}" >&2
+    echo "" >&2
+    echo -e "  ${GREEN}1.${NC} DNS / hosts (server-side) - default, matches pre-#432 behavior" >&2
+    echo -e "  ${GREEN}2.${NC} Browser (client-side, cosmetic/JS rules)" >&2
+    echo -e "  ${GREEN}3.${NC} Auto - let the configuration's defaultEngine/per-source engine decide" >&2
+    echo "" >&2
+    local engine_choice
+    read -r -p "Select engine [1-3, Enter = Auto]: " engine_choice >&2
+
+    case "$engine_choice" in
+        1) echo "dns" ;;
+        2) echo "browser" ;;
+        3|"") echo "auto" ;;
+        *)
+            echo -e "${YELLOW}Unrecognized choice - defaulting to Auto.${NC}" >&2
+            echo "auto"
+            ;;
+    esac
+}
+
+# Optional explicit --browser-output path prompt, shared by every "Compile
+# with X" entry. Same stderr/stdout split as prompt_engine_choice() above.
+# Echoes an empty string (nothing) when the user leaves it blank, so callers
+# only pass --browser-output when the user actually asked for a specific path
+# - the wrapper CLIs already derive a sensible default (.browser.txt) on
+# their own when this is omitted.
+prompt_browser_output_path() {
+    local browser_output_path
+    read -r -p "Browser-syntax output path (Enter = let the compiler derive one): " browser_output_path >&2
+    echo "$browser_output_path"
+}
+
 # Function to check tool availability
 check_tool() {
     local tool="$1"
@@ -244,8 +282,15 @@ rules_menu() {
                 if require_tool deno "Deno" \
                     "Required to run @bloqr/compiler-core, the TypeScript compilation engine." \
                     'curl -fsSL https://deno.land/install.sh | sh && export PATH="$PATH:$HOME/.deno/bin"'; then
+                    local ts_engine ts_browser_output
+                    ts_engine=$(prompt_engine_choice)
+                    ts_browser_output=$(prompt_browser_output_path)
                     cd src/compilers/typescript
-                    deno task compile
+                    if [ -n "$ts_browser_output" ]; then
+                        deno task compile --engine "$ts_engine" --browser-output "$ts_browser_output"
+                    else
+                        deno task compile --engine "$ts_engine"
+                    fi
                     cd "$SCRIPT_DIR"
                 fi
                 pause
@@ -254,8 +299,15 @@ rules_menu() {
                 if require_tool dotnet ".NET SDK" \
                     "Required to build/run the .NET rules compiler (installs to ~/.dotnet; add to PATH if it isn't already)." \
                     'curl -sSL https://dot.net/v1/dotnet-install.sh | bash -s -- --channel 10.0 --install-dir "$HOME/.dotnet" && export PATH="$PATH:$HOME/.dotnet"'; then
+                    local dotnet_engine dotnet_browser_output
+                    dotnet_engine=$(prompt_engine_choice)
+                    dotnet_browser_output=$(prompt_browser_output_path)
                     cd src/compilers/dotnet
-                    dotnet run --project src/Bloqr.Compiler.Dotnet.Console
+                    if [ -n "$dotnet_browser_output" ]; then
+                        dotnet run --project src/Bloqr.Compiler.Dotnet.Console -- --compile --engine "$dotnet_engine" --browser-output "$dotnet_browser_output"
+                    else
+                        dotnet run --project src/Bloqr.Compiler.Dotnet.Console -- --compile --engine "$dotnet_engine"
+                    fi
                     cd "$SCRIPT_DIR"
                 fi
                 pause
@@ -264,16 +316,30 @@ rules_menu() {
                 if require_tool cargo "Rust toolchain" \
                     "Required to build/run the Rust rules compiler." \
                     'curl --proto "=https" --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y && source "$HOME/.cargo/env"'; then
+                    local rust_engine rust_browser_output
+                    rust_engine=$(prompt_engine_choice)
+                    rust_browser_output=$(prompt_browser_output_path)
                     cd src/compilers/rust/cli
-                    cargo run --release
+                    if [ -n "$rust_browser_output" ]; then
+                        cargo run --release -- compile --engine "$rust_engine" --browser-output "$rust_browser_output"
+                    else
+                        cargo run --release -- compile --engine "$rust_engine"
+                    fi
                     cd "$SCRIPT_DIR"
                 fi
                 pause
                 ;;
             4)
                 if command -v python3 &> /dev/null; then
+                    local python_engine python_browser_output
+                    python_engine=$(prompt_engine_choice)
+                    python_browser_output=$(prompt_browser_output_path)
                     cd src/compilers/python
-                    python3 -m bloqr_compiler
+                    if [ -n "$python_browser_output" ]; then
+                        python3 -m bloqr_compiler --engine "$python_engine" --browser-output "$python_browser_output"
+                    else
+                        python3 -m bloqr_compiler --engine "$python_engine"
+                    fi
                     cd "$SCRIPT_DIR"
                 else
                     echo -e "${RED}✗ Python 3 is not installed${NC}"
@@ -323,6 +389,9 @@ benchmark_menu() {
         echo ""
         echo -e "${CYAN}Compiles the canned benchmarks/data/ datasets through each compiler's real${NC}"
         echo -e "${CYAN}pipeline, chunked vs unchunked - see benchmarks/README.md.${NC}"
+        echo -e "${YELLOW}Note: per-engine benchmarking is out of scope for #432 (dual-engine). A${NC}"
+        echo -e "${YELLOW}compile that produces both a DNS and a browser artifact is still reported${NC}"
+        echo -e "${YELLOW}as one benchmark run below, not two.${NC}"
         echo ""
 
         local choice
@@ -362,8 +431,9 @@ validation_menu() {
             "Run Build Script Tests" \
             "Check Validation Compliance" \
             "Run Clippy (Rust Linter)" \
+            "Validate a Filter File" \
             "← Back to Main Menu")
-        
+
         case $choice in
             1)
                 cargo test -p bloqr-validator-core -p bloqr-validator-core-cli
@@ -391,7 +461,26 @@ validation_menu() {
                 cargo clippy --workspace --all-features -- -W clippy::all
                 pause
                 ;;
-            7|"") return ;;
+            7)
+                # bloqr-validate (src/validation/cli) has no --engine flag yet -
+                # native browser-syntax validation is tracked separately as #434
+                # and hasn't landed. Rather than silently running every browser-
+                # syntax/cosmetic rule through the DNS/hosts grammar and
+                # misreporting it as invalid, say so up front (#442).
+                echo -e "${YELLOW}Note: bloqr-validate currently only understands DNS/hosts syntax.${NC}"
+                echo -e "${YELLOW}This will validate your file as DNS/hosts syntax; browser-syntax${NC}"
+                echo -e "${YELLOW}validation lands with #434.${NC}"
+                echo ""
+                local validate_path
+                read -r -p "Path to filter file to validate: " validate_path
+                if [ -n "$validate_path" ]; then
+                    cargo run -p bloqr-validator-core-cli --bin bloqr-validate -- file "$validate_path"
+                else
+                    echo -e "${RED}No path given.${NC}"
+                fi
+                pause
+                ;;
+            8|"") return ;;
         esac
     done
 }
