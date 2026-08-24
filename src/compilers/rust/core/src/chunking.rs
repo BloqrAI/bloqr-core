@@ -242,6 +242,7 @@ fn split_by_source(
             license: config.license.clone(),
             version: config.version.clone(),
             sources: chunk_sources.clone(),
+            default_engine: config.default_engine,
             transformations: config.transformations.clone(),
             inclusions: config.inclusions.clone(),
             exclusions: config.exclusions.clone(),
@@ -463,10 +464,14 @@ async fn compile_single_chunk_async(
         })?;
 
     // Get compiler command - shared with the unchunked path (crate::compiler) so both invoke
-    // the same underlying compiler for the same config; see #424.
+    // the same underlying compiler for the same config; see #424. Chunked compilation
+    // doesn't support the multi-engine path yet (#437), so engine/browser-output are
+    // always omitted here.
     let (cmd, args) = crate::compiler::get_compiler_command(
         temp_config_path.to_str().unwrap_or(""),
         temp_output_path.to_str().unwrap_or(""),
+        None,
+        None,
     )?;
 
     if debug {

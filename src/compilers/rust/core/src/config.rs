@@ -142,6 +142,43 @@ impl fmt::Display for SourceType {
     }
 }
 
+/// Which compilation engine/grammar a source or configuration uses.
+///
+/// - `Dns` - the DNS/hosts-style grammar (domains, `||domain^`, hosts-file syntax)
+///   consumed by DNS resolvers (AdGuard Home/DNS, Pi-hole).
+/// - `Browser` - AdGuard's browser-syntax grammar (network rules with URL/resource
+///   modifiers, cosmetic/element-hiding rules, extended CSS, scriptlets) consumed by
+///   browser extensions.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "lowercase")]
+pub enum EngineKind {
+    /// The DNS/hosts-style grammar.
+    Dns,
+    /// AdGuard's browser-syntax grammar.
+    Browser,
+}
+
+impl fmt::Display for EngineKind {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::Dns => write!(f, "dns"),
+            Self::Browser => write!(f, "browser"),
+        }
+    }
+}
+
+impl std::str::FromStr for EngineKind {
+    type Err = CompilerError;
+
+    fn from_str(s: &str) -> Result<Self> {
+        match s.to_lowercase().as_str() {
+            "dns" => Ok(Self::Dns),
+            "browser" => Ok(Self::Browser),
+            other => Err(CompilerError::InvalidEngine(other.to_string())),
+        }
+    }
+}
+
 /// A source filter list to compile.
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
 #[serde(default)]
@@ -155,6 +192,13 @@ pub struct FilterSource {
     /// Type of the source.
     #[serde(rename = "type")]
     pub source_type: SourceType,
+
+    /// Which compilation engine/grammar this source uses. When set, overrides
+    /// auto-detection. When unset, the engine is auto-detected from the source
+    /// content, falling back to [`CompilerConfig::default_engine`], falling back to
+    /// [`EngineKind::Dns`].
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub engine: Option<EngineKind>,
 
     /// Transformations to apply to this source only.
     #[serde(skip_serializing_if = "Vec::is_empty")]
@@ -177,6 +221,7 @@ impl FilterSource {
             name: name.into(),
             source: source.into(),
             source_type: SourceType::default(),
+            engine: None,
             transformations: Vec::new(),
             inclusions: Vec::new(),
             exclusions: Vec::new(),
@@ -228,6 +273,13 @@ pub struct CompilerConfig {
 
     /// List of source filter lists to compile.
     pub sources: Vec<FilterSource>,
+
+    /// Default compilation engine/grammar for sources that don't set
+    /// [`FilterSource::engine`] explicitly and whose content can't be confidently
+    /// auto-detected. Defaults to [`EngineKind::Dns`] - existing configurations are
+    /// unaffected.
+    #[serde(rename = "defaultEngine", skip_serializing_if = "Option::is_none")]
+    pub default_engine: Option<EngineKind>,
 
     /// Global transformations to apply.
     #[serde(skip_serializing_if = "Vec::is_empty")]
@@ -536,5 +588,51 @@ mod tests {
 
         assert_eq!(config.local_sources_count(), 2);
         assert_eq!(config.remote_sources_count(), 1);
+    }
+
+    #[test]
+    fn test_engine_kind_from_str() {
+        assert_eq!("dns".parse::<EngineKind>().unwrap(), EngineKind::Dns);
+        assert_eq!("DNS".parse::<EngineKind>().unwrap(), EngineKind::Dns);
+        assert_eq!(
+            "browser".parse::<EngineKind>().unwrap(),
+            EngineKind::Browser
+        );
+        assert_eq!(
+            "Browser".parse::<EngineKind>().unwrap(),
+            EngineKind::Browser
+        );
+        assert!("auto".parse::<EngineKind>().is_err());
+        assert!("".parse::<EngineKind>().is_err());
+    }
+
+    #[test]
+    fn test_engine_kind_display() {
+        assert_eq!(EngineKind::Dns.to_string(), "dns");
+        assert_eq!(EngineKind::Browser.to_string(), "browser");
+    }
+
+    #[test]
+    fn test_engine_kind_serde_lowercase() {
+        let json = serde_json::to_string(&EngineKind::Browser).unwrap();
+        assert_eq!(json, "\"browser\"");
+        let parsed: EngineKind = serde_json::from_str("\"dns\"").unwrap();
+        assert_eq!(parsed, EngineKind::Dns);
+    }
+
+    #[test]
+    fn test_filter_source_engine_omitted_by_default() {
+        let source = FilterSource::new("Local", "./local.txt");
+        assert_eq!(source.engine, None);
+        let json = serde_json::to_string(&source).unwrap();
+        assert!(!json.contains("engine"));
+    }
+
+    #[test]
+    fn test_compiler_config_default_engine_roundtrip_none() {
+        let config = CompilerConfig::new("Test");
+        assert_eq!(config.default_engine, None);
+        let json = to_json(&config).unwrap();
+        assert!(!json.contains("defaultEngine"));
     }
 }

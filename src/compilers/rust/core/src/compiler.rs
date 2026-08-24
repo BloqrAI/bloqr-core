@@ -153,6 +153,13 @@ pub struct CompilerResult {
     pub stdout: String,
     /// Standard error from compiler.
     pub stderr: String,
+    /// Path to the browser-syntax artifact, present only when the configuration mixed
+    /// DNS and browser-syntax sources (producing two artifacts).
+    pub browser_output_path: Option<PathBuf>,
+    /// SHA-384 hash of the browser-syntax artifact, when present.
+    pub browser_output_hash: Option<String>,
+    /// Number of rules in the browser-syntax artifact, when present.
+    pub browser_rule_count: Option<usize>,
 }
 
 impl Default for CompilerResult {
@@ -173,6 +180,9 @@ impl Default for CompilerResult {
             error_message: None,
             stdout: String::new(),
             stderr: String::new(),
+            browser_output_path: None,
+            browser_output_hash: None,
+            browser_rule_count: None,
         }
     }
 }
@@ -239,6 +249,16 @@ pub struct CompileOptions {
     /// `false` - there is no silent skip. Set this to `true` only for deliberate debugging
     /// of unvalidated output; doing so is logged as a warning.
     pub allow_unvalidated_output: bool,
+    /// Which compilation engine to route sources through. `None`/`"auto"` (the
+    /// default) detects per-source; `"dns"` or `"browser"` forces every source
+    /// through that engine regardless of its declared/detected type.
+    pub engine: Option<String>,
+    /// Output path for the browser-syntax artifact when a configuration mixes DNS
+    /// and browser-syntax sources. Defaults to `output_path` with its extension
+    /// replaced by `.browser.txt` (or that suffix appended). Ignored for
+    /// single-engine configurations, which always produce exactly one artifact at
+    /// `output_path`.
+    pub browser_output_path: Option<PathBuf>,
 }
 
 impl CompileOptions {
@@ -302,6 +322,20 @@ impl CompileOptions {
     #[must_use]
     pub const fn with_allow_unvalidated_output(mut self, allow_unvalidated_output: bool) -> Self {
         self.allow_unvalidated_output = allow_unvalidated_output;
+        self
+    }
+
+    /// Set the engine override (`"auto"`, `"dns"`, or `"browser"`).
+    #[must_use]
+    pub fn with_engine(mut self, engine: impl Into<String>) -> Self {
+        self.engine = Some(engine.into());
+        self
+    }
+
+    /// Set the browser-syntax artifact's output path.
+    #[must_use]
+    pub fn with_browser_output<P: Into<PathBuf>>(mut self, path: P) -> Self {
+        self.browser_output_path = Some(path.into());
         self
     }
 }
@@ -577,6 +611,8 @@ pub fn verify_hash_with_events<P: AsRef<Path>>(
 pub(crate) fn get_compiler_command(
     config_path: &str,
     output_path: &str,
+    engine: Option<&str>,
+    browser_output_path: Option<&str>,
 ) -> Result<(String, Vec<String>)> {
     if let Some(deno_path) = find_command("deno") {
         let mut args: Vec<String> = DENO_PERMISSIONS.iter().map(|s| s.to_string()).collect();
@@ -586,10 +622,35 @@ pub(crate) fn get_compiler_command(
         args.push("--output".to_string());
         args.push(output_path.to_string());
 
+        // "auto" is the CLI's own default, so omitting it (like an unset engine)
+        // keeps the command line identical to the no-engine-specified case - the
+        // byte-identical-output guarantee's command-line analogue.
+        if let Some(engine) = engine.filter(|e| !e.eq_ignore_ascii_case("auto")) {
+            args.push("--engine".to_string());
+            args.push(engine.to_string());
+        }
+        if let Some(browser_output_path) = browser_output_path {
+            args.push("--browser-output".to_string());
+            args.push(browser_output_path.to_string());
+        }
+
         return Ok((deno_path.display().to_string(), args));
     }
 
     Err(CompilerError::CompilerNotFound)
+}
+
+/// Derives the default output path for the browser-syntax artifact from the
+/// DNS/primary output path: `.txt` is replaced with `.browser.txt`; any other
+/// extension (or none) has `.browser.txt` appended. Mirrors the TypeScript CLI's
+/// `deriveBrowserOutputPath` so every wrapper agrees on the default.
+fn derive_browser_output_path(output_path: &Path) -> PathBuf {
+    let path_str = output_path.to_string_lossy();
+    if let Some(stripped) = path_str.strip_suffix(".txt") {
+        PathBuf::from(format!("{stripped}.browser.txt"))
+    } else {
+        PathBuf::from(format!("{path_str}.browser.txt"))
+    }
 }
 
 /// Generate default output path based on config path and timestamp.
@@ -779,10 +840,25 @@ pub fn compile_rules<P: AsRef<Path>>(
         })?;
     }
 
+    // Mixed-engine config writes a second artifact at this (default-derived, unless
+    // the caller passed an explicit path) location; single-engine (all-DNS - the
+    // overwhelming default - or --engine-forced) never does, so this command line is
+    // byte-for-byte the same as before this feature existed whenever engine/
+    // browser_output_path are both unset.
+    let browser_output_path = options
+        .browser_output_path
+        .clone()
+        .unwrap_or_else(|| derive_browser_output_path(&output_path));
+
     // Get compiler command
     let (cmd, args) = get_compiler_command(
         compile_config_path.to_str().unwrap_or(""),
         output_path.to_str().unwrap_or(""),
+        options.engine.as_deref(),
+        options
+            .browser_output_path
+            .as_ref()
+            .and_then(|p| p.to_str()),
     )?;
 
     if options.debug {
@@ -845,6 +921,35 @@ pub fn compile_rules<P: AsRef<Path>>(
         result.end_time = Utc::now();
         result.elapsed_ms = start.elapsed().as_millis() as u64;
         return Ok(result);
+    }
+
+    // A browser-syntax artifact only exists when the configuration actually mixed
+    // engines (or --engine browser was forced) - detected by file presence rather
+    // than re-parsing the config, since the CLI is the single source of truth for
+    // whether a source resolved to the browser engine.
+    if browser_output_path.exists() {
+        result.browser_rule_count = Some(count_rules(&browser_output_path));
+        result.browser_output_hash = Some(compute_hash(&browser_output_path)?);
+
+        if let Some(abort_reason) = validate_output_with_events(
+            &browser_output_path,
+            &EventDispatcher::new(),
+            &ValidationConfig::default(),
+            options.allow_unvalidated_output,
+            options.fail_on_warnings,
+        ) {
+            result.error_message = Some(format!(
+                "browser-syntax artifact failed syntax validation (DNS artifact was already \
+                 published successfully at {}): {abort_reason}",
+                output_path.display()
+            ));
+            result.success = false;
+            result.end_time = Utc::now();
+            result.elapsed_ms = start.elapsed().as_millis() as u64;
+            return Ok(result);
+        }
+
+        result.browser_output_path = Some(browser_output_path);
     }
 
     // Copy to rules directory if requested
@@ -962,10 +1067,23 @@ pub fn compile_rules_with_events<P: AsRef<Path>>(
         })?;
     }
 
+    // Mixed-engine config writes a second artifact at this (default-derived, unless
+    // the caller passed an explicit path) location; single-engine never does - see
+    // compile_rules()'s matching comment for the byte-identical-output guarantee.
+    let browser_output_path = options
+        .browser_output_path
+        .clone()
+        .unwrap_or_else(|| derive_browser_output_path(&output_path));
+
     // Get compiler command
     let (cmd, args) = get_compiler_command(
         compile_config_path.to_str().unwrap_or(""),
         output_path.to_str().unwrap_or(""),
+        options.engine.as_deref(),
+        options
+            .browser_output_path
+            .as_ref()
+            .and_then(|p| p.to_str()),
     )?;
 
     if options.debug {
@@ -1027,6 +1145,37 @@ pub fn compile_rules_with_events<P: AsRef<Path>>(
         result.end_time = Utc::now();
         result.elapsed_ms = start.elapsed().as_millis() as u64;
         return Ok(result);
+    }
+
+    // A browser-syntax artifact only exists when the configuration actually mixed
+    // engines (or --engine browser was forced) - see compile_rules()'s matching comment.
+    if browser_output_path.exists() {
+        result.browser_rule_count = Some(count_rules(&browser_output_path));
+        result.browser_output_hash = Some(compute_hash_with_events(
+            &browser_output_path,
+            "browser_output_file",
+            Some(dispatcher),
+        )?);
+
+        if let Some(abort_reason) = validate_output_with_events(
+            &browser_output_path,
+            dispatcher,
+            &ValidationConfig::default(),
+            options.allow_unvalidated_output,
+            options.fail_on_warnings,
+        ) {
+            result.error_message = Some(format!(
+                "browser-syntax artifact failed syntax validation (DNS artifact was already \
+                 published successfully at {}): {abort_reason}",
+                output_path.display()
+            ));
+            result.success = false;
+            result.end_time = Utc::now();
+            result.elapsed_ms = start.elapsed().as_millis() as u64;
+            return Ok(result);
+        }
+
+        result.browser_output_path = Some(browser_output_path);
     }
 
     // Copy to rules directory if requested
@@ -1143,10 +1292,23 @@ pub async fn compile_rules_async<P: AsRef<Path>>(
         })?;
     }
 
+    // Mixed-engine config writes a second artifact at this (default-derived, unless
+    // the caller passed an explicit path) location; single-engine never does - see
+    // compile_rules()'s matching comment for the byte-identical-output guarantee.
+    let browser_output_path = options
+        .browser_output_path
+        .clone()
+        .unwrap_or_else(|| derive_browser_output_path(&output_path));
+
     // Get compiler command
     let (cmd, args) = get_compiler_command(
         compile_config_path.to_str().unwrap_or(""),
         output_path.to_str().unwrap_or(""),
+        options.engine.as_deref(),
+        options
+            .browser_output_path
+            .as_ref()
+            .and_then(|p| p.to_str()),
     )?;
 
     if options.debug {
@@ -1193,6 +1355,20 @@ pub async fn compile_rules_async<P: AsRef<Path>>(
     result.rule_count = count_rules_async(&output_path).await?;
     result.output_hash = compute_hash_async(&output_path).await?;
     result.success = true;
+
+    // A browser-syntax artifact only exists when the configuration actually mixed
+    // engines (or --engine browser was forced) - see compile_rules()'s matching
+    // comment. Mirrors this function's existing behavior of not running the
+    // rules-validator syntax check (unlike the sync compile_rules[_with_events]
+    // paths) - not introduced by this change.
+    if tokio::fs::try_exists(&browser_output_path)
+        .await
+        .unwrap_or(false)
+    {
+        result.browser_rule_count = Some(count_rules_async(&browser_output_path).await?);
+        result.browser_output_hash = Some(compute_hash_async(&browser_output_path).await?);
+        result.browser_output_path = Some(browser_output_path);
+    }
 
     // Copy to rules directory if requested
     if options.copy_to_rules {
@@ -1453,5 +1629,76 @@ mod tests {
             ),
             None
         );
+    }
+
+    #[test]
+    fn test_derive_browser_output_path_txt_suffix() {
+        let path = derive_browser_output_path(Path::new("/out/rules.txt"));
+        assert_eq!(path, PathBuf::from("/out/rules.browser.txt"));
+    }
+
+    #[test]
+    fn test_derive_browser_output_path_no_txt_extension() {
+        let path = derive_browser_output_path(Path::new("/out/rules"));
+        assert_eq!(path, PathBuf::from("/out/rules.browser.txt"));
+    }
+
+    #[test]
+    fn test_compile_options_with_engine_and_browser_output() {
+        let options = CompileOptions::new()
+            .with_engine("browser")
+            .with_browser_output("/out/rules.browser.txt");
+
+        assert_eq!(options.engine, Some("browser".to_string()));
+        assert_eq!(
+            options.browser_output_path,
+            Some(PathBuf::from("/out/rules.browser.txt"))
+        );
+    }
+
+    #[test]
+    fn test_get_compiler_command_omits_engine_when_none() {
+        if find_command("deno").is_none() {
+            return;
+        }
+        let (_, args) = get_compiler_command("config.json", "output.txt", None, None).unwrap();
+        assert!(!args.iter().any(|a| a == "--engine"));
+        assert!(!args.iter().any(|a| a == "--browser-output"));
+    }
+
+    #[test]
+    fn test_get_compiler_command_omits_engine_when_auto() {
+        if find_command("deno").is_none() {
+            return;
+        }
+        let (_, args) =
+            get_compiler_command("config.json", "output.txt", Some("auto"), None).unwrap();
+        assert!(!args.iter().any(|a| a == "--engine"));
+    }
+
+    #[test]
+    fn test_get_compiler_command_includes_engine_and_browser_output() {
+        if find_command("deno").is_none() {
+            return;
+        }
+        let (_, args) = get_compiler_command(
+            "config.json",
+            "output.txt",
+            Some("browser"),
+            Some("output.browser.txt"),
+        )
+        .unwrap();
+        let engine_idx = args.iter().position(|a| a == "--engine").unwrap();
+        assert_eq!(args[engine_idx + 1], "browser");
+        let browser_idx = args.iter().position(|a| a == "--browser-output").unwrap();
+        assert_eq!(args[browser_idx + 1], "output.browser.txt");
+    }
+
+    #[test]
+    fn test_compiler_result_default_has_no_browser_artifact() {
+        let result = CompilerResult::default();
+        assert!(result.browser_output_path.is_none());
+        assert!(result.browser_output_hash.is_none());
+        assert!(result.browser_rule_count.is_none());
     }
 }

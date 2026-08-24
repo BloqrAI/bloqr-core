@@ -74,6 +74,16 @@ enum Commands {
         /// debugging of unvalidated output.
         #[arg(long)]
         allow_unvalidated_output: bool,
+
+        /// Compilation engine/grammar to use ("dns" or "browser"). Omit (or "auto") to
+        /// use the configuration's own defaultEngine/per-source engine resolution.
+        #[arg(long, value_name = "ENGINE")]
+        engine: Option<String>,
+
+        /// Output path for the browser-syntax artifact, when the configuration mixes
+        /// engines. Defaults to the DNS output path with a `.browser.txt` suffix.
+        #[arg(long, value_name = "PATH")]
+        browser_output: Option<PathBuf>,
     },
     /// Show configuration details without compiling
     Config,
@@ -545,6 +555,7 @@ fn show_config(config_path: &PathBuf, format: Option<ConfigFormat>) -> ExitCode 
 }
 
 /// Run compilation with the given options.
+#[allow(clippy::too_many_arguments)]
 fn run_compile(
     config_path: &PathBuf,
     output: Option<PathBuf>,
@@ -554,6 +565,8 @@ fn run_compile(
     validate: bool,
     fail_on_warnings: bool,
     allow_unvalidated_output: bool,
+    engine: Option<String>,
+    browser_output: Option<PathBuf>,
 ) -> ExitCode {
     let options = CompileOptions::new()
         .with_copy_to_rules(copy_to_rules)
@@ -561,6 +574,18 @@ fn run_compile(
         .with_validation(validate)
         .with_fail_on_warnings(fail_on_warnings)
         .with_allow_unvalidated_output(allow_unvalidated_output);
+
+    let options = if let Some(engine) = engine {
+        options.with_engine(engine)
+    } else {
+        options
+    };
+
+    let options = if let Some(path) = browser_output {
+        options.with_browser_output(path)
+    } else {
+        options
+    };
 
     if allow_unvalidated_output {
         eprintln!(
@@ -605,6 +630,19 @@ fn run_compile(
                 println!("    Output:     {}", result.output_path_str());
                 println!("    Hash:       {}...", result.hash_short());
                 println!("    Elapsed:    {}", result.elapsed_formatted());
+
+                if let Some(browser_path) = &result.browser_output_path {
+                    println!();
+                    println!("  Browser-syntax artifact:");
+                    println!("    Output:     {}", browser_path.display());
+                    if let Some(count) = result.browser_rule_count {
+                        println!("    Rules:      {count}");
+                    }
+                    if let Some(hash) = &result.browser_output_hash {
+                        let short: String = hash.chars().take(8).collect();
+                        println!("    Hash:       {short}...");
+                    }
+                }
 
                 if result.copied_to_rules {
                     println!();
@@ -798,6 +836,8 @@ fn run_interactive_menu(initial_config: Option<PathBuf>) -> ExitCode {
                         validate,
                         fail_on_warnings,
                         false,
+                        None,
+                        None,
                     );
                 } else {
                     eprintln!("  No configuration file selected.");
@@ -883,6 +923,8 @@ fn main() -> ExitCode {
             validate,
             fail_on_warnings,
             allow_unvalidated_output,
+            engine,
+            browser_output,
         }) => {
             let config_path = match cli.config.or_else(find_default_config) {
                 Some(path) => path,
@@ -901,6 +943,8 @@ fn main() -> ExitCode {
                 validate,
                 fail_on_warnings,
                 allow_unvalidated_output,
+                engine,
+                browser_output,
             )
         }
         None => {
@@ -921,6 +965,8 @@ fn main() -> ExitCode {
                 false,
                 false,
                 false,
+                None,
+                None,
             )
         }
         Some(Commands::Menu) => run_interactive_menu(cli.config),
