@@ -25,6 +25,29 @@ public sealed class DashboardServiceTests
         Assert.True(result.Success);
         Assert.Equal(42, result.RuleCount);
         Assert.Equal("config.json", _compilerService.LastRunConfigPath);
+        Assert.Null(_compilerService.LastRunOptions?.Engine);
+        Assert.Null(_compilerService.LastRunOptions?.BrowserOutputPath);
+    }
+
+    [Fact]
+    public async Task CompileAsync_ForcedToBrowserEngine_ForwardsEngineAndBrowserOutputPath()
+    {
+        _compilerService.RunResult = new CompilerResult
+        {
+            Success = true,
+            RuleCount = 10,
+            BrowserOutputPath = "out.browser.txt",
+            BrowserOutputHash = "deadbeef",
+            BrowserRuleCount = 10,
+        };
+
+        var result = await _service.CompileAsync("config.json", engine: "browser", browserOutputPath: "out.browser.txt");
+
+        Assert.True(result.Success);
+        Assert.Equal("out.browser.txt", result.BrowserOutputPath);
+        Assert.Equal("config.json", _compilerService.LastRunOptions?.ConfigPath);
+        Assert.Equal("browser", _compilerService.LastRunOptions?.Engine);
+        Assert.Equal("out.browser.txt", _compilerService.LastRunOptions?.BrowserOutputPath);
     }
 
     [Fact]
@@ -139,6 +162,7 @@ public sealed class DashboardServiceTests
         public CompilerResult RunResult { get; set; } = new();
         public ValidationResult ValidateResult { get; set; } = new();
         public string? LastRunConfigPath { get; private set; }
+        public CompilerOptions? LastRunOptions { get; private set; }
         public string? LastValidateConfigPath { get; private set; }
 
         public Task<CompilerResult> RunAsync(
@@ -153,6 +177,7 @@ public sealed class DashboardServiceTests
         public Task<CompilerResult> RunAsync(CompilerOptions options, CancellationToken cancellationToken = default)
         {
             LastRunConfigPath = options.ConfigPath;
+            LastRunOptions = options;
             return Task.FromResult(RunResult);
         }
 

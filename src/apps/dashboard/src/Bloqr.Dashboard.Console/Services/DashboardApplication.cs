@@ -40,7 +40,10 @@ public sealed class DashboardApplication
     /// <c>--compile</c>, <c>--validate-config</c>, <c>--list-profiles</c>,
     /// <c>--activate-profile</c>, <c>--non-interactive</c>) or the interactive main menu loop -
     /// full CLI-switch parity with the interactive menu's compile/validate/profile-management
-    /// operations, per #271. Every CLI branch below calls <see cref="IDashboardService"/>, the
+    /// operations, per #271. <c>--compile</c> accepts the peer <c>--engine</c>/<c>--browser-output</c>
+    /// flags (#440), mirroring <c>Bloqr.Compiler.Dotnet.Console</c>'s own dual-engine flags from
+    /// #436; both are value-taking, so they go through <see cref="GetOptionValue"/> rather than a
+    /// bare-presence check. Every CLI branch below calls <see cref="IDashboardService"/>, the
     /// same embeddable-library API boundary a future .NET MAUI host would depend on - the CLI is
     /// itself just one more consumer of that boundary, not a separate code path. Config
     /// generation (the wizard) remains interactive-only: mirroring its entire prompt tree as CLI
@@ -168,7 +171,9 @@ public sealed class DashboardApplication
         if (args.Contains("--compile"))
         {
             var compileConfigPath = GetOptionValue(args, "--compile");
-            command = ct => RunCompileAsync(compileConfigPath, ct);
+            var engine = GetOptionValue(args, "--engine");
+            var browserOutputPath = GetOptionValue(args, "--browser-output");
+            command = ct => RunCompileAsync(compileConfigPath, engine, browserOutputPath, ct);
             return true;
         }
 
@@ -230,7 +235,8 @@ public sealed class DashboardApplication
         return result.IsValid ? 0 : 1;
     }
 
-    private async Task<int> RunCompileAsync(string? configPath, CancellationToken cancellationToken)
+    private async Task<int> RunCompileAsync(
+        string? configPath, string? engine, string? browserOutputPath, CancellationToken cancellationToken)
     {
         var configPaths = configPath is not null
             ? [configPath]
@@ -247,12 +253,20 @@ public sealed class DashboardApplication
         var exitCode = 0;
         foreach (var path in configPaths)
         {
-            var result = await _dashboardService.CompileAsync(path, cancellationToken).ConfigureAwait(false);
+            var result = await _dashboardService.CompileAsync(path, engine, browserOutputPath, cancellationToken)
+                .ConfigureAwait(false);
             if (result.Success)
             {
                 _renderer.WriteStyled(
                     $"Compiled '{result.ConfigName}': {result.RuleCount} rules -> {result.OutputPath} ({result.ElapsedMs}ms)",
                     TextStyle.Success);
+
+                if (!string.IsNullOrEmpty(result.BrowserOutputPath))
+                {
+                    _renderer.WriteStyled(
+                        $"  Browser artifact: {result.BrowserRuleCount} rules -> {result.BrowserOutputPath}",
+                        TextStyle.Success);
+                }
             }
             else
             {
@@ -332,6 +346,12 @@ public sealed class DashboardApplication
         _renderer.WriteLine("  --non-interactive     Print status and exit instead of prompting");
         _renderer.WriteLine("  --compile [path]      Compile a specific compiler config, or the active");
         _renderer.WriteLine("                        profile's config(s) if no path is given");
+        _renderer.WriteLine("  --engine <auto|dns|browser>");
+        _renderer.WriteLine("                        With --compile: force every source through this engine");
+        _renderer.WriteLine("                        (default: auto-detect per source)");
+        _renderer.WriteLine("  --browser-output <path>");
+        _renderer.WriteLine("                        With --compile: override the browser-syntax artifact's");
+        _renderer.WriteLine("                        output path for a mixed-engine config");
         _renderer.WriteLine("  --validate-config <path>");
         _renderer.WriteLine("                        Validate a compiler config file without compiling it");
         _renderer.WriteLine("  --list-profiles       List Dashboard profiles (* marks the active one)");
