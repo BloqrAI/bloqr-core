@@ -34,7 +34,7 @@ public sealed class CompilationProgressEventHandlerTests
         };
         await handler.OnConfigurationLoadedAsync(new ConfigurationLoadedEventArgs(Options(), config)).ConfigureAwait(true);
 
-        context.Tasks.Select(t => t.Description.Trim()).Should().Equal("Compiling", "DNS artifact", "Browser artifact");
+        context.Tasks.Select(t => t.Description.Trim()).Should().Equal("Compiling Mixed", "DNS artifact", "Browser artifact");
         context.Tasks.Should().OnlyContain(t => !t.IsFinished);
 
         // The DNS artifact finishes when chunks are merged...
@@ -72,7 +72,7 @@ public sealed class CompilationProgressEventHandlerTests
         };
         await handler.OnConfigurationLoadedAsync(new ConfigurationLoadedEventArgs(Options(), config)).ConfigureAwait(true);
 
-        context.Tasks.Select(t => t.Description.Trim()).Should().Equal("Compiling");
+        context.Tasks.Select(t => t.Description.Trim()).Should().Equal("Compiling Dns Only");
     }
 
     [Fact]

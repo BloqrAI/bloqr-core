@@ -11,6 +11,7 @@ namespace Bloqr.Dashboard.Tests;
 public sealed class CompilerConfigEditorMenuServiceTests : IDisposable
 {
     private readonly string _tempDirectory = Directory.CreateTempSubdirectory("editor-tests-").FullName;
+    private readonly string _configPath;
     private readonly FakeConfigurationReader _configurationReader = new();
     private readonly FakeCompilerConfigGuard _configGuard = new();
     private readonly FakeSchemaValidator _schemaValidator = new();
@@ -21,8 +22,11 @@ public sealed class CompilerConfigEditorMenuServiceTests : IDisposable
 
     public CompilerConfigEditorMenuServiceTests()
     {
+        _configPath = Path.Combine(_tempDirectory, "mixed.json");
+        File.WriteAllText(_configPath, "{}"); // Only needs to exist; the reader/guard are faked.
+
         _paths = new FakeDashboardPaths(_tempDirectory);
-        _prompter = new RenamingFakePrompter("Renamed Filter List");
+        _prompter = new RenamingFakePrompter("Renamed Filter List", _configPath);
         _service = new CompilerConfigEditorMenuService(
             new NoOpConsoleRenderer(),
             _prompter,
@@ -45,8 +49,7 @@ public sealed class CompilerConfigEditorMenuServiceTests : IDisposable
     [Fact]
     public async Task EditConfig_UnrelatedRename_PreservesEngineAndDefaultEngineUnchanged()
     {
-        var configPath = Path.Combine(_tempDirectory, "mixed.json");
-        File.WriteAllText(configPath, "{}"); // Only needs to exist; the reader/guard are faked.
+        var configPath = _configPath;
 
         var original = new CompilerConfiguration
         {
@@ -105,10 +108,25 @@ public sealed class CompilerConfigEditorMenuServiceTests : IDisposable
     /// <c>CompilerConfigFormMenuServiceBase</c> orders the current value first via
     /// <c>WithCurrentFirst</c> - means every such prompt effectively keeps its current value too.
     /// </summary>
-    private sealed class RenamingFakePrompter(string newName) : IConsolePrompter
+    private sealed class RenamingFakePrompter(string newName, string configPath) : IConsolePrompter
     {
-        public string Prompt(string prompt, string? defaultValue = null) =>
-            prompt == "Filter list name" ? newName : defaultValue ?? string.Empty;
+        public string Prompt(string prompt, string? defaultValue = null)
+        {
+            if (prompt == "Filter list name")
+            {
+                return newName;
+            }
+
+            // PromptRequired's "Path to compiler config file to edit" has no defaultValue to fall
+            // back on and re-prompts forever on blank - answer it with the config path under test
+            // like a real user would, rather than looping.
+            if (prompt.StartsWith("Path to compiler config file", StringComparison.Ordinal))
+            {
+                return configPath;
+            }
+
+            return defaultValue ?? string.Empty;
+        }
 
         public Task<string> PromptAsync(
             string prompt, string? defaultValue = null, CancellationToken cancellationToken = default) =>
