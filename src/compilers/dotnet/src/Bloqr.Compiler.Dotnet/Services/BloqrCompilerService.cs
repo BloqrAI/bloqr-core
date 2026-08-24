@@ -179,6 +179,8 @@ public class BloqrCompilerService : IBloqrCompilerService
             Verbose = options.Verbose,
             FailOnWarnings = options.FailOnWarnings,
             AllowUnvalidatedOutput = options.AllowUnvalidatedOutput,
+            Engine = options.Engine,
+            BrowserOutputPath = options.BrowserOutputPath,
         };
 
         // Read configuration once for the settings this method acts on directly
@@ -269,6 +271,21 @@ public class BloqrCompilerService : IBloqrCompilerService
             }
         }
 
+        // Dual-engine: a mixed-engine configuration produced a second (browser-syntax)
+        // artifact, published/hashed/validated independently of the DNS one above. The
+        // .hashes.json sidecar's IHashDatabaseService.RecordAsync already keys entries by
+        // itemIdentifier (a path), so recording both artifacts under their own paths in the
+        // same database "just works" - no interface change needed for the key shape.
+        if (!string.IsNullOrWhiteSpace(result.BrowserOutputPath))
+        {
+            var canContinueBrowser = await PublishAndVerifyBrowserArtifactAsync(
+                result, config, actualConfigPath, compilerOptions, cancellationToken);
+            if (!canContinueBrowser)
+            {
+                return result;
+            }
+        }
+
         // Copy to rules directory if requested
         if (options.CopyToRules)
         {
@@ -306,6 +323,130 @@ public class BloqrCompilerService : IBloqrCompilerService
         }
 
         return result;
+    }
+
+    /// <summary>
+    /// Publishes, hashes, syntax-validates, and (if configured) hash-verifies the
+    /// browser-syntax artifact of a mixed-engine compilation - the same pipeline stages
+    /// <see cref="RunAsyncCore"/> already runs for the DNS/primary artifact, applied to
+    /// <paramref name="result"/>'s <see cref="CompilerResult.BrowserOutputPath"/>.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>Partial-publish behavior</b>: by the time this runs, the DNS artifact (if any) has
+    /// already been published successfully - <see cref="RunAsyncCore"/> returns early on that
+    /// failure before reaching here. If the browser artifact then fails to publish, hash, or
+    /// validate, this method does <i>not</i> roll back the DNS artifact - undoing a successful
+    /// publish (including a possible archive-and-overwrite) has its own failure modes and
+    /// would destroy a legitimately-published file. Instead, <paramref name="result"/> is
+    /// marked unsuccessful with an error message that names the DNS artifact as already
+    /// published at <see cref="CompilerResult.OutputPath"/>, so the failure is visible and
+    /// actionable rather than silently leaving a half-published pair.
+    /// </para>
+    /// <para>
+    /// The browser-syntax artifact is published to a path derived the same way the compiler
+    /// wrapper derives its default (<c>.browser.txt</c>), rooted next to the DNS artifact's
+    /// resolved publish destination when one is configured; otherwise the file compiled by
+    /// <see cref="IFilterCompiler"/> is used in place, matching how the DNS artifact behaves
+    /// when <c>config.Output</c> is unset.
+    /// </para>
+    /// </remarks>
+    /// <returns><see langword="true"/> if compilation can continue; <see langword="false"/> otherwise.</returns>
+    private async Task<bool> PublishAndVerifyBrowserArtifactAsync(
+        CompilerResult result,
+        CompilerConfiguration config,
+        string actualConfigPath,
+        CompilerOptions compilerOptions,
+        CancellationToken cancellationToken)
+    {
+        var browserOutputPath = result.BrowserOutputPath!;
+
+        if (config.Output is { } output && !string.IsNullOrWhiteSpace(output.Path))
+        {
+            var resolvedPrimaryPath = ResolvePathRelativeToConfig(output.Path, actualConfigPath);
+            var resolvedBrowserDestination = new OutputSettings
+            {
+                Path = DeriveBrowserArtifactPath(resolvedPrimaryPath),
+                ConflictStrategy = output.ConflictStrategy,
+            };
+
+            var publishResult = await _outputPublisher.PublishAsync(
+                browserOutputPath, resolvedBrowserDestination, config.Archiving, cancellationToken);
+
+            if (!publishResult.Success)
+            {
+                result.Success = false;
+                result.ErrorMessage = "Browser-syntax artifact failed to publish " +
+                    $"(DNS artifact was already published successfully at {result.OutputPath}): " +
+                    publishResult.ErrorMessage;
+                _logger.LogError("Failed to publish browser-syntax output: {Error}", publishResult.ErrorMessage);
+                return false;
+            }
+
+            browserOutputPath = publishResult.FinalPath!;
+            result.BrowserOutputPath = browserOutputPath;
+            if (publishResult.ArchivedPath is not null)
+            {
+                _logger.LogInformation("Archived previous browser-syntax output to {ArchivedPath}", publishResult.ArchivedPath);
+            }
+        }
+
+        result.BrowserRuleCount = await _outputWriter.CountRulesAsync(browserOutputPath, cancellationToken);
+        result.BrowserOutputHash = await _outputWriter.ComputeHashAsync(browserOutputPath, cancellationToken);
+
+        _logger.LogInformation(
+            "Compiled browser-syntax artifact: {RuleCount} rules, hash: {Hash}",
+            result.BrowserRuleCount, result.BrowserOutputHash[..16] + "...");
+
+        await _eventDispatcher.RaiseHashComputedAsync(
+            new HashComputedEventArgs(
+                compilerOptions, browserOutputPath, "browser_output_file", result.BrowserOutputHash,
+                new FileInfo(browserOutputPath).Length),
+            cancellationToken);
+
+        var (canContinueAfterValidation, validationErrorMessage) =
+            await ValidateOutputSyntaxAsync(browserOutputPath, compilerOptions, cancellationToken);
+        if (!canContinueAfterValidation)
+        {
+            result.Success = false;
+            result.ErrorMessage = "Browser-syntax artifact failed syntax validation " +
+                $"(DNS artifact was already published successfully at {result.OutputPath}): " +
+                validationErrorMessage;
+            return false;
+        }
+
+        if (config.HashVerification is { } browserHashVerification &&
+            !string.Equals(browserHashVerification.Mode, "disabled", StringComparison.OrdinalIgnoreCase) &&
+            !string.IsNullOrWhiteSpace(browserHashVerification.HashDatabasePath))
+        {
+            var hashDatabasePath = ResolvePathRelativeToConfig(browserHashVerification.HashDatabasePath, actualConfigPath);
+            var (canContinue, errorMessage) = await VerifyAndRecordHashAsync(
+                hashDatabasePath, browserOutputPath, "browser_output_file", result.BrowserOutputHash,
+                browserHashVerification, compilerOptions, cancellationToken);
+
+            if (!canContinue)
+            {
+                result.Success = false;
+                result.ErrorMessage = "Browser-syntax artifact failed hash verification " +
+                    $"(DNS artifact was already published successfully at {result.OutputPath}): {errorMessage}";
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    /// <summary>
+    /// Derives the browser-syntax artifact's publish destination from the DNS/primary
+    /// artifact's: <c>.txt</c> is replaced with <c>.browser.txt</c>; any other extension (or
+    /// none) has <c>.browser.txt</c> appended. Mirrors the TypeScript CLI's
+    /// <c>deriveBrowserOutputPath</c> so every wrapper agrees on the default.
+    /// </summary>
+    private static string DeriveBrowserArtifactPath(string primaryPath)
+    {
+        return primaryPath.EndsWith(".txt", StringComparison.OrdinalIgnoreCase)
+            ? string.Concat(primaryPath.AsSpan(0, primaryPath.Length - ".txt".Length), ".browser.txt")
+            : primaryPath + ".browser.txt";
     }
 
     /// <summary>

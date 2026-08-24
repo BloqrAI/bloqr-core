@@ -79,6 +79,18 @@ public class CompilerConfiguration
     public List<FilterSource> Sources { get; set; } = [];
 
     /// <summary>
+    /// Gets or sets the default compilation engine/grammar for sources that don't set
+    /// <see cref="FilterSource.Engine"/> explicitly and whose content can't be
+    /// confidently auto-detected.
+    /// </summary>
+    /// <remarks>
+    /// Valid values are <c>"dns"</c> and <c>"browser"</c>. Defaults to <c>"dns"</c> -
+    /// existing configurations are unaffected.
+    /// </remarks>
+    [JsonPropertyName("defaultEngine")]
+    public string? DefaultEngine { get; set; }
+
+    /// <summary>
     /// Gets or sets the list of transformations to apply to the final compiled output.
     /// </summary>
     /// <remarks>

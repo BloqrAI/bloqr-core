@@ -36,6 +36,17 @@ public class FilterSource
     public string Type { get; set; } = "adblock";
 
     /// <summary>
+    /// Gets or sets which compilation engine/grammar this source uses.
+    /// </summary>
+    /// <remarks>
+    /// Valid values are <c>"dns"</c> and <c>"browser"</c>. When unset, the engine is
+    /// auto-detected from the source content, falling back to
+    /// <see cref="CompilerConfiguration.DefaultEngine"/>, falling back to <c>"dns"</c>.
+    /// </remarks>
+    [JsonPropertyName("engine")]
+    public string? Engine { get; set; }
+
+    /// <summary>
     /// Gets or sets the source-specific transformations to apply.
     /// </summary>
     /// <remarks>
