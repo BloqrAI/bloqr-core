@@ -42,6 +42,7 @@ This directory contains comprehensive documentation for the ad-blocking reposito
 
 | Document | Description |
 |----------|--------------|
+| [Dual-Engine Compilation](architecture/dual-engine-compilation.md) | Server-side/DNS vs client-side/browser compilation: how `EngineDetector` routes sources, why the two artifacts are never merged, browser-safe vs. DNS-only transformations, and the ownership split with the commercial compiler |
 | [Versioning Strategy](architecture/versioning-strategy.md) | Org-wide per-package JSR versioning standard, with `@bloqr/compiler-core` as the reference implementation |
 | [NuGet Distribution Strategy](architecture/nuget-distribution-strategy.md) | Decision record for publishing `Bloqr.Compiler.Abstractions`/`Core` to GitHub Packages, and why in-repo consumers keep `<ProjectReference>` |
 | [Release Packaging Strategy](architecture/release-packaging-strategy.md) | Source vs. binary-only release shapes, self-contained-vs-Native-AOT evaluation, and launcher dependency preflight checks |

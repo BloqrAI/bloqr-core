@@ -87,6 +87,10 @@ dotnet run --project src/Bloqr.Compiler.Dotnet.Console -- --version
 | `--fail-on-warnings` | | Fail compilation if configuration has validation warnings |
 | `--version` | `-v` | Show version information |
 | `--benchmark` | | Benchmark real compilation performance, chunked vs unchunked - see [Benchmarking](#benchmarking) |
+| `--engine ENGINE` | | `auto` (default), `dns`, or `browser` - forces every source through `ENGINE`, bypassing per-source detection |
+| `--browser-output PATH` | | Output path for the browser-syntax artifact when a config mixes DNS and browser-syntax sources (default: `PATH` with its extension replaced by `.browser.txt`). Ignored for single-engine configs |
+
+See [Dual-Engine Compilation](../../../docs/architecture/dual-engine-compilation.md) for what `dns`/`browser` mean and how sources are routed.
 
 ## Benchmarking
 

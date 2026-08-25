@@ -333,6 +333,7 @@ All compilers support the same @bloqr/compiler-core configuration schema:
 | `transformations` | array | No | Global transformations |
 | `inclusions` | array | No | Global include patterns |
 | `exclusions` | array | No | Global exclude patterns |
+| `defaultEngine` | string | No | Default compilation engine (`dns`/`browser`) for sources without their own `engine` and that can't be content-sniffed — see [Dual-Engine Compilation](docs/architecture/dual-engine-compilation.md) |
 
 ### Source Properties
 | Property | Type | Required | Description |
@@ -343,9 +344,12 @@ All compilers support the same @bloqr/compiler-core configuration schema:
 | `transformations` | array | No | Source-specific transforms |
 | `inclusions` | array | No | Source-specific includes |
 | `exclusions` | array | No | Source-specific excludes |
+| `engine` | string | No | Compilation engine/grammar for this source (`dns`/`browser`); overrides auto-detection when set — see [Dual-Engine Compilation](docs/architecture/dual-engine-compilation.md) |
 
 ### Available Transformations
-RemoveComments, Compress, RemoveModifiers, Validate, ValidateAllowIp, Deduplicate, InvertAllow, RemoveEmptyLines, TrimLines, InsertFinalNewLine, ConvertToAscii
+RemoveComments, Compress, RemoveModifiers, Validate, ValidateAllowIp, Deduplicate, InvertAllow, RemoveEmptyLines, TrimLines, InsertFinalNewLine, ConvertToAscii, ConflictDetection, RuleOptimizer
+
+Not every transformation is valid for every engine: `Compress`, `Validate`/`ValidateAllowIp`, and `InvertAllow` are DNS-only (they assume DNS/hosts-style grammar and are rejected on a browser-engine source); the rest are browser-safe. See [Dual-Engine Compilation](docs/architecture/dual-engine-compilation.md#which-transformations-are-browser-safe) for the full breakdown and why.
 
 ## Environment Variables
 

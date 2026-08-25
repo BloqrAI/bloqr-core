@@ -94,6 +94,10 @@ deno task start -- --version
 | `--enable-chunking` | Enable chunked parallel compilation for large rule lists |
 | `--chunk-size N` | Number of sources per chunk (when using source-based chunking) |
 | `--max-parallel N` | Maximum number of chunks to compile in parallel (default: CPU count) |
+| `--engine ENGINE` | `auto` (default), `dns`, or `browser` — forces every source through `ENGINE`, bypassing per-source detection |
+| `--browser-output PATH` | Output path for the browser-syntax artifact when a config mixes DNS and browser-syntax sources (default: `PATH` with its extension replaced by `.browser.txt`). Ignored for single-engine configs, which always produce exactly one artifact at `--output` |
+
+See [Dual-Engine Compilation](../../../docs/architecture/dual-engine-compilation.md) for what `dns`/`browser` mean and how sources are routed. Compiling any browser-syntax source currently also requires `--allow-unvalidated-output`, since `bloqr-validate` doesn't yet validate browser syntax natively (tracked separately).
 
 ### Chunked Parallel Compilation
 

@@ -25,6 +25,7 @@ YAML and TOML remain supported by the underlying config readers for backward com
 | `hashVerification` | object | No | See below | Hash verification configuration |
 | `archiving` | object | No | See below | Archiving configuration |
 | `sources` | array | **Yes** | - | List of filter sources to compile |
+| `defaultEngine` | string | No | See below | Default compilation engine/grammar (`dns` or `browser`) for sources that don't set their own `engine` and whose content can't be confidently auto-detected |
 | `transformations` | array | No | `[]` | Global transformations to apply |
 | `inclusions` | array | No | `[]` | Global inclusion patterns |
 | `inclusions_sources` | array | No | `[]` | Files containing inclusion patterns |
@@ -171,6 +172,28 @@ Each source in the `sources` array supports:
 | `inclusions_sources` | array | No | `[]` | Files with source inclusion patterns |
 | `exclusions` | array | No | `[]` | Source-specific exclusion patterns |
 | `exclusions_sources` | array | No | `[]` | Files with source exclusion patterns |
+| `engine` | string | No | See below | Compilation engine/grammar this source uses (`dns` or `browser`) |
+
+## Dual-Engine Compilation (`engine` / `defaultEngine`)
+
+Every source compiles under one of two grammars:
+
+- **`dns`** (server-side) — DNS-sinkholing rules: hosts-file/domain-blocking syntax, what every compiler in this repo has always produced.
+- **`browser`** (client-side) — browser-syntax rules: cosmetic/element-hiding rules, extended-CSS, scriptlet injection, and `$`-modifier network rules that only a browser extension/app can act on (a DNS resolver has no concept of them).
+
+One configuration can mix both. Sources resolved to `browser` produce a separate output artifact from sources resolved to `dns` — the two are never merged into a single file (see [Dual-Engine Compilation](architecture/dual-engine-compilation.md) for why). Each per-language wrapper exposes this as `--engine`/`--browser-output` (PowerShell: `-Engine`/`-BrowserOutputPath`) alongside the config-level `engine`/`defaultEngine` fields documented here — see that wrapper's README for the exact flags.
+
+**Allowed values** for both `engine` (per-source) and `defaultEngine` (root-level): `"dns"` or `"browser"`.
+
+**Resolution order**, per source, applied by `EngineDetector`:
+
+1. An explicit `source.engine` — always wins.
+2. `source.type === "hosts"` — hosts-format sources are always DNS.
+3. Content sniffing — if the source's rule lines have already been fetched, they're sampled (majority vote over cosmetic separators, hosts-line syntax, and browser-only `$` modifiers vs. bare DNS-adblock lines) to guess `dns` vs. `browser`.
+4. `defaultEngine`, if set.
+5. `"dns"` — the final fallback.
+
+**Backward-compatibility guarantee:** omitting both `engine` and `defaultEngine` everywhere in a configuration keeps today's behavior byte-identical — the compiler takes the all-DNS path exactly as before dual-engine support existed, with no browser-syntax detection, no second output artifact, and no wiring into the browser-syntax compiler touched at all. This is a tested guarantee, not just a claim: see `MultiEngineCompiler.test.ts`'s *"all-DNS config produces byte-identical output to FilterCompiler directly"* test and `compiler.dual-engine.test.ts` in the TypeScript core (`src/compilers/typescript/src/engines/`, `src/compilers/typescript/src/orchestration/`), plus each wrapper's own byte-identical-output coverage added alongside its `--engine`/`--browser-output` pass-through in Wave 2 of epic #432.
 
 ## Transformations
 
@@ -339,19 +362,22 @@ All URLs in `internet-sources.txt` undergo comprehensive security validation:
 
 ### Output Directory (`../bloqr-blocklists/output/`)
 
-**Purpose**: Store final compiled filter list.
+**Purpose**: Store final compiled filter list(s).
 
 **Main file**: `adguard_user_filter.txt`
 - Always in **adblock syntax** (not hosts format)
-- Merged from all input sources
+- Merged from all DNS-engine input sources
 - Deduplicated and validated
 - SHA-384 hash computed for verification
 
+**Second file, when the configuration mixes engines**: a browser-syntax artifact (default name: `adguard_user_filter.browser.txt`, or the path passed via `--browser-output`/`-BrowserOutputPath`) — see [Dual-Engine Compilation](#dual-engine-compilation-engine--defaultengine) above. Its rules are never merged into the main file.
+
 **Guarantees**:
-- ✅ Output format is always adblock
+- ✅ The DNS-engine output format is always adblock
+- ✅ A browser-engine artifact, when produced, is always kept separate from the DNS artifact — one config, one compile, up to two output files
 - ✅ Rules are validated and deduplicated
 - ✅ Comments and metadata preserved
-- ✅ Hash computed for integrity verification
+- ✅ Hash computed for integrity verification (each artifact independently)
 
 ### Compilation Workflow
 
@@ -589,12 +615,16 @@ This checks:
 
 ## CLI Options by Compiler
 
-| Option | TypeScript | .NET | Python | Rust |
-|--------|------------|------|--------|------|
-| Config file | `-c`, `--config` | `-c`, `--config` | `-c`, `--config` | `-c`, `--config` |
-| Output file | `-o`, `--output` | `-o`, `--output` | `-o`, `--output` | `-o`, `--output` |
-| Copy to rules | `-r`, `--copy-to-rules` | `--copy` | `-r`, `--copy-to-rules` | `-r`, `--copy-to-rules` |
-| Debug output | `-d`, `--debug` | `--verbose` | `-d`, `--debug` | `-d`, `--debug` |
-| Validate only | - | `--validate` | - | - |
-| Version | `--version` | `-v`, `--version` | `-V`, `--version` | `-V`, `--version` |
-| Help | `--help` | `--help` | `--help` | `--help` |
+| Option | TypeScript | .NET | Python | Rust | PowerShell |
+|--------|------------|------|--------|------|------------|
+| Config file | `-c`, `--config` | `-c`, `--config` | `-c`, `--config` | `-c`, `--config` | `-ConfigPath` |
+| Output file | `-o`, `--output` | `-o`, `--output` | `-o`, `--output` | `-o`, `--output` | `-OutputPath` |
+| Copy to rules | `-r`, `--copy-to-rules` | `--copy` | `-r`, `--copy-to-rules` | `-r`, `--copy-to-rules` | - |
+| Debug output | `-d`, `--debug` | `--verbose` | `-d`, `--debug` | `-d`, `--debug` | - |
+| Validate only | - | `--validate` | - | - | - |
+| Version | `--version` | `-v`, `--version` | `-V`, `--version` | `-V`, `--version` | - |
+| Help | `--help` | `--help` | `--help` | `--help` | - |
+| Engine | `--engine` | `--engine` | `--engine` | `--engine` | `-Engine` |
+| Browser output path | `--browser-output` | `--browser-output` | `--browser-output` | `--browser-output` | `-BrowserOutputPath` |
+
+`Engine`/`Browser output path` correspond to the config-level `engine`/`defaultEngine` fields above — see [Dual-Engine Compilation](architecture/dual-engine-compilation.md). PowerShell's chunked/benchmark paths (`Invoke-BloqrCompilerChunked`) don't yet support these two, matching the other wrappers' chunking paths.

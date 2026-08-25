@@ -35,6 +35,8 @@ flowchart BT
     CompilerDotnet --> CompilerCommon
 ```
 
+`IDashboardService.CompileAsync` (and the underlying `IBloqrCompilerService`) are dual-engine aware as of epic #432: an `engine`/`browserOutputPath` pair flows through this same dependency graph, and a single compile can produce a DNS artifact and a separate browser-syntax artifact — the compile menu, config wizard/editor, diagnostics, and live progress all reflect both. See [Dual-Engine Compilation](../../../docs/architecture/dual-engine-compilation.md).
+
 ## Design patterns
 
 ### Dependency Injection

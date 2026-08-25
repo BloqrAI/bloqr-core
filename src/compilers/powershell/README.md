@@ -58,6 +58,15 @@ Invoke-BloqrCompiler -ConfigPath config.json
 Invoke-BloqrCompiler -ConfigPath config.json -Engine browser -BrowserOutputPath ./output/rules.browser.txt
 ```
 
+**`Invoke-BloqrCompiler` parameters** (equivalent to the other four wrappers' `--engine`/`--browser-output` CLI flags — PowerShell uses cmdlet parameters, not string flags):
+
+| Parameter | Description |
+|-----------|-------------|
+| `-ConfigPath` | Path to configuration file |
+| `-OutputPath` | Path to output file |
+| `-Engine` | Compilation engine override passed through as `--engine` (`dns` or `browser`). Omit (or pass `auto`) to use the configuration's own `defaultEngine`/per-source `engine` resolution |
+| `-BrowserOutputPath` | Output path for the browser-syntax artifact, passed through as `--browser-output`, when the configuration mixes engines. See [Engine/output resolution decision](#engineoutput-resolution-decision) below for exactly how this and `-Engine` resolve to the underlying command line |
+
 ### Engine/output resolution decision
 
 As of [#439](https://github.com/BloqrAI/bloqr-core/issues/439) (epic [#432](https://github.com/BloqrAI/bloqr-core/issues/432)),

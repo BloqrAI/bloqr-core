@@ -96,6 +96,9 @@ dotnet run --project src/Bloqr.Dashboard.Console -- --log-level debug --compile
 
 # Non-interactive mode (check status, no prompts)
 dotnet run --project src/Bloqr.Dashboard.Console -- --non-interactive
+
+# Force every source through a specific engine, and pick a browser-artifact path
+dotnet run --project src/Bloqr.Dashboard.Console -- --compile --engine browser --browser-output ./output/rules.browser.txt
 ```
 
 ### CLI Options Reference
@@ -112,8 +115,22 @@ dotnet run --project src/Bloqr.Dashboard.Console -- --non-interactive
 | `--validate-config PATH` | | Validate a config without compiling |
 | `--list-profiles` | | List all profiles |
 | `--activate-profile NAME` | | Activate and persist a profile |
+| `--engine <auto\|dns\|browser>` | | With `--compile`: force every source through this engine, bypassing per-source detection |
+| `--browser-output PATH` | | With `--compile`: override the browser-syntax artifact's output path for a mixed-engine config |
 
 The Dashboard auto-detects redirected/piped stdin and switches to non-interactive mode automatically, so it's safe to invoke from scripts or CI without hanging.
+
+### Dual-Engine Compilation
+
+`--compile` is dual-engine aware (epic #432): a configuration can mix DNS-engine and browser-engine sources, producing up to two output artifacts from one compile. `IDashboardService.CompileAsync` returns both when present, and the CLI output shows a `Browser artifact:` line alongside the usual result whenever one was produced. This flows through the interactive menus too:
+
+- **Compile menu** shows both artifacts (path, rule count, hash) when a mixed-engine compile ran, and prompts for an engine override before compiling.
+- **Config wizard** prompts for each source's `engine` (inferring one for a local file via a .NET port of `EngineDetector`, and asking directly for a remote URL) plus the configuration's `defaultEngine`.
+- **Config editor** round-trips `engine`/`defaultEngine` on an existing config without dropping them.
+- **Diagnostics** ("Validate a filter file") currently validates DNS/hosts syntax only — native browser-syntax validation in `bloqr-validate` is tracked separately and gates epic #432's closure.
+- **Live progress** shows two named child tasks ("DNS artifact"/"Browser artifact") under the compile root for a mixed-engine compile.
+
+See [Dual-Engine Compilation](../architecture/dual-engine-compilation.md) for how engine resolution works, and [Configuration Reference](../configuration-reference.md#dual-engine-compilation-engine--defaultengine) for the `engine`/`defaultEngine` config fields.
 
 ## Configuration
 
