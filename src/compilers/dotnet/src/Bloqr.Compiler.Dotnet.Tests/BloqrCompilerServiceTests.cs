@@ -41,7 +41,7 @@ public sealed class BloqrCompilerServiceTests : IDisposable
         // blanket "unavailable" default here would fail every other test in this file.
         _rulesValidatorService.Setup(v => v.IsAvailable).Returns(true);
         _rulesValidatorService
-            .Setup(v => v.ValidateLocalFileAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .Setup(v => v.ValidateLocalFileAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new SyntaxValidationResult { IsValid = true, Format = "Adblock", ValidRules = 1, InvalidRules = 0 });
 
         _service = new BloqrCompilerService(
@@ -268,7 +268,7 @@ public sealed class BloqrCompilerServiceTests : IDisposable
 
         Assert.False(result.Success);
         _rulesValidatorService.Verify(
-            v => v.ValidateLocalFileAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
+            v => v.ValidateLocalFileAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
         _eventDispatcher.Verify(
             d => d.RaiseValidationAsync(It.IsAny<ValidationEventArgs>(), It.IsAny<CancellationToken>()), Times.Never);
     }
@@ -289,7 +289,7 @@ public sealed class BloqrCompilerServiceTests : IDisposable
 
         Assert.True(result.Success);
         _rulesValidatorService.Verify(
-            v => v.ValidateLocalFileAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
+            v => v.ValidateLocalFileAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
         _eventDispatcher.Verify(
             d => d.RaiseValidationAsync(It.IsAny<ValidationEventArgs>(), It.IsAny<CancellationToken>()), Times.Never);
     }
@@ -301,7 +301,7 @@ public sealed class BloqrCompilerServiceTests : IDisposable
         SetUpSuccessfulCompilation();
         _rulesValidatorService.Setup(v => v.IsAvailable).Returns(true);
         _rulesValidatorService
-            .Setup(v => v.ValidateLocalFileAsync(_compiledPath, It.IsAny<CancellationToken>()))
+            .Setup(v => v.ValidateLocalFileAsync(_compiledPath, It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new SyntaxValidationResult { IsValid = true, Format = "Adblock", ValidRules = 3, InvalidRules = 0 });
 
         var result = await _service.RunAsync(new CompilerOptions { ConfigPath = _configPath, ValidateConfig = false });
@@ -320,7 +320,7 @@ public sealed class BloqrCompilerServiceTests : IDisposable
         SetUpSuccessfulCompilation();
         _rulesValidatorService.Setup(v => v.IsAvailable).Returns(true);
         _rulesValidatorService
-            .Setup(v => v.ValidateLocalFileAsync(_compiledPath, It.IsAny<CancellationToken>()))
+            .Setup(v => v.ValidateLocalFileAsync(_compiledPath, It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new SyntaxValidationResult
             {
                 IsValid = false,
@@ -351,7 +351,7 @@ public sealed class BloqrCompilerServiceTests : IDisposable
         SetUpSuccessfulCompilation();
         _rulesValidatorService.Setup(v => v.IsAvailable).Returns(true);
         _rulesValidatorService
-            .Setup(v => v.ValidateLocalFileAsync(_compiledPath, It.IsAny<CancellationToken>()))
+            .Setup(v => v.ValidateLocalFileAsync(_compiledPath, It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new SyntaxValidationResult { IsValid = false, Format = "Adblock", ValidRules = 2, InvalidRules = 1 });
 
         var result = await _service.RunAsync(new CompilerOptions { ConfigPath = _configPath, ValidateConfig = false });
@@ -368,7 +368,7 @@ public sealed class BloqrCompilerServiceTests : IDisposable
         SetUpSuccessfulCompilation();
         _rulesValidatorService.Setup(v => v.IsAvailable).Returns(true);
         _rulesValidatorService
-            .Setup(v => v.ValidateLocalFileAsync(_compiledPath, It.IsAny<CancellationToken>()))
+            .Setup(v => v.ValidateLocalFileAsync(_compiledPath, It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new SyntaxValidationResult { IsValid = false, Format = "Adblock", ValidRules = 2, InvalidRules = 1 });
 
         var result = await _service.RunAsync(new CompilerOptions
@@ -389,7 +389,7 @@ public sealed class BloqrCompilerServiceTests : IDisposable
         SetUpSuccessfulCompilation();
         _rulesValidatorService.Setup(v => v.IsAvailable).Returns(true);
         _rulesValidatorService
-            .Setup(v => v.ValidateLocalFileAsync(_compiledPath, It.IsAny<CancellationToken>()))
+            .Setup(v => v.ValidateLocalFileAsync(_compiledPath, It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new SyntaxValidationResult
             {
                 IsValid = true,
