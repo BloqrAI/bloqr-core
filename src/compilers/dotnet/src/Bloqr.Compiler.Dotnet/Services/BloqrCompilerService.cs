@@ -405,7 +405,7 @@ public class BloqrCompilerService : IBloqrCompilerService
             cancellationToken);
 
         var (canContinueAfterValidation, validationErrorMessage) =
-            await ValidateOutputSyntaxAsync(browserOutputPath, compilerOptions, cancellationToken);
+            await ValidateOutputSyntaxAsync(browserOutputPath, compilerOptions, cancellationToken, engine: "browser");
         if (!canContinueAfterValidation)
         {
             result.Success = false;
@@ -469,7 +469,8 @@ public class BloqrCompilerService : IBloqrCompilerService
     private async Task<(bool CanContinue, string? ErrorMessage)> ValidateOutputSyntaxAsync(
         string outputPath,
         CompilerOptions options,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken,
+        string engine = "dns")
     {
         if (!_rulesValidatorService.IsAvailable)
         {
@@ -480,7 +481,13 @@ public class BloqrCompilerService : IBloqrCompilerService
                           "to bypass this check (not recommended).");
         }
 
-        var syntaxResult = await _rulesValidatorService.ValidateLocalFileAsync(outputPath, cancellationToken);
+        // "engine" selects which grammar bloqr-validator-core validates against - "dns" (the
+        // default, for the server-side artifact) rejects cosmetic/browser-only syntax by
+        // design, while "browser" (passed for the browser-syntax artifact below) natively
+        // accepts it. Per #434, this is what makes browser-artifact validation fail-closed
+        // WITHOUT needing CompilerOptions.AllowUnvalidatedOutput - see
+        // docs/adr/0005-browser-syntax-validation-engine.md.
+        var syntaxResult = await _rulesValidatorService.ValidateLocalFileAsync(outputPath, engine, cancellationToken);
         if (syntaxResult is null)
         {
             return options.AllowUnvalidatedOutput
