@@ -20,6 +20,41 @@ use std::path::Path;
 
 use crate::error::Result;
 
+/// Which grammar to validate a rule against.
+///
+/// DNS-level (server-side) blockers can't act on cosmetic/scriptlet/browser-only-modifier
+/// rules, so [`ValidationEngine::Dns`] rejects them exactly as before this type existed
+/// (see `test_cosmetic_rules_rejected` and its siblings in this module's tests). Browser
+/// (client-side) engines *do* understand that syntax, so [`ValidationEngine::Browser`]
+/// validates against a hand-rolled browser grammar instead - see
+/// `docs/adr/0005-browser-syntax-validation-engine.md` for why hand-rolled rather than a
+/// crate dependency.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default, Serialize, Deserialize)]
+#[serde(rename_all = "lowercase")]
+pub enum ValidationEngine {
+    /// Server-side/DNS grammar (`HostlistCompiler`-compatible). Default, and the only
+    /// grammar this crate validated before browser-engine support was added.
+    #[default]
+    Dns,
+    /// Client-side/browser grammar (cosmetic rules, extended CSS, scriptlet injection,
+    /// browser-only `$` modifiers), validated with a hand-rolled parser.
+    Browser,
+}
+
+impl std::str::FromStr for ValidationEngine {
+    type Err = String;
+
+    fn from_str(s: &str) -> std::result::Result<Self, Self::Err> {
+        match s.to_ascii_lowercase().as_str() {
+            "dns" => Ok(Self::Dns),
+            "browser" => Ok(Self::Browser),
+            other => Err(format!(
+                "unknown validation engine: {other} (expected \"dns\" or \"browser\")"
+            )),
+        }
+    }
+}
+
 /// Filter format type.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
 #[serde(rename_all = "lowercase")]
@@ -98,6 +133,9 @@ pub fn validate_syntax<P: AsRef<Path>>(path: P) -> Result<SyntaxValidationResult
 
 /// Validate filter list syntax, choosing which `HostlistCompiler`-compatible mode to emulate.
 ///
+/// Equivalent to [`validate_syntax_with_engine`] with [`ValidationEngine::Dns`] - DNS-mode
+/// behavior is unchanged by the addition of browser-engine support.
+///
 /// # Errors
 ///
 /// Returns an error if file cannot be read.
@@ -105,9 +143,25 @@ pub fn validate_syntax_with_mode<P: AsRef<Path>>(
     path: P,
     mode: HostlistValidationMode,
 ) -> Result<SyntaxValidationResult> {
+    validate_syntax_with_engine(path, mode, ValidationEngine::Dns)
+}
+
+/// Validate filter list syntax against a specific [`ValidationEngine`] (DNS or browser
+/// grammar), choosing which `HostlistCompiler`-compatible mode to emulate for DNS-engine
+/// validation (`mode` is ignored for [`ValidationEngine::Browser`], which has no equivalent
+/// IP/public-suffix leniency knobs).
+///
+/// # Errors
+///
+/// Returns an error if file cannot be read.
+pub fn validate_syntax_with_engine<P: AsRef<Path>>(
+    path: P,
+    mode: HostlistValidationMode,
+    engine: ValidationEngine,
+) -> Result<SyntaxValidationResult> {
     let path = path.as_ref();
     let content = fs::read_to_string(path)?;
-    Ok(validate_syntax_content_with_mode(&content, mode))
+    Ok(validate_syntax_content_with_engine(&content, mode, engine))
 }
 
 /// Validate filter list syntax from in-memory content.
@@ -123,10 +177,24 @@ pub fn validate_syntax_content(content: &str) -> SyntaxValidationResult {
 
 /// Validate filter list syntax from in-memory content, choosing which
 /// `HostlistCompiler`-compatible mode to emulate.
+///
+/// Equivalent to [`validate_syntax_content_with_engine`] with [`ValidationEngine::Dns`] -
+/// **byte-identical** to this function's behavior before browser-engine support existed.
 #[must_use]
 pub fn validate_syntax_content_with_mode(
     content: &str,
     mode: HostlistValidationMode,
+) -> SyntaxValidationResult {
+    validate_syntax_content_with_engine(content, mode, ValidationEngine::Dns)
+}
+
+/// Validate filter list syntax from in-memory content against a specific
+/// [`ValidationEngine`] (DNS or browser grammar).
+#[must_use]
+pub fn validate_syntax_content_with_engine(
+    content: &str,
+    mode: HostlistValidationMode,
+    engine: ValidationEngine,
 ) -> SyntaxValidationResult {
     let mut result = SyntaxValidationResult {
         is_valid: true,
@@ -146,7 +214,12 @@ pub fn validate_syntax_content_with_mode(
             continue;
         }
 
-        if is_valid_rule(line, mode) {
+        let valid = match engine {
+            ValidationEngine::Dns => is_valid_rule(line, mode),
+            ValidationEngine::Browser => is_valid_browser_rule(line),
+        };
+
+        if valid {
             result.valid_rules += 1;
         } else {
             result.invalid_rules += 1;
@@ -166,6 +239,178 @@ pub fn validate_syntax_content_with_mode(
     }
 
     result
+}
+
+/// Cosmetic-rule separators recognized between a (possibly empty) domain list and the
+/// rule body: element hiding (`##`), element-hiding exception (`#@#`), extended-CSS
+/// (`#?#`), extended-CSS exception (`#@?#`), AdGuard scriptlet/HTML/JS injection
+/// (`#%#`, `#$#`, `#$?#`), and their exception counterparts. Ordered longest-first so the
+/// scan below can't match a short separator (`##`) as a prefix of a longer one (`#@#`).
+const COSMETIC_SEPARATORS: &[&str] = &["#@?#", "#$?#", "#@$#", "#@#", "#?#", "#$#", "#%#", "##"];
+
+/// Browser-only `$` modifiers this validator additionally accepts in browser mode, on top
+/// of everything [`SUPPORTED_MODIFIERS`] already allows (those remain valid too - a DNS
+/// rule with only DNS-safe modifiers is still well-formed browser syntax). This is
+/// deliberately not exhaustive of every modifier the uBO/AdGuard/ABP dialects define
+/// (full AST-level modifier semantics are tsurlfilter's job, per
+/// docs/adr/0002-aglint-integration-strategy.md) - it covers the content-type, party, and
+/// popup/document modifiers this issue's scope item 2 calls out by name, plus their
+/// `~`-negated forms and the `domain=`/`app=` value modifiers commonly paired with them.
+const BROWSER_ONLY_MODIFIERS: &[&str] = &[
+    "script",
+    "~script",
+    "image",
+    "~image",
+    "stylesheet",
+    "~stylesheet",
+    "object",
+    "~object",
+    "xmlhttprequest",
+    "~xmlhttprequest",
+    "media",
+    "~media",
+    "font",
+    "~font",
+    "websocket",
+    "~websocket",
+    "ping",
+    "~ping",
+    "other",
+    "~other",
+    "subdocument",
+    "~subdocument",
+    "third-party",
+    "~third-party",
+    "first-party",
+    "~first-party",
+    "document",
+    "~document",
+    "popup",
+    "~popup",
+    "generichide",
+    "genericblock",
+    "elemhide",
+    "specifichide",
+    "domain",
+    "app",
+    "csp",
+    "removeparam",
+    "redirect",
+    "redirect-rule",
+    "empty",
+    "mp4",
+    "replace",
+    "cookie",
+    "network",
+    "extension",
+    "match-case",
+];
+
+/// Validates a single line against the hand-rolled browser/client-side grammar: cosmetic
+/// rules (`##`/`#@#`/`#?#`/`#$#`/`#%#` and their exception variants, covering extended CSS
+/// and scriptlet/JS/HTML injection bodies), and network rules whose `$` modifiers may
+/// include [`BROWSER_ONLY_MODIFIERS`] in addition to [`SUPPORTED_MODIFIERS`] - in contrast
+/// to [`is_valid_rule`]'s DNS-only grammar, which rejects both.
+///
+/// "Can this rule be parsed and is it well-formed" is the bar, matching this issue's
+/// deliberately narrower scope than a full AGTree-equivalent AST parser - see
+/// `docs/adr/0005-browser-syntax-validation-engine.md` for why this is hand-rolled rather
+/// than delegated to a crate, and for the fixture-corpus rules this was checked against.
+fn is_valid_browser_rule(line: &str) -> bool {
+    let without_exception = line.strip_prefix("@@").unwrap_or(line);
+
+    if let Some(sep_pos) = find_cosmetic_separator(without_exception) {
+        return is_valid_cosmetic_rule(without_exception, sep_pos);
+    }
+
+    is_valid_browser_network_rule(line)
+}
+
+/// Finds the earliest occurrence of any [`COSMETIC_SEPARATORS`] entry in `line`, returning
+/// its byte offset. A domain list (possibly empty, e.g. bare `##.ad-banner`) may precede
+/// it; DNS-shaped rules like `||example.com^` never contain `#`, so this is unambiguous.
+fn find_cosmetic_separator(line: &str) -> Option<usize> {
+    COSMETIC_SEPARATORS
+        .iter()
+        .filter_map(|sep| line.find(sep))
+        .min()
+}
+
+/// Validates a cosmetic rule: the (possibly empty, comma-separated) domain list before the
+/// separator must be well-formed hostnames/wildcards, and the body after the separator
+/// (the CSS selector, extended-CSS selector, or scriptlet/JS/HTML injection payload) must
+/// be non-empty. Mirrors the shape `bloqr-enginelib`'s `CosmeticFilter::parse` and AGTree's
+/// cosmetic-rule grammar both use: `[domains]<separator><body>`.
+fn is_valid_cosmetic_rule(line: &str, sep_pos: usize) -> bool {
+    let domains = &line[..sep_pos];
+    let sep = COSMETIC_SEPARATORS
+        .iter()
+        .filter(|s| line[sep_pos..].starts_with(**s))
+        .max_by_key(|s| s.len())
+        .expect("sep_pos was found via find_cosmetic_separator using this same list");
+    let body = &line[sep_pos + sep.len()..];
+
+    if body.is_empty() {
+        return false;
+    }
+
+    if !domains.is_empty()
+        && !domains
+            .split(',')
+            .all(|d| is_valid_cosmetic_domain(d.trim()))
+    {
+        return false;
+    }
+
+    true
+}
+
+/// A single entry in a cosmetic rule's domain list: an optional leading `~` (negation),
+/// then a hostname made of alphanumerics, hyphens, dots, and (uBO extension) wildcard `*`.
+fn is_valid_cosmetic_domain(domain: &str) -> bool {
+    let domain = domain.strip_prefix('~').unwrap_or(domain);
+    !domain.is_empty()
+        && domain
+            .chars()
+            .all(|c| c.is_ascii_alphanumeric() || matches!(c, '-' | '.' | '*'))
+}
+
+/// Validates a network-style rule (no cosmetic separator present) under the browser
+/// grammar: same pattern/character-class shape [`valid_adblock_rule`] already enforces,
+/// but the modifier allowlist is widened to [`SUPPORTED_MODIFIERS`] **or**
+/// [`BROWSER_ONLY_MODIFIERS`] rather than [`SUPPORTED_MODIFIERS`] alone.
+fn is_valid_browser_network_rule(rule_text: &str) -> bool {
+    let Some(tokens) = parse_rule_tokens(rule_text) else {
+        return false;
+    };
+    let pattern = tokens.pattern;
+
+    if let Some(options) = tokens.options {
+        for name in option_names(options) {
+            if !SUPPORTED_MODIFIERS.contains(&name.as_str())
+                && !BROWSER_ONLY_MODIFIERS.contains(&name.as_str())
+            {
+                return false;
+            }
+        }
+    }
+
+    // Regex rules (`/.../`) may contain any characters - nothing further to check,
+    // matching valid_adblock_rule's own regex short-circuit.
+    if pattern.len() > 1 && pattern.starts_with('/') && pattern.ends_with('/') {
+        return true;
+    }
+
+    if pattern.is_empty() {
+        return false;
+    }
+
+    // Browser engines accept a materially wider character set in the pattern itself
+    // (path/query components for `$script`/`$xmlhttprequest` targeting, for instance) -
+    // this is deliberately more permissive than valid_adblock_rule's DNS-oriented
+    // CHAR_CHECK, matching this issue's "well-formed", not "byte-identical to DNS shape",
+    // bar for the browser engine.
+    !pattern.chars().any(char::is_whitespace)
 }
 
 /// Detect filter format from content.
@@ -731,12 +976,112 @@ mod tests {
         ));
     }
 
-    // --- Cosmetic rules: meaningless at the DNS level, and upstream rejects them ---
+    // --- Cosmetic rules: meaningless at the DNS level, and upstream rejects them.
+    // Engine-gated per docs/adr/0005-browser-syntax-validation-engine.md: DNS-mode
+    // rejection is unchanged (byte-identical to before browser-engine support), but the
+    // same rules are now valid under the browser engine. ---
 
     #[test]
-    fn test_cosmetic_rules_rejected() {
+    fn test_cosmetic_rules_rejected_in_dns_mode() {
         assert!(!valid_adblock_rule("##.ad-banner", false, false));
         assert!(!valid_adblock_rule("example.com##.ad-banner", false, false));
+    }
+
+    #[test]
+    fn test_cosmetic_rules_accepted_in_browser_mode() {
+        assert!(is_valid_browser_rule("##.ad-banner"));
+        assert!(is_valid_browser_rule("example.com##.ad-banner"));
+        // Exception cosmetic rule.
+        assert!(is_valid_browser_rule("tracker.com#@#.allowed-banner"));
+    }
+
+    #[test]
+    fn test_browser_only_modifiers_accepted_in_browser_mode() {
+        // Rejected in DNS mode by test_browser_only_modifiers_rejected above; valid
+        // client-side content-type/party modifiers under the browser engine.
+        assert!(is_valid_browser_rule("||example.com^$third-party"));
+        assert!(is_valid_browser_rule("||example.com^$script"));
+        assert!(is_valid_browser_rule("||example.com^$image"));
+        assert!(is_valid_browser_rule("||example.com^$domain=example.org"));
+    }
+
+    #[test]
+    fn test_scriptlet_injection_accepted_in_browser_mode() {
+        assert!(is_valid_browser_rule(
+            "example.com#%#//scriptlet('abort-on-property-read', 'foo')"
+        ));
+    }
+
+    #[test]
+    fn test_extended_css_selector_accepted_in_browser_mode() {
+        assert!(is_valid_browser_rule(
+            "example.com#?#.ad:has(> .inner-banner)"
+        ));
+    }
+
+    #[test]
+    fn test_dns_only_rule_still_valid_in_browser_mode() {
+        // A DNS-shaped network rule should also parse under the browser grammar - it's a
+        // strict superset for non-DNS-specific modifiers like `dnstype`/`dnsrewrite`,
+        // which browser engines simply don't recognize as meaningful and reject.
+        assert!(is_valid_browser_rule("||example.com^"));
+    }
+
+    #[test]
+    fn test_malformed_rule_rejected_in_browser_mode() {
+        // A cosmetic separator with no body after it is not well-formed under either
+        // grammar.
+        assert!(!is_valid_browser_rule("example.com##"));
+        // A network rule with an unrecognized modifier (neither DNS- nor browser-safe)
+        // stays rejected.
+        assert!(!is_valid_browser_rule(
+            "||example.com^$totally-made-up-modifier"
+        ));
+    }
+
+    #[test]
+    fn test_validate_syntax_content_with_engine_browser_accepts_cosmetic() {
+        let result = validate_syntax_content_with_engine(
+            "! Comment\n||example.com^\nexample.com##.ad-banner\n||ads.example.org^$script\n",
+            HostlistValidationMode::Validate,
+            ValidationEngine::Browser,
+        );
+        assert!(result.is_valid);
+        assert_eq!(result.invalid_rules, 0);
+        assert_eq!(result.valid_rules, 3);
+    }
+
+    #[test]
+    fn test_validate_syntax_content_with_engine_dns_rejects_cosmetic() {
+        // Same content as above, but engine-gated to Dns: cosmetic rule and browser-only
+        // `$script` modifier are both rejected, exactly as validate_syntax_content()
+        // (implicitly Dns) has always behaved.
+        let content =
+            "! Comment\n||example.com^\nexample.com##.ad-banner\n||ads.example.org^$script\n";
+        let engine_gated = validate_syntax_content_with_engine(
+            content,
+            HostlistValidationMode::Validate,
+            ValidationEngine::Dns,
+        );
+        let default_dns = validate_syntax_content(content);
+        assert_eq!(engine_gated.valid_rules, default_dns.valid_rules);
+        assert_eq!(engine_gated.invalid_rules, default_dns.invalid_rules);
+        assert_eq!(engine_gated.is_valid, default_dns.is_valid);
+        assert_eq!(default_dns.valid_rules, 1);
+        assert_eq!(default_dns.invalid_rules, 2);
+    }
+
+    #[test]
+    fn test_validation_engine_from_str() {
+        assert_eq!(
+            "dns".parse::<ValidationEngine>().unwrap(),
+            ValidationEngine::Dns
+        );
+        assert_eq!(
+            "Browser".parse::<ValidationEngine>().unwrap(),
+            ValidationEngine::Browser
+        );
+        assert!("nonsense".parse::<ValidationEngine>().is_err());
     }
 
     // --- IP pattern classification ---

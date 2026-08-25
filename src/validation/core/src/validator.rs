@@ -5,7 +5,9 @@ use std::path::Path;
 use crate::config::ValidationConfig;
 use crate::error::Result;
 use crate::hash::{verify_and_update, HashDatabase};
-use crate::syntax::{validate_syntax, SyntaxValidationResult};
+use crate::syntax::{
+    validate_syntax_with_engine, HostlistValidationMode, SyntaxValidationResult, ValidationEngine,
+};
 use crate::url_security::{validate_url, UrlValidationResult};
 
 /// Main validator for filter lists.
@@ -37,10 +39,28 @@ impl Validator {
         &mut self,
         path: P,
     ) -> Result<SyntaxValidationResult> {
+        self.validate_local_file_with_engine(path, self.config.engine)
+    }
+
+    /// Validate a local file against a specific [`ValidationEngine`], overriding
+    /// [`ValidationConfig::engine`] for this call only.
+    ///
+    /// Otherwise identical to [`Self::validate_local_file`]: syntax validation followed by
+    /// at-rest hash verification.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if validation fails in strict mode.
+    pub fn validate_local_file_with_engine<P: AsRef<Path>>(
+        &mut self,
+        path: P,
+        engine: ValidationEngine,
+    ) -> Result<SyntaxValidationResult> {
         let path = path.as_ref();
 
         // Syntax validation
-        let syntax_result = validate_syntax(path)?;
+        let syntax_result =
+            validate_syntax_with_engine(path, HostlistValidationMode::Validate, engine)?;
 
         // Hash verification
         let strict = matches!(
