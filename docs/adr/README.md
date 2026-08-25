@@ -1,0 +1,25 @@
+# Architecture Decision Records
+
+This directory records significant architectural decisions for `bloqr-core` — the kind of choice that's expensive to re-litigate later without knowing why it was made in the first place: engine/dependency selection, build-vs-adopt calls, cross-language integration strategy, and structural conventions that future contributors (and future PRs) need to stay consistent with.
+
+## Index
+
+| ADR | Title | Status | Summary |
+|---|---|---|---|
+| [0001](0001-canonical-rules-compilation-engine.md) | Canonical Rules-Compilation Engine Strategy Across Languages | Accepted | Extracts a minimal, dependency-free compilation engine (`@bloqr/compiler-core`) from the commercial `bloqr-compiler` product and dogfoods it across TypeScript (in-process) and .NET/Python/Rust (via `deno run` subprocess), instead of coupling every open-source compiler to the commercial product's full AGTree-dependent surface. |
+| [0002](0002-aglint-integration-strategy.md) | AGLint/tsurlfilter/ExtendedCss/ecsstree/DiffBuilder Integration Strategy | Accepted | Settles how the .NET side consumes AdGuard's npm/TypeScript linting and diffing tooling (AGLint, tsurlfilter, ExtendedCss, ecsstree, DiffBuilder) — subprocess wrapper vs. an embedded JS engine — based on an empirical spike against the AGLint CLI. |
+| [0003](0003-adguard-hostlist-compatibility.md) | AdGuard `HostlistCompiler` Compatibility for `bloqr-validator-core` | Accepted (Phase 1 and Phase 2 both implemented) | Scopes "compatible with AdGuard's compilers" down to `HostlistCompiler` specifically (not the browser-extension-oriented `FiltersCompiler`, which this repo doesn't target), and replaces `bloqr-validator-core`'s hand-rolled pre-validation heuristic with one that matches `HostlistCompiler`'s real `Validate*` transformation behavior. |
+| [0004](0004-src-reorg-naming-blueprint.md) | `src/` reorg naming blueprint — the `validation` pilot | Accepted | Records the `validation/` directory migration (from `rules-validator/{rules-validator-core,rules-validator-cli}`) as the pilot for the org's target `src/` taxonomy and per-language naming convention, and the scope boundary later migrations followed. |
+| [0005](0005-browser-syntax-validation-engine.md) | Browser-Syntax Validation Engine for `bloqr-validator-core` | Accepted | Rejects adopting `bloqr-enginelib` (a `adblock-rust` fork) for browser-syntax validation, after its MPL-2.0 license was confirmed compatible but its toolchain (Rust 1.97/edition 2024) proved incompatible with this workspace's MSRV — and instead hand-rolls a narrow browser-syntax grammar in `bloqr-validator-core::syntax`, gating epic #432's closure. |
+
+## Process and numbering
+
+- **Numbering**: ADRs are numbered sequentially, zero-padded to four digits (`0001`, `0002`, ...), in the order they're accepted. Numbers are never reused or renumbered, even if a later ADR supersedes an earlier one — supersession is recorded in the superseding ADR's own text (and ideally a note added to the superseded one), not by renumbering.
+- **Filename**: `NNNN-short-kebab-case-title.md`, matching the ADR's own `# ADR NNNN: Title` heading.
+- **When to write one**: an ADR is warranted for a decision that (a) was genuinely contested — more than one reasonable option existed and was weighed, (b) is expensive to reverse once other code depends on it, or (c) future contributors are likely to second-guess without knowing the context that ruled out the alternative. Routine implementation choices, bug fixes, and anything already covered by an existing `docs/architecture/*.md` strategy doc don't need a new ADR.
+- **Structure**: follow the existing ADRs' shape — `Status`, `Date`, `Related` (issue/PR/other-ADR links), `Context` (the problem and the options considered), `Decision`, and `Consequences`. Investigation-heavy ADRs (like 0003 and 0005) also include an `Investigation` section documenting what was actually tried, with real commands/output where relevant — reproducibility for whoever revisits the decision later matters more than brevity.
+- **Status values**: `Accepted` is the normal end state for a decision that's been implemented. Use `Proposed` while a decision is still under discussion, and `Superseded by ADR NNNN` (with a link) if a later ADR replaces this one's decision outright.
+- **Updates after acceptance**: ADRs are allowed to gain dated "Update" notes (see ADR 0001) when a fact they describe changes without the underlying decision changing (e.g. a package rename) — this keeps the historical narrative intact rather than silently editing history. A change to the *decision itself* gets a new ADR instead.
+- **Related architecture docs**: not every architectural decision belongs in `docs/adr/` — ongoing, evolving standards (versioning, licensing, release packaging, NuGet/JSR distribution) live under `docs/architecture/` instead, since they're expected to be revised in place rather than recorded as a point-in-time decision. Use an ADR for the "why we chose X over Y" moment; use an architecture doc for "how X currently works, kept up to date."
+
+When adding a new ADR, update this table in the same PR.
