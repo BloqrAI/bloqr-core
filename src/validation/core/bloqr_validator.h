@@ -112,6 +112,32 @@ FfiStatus bloqr_validator_validate_local_file(struct Validator *validator,
                                               char **out_result_json);
 
 /**
+ * Validates a local file (syntax + at-rest hash verification) against a specific
+ * [`ValidationEngine`], overriding whatever engine the validator was constructed with.
+ *
+ * `engine` must be `"dns"` or `"browser"` (case-insensitive); any other value (including
+ * `NULL`) is treated as invalid UTF-8/an unrecognized engine and returns
+ * [`FfiStatus::InvalidUtf8`]. This is the FFI-boundary counterpart of
+ * [`Validator::validate_local_file_with_engine`] - see that function's docs, and
+ * `docs/adr/0005-browser-syntax-validation-engine.md`, for what each engine accepts.
+ *
+ * On success or a validation failure, `*out_result_json` is set to an owned,
+ * null-terminated JSON string describing the result (or the error) which the caller must
+ * free with [`bloqr_validator_free_string`].
+ *
+ * # Safety
+ *
+ * `validator` must be a live handle from [`bloqr_validator_new`]. `path` and `engine` must
+ * each point to a valid null-terminated UTF-8 C string. `out_result_json` must point to
+ * valid, writable memory for a `*mut c_char`.
+ */
+
+FfiStatus bloqr_validator_validate_local_file_with_engine(struct Validator *validator,
+                                                           const char *path,
+                                                           const char *engine,
+                                                           char **out_result_json);
+
+/**
  * Validates a remote URL (security checks, HTTPS enforcement, optional
  * in-flight hash verification).
  *

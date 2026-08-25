@@ -58,6 +58,27 @@ public sealed class BloqrValidatorService : IBloqrValidatorService, IDisposable
     }
 
     /// <inheritdoc/>
+    public Task<SyntaxValidationResult?> ValidateLocalFileAsync(
+        string path, string engine, CancellationToken cancellationToken = default)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(path);
+        ArgumentException.ThrowIfNullOrWhiteSpace(engine);
+
+        if (!IsAvailable)
+        {
+            return Task.FromResult<SyntaxValidationResult?>(null);
+        }
+
+        var status = BloqrValidatorNativeMethods.bloqr_validator_validate_local_file_with_engine(
+            _handle, path, engine, out var resultPtr);
+
+        var result = ReadResultJson(resultPtr, status, "validate_local_file_with_engine",
+            json => JsonSerializer.Deserialize<SyntaxValidationResult>(json, SerializerOptions));
+
+        return Task.FromResult(result);
+    }
+
+    /// <inheritdoc/>
     public Task<UrlValidationResult?> ValidateRemoteUrlAsync(
         string url, string? expectedHash = null, CancellationToken cancellationToken = default)
     {

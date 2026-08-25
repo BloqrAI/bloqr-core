@@ -22,6 +22,10 @@ internal static class BloqrValidatorNativeMethods
         IntPtr validator, string path, out IntPtr outResultJson);
 
     [DllImport(LibraryName, CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl)]
+    public static extern int bloqr_validator_validate_local_file_with_engine(
+        IntPtr validator, string path, string engine, out IntPtr outResultJson);
+
+    [DllImport(LibraryName, CharSet = CharSet.Ansi, CallingConvention = CallingConvention.Cdecl)]
     public static extern int bloqr_validator_validate_remote_url(
         IntPtr validator, string url, string? expectedHash, out IntPtr outResultJson);
 
