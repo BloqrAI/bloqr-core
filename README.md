@@ -127,7 +127,7 @@ The TypeScript compiler is the only one that implements compilation logic direct
 
 ```mermaid
 flowchart TB
-    Core["@bloqr/compiler-core\n(src/compilers/typescript/)\nJSR — canonical compilation engine"]
+    Core["@bloqr/compiler-core\n(src/compilers/typescript/)\nJSR — canonical compilation engine\nOne config → up to 2 artifacts (DNS + browser)"]
 
     subgraph Wrappers["Thin wrappers — shell out to Core via Deno"]
         direction LR
@@ -162,6 +162,8 @@ flowchart TB
 ```
 
 `common/dotnet` is a separate solution (`CompilerCommon.slnx`) consumed by both `compilers/dotnet` and `apps/dashboard` via `<ProjectReference>` — it isn't part of either consumer's own solution. `validation/` is reached differently per language: Rust links `bloqr-validator-core` as a Cargo path dependency, .NET P/Invokes the same code through an `extern "C"` FFI surface, and every other wrapper (TypeScript, Python, PowerShell, and the Rust/`.NET` compilers' own compiled output) shells out to the `bloqr-validate` CLI as a subprocess.
+
+Since epic #432, a single configuration can route sources through two independent grammars — `dns` (server-side, DNS-sinkholing) and `browser` (client-side, browser-syntax) — via each source's `engine`/the config's `defaultEngine`. The two never merge into one file; a mixed-engine compile produces a DNS artifact and a separate browser-syntax artifact. See [Dual-Engine Compilation](docs/architecture/dual-engine-compilation.md) for the full architecture.
 
 `@bloqr/compiler-core` is deliberately separate from Bloqr's commercial `@bloqr/compiler` product ([`BloqrAI/bloqr-compiler`](https://github.com/BloqrAI/bloqr-compiler)), which layers AST tooling, linting, plugins, and Cloudflare Workers deployment on top of this open-source engine — see [`src/compilers/typescript/README.md`](src/compilers/typescript/README.md#architecture) for the full relationship.
 

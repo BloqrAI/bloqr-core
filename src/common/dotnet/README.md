@@ -53,6 +53,8 @@ flowchart BT
     Core -.->|extern C P/Invoke| Validation
 ```
 
+`Bloqr.Compiler.Core` carries the dual-engine (DNS/browser) `engine`/`browserOutputPath` plumbing added in epic #432 — hash verification and output publishing here handle up to two artifacts per compile, not one. See [Dual-Engine Compilation](../../../docs/architecture/dual-engine-compilation.md).
+
 `Bloqr.Compiler.Dotnet` references both projects directly. On the Dashboard side, `Bloqr.Dashboard.Abstractions` references only `Bloqr.Compiler.Abstractions` (keeping the embeddable-library API boundary free of implementation dependencies), while `Bloqr.Dashboard.Core` references `Bloqr.Compiler.Core` for the actual compile/validate operations.
 
 ## API Reference
