@@ -55,6 +55,17 @@ commercial paths that make sense for `bloqr-compiler` don't apply here.
   See the dependency license compatibility audit (tracked separately,
   modeled on `bloqr-compiler`'s own
   [`DEPENDENCY_LICENSE_COMPATIBILITY.md`](https://github.com/BloqrAI/bloqr-compiler/blob/main/DEPENDENCY_LICENSE_COMPATIBILITY.md)).
+- **MPL-2.0 specifically confirmed compatible** (#434): evaluated whether an
+  MPL-2.0-licensed dependency (`BloqrAI/bloqr-enginelib`, a fork of Brave's
+  `adblock-rust`) could be taken as a dependency of this repo's GPL-3.0
+  code. MPL-2.0 is file-level weak-copyleft; its §3.3 "Larger Works"
+  provision explicitly permits distributing a combined work containing
+  MPL-licensed files under a secondary license, including GPL, without the
+  GPL license "infecting" the MPL files or vice versa. **This finding was
+  confirmed but the crate was not ultimately adopted** — see
+  `docs/adr/0005-browser-syntax-validation-engine.md` for why (a toolchain
+  incompatibility, not a license one). The finding itself remains valid and
+  reusable for any future MPL-2.0 dependency decision.
 
 ## Current state (as of this doc)
 

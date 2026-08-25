@@ -46,6 +46,15 @@ that is the explicit `allow_unvalidated_output`-style flag documented in
 `docs/VALIDATION_ENFORCEMENT.md`, which is off by default and logs a warning
 whenever it's used.
 
+Since #434, each of these call sites also selects an `engine` (`dns` or
+`browser`) matching which artifact it's validating — the browser-syntax
+artifact validates against the browser grammar, the DNS/server-side
+artifact against the DNS grammar. This is a grammar choice, not a laxer
+enforcement mode: both engines are still fail-closed by the same mechanism
+described above, and picking the wrong engine for an artifact is a bug, not
+a supported way to skip validation. See "Engine-aware validation" in
+`docs/VALIDATION_ENFORCEMENT.md` for the full per-language API surface.
+
 ## Preventing bypass at the call site
 
 There is no bespoke ESLint rule, custom lint pass, or forged-signature
