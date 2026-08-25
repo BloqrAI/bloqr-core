@@ -119,12 +119,17 @@ bloqr-compiler compile --validate --fail-on-warnings
 | `--interactive` | `-i` | Run in interactive mode |
 | `--help` | `-h` | Show help message |
 
+See [Dual-Engine Compilation](../../../docs/architecture/dual-engine-compilation.md) for what `dns`/`browser` mean and how sources are routed.
+
 ### Compile Subcommand Options
 
 | Option | Description |
 |--------|-------------|
 | `--validate` | Validate configuration before compiling |
 | `--fail-on-warnings` | Fail compilation if configuration has validation warnings |
+| `--allow-unvalidated-output` | Opt out of the mandatory rules-validator syntax check on compiled output |
+| `--engine ENGINE` | Compilation engine/grammar to use (`dns` or `browser`). Omit (or `auto`) to use the configuration's own `defaultEngine`/per-source `engine` resolution |
+| `--browser-output PATH` | Output path for the browser-syntax artifact, when the configuration mixes engines. Defaults to the DNS output path with a `.browser.txt` suffix |
 
 ## Library Usage
 

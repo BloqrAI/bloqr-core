@@ -57,6 +57,8 @@ bloqr-compiler -c config.json --fail-on-warnings
 | `--copy-to-rules` | `-r` | Copy output to rules directory |
 | `--format FORMAT` | `-f` | Force format (`json`; `yaml`/`toml` accepted for backward compatibility only) |
 | `--version` | `-v` | Show version information |
+| `--engine ENGINE` | | `auto` (default), `dns`, or `browser` - forces every source through `ENGINE`, bypassing per-source detection |
+| `--browser-output PATH` | | Output path for the browser-syntax artifact when a config mixes DNS and browser-syntax sources (default: the DNS output path with a `.browser.txt` suffix) |
 | `--debug` | `-d` | Enable debug output |
 | `--validate` | | Validate configuration only (no compilation) |
 | `--validate-config` | | Enable configuration validation before compilation (default: true) |
@@ -64,6 +66,8 @@ bloqr-compiler -c config.json --fail-on-warnings
 | `--fail-on-warnings` | | Fail compilation if configuration has validation warnings |
 | `--benchmark` | | Benchmark real compilation performance, chunked vs unchunked - see [Benchmarking](#benchmarking) |
 | `--help` | `-h` | Show help message |
+
+See [Dual-Engine Compilation](../../../docs/architecture/dual-engine-compilation.md) for what `dns`/`browser` mean and how sources are routed.
 
 ## Benchmarking
 
