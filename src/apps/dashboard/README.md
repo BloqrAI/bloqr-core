@@ -65,7 +65,13 @@ operations (#271):
 --list-profiles         List Dashboard profiles (* marks the active one)
 --activate-profile <name>
                         Activate a profile and persist the change
+--engine <auto|dns|browser>
+                        With --compile: force every source through this engine
+--browser-output <path> With --compile: override the browser-syntax artifact's output
+                        path for a mixed-engine config
 ```
+
+`--engine`/`--browser-output` are the same dual-engine (DNS/browser) flags as `Bloqr.Compiler.Dotnet.Console` (epic #432) — `IDashboardService.CompileAsync` takes the equivalent `engine`/`browserOutputPath` parameters, and a mixed-engine compile's result carries both artifacts' paths, rule counts, and hashes. The interactive Compile menu, config wizard/editor, and live progress are all dual-engine aware too — see [Dual-Engine Compilation](../../../docs/architecture/dual-engine-compilation.md) and the [Dashboard guide](../../../docs/guides/dashboard-guide.md#dual-engine-compilation).
 
 The Dashboard also auto-detects redirected/piped stdin and switches to non-interactive
 behavior, so it's safe to invoke from scripts or CI without hanging on a prompt.
