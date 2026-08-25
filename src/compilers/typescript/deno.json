@@ -64,7 +64,7 @@
     // and this module's interactive flows have no automated test coverage to verify behavioral parity
     // against a real TTY. Left in place pending a dedicated follow-up with manual/e2e verification
     // (audited for #294).
-    "@inquirer/prompts": "npm:@inquirer/prompts@^8.5.2"
+    "@inquirer/prompts": "npm:@inquirer/prompts@^8.6.0"
   },
   "allowScripts": ["npm:core-js@3.47.0"],
   "fmt": {
