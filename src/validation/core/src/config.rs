@@ -2,6 +2,8 @@
 
 use serde::{Deserialize, Serialize};
 
+use crate::syntax::ValidationEngine;
+
 /// Verification mode for hash checking.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default)]
 #[serde(rename_all = "lowercase")]
@@ -120,6 +122,12 @@ pub struct ValidationConfig {
     pub archiving: ArchivingConfig,
     /// Output settings.
     pub output: OutputConfig,
+    /// Which syntax grammar [`Validator::validate_local_file`](crate::validator::Validator::validate_local_file)
+    /// validates against. Defaults to [`ValidationEngine::Dns`] - existing callers that
+    /// don't set this see byte-identical behavior to before browser-engine support
+    /// existed. Reaches the FFI surface via the JSON config passed to
+    /// `bloqr_validator_new` (see `src/ffi.rs`).
+    pub engine: ValidationEngine,
 }
 
 impl ValidationConfig {
@@ -147,6 +155,13 @@ impl ValidationConfig {
     #[must_use]
     pub fn with_output_path(mut self, path: impl Into<String>) -> Self {
         self.output.path = path.into();
+        self
+    }
+
+    /// Set the syntax-validation engine (DNS or browser grammar).
+    #[must_use]
+    pub const fn with_engine(mut self, engine: ValidationEngine) -> Self {
+        self.engine = engine;
         self
     }
 }

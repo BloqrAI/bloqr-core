@@ -54,7 +54,7 @@ public sealed class BloqrCompilerServiceDualEngineTests : IDisposable
 
         _rulesValidatorService.Setup(v => v.IsAvailable).Returns(true);
         _rulesValidatorService
-            .Setup(v => v.ValidateLocalFileAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .Setup(v => v.ValidateLocalFileAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new SyntaxValidationResult { IsValid = true, Format = "Adblock", ValidRules = 1, InvalidRules = 0 });
 
         _service = new BloqrCompilerService(

@@ -36,6 +36,12 @@ walkdir = { workspace = true }
 # self-maintained list file - neither fits this crate's offline-by-design posture).
 psl = "2"
 regex = { workspace = true }
+# NOTE: `bloqr-enginelib` (BloqrAI's fork of Brave's adblock-rust) was evaluated for
+# browser-grammar validation and NOT adopted - it requires a Rust 1.97 / edition-2024
+# toolchain (let-chains, `is_multiple_of`) that this workspace's pinned 1.86 toolchain
+# cannot compile. See docs/adr/0005-browser-syntax-validation-engine.md for the full
+# build-vs-adopt decision, including the license and grammar-parity findings that would
+# otherwise have favored adoption. Browser-grammar validation below is hand-rolled instead.
 
 # WASM support
 [target.'cfg(target_arch = "wasm32")'.dependencies]

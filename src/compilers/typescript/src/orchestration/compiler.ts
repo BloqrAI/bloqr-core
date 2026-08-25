@@ -291,6 +291,10 @@ interface RulesValidateFileResult {
  * @param logger - Logger instance
  * @param allowUnvalidated - Explicit opt-out of the fail-closed default
  * @param failOnWarnings - Also abort on Warning-severity findings
+ * @param engine - Which grammar `bloqr-validate` validates against: `'dns'` (default -
+ * rejects cosmetic/browser-only syntax) or `'browser'` (accepts it natively). Pass
+ * `'browser'` for the browser-syntax artifact so it validates fail-closed without needing
+ * `allowUnvalidatedOutput` - see docs/adr/0005-browser-syntax-validation-engine.md.
  * @throws {Error} If validation could not run, reported invalid output, or a
  * handler set `event.abort = true` - unless `allowUnvalidated` is set
  */
@@ -300,6 +304,7 @@ export async function runRulesValidator(
   logger: Logger = defaultLogger,
   allowUnvalidated = false,
   failOnWarnings = false,
+  engine: 'dns' | 'browser' = 'dns',
 ): Promise<void> {
   const binary = findRulesValidateBinary();
   if (!binary) {
@@ -319,7 +324,7 @@ export async function runRulesValidator(
   try {
     const spawnResult = spawnSync(
       binary,
-      ['--json', 'file', outputPath, '--hash-db', hashDbPath],
+      ['--json', 'file', outputPath, '--hash-db', hashDbPath, '--engine', engine],
       { encoding: 'utf8' },
     );
     if (spawnResult.error) {
@@ -660,6 +665,7 @@ export async function runCompiler(options: ExtendedCompileOptions): Promise<Comp
           logger,
           options.allowUnvalidatedOutput ?? false,
           options.failOnWarnings ?? false,
+          'browser',
         );
 
         if (multiResult.dns) {

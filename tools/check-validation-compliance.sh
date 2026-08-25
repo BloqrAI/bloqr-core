@@ -225,6 +225,61 @@ check_powershell_integration() {
     fi
 }
 
+# Function to check that the validator's engine-awareness (#434) is actually
+# wired in, not just present in bloqr-validator-core in isolation. Browser
+# artifacts must validate fail-closed WITHOUT allow_unvalidated_output - that
+# only holds if callers pass the browser engine when validating a browser
+# artifact, so this checks for that plumbing specifically (not merely that
+# the word "engine" appears somewhere).
+check_engine_aware_validation() {
+    echo ""
+    echo "→ Checking engine-aware (dns/browser) validation (#434)..."
+
+    # bloqr-validator-core itself: ValidationEngine must exist and be exported.
+    if grep -q "pub enum ValidationEngine" "$REPO_ROOT/src/validation/core/src/syntax.rs" 2>/dev/null \
+        && grep -q "ValidationEngine" "$REPO_ROOT/src/validation/core/src/lib.rs" 2>/dev/null; then
+        echo -e "${GREEN}✓ bloqr-validator-core: ValidationEngine (dns/browser) present and exported${NC}"
+    else
+        echo -e "${RED}✗ bloqr-validator-core: ValidationEngine not found or not exported${NC}"
+        ERRORS=$((ERRORS + 1))
+    fi
+
+    # FFI surface: engine has to reach .NET's P/Invoke boundary.
+    if grep -q "bloqr_validator_validate_local_file_with_engine" "$REPO_ROOT/src/validation/core/src/ffi.rs" 2>/dev/null; then
+        echo -e "${GREEN}✓ FFI: engine-aware validation function exported${NC}"
+    else
+        echo -e "${RED}✗ FFI: engine-aware validation function missing (bloqr_validator_validate_local_file_with_engine)${NC}"
+        ERRORS=$((ERRORS + 1))
+    fi
+
+    # bloqr-validate CLI: --engine flag.
+    if grep -q '"--engine"\|long = "engine"\|engine: String' "$REPO_ROOT/src/validation/cli/src/main.rs" 2>/dev/null; then
+        echo -e "${GREEN}✓ bloqr-validate CLI: --engine flag present${NC}"
+    else
+        echo -e "${RED}✗ bloqr-validate CLI: --engine flag missing${NC}"
+        ERRORS=$((ERRORS + 1))
+    fi
+
+    # TypeScript and .NET must pass the browser engine when validating the
+    # browser-syntax artifact specifically - not just accept an engine
+    # parameter that nothing ever sets to "browser".
+    local ts_orchestration="$REPO_ROOT/src/compilers/typescript/src/orchestration/compiler.ts"
+    if [ -f "$ts_orchestration" ] && grep -q "'browser'" "$ts_orchestration" 2>/dev/null; then
+        echo -e "${GREEN}✓ TypeScript: browser artifact validated with the browser engine${NC}"
+    elif [ -f "$ts_orchestration" ]; then
+        echo -e "${RED}✗ TypeScript: browser artifact does not appear to pass the browser engine to runRulesValidator${NC}"
+        ERRORS=$((ERRORS + 1))
+    fi
+
+    local dotnet_compiler_service="$REPO_ROOT/src/compilers/dotnet/src/Bloqr.Compiler.Dotnet/Services/BloqrCompilerService.cs"
+    if [ -f "$dotnet_compiler_service" ] && grep -q 'engine: "browser"' "$dotnet_compiler_service" 2>/dev/null; then
+        echo -e "${GREEN}✓ .NET: browser artifact validated with the browser engine${NC}"
+    elif [ -f "$dotnet_compiler_service" ]; then
+        echo -e "${RED}✗ .NET: browser artifact does not appear to pass the browser engine to ValidateOutputSyntaxAsync${NC}"
+        ERRORS=$((ERRORS + 1))
+    fi
+}
+
 # Function to check if validation library builds
 check_validation_library_builds() {
     echo ""
@@ -264,6 +319,7 @@ check_dotnet_integration
 check_python_integration
 check_rust_integration
 check_powershell_integration
+check_engine_aware_validation
 
 # Summary
 echo ""

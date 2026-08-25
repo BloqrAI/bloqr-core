@@ -26,6 +26,7 @@ use std::panic::{catch_unwind, AssertUnwindSafe};
 use std::ptr;
 
 use crate::config::ValidationConfig;
+use crate::syntax::ValidationEngine;
 use crate::validator::Validator;
 
 /// Status codes returned by every fallible FFI function.
@@ -198,6 +199,64 @@ pub unsafe extern "C" fn bloqr_validator_validate_remote_url(
     }
 }
 
+/// Validates a local file (syntax + at-rest hash verification) against a specific
+/// [`ValidationEngine`], overriding whatever engine the validator was constructed with.
+///
+/// `engine` must be `"dns"` or `"browser"` (case-insensitive); any other value (including
+/// `NULL`) is treated as invalid UTF-8/an unrecognized engine and returns
+/// [`FfiStatus::InvalidUtf8`]. This is the FFI-boundary counterpart of
+/// [`Validator::validate_local_file_with_engine`] - see that function's docs, and
+/// `docs/adr/0005-browser-syntax-validation-engine.md`, for what each engine accepts.
+///
+/// On success or a validation failure, `*out_result_json` is set to an owned,
+/// null-terminated JSON string describing the result (or the error) which the caller must
+/// free with [`bloqr_validator_free_string`].
+///
+/// # Safety
+///
+/// `validator` must be a live handle from [`bloqr_validator_new`]. `path` and `engine` must
+/// each point to a valid null-terminated UTF-8 C string. `out_result_json` must point to
+/// valid, writable memory for a `*mut c_char`.
+#[no_mangle]
+pub unsafe extern "C" fn bloqr_validator_validate_local_file_with_engine(
+    validator: *mut Validator,
+    path: *const c_char,
+    engine: *const c_char,
+    out_result_json: *mut *mut c_char,
+) -> FfiStatus {
+    if validator.is_null() || path.is_null() || engine.is_null() || out_result_json.is_null() {
+        return FfiStatus::NullPointer;
+    }
+
+    let Ok(path_str) = CStr::from_ptr(path).to_str() else {
+        return FfiStatus::InvalidUtf8;
+    };
+
+    let Ok(engine_str) = CStr::from_ptr(engine).to_str() else {
+        return FfiStatus::InvalidUtf8;
+    };
+    let Ok(engine) = engine_str.parse::<ValidationEngine>() else {
+        return FfiStatus::InvalidUtf8;
+    };
+
+    let result = catch_unwind(AssertUnwindSafe(|| {
+        let validator = &mut *validator;
+        validator.validate_local_file_with_engine(path_str, engine)
+    }));
+
+    match result {
+        Ok(Ok(validation_result)) => {
+            write_json_out(out_result_json, &validation_result);
+            FfiStatus::Success
+        }
+        Ok(Err(err)) => {
+            write_json_out(out_result_json, &FfiError::from(&err));
+            FfiStatus::ValidationFailed
+        }
+        Err(_) => FfiStatus::Panic,
+    }
+}
+
 /// Returns the library version as an owned, null-terminated C string.
 ///
 /// The caller must free the returned string with
@@ -335,6 +394,105 @@ mod tests {
             assert!(json_str.contains("\"valid_rules\""));
 
             bloqr_validator_free_string(out_json);
+            bloqr_validator_free(handle);
+        }
+    }
+
+    #[test]
+    fn test_validate_local_file_with_engine_browser_accepts_cosmetic() {
+        use tempfile::TempDir;
+
+        let dir = TempDir::new().unwrap();
+        let hash_db_path = dir.path().join(".hashes.json");
+
+        let mut config = ValidationConfig::default();
+        config.hash_verification.hash_database_path = hash_db_path.display().to_string();
+        let config_json = cstr(&serde_json::to_string(&config).unwrap());
+
+        let mut file = NamedTempFile::new().unwrap();
+        writeln!(file, "example.com##.ad-banner").unwrap();
+        writeln!(file, "||ads.example.org^$script").unwrap();
+        file.flush().unwrap();
+
+        let path_c = cstr(file.path().to_str().unwrap());
+        let engine_c = cstr("browser");
+
+        unsafe {
+            let handle = bloqr_validator_new(config_json.as_ptr());
+            assert!(!handle.is_null());
+
+            let mut out_json: *mut c_char = ptr::null_mut();
+            let status = bloqr_validator_validate_local_file_with_engine(
+                handle,
+                path_c.as_ptr(),
+                engine_c.as_ptr(),
+                &mut out_json,
+            );
+
+            assert_eq!(status, FfiStatus::Success);
+            let json_str = CStr::from_ptr(out_json).to_str().unwrap();
+            assert!(json_str.contains("\"is_valid\":true"));
+            assert!(json_str.contains("\"invalid_rules\":0"));
+
+            bloqr_validator_free_string(out_json);
+            bloqr_validator_free(handle);
+        }
+    }
+
+    #[test]
+    fn test_validate_local_file_with_engine_dns_rejects_cosmetic() {
+        use tempfile::TempDir;
+
+        let dir = TempDir::new().unwrap();
+        let hash_db_path = dir.path().join(".hashes.json");
+
+        let mut config = ValidationConfig::default();
+        config.hash_verification.hash_database_path = hash_db_path.display().to_string();
+        let config_json = cstr(&serde_json::to_string(&config).unwrap());
+
+        let mut file = NamedTempFile::new().unwrap();
+        writeln!(file, "example.com##.ad-banner").unwrap();
+        file.flush().unwrap();
+
+        let path_c = cstr(file.path().to_str().unwrap());
+        let engine_c = cstr("dns");
+
+        unsafe {
+            let handle = bloqr_validator_new(config_json.as_ptr());
+            let mut out_json: *mut c_char = ptr::null_mut();
+            let status = bloqr_validator_validate_local_file_with_engine(
+                handle,
+                path_c.as_ptr(),
+                engine_c.as_ptr(),
+                &mut out_json,
+            );
+
+            // Success status: the *call* succeeded even though is_valid is false.
+            assert_eq!(status, FfiStatus::Success);
+            let json_str = CStr::from_ptr(out_json).to_str().unwrap();
+            assert!(json_str.contains("\"is_valid\":false"));
+
+            bloqr_validator_free_string(out_json);
+            bloqr_validator_free(handle);
+        }
+    }
+
+    #[test]
+    fn test_validate_local_file_with_engine_invalid_engine_string() {
+        unsafe {
+            let handle = bloqr_validator_new(ptr::null());
+            let path_c = cstr("/nonexistent");
+            let engine_c = cstr("not-a-real-engine");
+            let mut out_json: *mut c_char = ptr::null_mut();
+
+            let status = bloqr_validator_validate_local_file_with_engine(
+                handle,
+                path_c.as_ptr(),
+                engine_c.as_ptr(),
+                &mut out_json,
+            );
+            assert_eq!(status, FfiStatus::InvalidUtf8);
+
             bloqr_validator_free(handle);
         }
     }

@@ -41,6 +41,24 @@ public interface IBloqrValidatorService
     Task<SyntaxValidationResult?> ValidateLocalFileAsync(string path, CancellationToken cancellationToken = default);
 
     /// <summary>
+    /// Validates a local filter file's syntax against a specific engine grammar ("dns" or
+    /// "browser"), overriding the default DNS grammar <see cref="ValidateLocalFileAsync(string, CancellationToken)"/>
+    /// uses. See <c>docs/adr/0005-browser-syntax-validation-engine.md</c> for what each
+    /// engine accepts - in short, "browser" additionally accepts cosmetic rules, extended
+    /// CSS, scriptlet injection, and browser-only <c>$</c> modifiers that "dns" rejects.
+    /// This is the .NET side of <see cref="CompilerOptions.Engine"/> reaching through to
+    /// native validation, per #434's FFI acceptance criterion.
+    /// </summary>
+    /// <param name="path">Path to the local filter file.</param>
+    /// <param name="engine">Either <c>"dns"</c> (default) or <c>"browser"</c>, case-insensitive.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>
+    /// The validation result, or <c>null</c> if the native library is unavailable or the call
+    /// otherwise could not be completed (logged, never thrown).
+    /// </returns>
+    Task<SyntaxValidationResult?> ValidateLocalFileAsync(string path, string engine, CancellationToken cancellationToken = default);
+
+    /// <summary>
     /// Validates a remote filter source URL (HTTPS enforcement and other security checks),
     /// optionally verifying its content against an expected SHA-384 hash in-flight.
     /// </summary>

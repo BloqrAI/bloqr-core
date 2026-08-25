@@ -1,6 +1,8 @@
 //! Bloqr CLI for validating adblock/hosts filter lists.
 
-use bloqr_validator::{HashDatabase, ValidationConfig, Validator, VerificationMode};
+use bloqr_validator::{
+    HashDatabase, ValidationConfig, ValidationEngine, Validator, VerificationMode,
+};
 use clap::{Parser, Subcommand};
 use serde::Serialize;
 use std::path::PathBuf;
@@ -44,6 +46,13 @@ enum Commands {
         /// directory, if it doesn't exist yet)
         #[arg(long, default_value = "data/input/.hashes.json")]
         hash_db: PathBuf,
+
+        /// Which syntax grammar to validate against: "dns" (server-side, the default -
+        /// rejects cosmetic/browser-only syntax) or "browser" (client-side - accepts
+        /// cosmetic rules, extended CSS, scriptlet injection, and browser-only $
+        /// modifiers). See docs/VALIDATION_ENFORCEMENT.md.
+        #[arg(long, default_value = "dns")]
+        engine: String,
     },
 
     /// Validate a remote URL
@@ -72,6 +81,7 @@ fn main() -> anyhow::Result<()> {
             path,
             mode,
             hash_db,
+            engine,
         } => {
             let verification_mode = match mode.as_str() {
                 "strict" => VerificationMode::Strict,
@@ -83,6 +93,11 @@ fn main() -> anyhow::Result<()> {
                 }
             };
 
+            let validation_engine: ValidationEngine = engine.parse().unwrap_or_else(|e| {
+                eprintln!("{e}. Using 'dns' instead.");
+                ValidationEngine::Dns
+            });
+
             let mut config = ValidationConfig::default().with_verification_mode(verification_mode);
             config.hash_verification.hash_database_path = hash_db.to_string_lossy().into_owned();
 
@@ -92,7 +107,7 @@ fn main() -> anyhow::Result<()> {
                 println!("Validating file: {}", path.display());
             }
 
-            match validator.validate_local_file(&path) {
+            match validator.validate_local_file_with_engine(&path, validation_engine) {
                 Ok(result) => {
                     if cli.json {
                         println!("{}", serde_json::to_string(&result)?);

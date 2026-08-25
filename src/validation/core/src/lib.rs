@@ -68,8 +68,9 @@ pub use runtime_enforcement::{
     CompilationOptions, EnforcedCompilationResult, ValidationMetadata,
 };
 pub use syntax::{
-    validate_syntax, validate_syntax_content_with_mode, validate_syntax_with_mode, FilterFormat,
-    HostlistValidationMode, SyntaxValidationResult,
+    validate_syntax, validate_syntax_content_with_engine, validate_syntax_content_with_mode,
+    validate_syntax_with_engine, validate_syntax_with_mode, FilterFormat, HostlistValidationMode,
+    SyntaxValidationResult, ValidationEngine,
 };
 pub use url_security::{validate_url, UrlValidationResult};
 pub use validator::Validator;

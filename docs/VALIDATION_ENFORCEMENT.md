@@ -74,6 +74,51 @@ in all five languages:
    flag is used. There is no other way to produce compiler output without a
    validator run being attempted.
 
+**This opt-out is no longer needed *for browser-mode compiles specifically*.**
+Before #434, `bloqr-validator-core`'s validator only understood DNS-level
+syntax and rejected every cosmetic/browser-only rule outright, so a
+browser-engine compile (epic #432) had 100% of its cosmetic rules flagged
+invalid and required this flag just to complete. Since #434, the validator
+is engine-aware (see "Engine-aware validation" below) and validates browser
+artifacts against a grammar that actually understands them — fail-closed,
+with no opt-out required. The flag itself was not removed: it remains a
+real escape hatch for deliberate debugging (e.g. a corrupted/experimental
+output a developer wants to inspect without the validator blocking it,
+or the "native library/binary unavailable" degraded-mode case in the
+Integration points below) — it is simply no longer *load-bearing* for the
+common case of "I compiled a browser-syntax filter list."
+
+## Engine-aware validation (#434)
+
+`bloqr-validator-core::syntax` validates against one of two grammars,
+selected by an `engine` parameter (`dns` or `browser`, default `dns` for
+full backward compatibility):
+
+- **`dns`** — the original grammar (`docs/adr/0003-adguard-hostlist-compatibility.md`):
+  server-side/DNS-blocker syntax only. Cosmetic rules, extended CSS,
+  scriptlet injection, and browser-only `$` modifiers (`$script`,
+  `$third-party`, …) are rejected, exactly as before #434.
+- **`browser`** — client-side/browser-engine syntax: accepts everything
+  `dns` does, plus cosmetic rules and browser-only modifiers. See
+  `docs/adr/0005-browser-syntax-validation-engine.md` for the grammar's
+  scope and the build-vs-adopt decision behind how it's implemented
+  (hand-rolled, not a third-party crate dependency).
+
+Each language surfaces this the same way it surfaces everything else in
+this document — consistently, but via its own idiom:
+
+| Language   | API                                              | CLI                    |
+|------------|---------------------------------------------------|-------------------------|
+| Rust       | `Validator::validate_local_file_with_engine`, `ValidationEngine` | n/a (library) |
+| .NET       | `IBloqrValidatorService.ValidateLocalFileAsync(path, engine, ct)` | n/a (library) |
+| TypeScript | `runRulesValidator(..., engine)`                   | `bloqr-validate file --engine <dns\|browser>` |
+| Python/PowerShell | shell out to `bloqr-validate`, same CLI flag | `bloqr-validate file --engine <dns\|browser>` |
+
+Every wrapper's dual-engine compile path (epic #432) passes `browser` when
+validating the browser-syntax output artifact and `dns` (the default) for
+the DNS/server-side artifact — never the reverse, and never the opt-out
+flag as a substitute for picking the right engine.
+
 | Language   | Opt-out flag (default `false`)   | CLI flag                        |
 |------------|-----------------------------------|----------------------------------|
 | Rust       | `allow_unvalidated_output` (`CompileOptions`) | `--allow-unvalidated-output` |

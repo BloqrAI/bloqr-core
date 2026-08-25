@@ -105,6 +105,9 @@ public sealed class DiagnosticsMenuServiceTests
         public Task<SyntaxValidationResult?> ValidateLocalFileAsync(string path, CancellationToken cancellationToken = default) =>
             Task.FromResult(ResultToReturn);
 
+        public Task<SyntaxValidationResult?> ValidateLocalFileAsync(string path, string engine, CancellationToken cancellationToken = default) =>
+            Task.FromResult(ResultToReturn);
+
         public Task<UrlValidationResult?> ValidateRemoteUrlAsync(
             string url, string? expectedHash = null, CancellationToken cancellationToken = default) =>
             Task.FromResult<UrlValidationResult?>(null);
