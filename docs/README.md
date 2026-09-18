@@ -47,6 +47,7 @@ This directory contains comprehensive documentation for the ad-blocking reposito
 | [NuGet Distribution Strategy](architecture/nuget-distribution-strategy.md) | Decision record for publishing `Bloqr.Compiler.Abstractions`/`Core` to GitHub Packages, and why in-repo consumers keep `<ProjectReference>` |
 | [Release Packaging Strategy](architecture/release-packaging-strategy.md) | Source vs. binary-only release shapes, self-contained-vs-Native-AOT evaluation, and launcher dependency preflight checks |
 | [Restructuring Retrospective](RESTRUCTURING_RETROSPECTIVE.md) | How this repo got split into `bloqr-core`/`bloqr-blocklists`/`bloqr-apiclients`, the JSR publishing story, and lessons learned |
+| [Dependency & Vulnerability Management](dependency-management.md) | Triage policy for Dependabot version-update PRs and security alerts, detection-surface coverage, and known gaps |
 | [Epic #256 Retrospective](EPIC_256_RETROSPECTIVE.md) | Dashboard, common library, validation-library (`rules-validator`, since renamed `src/validation/`)/crates.io publishing, and the documentation rewrite — what shipped, obstacles overcome, and what's still open for #331/#372 |
 | [Compiler Comparison](compiler-comparison.md) | Feature comparison of all compilers |
 
