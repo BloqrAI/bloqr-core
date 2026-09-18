@@ -38,9 +38,15 @@ truth for what's outstanding**; alerts without a PR still need triage
 
 ## Triage policy
 
-Work every open Dependabot PR *and* every open Security-tab alert
+Work every open automated dependency-update PR — Dependabot's or
+`deno-dependency-check.yml`'s — *and* every open Security-tab alert
 (including ones with no PR yet) against this decision order, most urgent
-first:
+first. The `deno-dependency-check.yml` PRs won't carry a GHSA/CVE advisory
+themselves (that workflow does plain `deno outdated` version bumps, not
+vulnerability-driven updates), so in practice they fall under step 3
+below; a JSR/npm package pulled in through `deno.json` that has its own
+published advisory is still tracked as a Security-tab alert and triaged
+through steps 1/2/4 like any other:
 
 1. **Has a linked GHSA/CVE advisory, patch available, no breaking change**
    (i.e. within the PR's own semver-compatible bump) → merge as soon as CI
@@ -60,8 +66,9 @@ first:
    open a tracking issue referencing the GHSA ID and note the interim
    mitigation (or accepted risk) in that issue.
 3. **No advisory, routine minor/patch bump** → these are what the weekly
-   grouped PRs (`minor-and-patch`, `gatsby-minor-and-patch`) exist for. Let
-   CI gate them; merge in batches once green. No individual review needed
+   grouped Dependabot PRs (`minor-and-patch`, `gatsby-minor-and-patch`)
+   exist for, and what every `deno-dependency-check.yml` PR is by
+   construction. Let CI gate them; merge once green. No individual review needed
    for a clean version bump with no changelog red flags.
 4. **Has an advisory, but no fix version has been published yet** (so
    there's no PR to review — this is the "alert with no PR" case above) →
