@@ -52,3 +52,7 @@ This repo does not yet publish a single repo-wide version — instead, each inde
 - If your report affects a specific published version, please mention it — it helps us confirm which packages need a patch release.
 
 This policy will be revisited as the versioning strategy matures (see `docs/architecture/versioning-strategy.md` for the org-wide direction).
+
+## Automated (Dependabot) vulnerability alerts
+
+The policy above covers vulnerabilities *reported to us*. For vulnerabilities *detected automatically* by GitHub/Dependabot against our own dependencies (the repo's [Security tab](../../security/dependabot) and the version-update PRs Dependabot opens), see [`docs/dependency-management.md`](docs/dependency-management.md) for the triage policy, detection-surface coverage, and current known gaps in that pipeline.
