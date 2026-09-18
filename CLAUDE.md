@@ -6,11 +6,12 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 This repository is a comprehensive multi-language toolkit for ad-blocking, network protection, and AdGuard DNS management:
 
-### Rules Compilers (4 languages)
+### Rules Compilers (5 languages)
 - **TypeScript** (`src/compilers/typescript/`) - Deno 2.0+ with npm compatibility
 - **C#/.NET 10** (`src/compilers/dotnet/`) - Library and Spectre.Console CLI with DI support
 - **Python 3.9+** (`src/compilers/python/`) - pip-installable package with CLI and API
 - **Rust** (`src/compilers/rust/`) - High-performance single binary with zero runtime deps
+- **Swift** (`src/compilers/swift/`) - macOS-native Swift Package (library + `bloqr-compiler` CLI), shells out to Deno + `@bloqr/compiler-core` like the Rust/.NET/Python wrappers
 
 ### PowerShell Modules
 - **BloqrCompiler Toolkit** (`src/compilers/powershell/`) - the sole cross-platform scripting-language compiler (PowerShell 7+ runs on Windows/Linux/macOS, so the earlier separate bash/zsh scripts under `src/compilers/shell/` were retired in favor of it) - canonical, actively-developed modular PowerShell toolkit (class-based `Common`/`BloqrCompiler` modules with Pester tests)
@@ -166,6 +167,24 @@ cargo run -- --help                      # Show help
 ./target/release/bloqr-compiler -c config.yaml
 ```
 
+### Swift Rules Compiler (`src/compilers/swift/`)
+```bash
+cd src/compilers/swift
+
+# Build and test
+swift build                # Debug build
+swift build -c release     # Release build
+swift test                  # Run all tests
+
+# CLI usage (via swift run, or .build/release/bloqr-compiler once built)
+swift run bloqr-compiler -c config.json
+swift run bloqr-compiler -c config.json -r
+swift run bloqr-compiler compile --validate
+swift run bloqr-compiler config -c config.json
+swift run bloqr-compiler version
+swift run bloqr-compiler --help
+```
+
 ### PowerShell BloqrCompiler Toolkit (`src/compilers/powershell/`)
 ```powershell
 # Import the modules
@@ -231,6 +250,14 @@ cargo test -p bloqr-compiler-core -- --nocapture            # With output
 cargo test -p bloqr-compiler-core test_count_rules          # Specific test
 cargo test -p bloqr-compiler-core config::                  # Tests in module
 cargo test -p bloqr-compiler                                # CLI crate's own tests (config discovery)
+```
+
+### Swift (swift test)
+```bash
+cd src/compilers/swift
+swift test                                  # Run all tests
+swift test --parallel                       # Run in parallel (as CI does)
+swift test --filter ConfigReaderTests       # By test class/method
 ```
 
 ## Architecture
@@ -302,6 +329,15 @@ cargo test -p bloqr-compiler                                # CLI crate's own te
 - Key structs: `BloqrCompiler`, `CompilerConfiguration`, `CompilerResult`, `VersionInfo`
 - LTO optimization enabled for small binary size
 
+### Bloqr Compiler - Swift (`src/compilers/swift/`)
+- macOS-native Swift Package Manager package for filter compilation
+- Supports JSON, YAML, and TOML configuration formats (JSON documented; YAML/TOML backward-compatibility only, matching the other wrappers)
+- Shells out to Deno + the `@bloqr/compiler-core` JSR package rather than reimplementing compilation logic - same shape as the Rust/.NET/Python wrappers
+- `Sources/BloqrCompilerCore/` - library target: `BloqrCompiler`, `CompilerConfig`/`FilterSource`, `ConfigReader` (JSON/YAML/TOML via `Yams`/`TOMLKit`), `VersionInfo`, hashing (`CryptoKit`, SHA-384) and rule-counting helpers
+- `Sources/bloqr-compiler/` - `bloqr-compiler` executable: swift-argument-parser-based CLI (`compile`/`config`/`version` subcommands)
+- `Tests/BloqrCompilerCoreTests/` - XCTest suite
+- Key types: `BloqrCompiler`, `CompilerConfig`, `CompileOptions`, `CompilerResult`, `VersionInfo`
+
 ### PowerShell Toolkit (`src/compilers/powershell/`)
 - The sole cross-platform scripting-language compiler (PowerShell 7+ runs on Windows/Linux/macOS) - the earlier separate bash/zsh scripts under `src/compilers/shell/` were retired in favor of it
 - **Common** (`Common/`) - Shared `CompilerLogger` and `CompilerResult` classes used by other modules
@@ -369,6 +405,7 @@ GitHub Actions workflows validate:
 - `.github/workflows/rust-clippy.yml` - Builds, tests, formats, and lints the Rust workspace (rules compiler, validation library)
 - `.github/workflows/python.yml` - Builds and tests the Python rules compiler across supported Python versions
 - `.github/workflows/powershell.yml` - Pester tests and PSScriptAnalyzer for the PowerShell toolkit
+- `.github/workflows/swift.yml` - Builds and tests the macOS-native Swift compiler wrapper on `macos-14`
 - `.github/workflows/build-scripts-tests.yml` - Exercises the root `build.sh`/`build.ps1` launcher scripts
 - `.github/workflows/gatsby.yml` - Builds the `website` documentation site
 - `.github/workflows/security.yml` - Consolidated security scanning (CodeQL, DevSkim, PSScriptAnalyzer)
@@ -504,6 +541,7 @@ GitHub Actions workflows validate:
 | PowerShell | 7+ | PowerShell scripts |
 | Python | 3.9+ | Python compiler |
 | Rust | 1.85+ | Rust compiler (install via rustup) |
+| Swift | 5.9+ (Xcode 15+) | Swift compiler wrapper (macOS-native) |
 | @bloqr/compiler-core | 1.0.0 | TypeScript compiler (via JSR: `deno add @bloqr/compiler-core`) |
 | Bun | latest | Optional — formally supported alternative runtime target for `src/compilers/typescript` (not required for this repo's own tooling; see that package's README) |
 | Docker | 24.0+ | Container development (optional but recommended) |
