@@ -50,6 +50,36 @@ final class ConfigReaderTests: XCTestCase {
         XCTAssertThrowsError(try ConfigFormat.from(extension: "txt"))
     }
 
+    func testReadJSONCConfigWithComments() throws {
+        let jsonc = """
+        {
+          // top-level name
+          "name": "Test", // trailing comment
+          /* version */
+          "version": "1.0.0",
+          "sources": [{"source": "https://example.com/list.txt" /* inline */}]
+        }
+        """
+        let dir = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        try FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: dir) }
+        let path = dir.appendingPathComponent("config.jsonc")
+        try jsonc.write(to: path, atomically: true, encoding: .utf8)
+
+        let config = try ConfigReader.readConfig(path: path)
+        XCTAssertEqual(config.name, "Test")
+        XCTAssertEqual(config.version, "1.0.0")
+        XCTAssertEqual(config.sourceFormat, .json)
+        XCTAssertEqual(config.sources.first?.source, "https://example.com/list.txt")
+    }
+
+    func testStripJSONCCommentsPreservesStringsWithSlashes() {
+        let input = #"{"source": "https://example.com/list.txt", "n": 1} // trailing"#
+        let stripped = stripJSONCComments(input)
+        XCTAssertTrue(stripped.contains("https://example.com/list.txt"))
+        XCTAssertFalse(stripped.contains("trailing"))
+    }
+
     func testToJSONRoundTrip() throws {
         var config = CompilerConfig(name: "Test", version: "1.0.0")
         config.sources = [FilterSource(name: "Local", source: "./rules.txt")]

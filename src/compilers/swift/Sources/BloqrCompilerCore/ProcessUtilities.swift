@@ -7,6 +7,12 @@ struct ProcessOutput {
     var stderr: String
 }
 
+/// Mutable box handed to a background queue so its captured `Data` can be read back after
+/// `DispatchGroup.wait()` without a `Sendable` warning on a plain `var` capture.
+private final class ReadResultBox: @unchecked Sendable {
+    var data = Data()
+}
+
 /// Locates an executable on `PATH`, mirroring the Rust wrapper's `which::which()` use.
 func findCommand(_ name: String) -> String? {
     guard let pathVar = ProcessInfo.processInfo.environment["PATH"] else { return nil }
@@ -53,9 +59,29 @@ func runProcess(command: String, arguments: [String], currentDirectory: URL?) th
         )
     }
 
-    let stdoutData = stdoutPipe.fileHandleForReading.readDataToEndOfFile()
-    let stderrData = stderrPipe.fileHandleForReading.readDataToEndOfFile()
+    // Drain both pipes concurrently, not sequentially: if the child fills the stderr pipe's
+    // buffer while still writing stdout (or vice versa), reading one pipe to EOF before
+    // touching the other deadlocks - the child blocks on the full pipe while this process
+    // blocks waiting for the other pipe's EOF.
+    let stdoutBox = ReadResultBox()
+    let stderrBox = ReadResultBox()
+    let group = DispatchGroup()
+
+    group.enter()
+    DispatchQueue.global(qos: .utility).async {
+        stdoutBox.data = stdoutPipe.fileHandleForReading.readDataToEndOfFile()
+        group.leave()
+    }
+    group.enter()
+    DispatchQueue.global(qos: .utility).async {
+        stderrBox.data = stderrPipe.fileHandleForReading.readDataToEndOfFile()
+        group.leave()
+    }
+    group.wait()
+
     process.waitUntilExit()
+    let stdoutData = stdoutBox.data
+    let stderrData = stderrBox.data
 
     return ProcessOutput(
         exitCode: process.terminationStatus,

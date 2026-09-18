@@ -12,7 +12,7 @@ public enum ConfigFormat: String, Sendable, Equatable {
 
     public static func from(extension ext: String) throws -> ConfigFormat {
         switch ext.lowercased() {
-        case "json": return .json
+        case "json", "jsonc": return .json
         case "yaml", "yml": return .yaml
         case "toml": return .toml
         default: throw CompilerError.unknownExtension(extension: ext)

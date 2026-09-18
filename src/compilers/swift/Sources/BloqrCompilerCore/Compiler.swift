@@ -38,13 +38,23 @@ public struct BloqrCompiler: Sendable {
             try config.validate()
         }
 
-        let outputPath = options.outputPath ?? Self.generateOutputPath(configPath: resolvedConfigPath)
+        // Absolute-ize before use: this path is handed to the Deno subprocess (which runs with
+        // the config's directory as its current directory, not this process's) and is also
+        // used for existence/hashing checks in *this* process, so a relative path must resolve
+        // identically in both places.
+        let outputPath = Self.absoluteURL(
+            options.outputPath ?? Self.generateOutputPath(configPath: resolvedConfigPath)
+        )
         result.outputPath = outputPath
 
-        // Convert to JSON if needed - the underlying compiler only accepts JSON.
+        // Convert to JSON if needed - the underlying compiler only accepts a `.json`/`.jsonc`
+        // path. This is keyed on the *resolved config path's own extension*, not the parsed
+        // source format: a forced `--format json` read of a `config.txt` still needs a
+        // `.json`-named temp file for Deno's own extension-based format detection.
         var tempConfigPath: URL?
         let compileConfigPath: URL
-        if config.sourceFormat != .json {
+        let configExtension = resolvedConfigPath.pathExtension.lowercased()
+        if configExtension != "json" && configExtension != "jsonc" {
             let temp = FileManager.default.temporaryDirectory
                 .appendingPathComponent("compiler-config-\(UUID().uuidString).json")
             let json = try ConfigReader.toJSON(config)
@@ -69,13 +79,20 @@ public struct BloqrCompiler: Sendable {
         let outputDir = outputPath.deletingLastPathComponent()
         try Self.createDirectory(outputDir)
 
-        let browserOutputPath = options.browserOutputPath ?? Self.deriveBrowserOutputPath(outputPath)
+        let browserOutputPath = Self.absoluteURL(
+            options.browserOutputPath ?? Self.deriveBrowserOutputPath(outputPath)
+        )
+        // Clear any pre-existing artifact at this path before compiling: the existence check
+        // after the run is how we detect whether *this* invocation produced a browser-syntax
+        // artifact, and a stale file left over from an earlier mixed-engine compile would
+        // otherwise be misreported as this run's output.
+        try? FileManager.default.removeItem(at: browserOutputPath)
 
         let (command, args) = try Self.compilerCommand(
             configPath: compileConfigPath.path,
             outputPath: outputPath.path,
             engine: options.engine,
-            browserOutputPath: options.browserOutputPath?.path
+            browserOutputPath: options.browserOutputPath != nil ? browserOutputPath.path : nil
         )
 
         if options.debug {
@@ -116,11 +133,41 @@ public struct BloqrCompiler: Sendable {
 
         result.ruleCount = Self.countRules(path: outputPath)
         result.outputHash = try Self.computeHash(path: outputPath)
+
+        // Mandatory rules-validator syntax check - fail-closed by default (see
+        // `RulesValidator.validateOutput`'s doc comment). Mirrors the other wrappers: an
+        // unvalidated compiled output is never silently treated as successful.
+        if let abortReason = RulesValidator.validateOutput(
+            path: outputPath,
+            allowUnvalidated: options.allowUnvalidatedOutput,
+            failOnWarnings: options.failOnWarnings
+        ) {
+            result.errorMessage = abortReason
+            result.success = false
+            result.endTime = Date()
+            result.elapsedMs = Self.elapsedMs(since: start)
+            return result
+        }
+
         result.success = true
 
         if FileManager.default.fileExists(atPath: browserOutputPath.path) {
             result.browserRuleCount = Self.countRules(path: browserOutputPath)
             result.browserOutputHash = try Self.computeHash(path: browserOutputPath)
+
+            if let abortReason = RulesValidator.validateOutput(
+                path: browserOutputPath,
+                allowUnvalidated: options.allowUnvalidatedOutput,
+                failOnWarnings: options.failOnWarnings
+            ) {
+                result.errorMessage = "browser-syntax artifact failed syntax validation (DNS " +
+                    "artifact was already published successfully at \(outputPath.path)): \(abortReason)"
+                result.success = false
+                result.endTime = Date()
+                result.elapsedMs = Self.elapsedMs(since: start)
+                return result
+            }
+
             result.browserOutputPath = browserOutputPath
         }
 
@@ -149,6 +196,15 @@ public struct BloqrCompiler: Sendable {
     }
 
     // MARK: - Helpers
+
+    /// Resolves a possibly-relative URL against this process's current working directory, so
+    /// it means the same thing here as it does to a subprocess launched with a *different*
+    /// current directory (the Deno compiler runs with the config's own directory as its cwd).
+    static func absoluteURL(_ url: URL) -> URL {
+        guard !url.path.hasPrefix("/") else { return url.standardizedFileURL }
+        let base = URL(fileURLWithPath: FileManager.default.currentDirectoryPath)
+        return base.appendingPathComponent(url.path).standardizedFileURL
+    }
 
     static func elapsedMs(since start: Date) -> UInt64 {
         UInt64(max(0, Date().timeIntervalSince(start) * 1000))

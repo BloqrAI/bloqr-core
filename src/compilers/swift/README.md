@@ -165,9 +165,10 @@ if let deno = info.denoVersion {
 
 ## Configuration Formats
 
-JSON (and JSONC, JSON with comments only via the underlying `@bloqr/compiler-core` step - this
-wrapper's own JSON decoder does not strip comments) is the only documented configuration
-format. YAML and TOML remain readable for backward compatibility but are undocumented - see
+JSON (and JSONC, JSON with `//` and `/* */` comments - this wrapper strips them before decoding,
+so `.json`/`.jsonc` files with comments work directly, not only once handed to the underlying
+`@bloqr/compiler-core` step) is the only documented configuration format. YAML and TOML remain
+readable for backward compatibility but are undocumented - see
 [`docs/guides/migration-guide.md`](../../../docs/guides/migration-guide.md) for converting
 legacy configs to JSON.
 

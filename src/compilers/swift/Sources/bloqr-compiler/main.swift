@@ -45,9 +45,17 @@ func printConfigNotFoundError() {
     FileHandle.standardError.write(Data("  2. Create a compiler-config.json in the current or parent directory\n".utf8))
 }
 
-func parseFormat(_ raw: String?) -> ConfigFormat? {
+/// Parses a user-supplied `-f/--format` value. Unlike auto-detection from a file extension
+/// (which falls back to JSON on an unrecognized extension), an explicitly forced format is a
+/// promise the user made about the file's contents - a typo like `-f jso` must be reported,
+/// not silently ignored in favor of a guess.
+func parseFormat(_ raw: String?) throws -> ConfigFormat? {
     guard let raw else { return nil }
-    return try? ConfigFormat.from(extension: raw)
+    do {
+        return try ConfigFormat.from(extension: raw)
+    } catch {
+        throw ValidationError("invalid --format value \"\(raw)\": expected \"json\", \"yaml\", or \"toml\"")
+    }
 }
 
 func printVersionInfo() {
@@ -247,7 +255,7 @@ struct Compile: ParsableCommand {
     var browserOutput: String?
 
     func run() throws {
-        let resolvedFormat = parseFormat(global.format)
+        let resolvedFormat = try parseFormat(global.format)
         guard let configPath = global.config.map({ URL(fileURLWithPath: $0) }) ?? findDefaultConfig() else {
             printConfigNotFoundError()
             throw ExitCode.failure
@@ -278,7 +286,7 @@ struct ShowConfig: ParsableCommand {
     @OptionGroup var global: GlobalOptions
 
     func run() throws {
-        let resolvedFormat = parseFormat(global.format)
+        let resolvedFormat = try parseFormat(global.format)
         guard let configPath = global.config.map({ URL(fileURLWithPath: $0) }) ?? findDefaultConfig() else {
             printConfigNotFoundError()
             throw ExitCode.failure
@@ -311,7 +319,7 @@ struct BloqrCompilerCLI: ParsableCommand {
     @OptionGroup var global: GlobalOptions
 
     func run() throws {
-        let resolvedFormat = parseFormat(global.format)
+        let resolvedFormat = try parseFormat(global.format)
         guard let configPath = global.config.map({ URL(fileURLWithPath: $0) }) ?? findDefaultConfig() else {
             printConfigNotFoundError()
             throw ExitCode.failure

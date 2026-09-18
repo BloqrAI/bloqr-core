@@ -33,7 +33,7 @@ public enum ConfigReader {
         switch format {
         case .json:
             do {
-                let data = Data(content.utf8)
+                let data = Data(stripJSONCComments(content).utf8)
                 return try JSONDecoder().decode(CompilerConfig.self, from: data)
             } catch {
                 throw CompilerError.parseFailed(format: "JSON", underlying: String(describing: error))
@@ -91,4 +91,68 @@ public enum ConfigReader {
             throw CompilerError.serialization(String(describing: error))
         }
     }
+}
+
+/// Strips `//` line comments and `/* */` block comments from JSONC content so `.json`/`.jsonc`
+/// configs with comments can be decoded by `JSONDecoder`, which otherwise rejects them
+/// outright. String literals (including escaped quotes) are left untouched so a `//` or `/*`
+/// inside a string value is never mistaken for a comment.
+func stripJSONCComments(_ content: String) -> String {
+    var result = String.UnicodeScalarView()
+    var scalars = content.unicodeScalars.makeIterator()
+    var pending = scalars.next()
+
+    func advance() -> Unicode.Scalar? {
+        let current = pending
+        pending = scalars.next()
+        return current
+    }
+
+    var inString = false
+    var escaped = false
+
+    while let scalar = advance() {
+        if inString {
+            result.append(scalar)
+            if escaped {
+                escaped = false
+            } else if scalar == "\\" {
+                escaped = true
+            } else if scalar == "\"" {
+                inString = false
+            }
+            continue
+        }
+
+        if scalar == "\"" {
+            inString = true
+            result.append(scalar)
+            continue
+        }
+
+        if scalar == "/", let next = pending {
+            if next == "/" {
+                _ = advance()
+                while let commentScalar = pending, commentScalar != "\n" {
+                    _ = advance()
+                }
+                continue
+            }
+            if next == "*" {
+                _ = advance()
+                var previous: Unicode.Scalar?
+                while let commentScalar = advance() {
+                    if previous == "*", commentScalar == "/" {
+                        break
+                    }
+                    previous = commentScalar
+                }
+                continue
+            }
+        }
+
+        result.append(scalar)
+    }
+
+    return String(result)
 }
