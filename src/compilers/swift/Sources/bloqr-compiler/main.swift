@@ -127,10 +127,9 @@ func runCompile(
     browserOutput: URL?
 ) -> Int32 {
     if allowUnvalidatedOutput {
-        FileHandle.standardError.write(Data(
-            "  [WARN] --allow-unvalidated-output set: compiled output will NOT be checked by " +
-            "rules-validator. Not recommended outside deliberate debugging.\n".utf8
-        ))
+        let warning = "  [WARN] --allow-unvalidated-output set: compiled output will NOT be checked by " +
+            "rules-validator. Not recommended outside deliberate debugging.\n"
+        FileHandle.standardError.write(Data(warning.utf8))
     }
 
     let options = CompileOptions(

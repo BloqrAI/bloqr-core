@@ -12,7 +12,7 @@ public enum ConfigReader {
             throw CompilerError.configNotFound(path: path.path)
         }
 
-        let resolvedFormat = try format ?? (try? ConfigFormat.from(path: path)) ?? .json
+        let resolvedFormat = format ?? (try? ConfigFormat.from(path: path)) ?? .json
         let content: String
         do {
             content = try String(contentsOf: path, encoding: .utf8)
