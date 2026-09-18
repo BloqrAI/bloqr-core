@@ -75,6 +75,13 @@ public struct BloqrCompiler: Sendable {
         } else {
             compileConfigPath = resolvedConfigPath
         }
+        // Scoped to cover every exit path below (directory creation, missing Deno, process
+        // launch failure, and the ordinary success path alike) - not just the two explicit
+        // `runProcess` outcomes, which previously left the temp file behind on any earlier
+        // throw.
+        defer {
+            if let tempConfigPath { try? FileManager.default.removeItem(at: tempConfigPath) }
+        }
 
         let outputDir = outputPath.deletingLastPathComponent()
         try Self.createDirectory(outputDir)
@@ -99,22 +106,14 @@ public struct BloqrCompiler: Sendable {
             FileHandle.standardError.write(Data("[DEBUG] Running: \(command) \(args.joined(separator: " "))\n".utf8))
         }
 
-        let processOutput: ProcessOutput
-        do {
-            processOutput = try runProcess(
-                command: command,
-                arguments: args,
-                currentDirectory: resolvedConfigPath.deletingLastPathComponent()
-            )
-        } catch let error as CompilerError {
-            if let tempConfigPath { try? FileManager.default.removeItem(at: tempConfigPath) }
-            throw error
-        }
+        let processOutput = try runProcess(
+            command: command,
+            arguments: args,
+            currentDirectory: resolvedConfigPath.deletingLastPathComponent()
+        )
 
         result.stdout = processOutput.stdout
         result.stderr = processOutput.stderr
-
-        if let tempConfigPath { try? FileManager.default.removeItem(at: tempConfigPath) }
 
         if processOutput.exitCode != 0 {
             result.errorMessage = "compiler exited with code \(processOutput.exitCode): " +
