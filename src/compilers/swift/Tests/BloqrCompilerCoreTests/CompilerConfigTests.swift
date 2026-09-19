@@ -17,11 +17,20 @@ final class CompilerConfigTests: XCTestCase {
         XCTAssertNoThrow(try config.validate())
     }
 
+    /// Explicit list (not `CompilerConfig.validTransformations` itself) so this test
+    /// actually checks the documented contract - an accidental omission or typo in the
+    /// implementation's allowlist would otherwise still pass trivially.
+    static let documentedTransformations = [
+        "RemoveComments", "Compress", "RemoveModifiers", "Validate", "ValidateAllowIp",
+        "Deduplicate", "InvertAllow", "RemoveEmptyLines", "TrimLines", "InsertFinalNewLine",
+        "ConvertToAscii",
+    ]
+
     func testValidateAcceptsEveryDocumentedTransformation() throws {
         let config = CompilerConfig(
             name: "Test",
             sources: [FilterSource(source: "https://example.com")],
-            transformations: Array(CompilerConfig.validTransformations)
+            transformations: Self.documentedTransformations
         )
         XCTAssertNoThrow(try config.validate())
     }
@@ -40,12 +49,21 @@ final class CompilerConfigTests: XCTestCase {
         // implementation's TransformationType enum but are commercial-only and not
         // implemented anywhere in this OSS repo (see issue #502) - accepting them
         // here would silently no-op since nothing applies them at compile time.
-        let config = CompilerConfig(
+        // Each is asserted independently so an accidental allowlist entry for one
+        // can't slip through unnoticed because only the other was tested.
+        let conflictDetectionConfig = CompilerConfig(
             name: "Test",
             sources: [FilterSource(source: "https://example.com")],
             transformations: ["ConflictDetection"]
         )
-        XCTAssertThrowsError(try config.validate())
+        XCTAssertThrowsError(try conflictDetectionConfig.validate())
+
+        let ruleOptimizerConfig = CompilerConfig(
+            name: "Test",
+            sources: [FilterSource(source: "https://example.com")],
+            transformations: ["RuleOptimizer"]
+        )
+        XCTAssertThrowsError(try ruleOptimizerConfig.validate())
     }
 
     func testValidateRejectsUnknownPerSourceTransformation() {

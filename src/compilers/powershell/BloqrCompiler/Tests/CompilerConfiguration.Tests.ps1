@@ -140,10 +140,26 @@ Describe 'CompilerConfiguration transformation validation (#502)' {
     }
 
     It 'Passes validation with every documented transformation' {
+        # Explicit list (not [CompilerConfiguration]::ValidTransformations itself) so this
+        # test actually checks the documented contract - an accidental omission or typo in
+        # the implementation's allowlist would otherwise still pass trivially.
+        $documentedTransformations = @(
+            'RemoveComments',
+            'Compress',
+            'RemoveModifiers',
+            'Validate',
+            'ValidateAllowIp',
+            'Deduplicate',
+            'InvertAllow',
+            'RemoveEmptyLines',
+            'TrimLines',
+            'InsertFinalNewLine',
+            'ConvertToAscii'
+        )
         $configPath = New-TestConfigFile -Directory $script:tempDir -ConfigData @{
             name            = 'test-filter'
             sources         = @(@{ source = 'https://example.com/list.txt' })
-            transformations = [CompilerConfiguration]::ValidTransformations
+            transformations = $documentedTransformations
         }
         $config = [CompilerConfiguration]::new($configPath)
 
@@ -166,6 +182,8 @@ Describe 'CompilerConfiguration transformation validation (#502)' {
         # transformations that exist in the TypeScript reference implementation's
         # TransformationType enum but are not registered/implemented anywhere in
         # this OSS repo - accepting them here would silently no-op at compile time.
+        # Each is asserted independently so an accidental allowlist entry for one
+        # can't slip through unnoticed because only the other was tested.
         $configPath = New-TestConfigFile -Directory $script:tempDir -ConfigData @{
             name            = 'test-filter'
             sources         = @(@{ source = 'https://example.com/list.txt' })
@@ -174,6 +192,15 @@ Describe 'CompilerConfiguration transformation validation (#502)' {
         $config = [CompilerConfiguration]::new($configPath)
 
         { $config.Validate() } | Should -Throw '*ConflictDetection*'
+
+        $configPath2 = New-TestConfigFile -Directory $script:tempDir -ConfigData @{
+            name            = 'test-filter'
+            sources         = @(@{ source = 'https://example.com/list.txt' })
+            transformations = @('RuleOptimizer')
+        }
+        $config2 = [CompilerConfiguration]::new($configPath2)
+
+        { $config2.Validate() } | Should -Throw '*RuleOptimizer*'
     }
 
     It 'Fails validation with an unknown per-source transformation' {

@@ -175,7 +175,7 @@ class CompilerConfiguration {
         }
 
         foreach ($transformation in $this.Transformations) {
-            if ($transformation -notin [CompilerConfiguration]::ValidTransformations) {
+            if ($transformation -cnotin [CompilerConfiguration]::ValidTransformations) {
                 $errors.Add("transformations: invalid transformation '$transformation'. Valid: $([CompilerConfiguration]::ValidTransformations -join ', ')")
             }
         }
@@ -194,7 +194,7 @@ class CompilerConfiguration {
 
             if ($source.PSObject.Properties.Match('transformations').Count -gt 0) {
                 foreach ($transformation in $source.transformations) {
-                    if ($transformation -notin [CompilerConfiguration]::ValidTransformations) {
+                    if ($transformation -cnotin [CompilerConfiguration]::ValidTransformations) {
                         $errors.Add("Source '$($source.name)': invalid transformation '$transformation'. Valid: $([CompilerConfiguration]::ValidTransformations -join ', ')")
                     }
                 }

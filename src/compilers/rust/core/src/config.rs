@@ -595,6 +595,14 @@ mod tests {
         let source_invalid = CompilerConfig::new("Test").with_source(source_invalid_source);
         assert!(source_invalid.validate().is_err());
 
+        // Asserted independently from ConflictDetection above so an accidental
+        // allowlist entry for one commercial-only transformation can't slip
+        // through unnoticed because only the other was tested.
+        let rule_optimizer_invalid = CompilerConfig::new("Test")
+            .with_source(FilterSource::new("Source", "https://example.com"))
+            .with_transformation("RuleOptimizer");
+        assert!(rule_optimizer_invalid.validate().is_err());
+
         let valid = CompilerConfig::new("Test")
             .with_source(FilterSource::new("Source", "https://example.com"))
             .with_transformation("Deduplicate")
