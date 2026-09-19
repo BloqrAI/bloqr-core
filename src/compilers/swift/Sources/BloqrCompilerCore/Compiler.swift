@@ -181,11 +181,15 @@ public struct BloqrCompiler: Sendable {
 
         // Mandatory rules-validator syntax check - fail-closed by default (see
         // `RulesValidator.validateOutput`'s doc comment). Mirrors the other wrappers: an
-        // unvalidated compiled output is never silently treated as successful.
+        // unvalidated compiled output is never silently treated as successful. Pass through
+        // the resolved engine: for a forced `--engine browser` compile, `outputPath` itself
+        // (not just the derived browser-output path) holds browser-syntax content, and
+        // validating it against the DNS grammar default would reject valid cosmetic rules.
         if let abortReason = RulesValidator.validateOutput(
             path: outputPath,
             allowUnvalidated: options.allowUnvalidatedOutput,
-            failOnWarnings: options.failOnWarnings
+            failOnWarnings: options.failOnWarnings,
+            engine: options.engine
         ) {
             result.errorMessage = abortReason
             result.success = false

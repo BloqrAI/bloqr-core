@@ -52,7 +52,7 @@ func printConfigNotFoundError() {
 func parseFormat(_ raw: String?) throws -> ConfigFormat? {
     guard let raw else { return nil }
     do {
-        return try ConfigFormat.from(extension: raw)
+        return try ConfigFormat.from(fileExtension: raw)
     } catch {
         throw ValidationError("invalid --format value \"\(raw)\": expected \"json\", \"yaml\", or \"toml\"")
     }

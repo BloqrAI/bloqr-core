@@ -6,7 +6,7 @@ import Foundation
 /// stay recognizable across wrappers, without attempting a one-to-one variant match.
 public enum CompilerError: Error, LocalizedError, CustomStringConvertible {
     case configNotFound(path: String)
-    case unknownExtension(extension: String)
+    case unknownExtension(fileExtension: String)
     case parseFailed(format: String, underlying: String)
     case validationFailed(String)
     case invalidEngine(String)

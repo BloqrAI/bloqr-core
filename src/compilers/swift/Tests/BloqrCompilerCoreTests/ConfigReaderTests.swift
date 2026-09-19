@@ -43,11 +43,11 @@ final class ConfigReaderTests: XCTestCase {
     }
 
     func testFormatFromExtension() throws {
-        XCTAssertEqual(try ConfigFormat.from(extension: "json"), .json)
-        XCTAssertEqual(try ConfigFormat.from(extension: "yaml"), .yaml)
-        XCTAssertEqual(try ConfigFormat.from(extension: "yml"), .yaml)
-        XCTAssertEqual(try ConfigFormat.from(extension: "toml"), .toml)
-        XCTAssertThrowsError(try ConfigFormat.from(extension: "txt"))
+        XCTAssertEqual(try ConfigFormat.from(fileExtension: "json"), .json)
+        XCTAssertEqual(try ConfigFormat.from(fileExtension: "yaml"), .yaml)
+        XCTAssertEqual(try ConfigFormat.from(fileExtension: "yml"), .yaml)
+        XCTAssertEqual(try ConfigFormat.from(fileExtension: "toml"), .toml)
+        XCTAssertThrowsError(try ConfigFormat.from(fileExtension: "txt"))
     }
 
     func testReadJSONCConfigWithComments() throws {

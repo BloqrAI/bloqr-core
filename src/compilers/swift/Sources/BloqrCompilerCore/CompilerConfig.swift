@@ -10,17 +10,17 @@ public enum ConfigFormat: String, Sendable, Equatable {
     case yaml
     case toml
 
-    public static func from(extension ext: String) throws -> ConfigFormat {
+    public static func from(fileExtension ext: String) throws -> ConfigFormat {
         switch ext.lowercased() {
         case "json", "jsonc": return .json
         case "yaml", "yml": return .yaml
         case "toml": return .toml
-        default: throw CompilerError.unknownExtension(extension: ext)
+        default: throw CompilerError.unknownExtension(fileExtension: ext)
         }
     }
 
     public static func from(path: URL) throws -> ConfigFormat {
-        try from(extension: path.pathExtension)
+        try from(fileExtension: path.pathExtension)
     }
 
     public var displayName: String {
