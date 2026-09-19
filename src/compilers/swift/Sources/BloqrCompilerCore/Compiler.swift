@@ -28,7 +28,13 @@ public struct BloqrCompiler: Sendable {
         var result = CompilerResult()
         result.startTime = start
 
-        let resolvedConfigPath = configPath.resolvingSymlinksInPath().standardizedFileURL
+        // Absolute-ize before resolving symlinks: `resolvingSymlinksInPath()` does not make a
+        // relative URL absolute on its own, and this path is both handed to the Deno
+        // subprocess (relative to *its* working directory, the config's own parent) and used
+        // to derive that very working directory in this process - a relative `-c
+        // configs/config.json` would otherwise resolve to `configs/configs/config.json` from
+        // Deno's point of view.
+        let resolvedConfigPath = Self.absoluteURL(configPath).resolvingSymlinksInPath().standardizedFileURL
 
         let config = try ConfigReader.readConfig(path: resolvedConfigPath, format: options.format)
         result.configName = config.name
