@@ -1,6 +1,7 @@
 import * as React from "react"
 import { Link } from "gatsby"
 import Layout from "../components/Layout"
+import Seo from "../components/Seo"
 
 const GettingStartedPage = () => {
   return (
@@ -219,4 +220,10 @@ const GettingStartedPage = () => {
 
 export default GettingStartedPage
 
-export const Head = () => <title>Getting Started - Bloqr Core</title>
+export const Head = () => (
+  <Seo
+    title="Getting Started"
+    description="Install and run your first compilation with the Bloqr Core toolkit."
+    pathname="/getting-started"
+  />
+)

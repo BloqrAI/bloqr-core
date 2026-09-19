@@ -1,6 +1,7 @@
 import * as React from "react"
 import { Link } from "gatsby"
 import Layout from "../components/Layout"
+import Seo from "../components/Seo"
 
 const BenchmarksPage = () => {
   return (
@@ -346,4 +347,10 @@ Maximum speedup: 6.75x`}
 
 export default BenchmarksPage
 
-export const Head = () => <title>Performance Benchmarks - Bloqr Core</title>
+export const Head = () => (
+  <Seo
+    title="Performance Benchmarks"
+    description="Measure and understand the performance characteristics of the filter compilation toolkit across languages."
+    pathname="/benchmarks"
+  />
+)

@@ -1,6 +1,7 @@
 import * as React from "react"
 import { Link } from "gatsby"
 import Layout from "../components/Layout"
+import Seo from "../components/Seo"
 
 const AdBlockCompilerPage = () => {
   return (
@@ -380,4 +381,10 @@ console.log(\`Compiled \${rules.length} rules\`);`}
 
 export default AdBlockCompilerPage
 
-export const Head = () => <title>@bloqr/compiler-core - Bloqr Core</title>
+export const Head = () => (
+  <Seo
+    title="@bloqr/compiler-core"
+    description="The open-source, dependency-free TypeScript filter compilation engine that powers every compiler in Bloqr Core."
+    pathname="/compiler-core"
+  />
+)

@@ -1,6 +1,7 @@
 import * as React from "react"
 import { Link } from "gatsby"
 import Layout from "../components/Layout"
+import Seo from "../components/Seo"
 
 const DashboardPage = () => {
   return (
@@ -161,4 +162,10 @@ dotnet run --project src/Bloqr.Dashboard.Console -- profiles list`}</code>
 
 export default DashboardPage
 
-export const Head = () => <title>Bloqr Dashboard - Bloqr Core</title>
+export const Head = () => (
+  <Seo
+    title="Bloqr Dashboard"
+    description="The flagship .NET console app that ties the rest of the toolkit together — config generation, compilation, profiles, and logs in one place."
+    pathname="/dashboard"
+  />
+)

@@ -1,6 +1,7 @@
 import * as React from "react"
 import { Link, graphql } from "gatsby"
 import Layout from "../components/Layout"
+import Seo from "../components/Seo"
 
 const ImprovementsPage = ({ data }) => {
   const improvements = [
@@ -104,5 +105,9 @@ export const query = graphql`
 export default ImprovementsPage
 
 export const Head = () => (
-  <title>Recent Improvements - Bloqr Core</title>
+  <Seo
+    title="Recent Improvements"
+    description="See what's new in the latest releases and ongoing development of Bloqr Core."
+    pathname="/improvements"
+  />
 )
