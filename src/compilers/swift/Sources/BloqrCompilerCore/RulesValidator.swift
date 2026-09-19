@@ -95,7 +95,12 @@ enum RulesValidator {
 
         if allowUnvalidated { return nil }
 
-        if !result.isValid {
+        // The CLI's own contract (`src/validation/cli/src/main.rs`) is explicit: "Exit codes
+        // are unchanged (0 = valid, 1 = invalid or error) regardless of [--json]; use the exit
+        // code as the pass/fail signal and the JSON body for detail." So a nonzero exit is a
+        // failure even if `result.isValid` were somehow true - never treat a successfully
+        // *parsed* JSON body as proof the run itself succeeded.
+        if output.exitCode != 0 || !result.isValid {
             if result.messages.isEmpty {
                 return "Output file failed rules-validator syntax validation " +
                     "(\(result.invalidRules) invalid rule(s) of \(result.validRules + result.invalidRules))."
