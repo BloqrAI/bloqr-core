@@ -158,15 +158,18 @@ h4 {
   padding: 0 24px;
 }
 
+.site-header {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
 header {
   background-color: var(--header-bg);
   -webkit-backdrop-filter: blur(16px);
   backdrop-filter: blur(16px);
   color: var(--text-color);
   padding: 1.1rem 0;
-  position: sticky;
-  top: 0;
-  z-index: 100;
   border-bottom: 1px solid var(--border-color);
 }
 
@@ -219,9 +222,6 @@ nav {
   -webkit-backdrop-filter: blur(16px);
   backdrop-filter: blur(16px);
   padding: 0.4rem 0;
-  position: sticky;
-  top: 62px;
-  z-index: 99;
   border-bottom: 1px solid var(--border-color);
 }
 
@@ -255,6 +255,25 @@ nav a:hover {
 
 [data-theme="light"] nav a:hover {
   color: #7cf0ff;
+}
+
+.nav-toggle {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  padding: 0;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--text-color);
+  cursor: pointer;
+}
+
+.nav-toggle svg {
+  width: 20px;
+  height: 20px;
 }
 
 main {
@@ -685,10 +704,6 @@ footer a:hover {
 }
 
 @media (max-width: 768px) {
-  nav {
-    top: 58px;
-  }
-
   .hero {
     padding: 3rem 1rem;
     border-radius: 0 0 var(--radius-md) var(--radius-md);
@@ -700,6 +715,25 @@ footer a:hover {
 
   .hero p {
     font-size: 1rem;
+  }
+
+  .nav-toggle {
+    display: inline-flex;
+  }
+
+  nav {
+    max-height: 0;
+    overflow: hidden;
+    padding: 0;
+    border-bottom: none;
+    transition: max-height var(--duration-fast, 0.2s) ease;
+  }
+
+  nav.nav-open {
+    max-height: 60vh;
+    overflow-y: auto;
+    padding: 0.4rem 0;
+    border-bottom: 1px solid var(--border-color);
   }
 
   nav ul {
