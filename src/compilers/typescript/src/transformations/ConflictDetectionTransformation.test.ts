@@ -74,3 +74,19 @@ Deno.test('ConflictDetectionTransformation - does not flag an allow rule with no
   assertEquals(result, rules);
   assertEquals(warnings.length, 0);
 });
+
+Deno.test('ConflictDetectionTransformation - detects a conflict even without TrimLines run first', async () => {
+  // Regression: classification (isAllowRule) trims internally, but the old
+  // slice(2) ran on the untrimmed string, so " @@||example.com^" was
+  // classified as an allow rule yet converted to "@||example.com^" instead of
+  // "||example.com^" - missing a real conflict whenever this transformation
+  // runs without TrimLines requested alongside it.
+  const { logger, warnings } = createRecordingLogger();
+  const transformation = new ConflictDetectionTransformation(logger);
+  const rules = ['||example.com^', ' @@||example.com^ '];
+
+  const result = await transformation.execute(rules);
+
+  assertEquals(result, rules);
+  assertEquals(warnings.length, 1);
+});

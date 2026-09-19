@@ -34,14 +34,21 @@ export class ConflictDetectionTransformation extends SyncTransformation {
    * @returns The same rules, unmodified
    */
   public executeSync(rules: readonly string[]): readonly string[] {
-    const ruleSet = new Set(rules);
+    // Normalized (trimmed) form of every rule, so classification and lookup work
+    // correctly even when this transformation runs without TrimLines - a caller
+    // can request ConflictDetection alone, and canonical order only orders
+    // transformations that were actually requested together.
+    const normalizedSet = new Set(rules.map((rule) => rule.trim()));
     const conflicts: string[] = [];
 
     for (const rule of rules) {
-      if (RuleUtils.isComment(rule) || RuleUtils.isEmpty(rule)) continue;
+      const trimmedRule = rule.trim();
+      if (RuleUtils.isComment(trimmedRule) || RuleUtils.isEmpty(trimmedRule)) continue;
 
-      const blockingForm = ConflictDetectionTransformation.toBlockingForm(rule);
-      if (blockingForm !== null && blockingForm !== rule && ruleSet.has(blockingForm)) {
+      const blockingForm = ConflictDetectionTransformation.toBlockingForm(trimmedRule);
+      if (
+        blockingForm !== null && blockingForm !== trimmedRule && normalizedSet.has(blockingForm)
+      ) {
         conflicts.push(`'${rule}' conflicts with '${blockingForm}'`);
       }
     }
@@ -64,11 +71,12 @@ export class ConflictDetectionTransformation extends SyncTransformation {
   /**
    * Returns the blocking-rule text an exception rule would conflict with, or
    * `null` if the rule isn't an exception rule (nothing to check).
+   * @param trimmedRule - A rule with leading/trailing whitespace already removed.
    */
-  private static toBlockingForm(rule: string): string | null {
-    if (RuleUtils.isCosmeticRule(rule)) {
-      return rule.includes('#@#') ? rule.replace('#@#', '##') : null;
+  private static toBlockingForm(trimmedRule: string): string | null {
+    if (RuleUtils.isCosmeticRule(trimmedRule)) {
+      return trimmedRule.includes('#@#') ? trimmedRule.replace('#@#', '##') : null;
     }
-    return RuleUtils.isAllowRule(rule) ? rule.slice(2) : null;
+    return RuleUtils.isAllowRule(trimmedRule) ? trimmedRule.slice(2) : null;
   }
 }

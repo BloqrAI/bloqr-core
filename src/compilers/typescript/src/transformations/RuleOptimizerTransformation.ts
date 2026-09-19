@@ -20,6 +20,16 @@ const PLAIN_HIDING_RULE_REGEX = /^([^#]*)##(.+)$/;
  */
 const SCRIPTLET_SELECTOR_REGEX = /^\+js\(/;
 
+/** Accumulated state for one domain-list's merge group while scanning. */
+interface MergeGroup {
+  /** Selector strings to join, in first-seen order, deduplicated by trimmed text. */
+  selectors: string[];
+  /** Trimmed selector text already seen, for O(1) duplicate checks. */
+  seen: Set<string>;
+  /** Total source rules folded into this group (including duplicates). */
+  occurrences: number;
+}
+
 /**
  * Transformation that merges structurally-equivalent, redundant rules into a
  * smaller rule set without changing the effective ruleset.
@@ -48,43 +58,50 @@ export class RuleOptimizerTransformation extends SyncTransformation {
 
   /**
    * Merges mergeable element-hiding rules that share a domain list.
+   *
+   * Runs in O(n) total: each domain's selector list/seen-set is accumulated
+   * incrementally while scanning (never re-parsed from an already-merged
+   * string), and every group's final rule text is materialized exactly once
+   * at the end - a domain with `k` occurrences costs O(k), not O(k²).
    * @param rules - Array of rules to optimize
    * @returns Array with mergeable rules combined
    */
   public executeSync(rules: readonly string[]): readonly string[] {
-    // Domain list -> index into `result` of the rule it was merged into.
-    const mergedAt = new Map<string, number>();
-    const result: string[] = [];
-    let mergedCount = 0;
+    const groups = new Map<string, MergeGroup>();
+    // Each entry is either a passthrough rule, or a marker for a merge group -
+    // resolved to that group's final merged rule text in the second pass.
+    const output: Array<string | { domains: string }> = [];
 
     for (const rule of rules) {
       const match = RuleOptimizerTransformation.matchMergeableRule(rule);
       if (!match) {
-        result.push(rule);
+        output.push(rule);
         continue;
       }
 
       const [domains, selector] = match;
-      const existingIndex = mergedAt.get(domains);
-      if (existingIndex === undefined) {
-        mergedAt.set(domains, result.length);
-        result.push(rule);
-        continue;
+      let group = groups.get(domains);
+      if (!group) {
+        group = { selectors: [], seen: new Set(), occurrences: 0 };
+        groups.set(domains, group);
+        output.push({ domains });
       }
 
-      const existingRule = result[existingIndex];
-      const existingSelector = existingRule.slice(existingRule.indexOf('##') + 2);
-      const existingSelectors = new Set(
-        existingSelector.split(',').map((s) => s.trim()),
-      );
-
-      if (!existingSelectors.has(selector.trim())) {
-        result[existingIndex] = `${existingRule}, ${selector}`;
-        mergedCount += 1;
-      } else {
-        mergedCount += 1;
+      group.occurrences += 1;
+      const trimmedSelector = selector.trim();
+      if (!group.seen.has(trimmedSelector)) {
+        group.seen.add(trimmedSelector);
+        group.selectors.push(selector);
       }
     }
+
+    let mergedCount = 0;
+    const result = output.map((entry) => {
+      if (typeof entry === 'string') return entry;
+      const group = groups.get(entry.domains)!;
+      mergedCount += group.occurrences - 1;
+      return `${entry.domains}##${group.selectors.join(', ')}`;
+    });
 
     if (mergedCount > 0) {
       this.info(`Merged ${mergedCount} redundant element-hiding rule(s) into shared selectors`);
