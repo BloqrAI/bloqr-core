@@ -307,16 +307,29 @@ public struct BloqrCompiler: Sendable {
     /// asynchronously.
     ///
     /// Runs the synchronous `compileRules(configPath:options:)` pipeline (config read, Deno
-    /// subprocess, hashing, syntax validation) on a detached background task, so a caller on
-    /// Swift Concurrency's cooperative thread pool - a SwiftUI view, a Vapor route handler, an
-    /// `async` CLI command - never blocks a cooperative thread on process I/O or file access.
-    /// This wrapper shells out to a subprocess for the actual compilation (see the type-level
-    /// doc comment above), so there is no natively-async Deno invocation to await here; offloading
-    /// the whole synchronous pipeline is what the other wrappers' own async entry points do too.
+    /// subprocess, hashing, syntax validation) on the global concurrent GCD queue, bridged back
+    /// via a checked continuation - deliberately *not* `Task.detached`, which only detaches
+    /// actor/priority inheritance and still schedules its operation on Swift Concurrency's
+    /// cooperative thread pool. That pool is sized for non-blocking work; this pipeline calls
+    /// `Process.waitUntilExit()`/`DispatchGroup.wait()` under the hood, and blocking a
+    /// cooperative thread on those can starve every other async task sharing the pool. A GCD
+    /// global queue has no such ceiling on blocked threads, so a caller on Swift Concurrency's
+    /// cooperative pool - a SwiftUI view, a Vapor route handler, an `async` CLI command - is
+    /// never at risk of that starvation. This wrapper shells out to a subprocess for the actual
+    /// compilation (see the type-level doc comment above), so there is no natively-async Deno
+    /// invocation to await here; offloading the whole synchronous pipeline is what the other
+    /// wrappers' own async entry points do too.
     public static func compileRules(configPath: URL, options: CompileOptions) async throws -> CompilerResult {
-        try await Task.detached(priority: .userInitiated) {
-            try compileRules(configPath: configPath, options: options)
-        }.value
+        try await withCheckedThrowingContinuation { continuation in
+            DispatchQueue.global(qos: .userInitiated).async {
+                do {
+                    let result = try compileRules(configPath: configPath, options: options)
+                    continuation.resume(returning: result)
+                } catch {
+                    continuation.resume(throwing: error)
+                }
+            }
+        }
     }
 
     // MARK: - Helpers
