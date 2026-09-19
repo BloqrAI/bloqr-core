@@ -90,3 +90,19 @@ Deno.test('ConflictDetectionTransformation - detects a conflict even without Tri
   assertEquals(result, rules);
   assertEquals(warnings.length, 1);
 });
+
+Deno.test('ConflictDetectionTransformation - classifies a network exception rule before checking for a cosmetic marker', async () => {
+  // Regression: RuleUtils.isCosmeticRule() matches '#@#' anywhere in the rule
+  // text, so a network exception rule whose regex pattern happens to contain
+  // that substring (not as a cosmetic marker) was misclassified as cosmetic
+  // instead of as the network exception it actually is, via toBlockingForm()
+  // checking isCosmeticRule() before the explicit '@@' prefix.
+  const { logger, warnings } = createRecordingLogger();
+  const transformation = new ConflictDetectionTransformation(logger);
+  const rules = ['/banner#@#ad/', '@@/banner#@#ad/'];
+
+  const result = await transformation.execute(rules);
+
+  assertEquals(result, rules);
+  assertEquals(warnings.length, 1);
+});

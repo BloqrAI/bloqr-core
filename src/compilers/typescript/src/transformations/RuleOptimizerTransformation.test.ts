@@ -97,3 +97,40 @@ Deno.test('RuleOptimizerTransformation - leaves an empty rule set unchanged', as
 
   assertEquals(result, []);
 });
+
+Deno.test('RuleOptimizerTransformation - never merges regex-delimited network rules containing ##', async () => {
+  // Regression: the old domain-list group accepted any text before '##', so a
+  // valid regex-delimited network rule like '/foo##bar/' was misidentified as
+  // a cosmetic rule with domain list '/foo' and could be merged with another
+  // such rule into corrupted, invalid syntax.
+  const transformation = new RuleOptimizerTransformation(silentLogger);
+  const rules = ['/foo##bar/', '/foo##baz/'];
+
+  const result = await transformation.execute(rules);
+
+  assertEquals(result, rules);
+});
+
+Deno.test('RuleOptimizerTransformation - never merges HTML-filtering rules', async () => {
+  // Regression: uBlock Origin HTML-filtering rules ('##^tag:has-text(...)')
+  // reuse the plain '##' marker but their body is a procedural DSL, not a CSS
+  // selector - only scriptlet bodies ('+js(...)') were excluded before.
+  const transformation = new RuleOptimizerTransformation(silentLogger);
+  const rules = [
+    'example.com##^script:has-text(foo)',
+    'example.com##^script:has-text(bar)',
+  ];
+
+  const result = await transformation.execute(rules);
+
+  assertEquals(result, rules);
+});
+
+Deno.test('RuleOptimizerTransformation - merges rules with a wildcard-prefixed domain list', async () => {
+  const transformation = new RuleOptimizerTransformation(silentLogger);
+  const rules = ['*.example.com##.a', '*.example.com##.b'];
+
+  const result = await transformation.execute(rules);
+
+  assertEquals(result, ['*.example.com##.a, .b']);
+});

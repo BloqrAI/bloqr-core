@@ -8,9 +8,17 @@ import { SyncTransformation } from './base/Transformation.ts';
  * Deliberately narrower than {@link RuleUtils.isCosmeticRule}: it requires the
  * literal two-character `##` marker with nothing between the hashes, which excludes
  * exception rules (`#@#`) and every other AdGuard cosmetic marker (`#$#`, `#%#`,
- * `#?#`, …) — domains never contain `#`, so this can't misfire on those.
+ * `#?#`, …).
+ *
+ * The domain-list group is restricted to the actual cosmetic domain-list grammar
+ * (comma-separated hostnames, each optionally `~`-negated) rather than "any text
+ * before `##`" - a valid regex-delimited network rule such as `/foo##bar/` also
+ * contains the literal substring `##`, and without this restriction would be
+ * misidentified as a cosmetic rule with domain list `/foo` and merged with another
+ * such regex rule into invalid, corrupted syntax.
  */
-const PLAIN_HIDING_RULE_REGEX = /^([^#]*)##(.+)$/;
+const PLAIN_HIDING_RULE_REGEX =
+  /^((?:~?[a-zA-Z0-9*][a-zA-Z0-9*_.-]*(?:,~?[a-zA-Z0-9*][a-zA-Z0-9*_.-]*)*)?)##(.+)$/;
 
 /**
  * A uBlock/AdGuard scriptlet-injection rule (`##+js(...)`) reuses the plain `##`
@@ -19,6 +27,15 @@ const PLAIN_HIDING_RULE_REGEX = /^([^#]*)##(.+)$/;
  * Rules matching this must never be merged.
  */
 const SCRIPTLET_SELECTOR_REGEX = /^\+js\(/;
+
+/**
+ * A uBlock Origin HTML-filtering rule (`##^tagName:has-text(...)`) also reuses the
+ * plain `##` marker, denoted by a leading `^`, but its body is uBO's own procedural
+ * HTML-matching DSL, not a CSS selector - comma-joining two such rules produces
+ * invalid HTML-filtering syntax and can silently drop both. Rules matching this must
+ * never be merged.
+ */
+const HTML_FILTERING_SELECTOR_REGEX = /^\^/;
 
 /** Accumulated state for one domain-list's merge group while scanning. */
 interface MergeGroup {
@@ -40,9 +57,10 @@ interface MergeGroup {
  * CSS selectors with a comma selects the union of both, the same real-world
  * optimization AdGuard/uBlock Origin compilers already perform — and doesn't depend
  * on which engine (DNS vs. browser) consumes the rule, since only browser-syntax
- * cosmetic rules match the pattern at all. Scriptlet-injection rules (`##+js(...)`)
- * are explicitly excluded (see {@link SCRIPTLET_SELECTOR_REGEX}) since their
- * "selector" is a function call, not a combinable CSS selector.
+ * cosmetic rules match the pattern at all. Scriptlet-injection rules (`##+js(...)`,
+ * see {@link SCRIPTLET_SELECTOR_REGEX}) and HTML-filtering rules (`##^tag:...`, see
+ * {@link HTML_FILTERING_SELECTOR_REGEX}) are explicitly excluded since neither body
+ * is a combinable CSS selector.
  *
  * Everything else (network rules, exception rules, non-plain cosmetic markers,
  * comments) passes through unchanged. Only exact-identical domain-list strings are
@@ -123,7 +141,9 @@ export class RuleOptimizerTransformation extends SyncTransformation {
     if (!match) return null;
 
     const [, domains, selector] = match;
-    if (SCRIPTLET_SELECTOR_REGEX.test(selector)) return null;
+    if (SCRIPTLET_SELECTOR_REGEX.test(selector) || HTML_FILTERING_SELECTOR_REGEX.test(selector)) {
+      return null;
+    }
 
     return [domains, selector];
   }

@@ -71,12 +71,22 @@ export class ConflictDetectionTransformation extends SyncTransformation {
   /**
    * Returns the blocking-rule text an exception rule would conflict with, or
    * `null` if the rule isn't an exception rule (nothing to check).
+   *
+   * Checks the explicit `@@` network-exception prefix before falling back to the
+   * substring-based cosmetic marker check: {@link RuleUtils.isCosmeticRule} matches
+   * `#@#` *anywhere* in the rule, so a network rule (e.g. a regex rule delimited by
+   * `/…/`) that merely contains that substring in its pattern - not as a cosmetic
+   * marker - would otherwise be misclassified as cosmetic instead of as the network
+   * exception it actually is.
    * @param trimmedRule - A rule with leading/trailing whitespace already removed.
    */
   private static toBlockingForm(trimmedRule: string): string | null {
-    if (RuleUtils.isCosmeticRule(trimmedRule)) {
-      return trimmedRule.includes('#@#') ? trimmedRule.replace('#@#', '##') : null;
+    if (RuleUtils.isAllowRule(trimmedRule)) {
+      return trimmedRule.slice(2);
     }
-    return RuleUtils.isAllowRule(trimmedRule) ? trimmedRule.slice(2) : null;
+    if (RuleUtils.isCosmeticRule(trimmedRule) && trimmedRule.includes('#@#')) {
+      return trimmedRule.replace('#@#', '##');
+    }
+    return null;
   }
 }
