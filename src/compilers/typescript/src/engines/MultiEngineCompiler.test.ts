@@ -1,6 +1,6 @@
-import { assertEquals, assertExists } from '@std/assert';
+import { assertEquals, assertExists, assertRejects } from '@std/assert';
 import { fromFileUrl } from '@std/path';
-import { MultiEngineCompiler } from './MultiEngineCompiler.ts';
+import { filterToBrowserSafe, MultiEngineCompiler } from './MultiEngineCompiler.ts';
 import type { IConfiguration } from '../types/index.ts';
 import { SourceType, TransformationType } from '../types/index.ts';
 import { silentLogger } from '../utils/index.ts';
@@ -105,6 +105,40 @@ Deno.test('MultiEngineCompiler - a shared top-level transformations list with DN
   assertExists(result.dns);
   assertExists(result.browser);
   assertEquals(result.browser!.rules.some((l) => l === 'example.com##.ad-banner'), true);
+});
+
+Deno.test('filterToBrowserSafe - drops known DNS-only entries', () => {
+  const result = filterToBrowserSafe([
+    TransformationType.RemoveComments,
+    TransformationType.Compress,
+    TransformationType.Validate,
+  ]);
+  assertEquals(result, [TransformationType.RemoveComments]);
+});
+
+Deno.test('filterToBrowserSafe - preserves unrecognized/commercial-only transformations (issue #502)', () => {
+  // Previously filtered IN only BROWSER_SAFE_TRANSFORMATIONS, which meant an
+  // unrecognized top-level transformation (a typo, or ConflictDetection/
+  // RuleOptimizer) was silently dropped here before BrowserSyntaxCompiler's
+  // ConfigurationValidator ever ran - the request just vanished instead of being
+  // rejected. It must now survive this filter so validation can reject it.
+  const result = filterToBrowserSafe([
+    TransformationType.RemoveComments,
+    TransformationType.ConflictDetection,
+  ]);
+  assertEquals(result, [TransformationType.RemoveComments, TransformationType.ConflictDetection]);
+});
+
+Deno.test('MultiEngineCompiler - rejects a top-level commercial-only transformation instead of silently dropping it (issue #502)', async () => {
+  const compiler = new MultiEngineCompiler({
+    filterCompilerOptions: { logger: silentLogger },
+    browserSyntaxCompilerOptions: { logger: silentLogger },
+  });
+
+  const config = createBrowserOnlyConfig();
+  config.transformations = [TransformationType.ConflictDetection];
+
+  await assertRejects(() => compiler.compile(config), Error);
 });
 
 Deno.test('MultiEngineCompiler - non-header output lines never overlap between engines', async () => {
