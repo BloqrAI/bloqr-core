@@ -33,4 +33,32 @@ final class CompilerHelperTests: XCTestCase {
 
         XCTAssertEqual(BloqrCompiler.countRules(path: path), 2)
     }
+
+    func testPrimaryArtifactEngineHonorsForcedEngine() {
+        let config = CompilerConfig(name: "Test", sources: [FilterSource(source: "https://example.com")])
+        let options = CompileOptions(engine: "browser")
+        XCTAssertEqual(BloqrCompiler.primaryArtifactEngine(config: config, options: options), "browser")
+    }
+
+    func testPrimaryArtifactEngineInfersBrowserFromAllSources() {
+        let config = CompilerConfig(
+            name: "Test",
+            sources: [
+                FilterSource(source: "https://a.example.com", engine: .browser),
+                FilterSource(source: "https://b.example.com", engine: .browser),
+            ]
+        )
+        XCTAssertEqual(BloqrCompiler.primaryArtifactEngine(config: config, options: CompileOptions()), "browser")
+    }
+
+    func testPrimaryArtifactEngineIsNilForMixedSources() {
+        let config = CompilerConfig(
+            name: "Test",
+            sources: [
+                FilterSource(source: "https://a.example.com", engine: .browser),
+                FilterSource(source: "https://b.example.com", engine: .dns),
+            ]
+        )
+        XCTAssertNil(BloqrCompiler.primaryArtifactEngine(config: config, options: CompileOptions()))
+    }
 }

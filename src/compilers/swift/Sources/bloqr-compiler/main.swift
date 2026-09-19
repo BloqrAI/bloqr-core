@@ -309,18 +309,18 @@ struct ShowVersion: ParsableCommand {
 }
 
 struct BloqrCompilerCLI: ParsableCommand {
-    // No `defaultSubcommand` is used here on purpose: `Compile` (and every other
-    // subcommand) declares its own `@OptionGroup var global: GlobalOptions`, and
-    // ArgumentParser gives each declared instance of a shared option-group type its own,
-    // independent parse of the argument list - it does *not* forward a parent command's
-    // parsed values into whichever subcommand actually runs. A root-level `@OptionGroup`
-    // here (as this type previously had, alongside its own `run()`) would silently discard
-    // `-c`/`-o`/etc. typed *before* an explicit subcommand name, since only the subcommand's
-    // own copy of `GlobalOptions` is what actually executes. So this type carries no options
-    // and no `run()` of its own: every invocation, with or without an explicit subcommand
-    // name, is required to name one (`compile` is the natural everyday case), and every
-    // global flag is parsed exactly once, by whichever subcommand's own `GlobalOptions`
-    // instance is actually invoked - never split across two never-reconciled copies.
+    // This type deliberately carries no `@OptionGroup`/`run()` of its own (it previously did,
+    // duplicating `Compile`'s `GlobalOptions`). `Compile` and every other subcommand each
+    // declare their own `@OptionGroup var global: GlobalOptions`, and ArgumentParser gives
+    // each declared instance of a shared option-group type its own, independent parse of the
+    // argument list - it does *not* forward a parent command's parsed values into whichever
+    // subcommand actually runs. A root-level `@OptionGroup` here, alongside its own `run()`,
+    // would silently discard `-c`/`-o`/etc. typed before the (possibly implicit, see
+    // `defaultSubcommand` below) subcommand name, since only the subcommand's own copy of
+    // `GlobalOptions` is what actually executes. `defaultSubcommand: Compile.self` below is
+    // what keeps bare invocation working (`bloqr-compiler -c foo.json` behaves as
+    // `bloqr-compiler compile -c foo.json`, handing the whole argument list to `Compile`'s own
+    // `GlobalOptions`) without this type needing to parse anything itself.
     static let configuration = CommandConfiguration(
         commandName: "bloqr-compiler",
         abstract: "Compile AdGuard filter rules using @bloqr/compiler-core (via Deno)",

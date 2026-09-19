@@ -182,14 +182,18 @@ public struct BloqrCompiler: Sendable {
         // Mandatory rules-validator syntax check - fail-closed by default (see
         // `RulesValidator.validateOutput`'s doc comment). Mirrors the other wrappers: an
         // unvalidated compiled output is never silently treated as successful. Pass through
-        // the resolved engine: for a forced `--engine browser` compile, `outputPath` itself
-        // (not just the derived browser-output path) holds browser-syntax content, and
-        // validating it against the DNS grammar default would reject valid cosmetic rules.
+        // the resolved engine: `outputPath` holds browser-syntax content - not just when
+        // `--engine browser` is forced, but also when every source resolves to the browser
+        // engine via its own `engine:`/`config.defaultEngine` - and validating that against
+        // the DNS grammar default would reject valid cosmetic/extended-CSS rules. This can't
+        // account for pure content-sniffing auto-detection (the same auto-detection
+        // `@bloqr/compiler-core` itself does, which this wrapper doesn't reimplement), only
+        // what the configuration itself declares.
         if let abortReason = RulesValidator.validateOutput(
             path: outputPath,
             allowUnvalidated: options.allowUnvalidatedOutput,
             failOnWarnings: options.failOnWarnings,
-            engine: options.engine
+            engine: Self.primaryArtifactEngine(config: config, options: options)
         ) {
             result.errorMessage = abortReason
             result.success = false
@@ -308,6 +312,22 @@ public struct BloqrCompiler: Sendable {
                 underlying: error.localizedDescription
             )
         }
+    }
+
+    /// Best-effort guess at which grammar the primary output artifact ends up in, from what
+    /// the configuration itself declares - not from sniffing the compiled content the way
+    /// `@bloqr/compiler-core` itself does, which this wrapper doesn't reimplement. Returns
+    /// `"browser"` when it's confident every source resolves to the browser engine, `nil`
+    /// otherwise (letting `RulesValidator` fall back to its DNS default).
+    static func primaryArtifactEngine(config: CompilerConfig, options: CompileOptions) -> String? {
+        if let engine = options.engine, engine.lowercased() != "auto" {
+            return engine
+        }
+        guard !config.sources.isEmpty else { return nil }
+        let allBrowser = config.sources.allSatisfy { source in
+            (source.engine ?? config.defaultEngine) == .browser
+        }
+        return allBrowser ? "browser" : nil
     }
 
     /// Resolves the command and arguments to invoke the compiler, mirroring the other
