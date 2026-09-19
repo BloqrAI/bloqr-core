@@ -12,6 +12,7 @@ import {
   SourceType,
   TransformationType,
 } from '../types/index.ts';
+import { CANONICAL_TRANSFORMATION_ORDER } from '../transformations/TransformationRegistry.ts';
 
 // ============================================================================
 // Public enums and constants (declared early for reuse throughout this file)
@@ -124,12 +125,34 @@ const FilterableSchema: z.ZodObject<{
 });
 
 /**
+ * Transformation names `TransformationRegistry` actually registers by default in this
+ * package, as opposed to every member of the broader `TransformationType` enum.
+ *
+ * `z.nativeEnum(TransformationType)` would also accept `ConflictDetection`/
+ * `RuleOptimizer` - commercial-only, browser-engine transformations that exist on the
+ * enum but are never registered here. `TransformationPipeline.transform()` silently
+ * skips any requested type that isn't registered, so a schema that accepted them would
+ * let a config validate successfully and then have the transformation quietly no-op at
+ * compile time (see issue #502). Kept as a `[T, ...T[]]` tuple because `z.enum` requires
+ * a non-empty literal list.
+ */
+const SUPPORTED_TRANSFORMATIONS = CANONICAL_TRANSFORMATION_ORDER as [
+  TransformationType,
+  ...TransformationType[],
+];
+
+/**
+ * Schema for a single supported transformation name. See {@link SUPPORTED_TRANSFORMATIONS}.
+ */
+const TransformationSchema = z.enum(SUPPORTED_TRANSFORMATIONS);
+
+/**
  * Schema for transformable properties
  */
 const TransformableSchema: z.ZodObject<{
-  transformations: z.ZodOptional<z.ZodArray<z.ZodEnum<typeof TransformationType>>>;
+  transformations: z.ZodOptional<z.ZodArray<typeof TransformationSchema>>;
 }> = z.object({
-  transformations: z.array(z.nativeEnum(TransformationType)).optional(),
+  transformations: z.array(TransformationSchema).optional(),
 });
 
 /**
@@ -572,7 +595,7 @@ export const CliArgumentsSchema: z.ZodType<CliArgumentsOutput> = z.object({
   removeModifiers: z.boolean().optional().describe('Apply the RemoveModifiers transformation'),
   allowIp: z.boolean().optional().describe('Use ValidateAllowIp instead of Validate'),
   convertToAscii: z.boolean().optional().describe('Apply the ConvertToAscii transformation'),
-  transformation: z.array(z.nativeEnum(TransformationType)).optional().describe(
+  transformation: z.array(TransformationSchema).optional().describe(
     'Explicit transformation pipeline (overrides all other transformation flags)',
   ),
   // Filtering
