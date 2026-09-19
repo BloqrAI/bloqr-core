@@ -158,23 +158,20 @@ Deno.test('validateConfiguration - accepts every registered transformation (issu
   }
 });
 
-Deno.test('validateConfiguration - rejects commercial-only transformations that silently no-op', () => {
-  // ConflictDetection/RuleOptimizer exist on TransformationType but are never
-  // registered by TransformationRegistry in this OSS package, so
-  // TransformationPipeline.transform() would silently skip them at compile
-  // time. Validation must reject them rather than let a config "succeed"
-  // and then quietly drop the requested transformation.
-  for (const transformation of ['ConflictDetection', 'RuleOptimizer']) {
-    const config = {
-      name: 'Test',
-      sources: [{ source: 'https://example.com' }],
-      transformations: [transformation],
-    };
-    const result = validateConfiguration(config);
+Deno.test('validateConfiguration - rejects transformation names that are not registered', () => {
+  // Guards against the validator accepting a name that TransformationRegistry
+  // wouldn't actually register - which would let a config "succeed" and then
+  // have TransformationPipeline.transform() silently skip the unrecognized
+  // transformation at compile time (issue #502).
+  const config = {
+    name: 'Test',
+    sources: [{ source: 'https://example.com' }],
+    transformations: ['NotARealTransformation'],
+  };
+  const result = validateConfiguration(config);
 
-    assertEquals(result.valid, false);
-    assertEquals(result.errors.some((e) => e.includes(transformation)), true);
-  }
+  assertEquals(result.valid, false);
+  assertEquals(result.errors.some((e) => e.includes('NotARealTransformation')), true);
 });
 
 Deno.test('validateConfiguration - warns about invalid homepage URL', () => {

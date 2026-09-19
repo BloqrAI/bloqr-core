@@ -106,13 +106,13 @@ function validateSource(source: unknown, index: number): string[] {
  * silently drift out of sync with what `TransformationRegistry.register()`
  * wires up (see issue #502).
  *
- * Deliberately narrower than the full `TransformationType` enum:
- * `ConflictDetection`/`RuleOptimizer` are commercial-only transformation
- * types that exist on the enum but are never registered here -
- * `TransformationPipeline.transform()` silently skips any requested type
- * that isn't registered, so accepting them here would let a config validate
- * successfully and then have the transformation quietly no-op at compile
- * time. See `TransformationRegistry.test.ts`.
+ * Deliberately derived rather than hardcoded as `Object.values(TransformationType)`:
+ * `TransformationPipeline.transform()` silently skips any requested type that isn't
+ * registered, so accepting a name here that `TransformationRegistry` doesn't
+ * register would let a config validate successfully and then have the
+ * transformation quietly no-op at compile time (this bit `ConflictDetection`/
+ * `RuleOptimizer` before they were implemented in #512 - see
+ * `TransformationRegistry.test.ts`).
  */
 const VALID_TRANSFORMATIONS: string[] = [...CANONICAL_TRANSFORMATION_ORDER];
 

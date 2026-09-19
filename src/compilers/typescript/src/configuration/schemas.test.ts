@@ -902,6 +902,8 @@ Deno.test('CliArgumentsSchema - should validate with every documented --transfor
     'TrimLines',
     'InsertFinalNewLine',
     'ConvertToAscii',
+    'ConflictDetection',
+    'RuleOptimizer',
   ];
   const args = {
     input: ['https://example.com/list.txt'],
@@ -912,20 +914,17 @@ Deno.test('CliArgumentsSchema - should validate with every documented --transfor
   assertEquals(result.success, true);
 });
 
-Deno.test('CliArgumentsSchema - should reject --transformation with commercial-only names (issue #502)', () => {
-  // Guards against CliArgumentsSchema.transformation regressing back to
-  // z.nativeEnum(TransformationType), which would let the CLI accept the same
-  // commercial-only, unregistered transformations that ConfigurationValidator
-  // and orchestration/validation.ts now reject.
-  for (const transformation of ['ConflictDetection', 'RuleOptimizer']) {
-    const args = {
-      input: ['https://example.com/list.txt'],
-      output: 'out.txt',
-      transformation: [transformation],
-    };
-    const result = CliArgumentsSchema.safeParse(args);
-    assertEquals(result.success, false, `expected '${transformation}' to be rejected`);
-  }
+Deno.test('CliArgumentsSchema - should reject --transformation with an unregistered name (issue #502)', () => {
+  // Guards against CliArgumentsSchema.transformation accepting a name
+  // TransformationRegistry wouldn't actually register, which would let the
+  // CLI accept a transformation that silently no-ops at compile time.
+  const args = {
+    input: ['https://example.com/list.txt'],
+    output: 'out.txt',
+    transformation: ['NotARealTransformation'],
+  };
+  const result = CliArgumentsSchema.safeParse(args);
+  assertEquals(result.success, false);
 });
 
 Deno.test('CliArgumentsSchema - should validate with filtering flags', () => {
