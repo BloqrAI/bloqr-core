@@ -73,20 +73,17 @@ public enum ConfigReader {
 
     /// Serializes a configuration back to a YAML string.
     public static func toYAML(_ config: CompilerConfig) throws(CompilerError) -> String {
-        // Round-trip through JSON so key ordering/coding-key rules match the JSON encoder,
-        // rather than depending on YAMLEncoder's own Codable handling of optionals.
-        let json = try toJSON(config)
-        guard let jsonData = json.data(using: .utf8) else {
-            throw CompilerError.serialization("could not round-trip configuration through JSON for YAML output")
-        }
-        // `JSONSerialization.jsonObject` and `Yams.dump` both throw their own untyped error
-        // types (not `CompilerError`) - wrap them explicitly rather than letting either
-        // propagate raw, matching every other serialization path in this file.
+        // Encode `CompilerConfig` directly via `YAMLEncoder` - it goes through the same
+        // `Encodable.encode(to:)` conformance `toJSON`/`toTOML` do (including that method's
+        // selective omission of empty optional fields), so there's no need to round-trip
+        // through JSON first. An earlier version of this function did round-trip through
+        // `JSONSerialization.jsonObject` + `Yams.dump(object:)` to get JSON-like key ordering,
+        // but `Yams.dump(object:)` operates on a type-erased `Any` tree and can fail to
+        // represent values that came back from `JSONSerialization` as Foundation bridging
+        // types (e.g. `NSString`) rather than native Swift ones - encoding straight from the
+        // `Encodable` value avoids that failure mode entirely, per `testToYAMLRoundTrip`.
         do {
-            guard let object = try JSONSerialization.jsonObject(with: jsonData) as? [String: Any] else {
-                throw CompilerError.serialization("could not round-trip configuration through JSON for YAML output")
-            }
-            return try Yams.dump(object: object)
+            return try YAMLEncoder().encode(config)
         } catch let error as CompilerError {
             throw error
         } catch {

@@ -107,10 +107,15 @@ final class ConfigReaderTests: XCTestCase {
 
     func testToYAMLRoundTrip() throws {
         // Regression test for a real bug this file's typed-throws pass (`throws(CompilerError)`)
-        // surfaced: toYAML used to let `JSONSerialization.jsonObject`/`Yams.dump` propagate
-        // their own untyped errors raw instead of wrapping them in `CompilerError`, unlike every
-        // other serialization path here. Round-tripping back through `ConfigReader.parse`
-        // confirms the fix didn't change the actual YAML output, only its error handling.
+        // surfaced: the old toYAML round-tripped through `JSONSerialization.jsonObject` into a
+        // type-erased `[String: Any]` for `Yams.dump(object:)`, which actually failed at
+        // runtime ("Failed to represent 1.0.0") because JSONSerialization's Foundation-bridged
+        // values (e.g. NSString) aren't always ones Yams's `Any`-based encoder recognizes -
+        // there was no test exercising toYAML at all before this one, so nothing had caught it.
+        // toYAML now encodes `CompilerConfig` directly via `YAMLEncoder`, the same `Encodable`
+        // path toJSON/toTOML use, which both fixes the runtime failure and gives toYAML proper
+        // `CompilerError` wrapping for whatever it can still throw. Round-tripping back through
+        // `ConfigReader.parse` confirms the fixed output actually parses back correctly.
         var config = CompilerConfig(name: "Test", version: "1.0.0")
         config.sources = [FilterSource(name: "Local", source: "./rules.txt")]
         let yaml = try ConfigReader.toYAML(config)
