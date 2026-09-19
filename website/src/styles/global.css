@@ -158,15 +158,18 @@ h4 {
   padding: 0 24px;
 }
 
+.site-header {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
 header {
   background-color: var(--header-bg);
   -webkit-backdrop-filter: blur(16px);
   backdrop-filter: blur(16px);
   color: var(--text-color);
   padding: 1.1rem 0;
-  position: sticky;
-  top: 0;
-  z-index: 100;
   border-bottom: 1px solid var(--border-color);
 }
 
@@ -219,9 +222,6 @@ nav {
   -webkit-backdrop-filter: blur(16px);
   backdrop-filter: blur(16px);
   padding: 0.4rem 0;
-  position: sticky;
-  top: 62px;
-  z-index: 99;
   border-bottom: 1px solid var(--border-color);
 }
 
@@ -722,7 +722,6 @@ footer a:hover {
   }
 
   nav {
-    position: static;
     max-height: 0;
     overflow: hidden;
     padding: 0;
