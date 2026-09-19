@@ -1,6 +1,7 @@
 import * as React from "react"
 import { Link, graphql } from "gatsby"
 import Layout from "../components/Layout"
+import Seo from "../components/Seo"
 import { useMermaidDiagrams } from "../components/Mermaid"
 
 const DocTemplate = ({ data }) => {
@@ -26,6 +27,7 @@ export const query = graphql`
   query ($id: String!) {
     markdownRemark(id: { eq: $id }) {
       html
+      excerpt(pruneLength: 200)
       frontmatter {
         title
       }
@@ -37,8 +39,11 @@ export const query = graphql`
 `
 
 export const Head = ({ data }) => {
-  const title = data.markdownRemark.frontmatter.title || "Documentation"
-  return <title>{title} - AdGuard Tools and Utilities</title>
+  const doc = data.markdownRemark
+  const title = doc.frontmatter.title || "Documentation"
+  return (
+    <Seo title={title} description={doc.excerpt} pathname={doc.fields.slug} />
+  )
 }
 
 export default DocTemplate

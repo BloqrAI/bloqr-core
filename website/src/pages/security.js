@@ -1,6 +1,7 @@
 import * as React from "react"
 import { Link } from "gatsby"
 import Layout from "../components/Layout"
+import Seo from "../components/Seo"
 
 const SecurityPage = () => {
   return (
@@ -567,5 +568,9 @@ const SecurityPage = () => {
 export default SecurityPage
 
 export const Head = () => (
-  <title>Security - Bloqr Core</title>
+  <Seo
+    title="Security"
+    description="Learn how the built-in security features protect against malicious filter lists, tampering, and network attacks."
+    pathname="/security"
+  />
 )

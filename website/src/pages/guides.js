@@ -1,6 +1,7 @@
 import * as React from "react"
 import { Link, graphql } from "gatsby"
 import Layout from "../components/Layout"
+import Seo from "../components/Seo"
 
 const GuidesPage = ({ data }) => {
   return (
@@ -46,4 +47,10 @@ export const query = graphql`
 
 export default GuidesPage
 
-export const Head = () => <title>Guides - Bloqr Core</title>
+export const Head = () => (
+  <Seo
+    title="Guides"
+    description="Step-by-step guides to help you get the most out of Bloqr Core's compilers and tools."
+    pathname="/guides"
+  />
+)

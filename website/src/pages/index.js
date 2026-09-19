@@ -1,6 +1,7 @@
 import * as React from "react"
 import { Link } from "gatsby"
 import Layout from "../components/Layout"
+import Seo from "../components/Seo"
 
 const IndexPage = () => {
   return (
@@ -159,4 +160,9 @@ const IndexPage = () => {
 
 export default IndexPage
 
-export const Head = () => <title>Bloqr Core</title>
+export const Head = () => (
+  <Seo
+    description="A comprehensive multi-language toolkit for compiling, validating, and managing AdGuard-syntax ad-blocking filter lists — with a Dashboard app to tie it all together."
+    pathname="/"
+  />
+)

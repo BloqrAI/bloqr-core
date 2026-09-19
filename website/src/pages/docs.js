@@ -1,6 +1,7 @@
 import * as React from "react"
 import { Link, graphql } from "gatsby"
 import Layout from "../components/Layout"
+import Seo from "../components/Seo"
 
 const DocsPage = ({ data }) => {
   // Group docs by category
@@ -95,4 +96,10 @@ export const query = graphql`
 
 export default DocsPage
 
-export const Head = () => <title>Documentation - Bloqr Core</title>
+export const Head = () => (
+  <Seo
+    title="Documentation"
+    description="Comprehensive guides covering all features and components of the Bloqr Core toolkit."
+    pathname="/docs"
+  />
+)
