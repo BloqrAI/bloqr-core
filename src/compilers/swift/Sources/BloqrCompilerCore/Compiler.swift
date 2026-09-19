@@ -326,7 +326,13 @@ public struct BloqrCompiler: Sendable {
         guard let data = try? Data(contentsOf: path), let text = String(data: data, encoding: .utf8) else {
             return 0
         }
-        return text.split(separator: "\n", omittingEmptySubsequences: false)
+        // Normalize CRLF to LF *before* splitting: Swift's `String` treats "\r\n" as a single
+        // extended grapheme cluster, so `split(separator: "\n")` never matches at a CRLF
+        // boundary and a whole CRLF file collapses into one giant "line". Normalizing first
+        // avoids that entirely, rather than trying to trim a lone "\n" out from inside a
+        // grapheme cluster after the fact.
+        let normalized = text.replacingOccurrences(of: "\r\n", with: "\n")
+        return normalized.split(separator: "\n", omittingEmptySubsequences: false)
             .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
             .filter { !$0.isEmpty && !$0.hasPrefix("!") && !$0.hasPrefix("#") }
             .count
