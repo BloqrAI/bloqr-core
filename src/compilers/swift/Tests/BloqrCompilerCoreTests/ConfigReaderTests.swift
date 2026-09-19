@@ -86,13 +86,15 @@ final class ConfigReaderTests: XCTestCase {
     }
 
     func testStripJSONCCommentsDoesNotMergeAdjacentTokens() throws {
-        // Without a whitespace separator left in place of the comment, this would collapse
-        // to `{"n": 10}` - silently corrupting the value from 1 to 10.
+        // `{"n": 1/*comment*/0}` was never valid JSONC (no separator between the two number
+        // tokens) - but without a whitespace placeholder left behind, stripping the comment
+        // would silently produce `{"n": 10}`, a corrupted value that parses without error.
+        // With the placeholder, it becomes `{"n": 1 0}`, which correctly fails to parse
+        // instead of silently succeeding with the wrong number.
         let input = #"{"n": 1/*comment*/0}"#
         let stripped = try stripJSONCComments(input)
-        let data = Data(stripped.utf8)
-        let object = try JSONSerialization.jsonObject(with: data) as? [String: Any]
-        XCTAssertEqual(object?["n"] as? Int, 1)
+        XCTAssertFalse(stripped.contains("10"))
+        XCTAssertThrowsError(try JSONSerialization.jsonObject(with: Data(stripped.utf8)))
     }
 
     func testToJSONRoundTrip() throws {
