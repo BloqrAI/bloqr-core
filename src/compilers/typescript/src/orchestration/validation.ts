@@ -5,6 +5,7 @@
 
 import { isAbsolute, normalize, resolve } from 'node:path';
 import type { IConfiguration } from '../index.ts';
+import { TransformationType } from '../types/index.ts';
 import {
   ConfigurationError,
   ErrorCode,
@@ -97,21 +98,14 @@ function validateSource(source: unknown, index: number): string[] {
 }
 
 /**
- * Valid transformation names from @bloqr/compiler-core
+ * Valid transformation names from @bloqr/compiler-core.
+ *
+ * Derived from {@link TransformationType} rather than a hand-maintained string
+ * list, so this validator can never reject a transformation the compiler
+ * itself supports (see issue #502 - it previously drifted out of sync when
+ * `ConflictDetection`/`RuleOptimizer` were added to the enum).
  */
-const VALID_TRANSFORMATIONS = [
-  'RemoveComments',
-  'Compress',
-  'RemoveModifiers',
-  'Validate',
-  'ValidateAllowIp',
-  'Deduplicate',
-  'InvertAllow',
-  'RemoveEmptyLines',
-  'TrimLines',
-  'InsertFinalNewLine',
-  'ConvertToAscii',
-];
+const VALID_TRANSFORMATIONS: string[] = Object.values(TransformationType);
 
 /**
  * Validates transformations array

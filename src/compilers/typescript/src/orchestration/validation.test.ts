@@ -15,6 +15,7 @@ import {
   validateUrl,
 } from './validation.ts';
 import { ConfigurationError, ResourceLimitError } from './errors.ts';
+import { TransformationType } from '../types/index.ts';
 
 // validateConfiguration tests
 Deno.test('validateConfiguration - validates a valid minimal configuration', () => {
@@ -134,6 +135,26 @@ Deno.test('validateConfiguration - accepts valid transformations', () => {
   const result = validateConfiguration(config);
 
   assertEquals(result.valid, true);
+});
+
+Deno.test('validateConfiguration - accepts every TransformationType member (issue #502 regression)', () => {
+  // Guards against the validator's transformation list drifting out of sync
+  // with TransformationType again - it previously rejected ConflictDetection
+  // and RuleOptimizer even though the compiler itself supports them.
+  for (const transformation of Object.values(TransformationType)) {
+    const config = {
+      name: 'Test',
+      sources: [{ source: 'https://example.com' }],
+      transformations: [transformation],
+    };
+    const result = validateConfiguration(config);
+
+    assertEquals(
+      result.valid,
+      true,
+      `expected '${transformation}' to be accepted, got errors: ${result.errors.join(', ')}`,
+    );
+  }
 });
 
 Deno.test('validateConfiguration - warns about invalid homepage URL', () => {
