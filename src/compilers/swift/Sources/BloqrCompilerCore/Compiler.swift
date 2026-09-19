@@ -211,17 +211,26 @@ public struct BloqrCompiler: Sendable {
             let rulesDir = options.rulesDirectory ?? Self.rulesDirectory(configPath: resolvedConfigPath)
             try Self.createDirectory(rulesDir)
             let destination = rulesDir.appendingPathComponent("adguard_user_filter.txt")
-            do {
-                if FileManager.default.fileExists(atPath: destination.path) {
-                    try FileManager.default.removeItem(at: destination)
+            if destination.standardizedFileURL.path != outputPath.standardizedFileURL.path {
+                // Copy to a staging path first and swap it in with `replaceItemAt`, so a
+                // failed copy (disk full, permissions) can never leave `destination` deleted
+                // with nothing in its place - the previous good rules file stays intact until
+                // the new one is fully written.
+                let staging = rulesDir.appendingPathComponent(".adguard_user_filter.txt.\(UUID().uuidString).tmp")
+                do {
+                    try FileManager.default.copyItem(at: outputPath, to: staging)
+                    _ = try FileManager.default.replaceItemAt(destination, withItemAt: staging)
+                } catch {
+                    try? FileManager.default.removeItem(at: staging)
+                    throw CompilerError.fileSystem(
+                        context: "copying \(outputPath.path) to \(destination.path)",
+                        underlying: error.localizedDescription
+                    )
                 }
-                try FileManager.default.copyItem(at: outputPath, to: destination)
-            } catch {
-                throw CompilerError.fileSystem(
-                    context: "copying \(outputPath.path) to \(destination.path)",
-                    underlying: error.localizedDescription
-                )
             }
+            // Else: the requested output path already *is* the rules destination (e.g.
+            // `-o <rules-dir>/adguard_user_filter.txt`) - the compiler just wrote it there
+            // directly, so there's nothing left to copy.
             result.copiedToRules = true
             result.rulesDestination = destination
         }
