@@ -5,7 +5,15 @@ import ThemeToggle from "./ThemeToggle"
 import Search from "./Search"
 import bloqrMark from "../images/brand/bloqr-mark.svg"
 
+const NavIcon = () => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M4 6h16M4 12h16M4 18h16" />
+  </svg>
+)
+
 const Layout = ({ children, pageTitle }) => {
+  const [navOpen, setNavOpen] = React.useState(false)
+
   const data = useStaticQuery(graphql`
     query SearchIndexQuery {
       allMarkdownRemark {
@@ -40,35 +48,45 @@ const Layout = ({ children, pageTitle }) => {
           <div className="header-actions">
             <Search searchIndex={searchIndex} />
             <ThemeToggle />
+            <button
+              type="button"
+              className="nav-toggle"
+              aria-label={navOpen ? "Close navigation menu" : "Open navigation menu"}
+              aria-expanded={navOpen}
+              aria-controls="site-nav"
+              onClick={() => setNavOpen((open) => !open)}
+            >
+              <NavIcon />
+            </button>
           </div>
         </div>
       </header>
-      <nav>
+      <nav id="site-nav" className={navOpen ? "nav-open" : undefined}>
         <div className="container">
           <ul>
             <li>
-              <Link to="/">Home</Link>
+              <Link to="/" onClick={() => setNavOpen(false)}>Home</Link>
             </li>
             <li>
-              <Link to="/getting-started">Getting Started</Link>
+              <Link to="/getting-started" onClick={() => setNavOpen(false)}>Getting Started</Link>
             </li>
             <li>
-              <Link to="/dashboard">Dashboard</Link>
+              <Link to="/dashboard" onClick={() => setNavOpen(false)}>Dashboard</Link>
             </li>
             <li>
-              <Link to="/security">Security</Link>
+              <Link to="/security" onClick={() => setNavOpen(false)}>Security</Link>
             </li>
             <li>
-              <Link to="/docs">Documentation</Link>
+              <Link to="/docs" onClick={() => setNavOpen(false)}>Documentation</Link>
             </li>
             <li>
-              <Link to="/guides">Guides</Link>
+              <Link to="/guides" onClick={() => setNavOpen(false)}>Guides</Link>
             </li>
             <li>
-              <Link to="/benchmarks">Benchmarks</Link>
+              <Link to="/benchmarks" onClick={() => setNavOpen(false)}>Benchmarks</Link>
             </li>
             <li>
-              <Link to="/improvements">Recent Improvements</Link>
+              <Link to="/improvements" onClick={() => setNavOpen(false)}>Recent Improvements</Link>
             </li>
           </ul>
         </div>
