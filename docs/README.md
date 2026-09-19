@@ -11,7 +11,7 @@ This directory contains comprehensive documentation for the ad-blocking reposito
 | [Getting Started](getting-started.md) | Installation and first steps |
 | [Configuration Reference](configuration-reference.md) | Complete configuration schema |
 | [Docker Guide](docker-guide.md) | Docker development environment |
-| [Compiler Comparison](compiler-comparison.md) | Compare TypeScript, .NET, Python, Rust compilers |
+| [Compiler Comparison](compiler-comparison.md) | Compare TypeScript, .NET, Python, Rust, Swift compilers |
 | [Release Guide](release-guide.md) | Creating releases with automatic binary builds |
 
 ## Security Documentation
@@ -68,6 +68,7 @@ The AdGuard DNS API clients (and their generated API reference docs) moved to [`
 | Python Compiler | [src/compilers/python/README.md](../src/compilers/python/README.md) |
 | Rust Compiler | [src/compilers/rust/README.md](../src/compilers/rust/README.md) |
 | PowerShell Toolkit | [src/compilers/powershell/README.md](../src/compilers/powershell/README.md) |
+| Swift Compiler | [src/compilers/swift/README.md](../src/compilers/swift/README.md) |
 | AdGuard DNS API Clients (.NET, TypeScript, Rust, PowerShell) | [`BloqrAI/bloqr-apiclients`](https://github.com/BloqrAI/bloqr-apiclients) |
 
 ### Development

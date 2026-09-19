@@ -6,7 +6,7 @@ All rules compilers in this repository use the same configuration schema, valida
 
 **JSON and JSONC are the documented, supported formats** — all examples below use JSON, and both are what the schema (`$schema` field) validates against `compiler-config.schema.json`. JSONC (`.jsonc`) is plain JSON with `//`/`/* */` comments and trailing commas allowed, useful for documenting a config file inline.
 
-JSONC support is currently per-compiler: the **.NET compiler** and the **Dashboard** (whose compiler-config wizard writes heavily-commented `.jsonc` by default, see #268) detect the `.jsonc` extension and tolerate comments/trailing commas when reading it. The **TypeScript, Python, and Rust** compilers parse configuration with a strict JSON parser and don't yet recognize the `.jsonc` extension — use plain `.json` (no comments) with those, or run the file through the .NET compiler/Dashboard first to strip comments if you want to share one `.jsonc` source across every compiler.
+JSONC support is currently per-compiler: the **.NET compiler** and the **Dashboard** (whose compiler-config wizard writes heavily-commented `.jsonc` by default, see #268) detect the `.jsonc` extension and tolerate comments/trailing commas when reading it. The **TypeScript, Python, Rust, and Swift** compilers parse configuration with a strict JSON parser and don't yet recognize the `.jsonc` extension — use plain `.json` (no comments) with those, or run the file through the .NET compiler/Dashboard first to strip comments if you want to share one `.jsonc` source across every compiler.
 
 YAML and TOML remain supported by the underlying config readers for backward compatibility (`.yaml`/`.yml` via each language's YAML library, `.toml` via each language's TOML library), but are no longer documented here. Convert an existing YAML/TOML config to JSON or JSONC if you want schema validation and IDE autocomplete against `compiler-config.schema.json`.
 
@@ -615,16 +615,16 @@ This checks:
 
 ## CLI Options by Compiler
 
-| Option | TypeScript | .NET | Python | Rust | PowerShell |
-|--------|------------|------|--------|------|------------|
-| Config file | `-c`, `--config` | `-c`, `--config` | `-c`, `--config` | `-c`, `--config` | `-ConfigPath` |
-| Output file | `-o`, `--output` | `-o`, `--output` | `-o`, `--output` | `-o`, `--output` | `-OutputPath` |
-| Copy to rules | `-r`, `--copy-to-rules` | `--copy` | `-r`, `--copy-to-rules` | `-r`, `--copy-to-rules` | - |
-| Debug output | `-d`, `--debug` | `--verbose` | `-d`, `--debug` | `-d`, `--debug` | - |
-| Validate only | - | `--validate` | - | - | - |
-| Version | `--version` | `-v`, `--version` | `-V`, `--version` | `-V`, `--version` | - |
-| Help | `--help` | `--help` | `--help` | `--help` | - |
-| Engine | `--engine` | `--engine` | `--engine` | `--engine` | `-Engine` |
-| Browser output path | `--browser-output` | `--browser-output` | `--browser-output` | `--browser-output` | `-BrowserOutputPath` |
+| Option | TypeScript | .NET | Python | Rust | Swift | PowerShell |
+|--------|------------|------|--------|------|-------|------------|
+| Config file | `-c`, `--config` | `-c`, `--config` | `-c`, `--config` | `-c`, `--config` | `-c`, `--config` | `-ConfigPath` |
+| Output file | `-o`, `--output` | `-o`, `--output` | `-o`, `--output` | `-o`, `--output` | `-o`, `--output` | `-OutputPath` |
+| Copy to rules | `-r`, `--copy-to-rules` | `--copy` | `-r`, `--copy-to-rules` | `-r`, `--copy-to-rules` | `-r` | - |
+| Debug output | `-d`, `--debug` | `--verbose` | `-d`, `--debug` | `-d`, `--debug` | - | - |
+| Validate only | - | `--validate` | - | - | `compile --validate` | - |
+| Version | `--version` | `-v`, `--version` | `-V`, `--version` | `-V`, `--version` | `version` | - |
+| Help | `--help` | `--help` | `--help` | `--help` | `--help` | - |
+| Engine | `--engine` | `--engine` | `--engine` | `--engine` | `--engine` | `-Engine` |
+| Browser output path | `--browser-output` | `--browser-output` | `--browser-output` | `--browser-output` | `--browser-output` | `-BrowserOutputPath` |
 
 `Engine`/`Browser output path` correspond to the config-level `engine`/`defaultEngine` fields above — see [Dual-Engine Compilation](architecture/dual-engine-compilation.md). PowerShell's chunked/benchmark paths (`Invoke-BloqrCompilerChunked`) don't yet support these two, matching the other wrappers' chunking paths.

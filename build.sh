@@ -21,6 +21,7 @@ BUILD_RUST=false
 BUILD_DOTNET=false
 BUILD_TYPESCRIPT=false
 BUILD_PYTHON=false
+BUILD_SWIFT=false
 
 # Function to print usage
 usage() {
@@ -35,6 +36,10 @@ OPTIONS:
     --dotnet            Build .NET projects
     --typescript        Build TypeScript/Deno projects
     --python            Build Python projects
+    --swift             Build Swift projects (macOS-only; opt-in, not part of --all
+                        since Swift/Xcode only builds on macOS and --all runs on
+                        non-macOS CI. Skips gracefully with a message if Swift is
+                        not installed.)
     --debug             Use debug profile (default)
     --release           Use release profile
     -h, --help          Show this help message
@@ -44,6 +49,7 @@ EXAMPLES:
     $0 --rust           # Build only Rust projects in debug mode
     $0 --dotnet --release   # Build only .NET projects in release mode
     $0 --all --release  # Build all projects in release mode
+    $0 --swift          # Build only Swift projects (macOS only)
 
 EOF
     exit "${1:-0}"
@@ -72,6 +78,10 @@ while [[ $# -gt 0 ]]; do
             BUILD_PYTHON=true
             shift
             ;;
+        --swift)
+            BUILD_SWIFT=true
+            shift
+            ;;
         --debug)
             BUILD_PROFILE="debug"
             shift
@@ -91,7 +101,7 @@ while [[ $# -gt 0 ]]; do
 done
 
 # If no specific project selected, build all
-if [[ "$BUILD_ALL" == false ]] && [[ "$BUILD_RUST" == false ]] && [[ "$BUILD_DOTNET" == false ]] && [[ "$BUILD_TYPESCRIPT" == false ]] && [[ "$BUILD_PYTHON" == false ]]; then
+if [[ "$BUILD_ALL" == false ]] && [[ "$BUILD_RUST" == false ]] && [[ "$BUILD_DOTNET" == false ]] && [[ "$BUILD_TYPESCRIPT" == false ]] && [[ "$BUILD_PYTHON" == false ]] && [[ "$BUILD_SWIFT" == false ]]; then
     BUILD_ALL=true
 fi
 
@@ -101,6 +111,9 @@ if [[ "$BUILD_ALL" == true ]]; then
     BUILD_DOTNET=true
     BUILD_TYPESCRIPT=true
     BUILD_PYTHON=true
+    # NOTE: Swift is intentionally NOT included in --all. Swift/Xcode only
+    # builds on macOS, and --all is exercised by non-macOS CI runners (see
+    # .github/workflows/build-scripts-tests.yml). Pass --swift explicitly.
 fi
 
 echo "╔═══════════════════════════════════════════════════════════╗"
@@ -225,6 +238,33 @@ build_python() {
     echo ""
 }
 
+# Function to build Swift projects (macOS-only)
+build_swift() {
+    echo -e "${BLUE}Building Swift projects...${NC}"
+
+    # Check if Swift is installed; skip gracefully on non-macOS runners
+    if ! command -v swift &> /dev/null; then
+        echo -e "${YELLOW}⊘ Swift is not installed (macOS/Xcode required). Skipping Swift build.${NC}"
+        echo ""
+        return 0
+    fi
+
+    # Build Rules Compiler Swift
+    echo "→ Building Rules Compiler (Swift)..."
+    local swift_flags=""
+    if [[ "$BUILD_PROFILE" == "release" ]]; then
+        swift_flags="-c release"
+    fi
+    if (cd src/compilers/swift && swift build $swift_flags); then
+        echo -e "${GREEN}✓ Rules Compiler (Swift) built successfully${NC}"
+    else
+        echo -e "${RED}✗ Rules Compiler (Swift) build failed${NC}"
+        BUILD_FAILED=true
+    fi
+
+    echo ""
+}
+
 # Build projects based on flags
 if [[ "$BUILD_RUST" == true ]]; then
     build_rust
@@ -240,6 +280,10 @@ fi
 
 if [[ "$BUILD_PYTHON" == true ]]; then
     build_python
+fi
+
+if [[ "$BUILD_SWIFT" == true ]]; then
+    build_swift
 fi
 
 # Summary

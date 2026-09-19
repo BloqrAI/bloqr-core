@@ -33,9 +33,9 @@ const AdBlockCompilerPage = () => {
           </a>
           . It replaced the AdGuard-maintained{" "}
           <code>@adguard/hostlist-compiler</code> npm package that the .NET,
-          Python, and Rust compilers in this repo used to shell out to — they
-          now shell out to <code>@bloqr/compiler-core</code> instead, and
-          the TypeScript compiler <em>is</em> the package, compiling
+          Python, Rust, and Swift compilers in this repo used to shell out to
+          — they now shell out to <code>@bloqr/compiler-core</code> instead,
+          and the TypeScript compiler <em>is</em> the package, compiling
           in-process.
         </p>
         <p>
@@ -163,8 +163,8 @@ console.log(\`Compiled \${rules.length} rules\`);`}
         <p>
           The TypeScript compiler (<code>src/compilers/typescript/</code>)
           compiles in-process — it <em>is</em> this package. The .NET,
-          Python, and Rust compilers shell out to it via Deno instead of
-          maintaining their own copy of the engine:
+          Python, Rust, and Swift compilers shell out to it via Deno instead
+          of maintaining their own copy of the engine:
         </p>
         <pre style={{ marginTop: "0.5rem" }}>
           {`deno run --allow-read --allow-write --allow-env --allow-net --allow-run \\
@@ -354,8 +354,8 @@ console.log(\`Compiled \${rules.length} rules\`);`}
               <Link to="/compiler-comparison">Compare Compilers</Link>
             </h3>
             <p>
-              See how the TypeScript, .NET, Python, and Rust compilers stack
-              up.
+              See how the TypeScript, .NET, Python, Rust, and Swift compilers
+              stack up.
             </p>
           </div>
           <div className="feature">

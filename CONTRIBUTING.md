@@ -28,6 +28,7 @@ Install the required tools for the language you're working with:
 - **Python**: [Python 3.9+](https://www.python.org/)
 - **Rust**: [Rust 1.86+](https://rustup.rs/)
 - **PowerShell**: [PowerShell 7+](https://github.com/PowerShell/PowerShell)
+- **Swift**: [Swift 5.9+ / Xcode 15+](https://www.swift.org/install/) (macOS-native; the Swift wrapper only builds on macOS)
 
 ### Initial Setup
 
@@ -59,6 +60,7 @@ bloqr-core/
 │   ├── compilers/typescript/       # TypeScript rules compiler (@bloqr/compiler-core)
 │   ├── compilers/python/            # Python compiler
 │   ├── compilers/powershell/        # PowerShell rules compiler toolkit (sole cross-platform scripting compiler)
+│   ├── compilers/swift/              # Swift rules compiler (macOS-native Swift Package)
 │   ├── validation/                  # Rust validation library + CLI
 │   └── website/                     # Gatsby documentation site
 └── .github/                     # GitHub workflows and configuration
@@ -96,6 +98,7 @@ Follow the coding standards for your language (see below).
 # Or use language-specific commands
 cd src/compilers/typescript && deno task test
 cd src/compilers/python && pytest
+cd src/compilers/swift && swift test   # macOS only
 ```
 
 ### 4. Lint Your Code
@@ -115,6 +118,9 @@ cargo clippy --workspace
 
 # PowerShell
 Invoke-ScriptAnalyzer -Path src/compilers/powershell -Recurse
+
+# Swift (macOS only)
+cd src/compilers/swift && swift build
 ```
 
 ### 5. Commit Changes
@@ -175,6 +181,12 @@ git commit -m "Fix: description of what was fixed"
 - Never use `ConvertTo-SecureString` with plaintext secrets
 - Use Pester v5 for tests
 
+#### Swift
+- Swift 5.9+ (Xcode 15+), macOS-native
+- Follow standard Swift API design guidelines
+- Use swift-argument-parser conventions for CLI subcommands
+- Use XCTest for tests
+
 ### Security Practices
 
 **NEVER commit:**
@@ -215,6 +227,7 @@ cd src/compilers/dotnet && dotnet test
 cd src/compilers/python && pytest
 cargo test -p bloqr-compiler-core -p bloqr-compiler
 cd src/compilers/powershell && Invoke-Pester
+cd src/compilers/swift && swift test   # macOS only
 ```
 
 ## Pull Request Process

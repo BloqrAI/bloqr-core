@@ -46,6 +46,9 @@ const GettingStartedPage = () => {
               <li>
                 <strong>Rust:</strong> Single binary, no runtime dependencies
               </li>
+              <li>
+                <strong>Swift:</strong> macOS-native library + CLI
+              </li>
             </ul>
             <p>
               <Link to="/compiler-comparison">Compare compilers →</Link>
@@ -72,6 +75,10 @@ const GettingStartedPage = () => {
           </li>
           <li>
             <strong>PowerShell 7+</strong> for PowerShell scripts
+          </li>
+          <li>
+            <strong>Swift 5.9+ (Xcode 15+)</strong> for the Swift compiler
+            (macOS-native)
           </li>
         </ul>
         <p>
@@ -111,6 +118,9 @@ const GettingStartedPage = () => {
               ./build.sh --python
               <br />
               ./build.sh --rust
+              <br />
+              ./build.sh --swift{" "}
+              {/* macOS only; not part of the default ./build.sh */}
             </pre>
           </li>
           <li>
@@ -135,6 +145,11 @@ const GettingStartedPage = () => {
               # Rust
               <br />
               cargo run --release -p bloqr-compiler
+              <br />
+              <br />
+              # Swift (macOS only)
+              <br />
+              cd src/compilers/swift && swift run bloqr-compiler
             </pre>
           </li>
         </ol>

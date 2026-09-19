@@ -224,10 +224,11 @@ function Show-BuildMenu {
             "Build .NET Projects"
             "Build TypeScript Projects"
             "Build Python Projects"
+            "Build Swift Projects (macOS only)"
             "Run Build Tests"
             "← Back to Main Menu"
         )
-        
+
         switch ($choice) {
             "1" { Invoke-SafeCommand { & "$Script:RootDir\build.ps1" -All } "Building all projects (debug)"; Pause }
             "2" { Invoke-SafeCommand { & "$Script:RootDir\build.ps1" -All -Profile release } "Building all projects (release)"; Pause }
@@ -247,8 +248,15 @@ function Show-BuildMenu {
             }
             "5" { Invoke-SafeCommand { & "$Script:RootDir\build.ps1" -TypeScript } "Building TypeScript"; Pause }
             "6" { Invoke-SafeCommand { & "$Script:RootDir\build.ps1" -Python } "Building Python"; Pause }
-            "7" { Invoke-SafeCommand { & "$Script:RootDir\tools\test-build-scripts.ps1" } "Running build script tests"; Pause }
-            "8" { return }
+            "7" {
+                $profile = Show-Menu -Title "Swift Build Profile (macOS only)" -Options @("Debug", "Release", "← Cancel")
+                switch ($profile) {
+                    "1" { Invoke-SafeCommand { & "$Script:RootDir\build.ps1" -Swift } "Building Swift (debug)"; Pause }
+                    "2" { Invoke-SafeCommand { & "$Script:RootDir\build.ps1" -Swift -Profile release } "Building Swift (release)"; Pause }
+                }
+            }
+            "8" { Invoke-SafeCommand { & "$Script:RootDir\tools\test-build-scripts.ps1" } "Running build script tests"; Pause }
+            "9" { return }
             default { Write-Host "Invalid choice" -ForegroundColor Red; Start-Sleep -Seconds 1 }
         }
     }
@@ -266,6 +274,7 @@ function Show-RulesMenu {
             "Compile with .NET"
             "Compile with Rust"
             "Compile with Python"
+            "Compile with Swift (macOS only)"
             "Run Compiler Tests"
             "← Back to Main Menu"
         )
@@ -378,7 +387,31 @@ function Show-RulesMenu {
                 Pause
             }
             "5" {
-                $testChoice = Show-Menu -Title "Test Which Compiler?" -Options @("TypeScript", "Rust", ".NET", "Python", "← Cancel")
+                $ready = Request-Tool -Command swift -Label "Swift toolchain (macOS/Xcode)" `
+                    -Description "Required to build/run the Swift rules compiler; macOS-native (Xcode 15+)." `
+                    -InstallAction { Write-Host "Install Xcode / the Swift toolchain from https://www.swift.org/install/ (macOS only)" }
+                if ($ready) {
+                    $swiftEngine = Show-EnginePrompt
+                    $swiftBrowserOutput = Read-BrowserOutputPath
+                    Invoke-SafeCommand {
+                        Push-Location "$Script:RootDir\src\compilers\swift"
+                        try {
+                            if ($swiftBrowserOutput) {
+                                swift run bloqr-compiler -c config.json --engine $swiftEngine --browser-output $swiftBrowserOutput
+                            }
+                            else {
+                                swift run bloqr-compiler -c config.json --engine $swiftEngine
+                            }
+                        }
+                        finally {
+                            Pop-Location
+                        }
+                    } "Compiling with Swift"
+                }
+                Pause
+            }
+            "6" {
+                $testChoice = Show-Menu -Title "Test Which Compiler?" -Options @("TypeScript", "Rust", ".NET", "Python", "Swift", "← Cancel")
                 switch ($testChoice) {
                     "1" {
                         Push-Location "$Script:RootDir\src\compilers\typescript"
@@ -401,10 +434,14 @@ function Show-RulesMenu {
                         }
                         finally { Pop-Location }
                     }
+                    "5" {
+                        Push-Location "$Script:RootDir\src\compilers\swift"
+                        try { swift test } finally { Pop-Location }
+                    }
                 }
                 Pause
             }
-            "6" { return }
+            "7" { return }
             default { Write-Host "Invalid choice" -ForegroundColor Red; Start-Sleep -Seconds 1 }
         }
     }
@@ -453,6 +490,7 @@ function Show-BenchmarkMenu {
             "TypeScript"
             "Python"
             "PowerShell"
+            "Swift (macOS only)"
             "← Back to Main Menu"
         )
 
@@ -463,7 +501,8 @@ function Show-BenchmarkMenu {
             "4" { Invoke-SafeCommand { & "$Script:RootDir\benchmark-all.ps1" -Languages typescript } "Benchmarking TypeScript"; Pause }
             "5" { Invoke-SafeCommand { & "$Script:RootDir\benchmark-all.ps1" -Languages python } "Benchmarking Python"; Pause }
             "6" { Invoke-SafeCommand { & "$Script:RootDir\benchmark-all.ps1" -Languages powershell } "Benchmarking PowerShell"; Pause }
-            "7" { return }
+            "7" { Invoke-SafeCommand { & "$Script:RootDir\benchmark-all.ps1" -Languages swift } "Benchmarking Swift"; Pause }
+            "8" { return }
             default { Write-Host "Invalid choice" -ForegroundColor Red; Start-Sleep -Seconds 1 }
         }
     }
@@ -602,13 +641,15 @@ function Show-SystemInfo {
     $denoVersion = if (Get-Command deno -ErrorAction SilentlyContinue) { (deno --version | Select-Object -First 1) } else { "Not installed" }
     $pythonVersion = if (Get-Command python3 -ErrorAction SilentlyContinue) { python3 --version } elseif (Get-Command python -ErrorAction SilentlyContinue) { python --version } else { "Not installed" }
     $pwshVersion = $PSVersionTable.PSVersion.ToString()
+    $swiftVersion = if (Get-Command swift -ErrorAction SilentlyContinue) { (swift --version | Select-Object -First 1) } else { "Not installed" }
     $gitVersion = if (Get-Command git -ErrorAction SilentlyContinue) { git --version } else { "Not installed" }
-    
+
     Write-Host "  Rust (cargo):      $(Test-Tool cargo)  $rustVersion"
     Write-Host "  .NET:              $(Test-Tool dotnet)  $dotnetVersion"
     Write-Host "  Deno:              $(Test-Tool deno)  $denoVersion"
     Write-Host "  Python:            $(Test-Tool python3)  $pythonVersion"
     Write-Host "  PowerShell:        ✓  $pwshVersion"
+    Write-Host "  Swift:             $(Test-Tool swift)  $swiftVersion"
     Write-Host "  Git:               $(Test-Tool git)  $gitVersion"
     Write-Host ""
     
@@ -626,11 +667,13 @@ function Show-SystemInfo {
     $dotnetProjects = (Get-ChildItem -Path "$Script:RootDir\src" -Recurse -Filter "*.csproj" | Measure-Object).Count
     $tsProjects = (Get-ChildItem -Path "$Script:RootDir\src" -Recurse -Filter "deno.json" | Measure-Object).Count
     $pyProjects = (Get-ChildItem -Path "$Script:RootDir\src" -Recurse -Filter "pyproject.toml" | Measure-Object).Count
-    
+    $swiftProjects = (Get-ChildItem -Path "$Script:RootDir\src" -Recurse -Filter "Package.swift" | Measure-Object).Count
+
     Write-Host "  Rust Projects:     $rustProjects packages"
     Write-Host "  .NET Projects:     $dotnetProjects projects"
     Write-Host "  TypeScript:        $tsProjects projects"
     Write-Host "  Python:            $pyProjects projects"
+    Write-Host "  Swift:             $swiftProjects packages"
     Write-Host ""
     
     Pause
