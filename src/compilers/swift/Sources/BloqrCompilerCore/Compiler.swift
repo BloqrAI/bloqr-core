@@ -127,11 +127,19 @@ public struct BloqrCompiler: Sendable {
         let browserOutputPath = Self.absoluteURL(
             options.browserOutputPath ?? Self.deriveBrowserOutputPath(outputPath)
         )
-        // Clear any pre-existing artifact at this path before compiling: the existence check
-        // after the run is how we detect whether *this* invocation produced a browser-syntax
-        // artifact, and a stale file left over from an earlier mixed-engine compile would
-        // otherwise be misreported as this run's output.
-        try Self.removeFileIfPresent(browserOutputPath)
+        // Record whether an artifact already sits at this path, and its modification date, so
+        // that after the run we can tell "this invocation just wrote it" apart from "a stale
+        // file was already here" *without* ever deleting anything up front. Deleting it first
+        // (an earlier version of this check did) is unsafe: `--browser-output` can point at an
+        // arbitrary pre-existing file, and the underlying compiler simply leaves it untouched
+        // for a DNS-only config - deleting it first would destroy that unrelated file for
+        // nothing, since nothing would recreate it.
+        let previousBrowserModDate: Date? = {
+            guard let attributes = try? FileManager.default.attributesOfItem(atPath: browserOutputPath.path) else {
+                return nil
+            }
+            return attributes[.modificationDate] as? Date
+        }()
 
         let (command, args) = try Self.compilerCommand(
             configPath: compileConfigPath.path,
@@ -188,7 +196,29 @@ public struct BloqrCompiler: Sendable {
 
         result.success = true
 
-        if FileManager.default.fileExists(atPath: browserOutputPath.path) {
+        // A browser-syntax artifact exists at this path *from this run* only if either it
+        // didn't exist before and does now, or it existed before and the compiler rewrote it
+        // (its modification date changed) - never from bare existence alone, which a
+        // pre-existing file (a stale artifact from an earlier mixed-engine run, or an
+        // unrelated file `--browser-output` happened to point at) would satisfy without this
+        // invocation having produced anything.
+        let browserModDateNow: Date? = {
+            guard let attributes = try? FileManager.default.attributesOfItem(atPath: browserOutputPath.path) else {
+                return nil
+            }
+            return attributes[.modificationDate] as? Date
+        }()
+        let browserProducedThisRun: Bool
+        switch (previousBrowserModDate, browserModDateNow) {
+        case (nil, .some):
+            browserProducedThisRun = true
+        case let (.some(previous), .some(now)):
+            browserProducedThisRun = now != previous
+        default:
+            browserProducedThisRun = false
+        }
+
+        if browserProducedThisRun {
             result.browserRuleCount = Self.countRules(path: browserOutputPath)
             result.browserOutputHash = try Self.computeHash(path: browserOutputPath)
 
@@ -263,24 +293,6 @@ public struct BloqrCompiler: Sendable {
 
     static func elapsedMs(since start: Date) -> UInt64 {
         UInt64(max(0, Date().timeIntervalSince(start) * 1000))
-    }
-
-    /// Removes the file at `url` if one exists, but refuses to touch a directory:
-    /// `FileManager.removeItem(at:)` deletes directories recursively, and `url` here is
-    /// derived from user-controlled input (`--output`/`--browser-output` or their defaults),
-    /// so silently recursing into a directory the user happened to point at would be
-    /// destructive. A directory at this path is a misuse of the option, not something to
-    /// clean up on its behalf.
-    static func removeFileIfPresent(_ url: URL) throws {
-        var isDirectory: ObjCBool = false
-        guard FileManager.default.fileExists(atPath: url.path, isDirectory: &isDirectory) else { return }
-        guard !isDirectory.boolValue else {
-            throw CompilerError.fileSystem(
-                context: "removing stale artifact at \(url.path)",
-                underlying: "refusing to remove a directory - check --output/--browser-output"
-            )
-        }
-        try FileManager.default.removeItem(at: url)
     }
 
     static func createDirectory(_ url: URL) throws {

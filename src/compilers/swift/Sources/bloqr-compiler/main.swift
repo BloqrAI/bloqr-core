@@ -309,36 +309,25 @@ struct ShowVersion: ParsableCommand {
 }
 
 struct BloqrCompilerCLI: ParsableCommand {
+    // No `defaultSubcommand` is used here on purpose: `Compile` (and every other
+    // subcommand) declares its own `@OptionGroup var global: GlobalOptions`, and
+    // ArgumentParser gives each declared instance of a shared option-group type its own,
+    // independent parse of the argument list - it does *not* forward a parent command's
+    // parsed values into whichever subcommand actually runs. A root-level `@OptionGroup`
+    // here (as this type previously had, alongside its own `run()`) would silently discard
+    // `-c`/`-o`/etc. typed *before* an explicit subcommand name, since only the subcommand's
+    // own copy of `GlobalOptions` is what actually executes. So this type carries no options
+    // and no `run()` of its own: every invocation, with or without an explicit subcommand
+    // name, is required to name one (`compile` is the natural everyday case), and every
+    // global flag is parsed exactly once, by whichever subcommand's own `GlobalOptions`
+    // instance is actually invoked - never split across two never-reconciled copies.
     static let configuration = CommandConfiguration(
         commandName: "bloqr-compiler",
         abstract: "Compile AdGuard filter rules using @bloqr/compiler-core (via Deno)",
         version: bloqrCompilerSwiftVersion,
-        subcommands: [Compile.self, ShowConfig.self, ShowVersion.self]
+        subcommands: [Compile.self, ShowConfig.self, ShowVersion.self],
+        defaultSubcommand: Compile.self
     )
-
-    @OptionGroup var global: GlobalOptions
-
-    func run() throws {
-        let resolvedFormat = try parseFormat(global.format)
-        guard let configPath = global.config.map({ URL(fileURLWithPath: $0) }) ?? findDefaultConfig() else {
-            printConfigNotFoundError()
-            throw ExitCode.failure
-        }
-
-        let exitCode = runCompile(
-            configPath: configPath,
-            output: global.output.map { URL(fileURLWithPath: $0) },
-            copyToRules: global.copyToRules,
-            format: resolvedFormat,
-            debug: global.debug,
-            validate: false,
-            failOnWarnings: false,
-            allowUnvalidatedOutput: false,
-            engine: nil,
-            browserOutput: nil
-        )
-        if exitCode != 0 { throw ExitCode.failure }
-    }
 }
 
 BloqrCompilerCLI.main()
