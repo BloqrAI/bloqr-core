@@ -1,0 +1,54 @@
+# Swift Build and Test workflow for the macOS-native compiler wrapper.
+
+name: Swift CI
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+on:
+  push:
+    branches: ["main"]
+    paths:
+      - 'src/compilers/swift/**'
+      - '.github/workflows/swift.yml'
+  pull_request:
+    branches: ["main"]
+    paths:
+      - 'src/compilers/swift/**'
+      - '.github/workflows/swift.yml'
+
+jobs:
+  build-and-test:
+    name: Build and test
+    runs-on: macos-14
+    defaults:
+      run:
+        working-directory: src/compilers/swift
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Show Swift version
+        run: swift --version
+
+      - name: Cache Swift Package Manager
+        uses: actions/cache@v4
+        with:
+          path: src/compilers/swift/.build
+          key: ${{ runner.os }}-spm-${{ hashFiles('src/compilers/swift/Package.swift', 'src/compilers/swift/Package.resolved') }}
+          restore-keys: |
+            ${{ runner.os }}-spm-
+
+      - name: Resolve dependencies
+        run: swift package resolve
+
+      - name: Build (debug)
+        run: swift build --build-tests
+
+      - name: Run tests
+        run: swift test --parallel
+
+      - name: Build (release)
+        run: swift build -c release
