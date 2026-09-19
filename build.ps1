@@ -21,6 +21,11 @@
 .PARAMETER Python
     Build Python projects
 
+.PARAMETER Swift
+    Build Swift projects (macOS-only; opt-in, not part of -All since Swift/Xcode
+    only builds on macOS and -All runs on non-macOS CI. Skips gracefully with a
+    message if Swift is not installed.)
+
 .PARAMETER Profile
     Build profile: 'debug' (default) or 'release'
 
@@ -39,6 +44,10 @@
 .EXAMPLE
     .\build.ps1 -All -Profile release
     Build all projects in release mode
+
+.EXAMPLE
+    .\build.ps1 -Swift
+    Build only Swift projects (macOS only)
 #>
 
 [CmdletBinding()]
@@ -57,7 +66,10 @@ param(
     
     [Parameter(HelpMessage = "Build Python projects")]
     [switch]$Python,
-    
+
+    [Parameter(HelpMessage = "Build Swift projects (macOS-only, opt-in)")]
+    [switch]$Swift,
+
     [Parameter(HelpMessage = "Build profile: 'debug' (default) or 'release'")]
     [ValidateSet('debug', 'release')]
     [string]$Profile = 'debug'
@@ -71,7 +83,7 @@ Set-Location $ScriptDir
 $BuildProfile = $Profile
 
 # If no specific project selected, build all
-if (-not $All -and -not $Rust -and -not $DotNet -and -not $TypeScript -and -not $Python) {
+if (-not $All -and -not $Rust -and -not $DotNet -and -not $TypeScript -and -not $Python -and -not $Swift) {
     $All = $true
 }
 
@@ -81,6 +93,9 @@ if ($All) {
     $DotNet = $true
     $TypeScript = $true
     $Python = $true
+    # NOTE: Swift is intentionally NOT included in -All. Swift/Xcode only
+    # builds on macOS, and -All is exercised by non-macOS CI runners (see
+    # .github/workflows/build-scripts-tests.yml). Pass -Swift explicitly.
 }
 
 Write-Host "╔═══════════════════════════════════════════════════════════╗" -ForegroundColor Cyan
@@ -243,6 +258,42 @@ function Build-PythonProjects {
     Write-Host ""
 }
 
+# Function to build Swift projects (macOS-only)
+function Build-SwiftProjects {
+    Write-Host "Building Swift projects..." -ForegroundColor Blue
+
+    # Package.swift declares .macOS(.v13); skip gracefully off macOS even if a Linux/Windows
+    # Swift toolchain happens to be on PATH, and if Swift isn't installed at all.
+    if (-not $IsMacOS -or -not (Get-Command swift -ErrorAction SilentlyContinue)) {
+        Write-Host "⊘ Swift is not installed (macOS/Xcode required). Skipping Swift build." -ForegroundColor Yellow
+        Write-Host ""
+        return
+    }
+
+    # Build Rules Compiler Swift
+    Write-Host "→ Building Rules Compiler (Swift)..."
+    try {
+        Push-Location src/compilers/swift
+        try {
+            if ($BuildProfile -eq "release") {
+                swift build -c release
+            } else {
+                swift build
+            }
+            Write-Host "✓ Rules Compiler (Swift) built successfully" -ForegroundColor Green
+        }
+        finally {
+            Pop-Location
+        }
+    }
+    catch {
+        Write-Host "✗ Rules Compiler (Swift) build failed" -ForegroundColor Red
+        $script:BuildFailed = $true
+    }
+
+    Write-Host ""
+}
+
 # Build projects based on flags
 if ($Rust) {
     Build-RustProjects
@@ -258,6 +309,10 @@ if ($TypeScript) {
 
 if ($Python) {
     Build-PythonProjects
+}
+
+if ($Swift) {
+    Build-SwiftProjects
 }
 
 # Summary

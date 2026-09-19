@@ -6,6 +6,10 @@
 # a combined JSON summary. Skips any language whose toolchain isn't installed, matching
 # launcher.sh's tool-detection convention. See benchmarks/README.md for the shared data/
 # JSON-output contract these commands follow, and issue #421.
+#
+# Swift is deliberately NOT part of the default --languages set below, since Swift/Xcode
+# only builds on macOS and this script's default run is exercised on non-macOS CI. Pass
+# --languages swift (or include it in a comma-separated list) to opt in on macOS.
 
 set -e
 
@@ -24,7 +28,7 @@ SIZE="all"
 SOURCES=4
 MAX_PARALLEL=""
 OUTPUT=""
-LANGUAGES="rust,dotnet,typescript,python,powershell"
+LANGUAGES="rust,dotnet,typescript,python,powershell"  # swift is macOS-only; opt in explicitly
 
 usage() {
     cat << EOF
@@ -38,6 +42,7 @@ OPTIONS:
     --sources N           Identical duplicated sources for the chunked run (default: 4)
     --max-parallel N      Max parallel workers for the chunked run (default: each language's own default)
     --languages LIST      Comma-separated subset to run (default: rust,dotnet,typescript,python,powershell)
+                          Add "swift" explicitly to also run the Swift benchmark (macOS only)
     --output PATH         Path for the combined JSON summary (default: benchmarks/results/benchmark-all-<timestamp>.json)
     -h, --help            Show this help message
 
@@ -194,6 +199,16 @@ if is_selected powershell; then
     echo ""
 fi
 
+# Swift (macOS only - not in the default LANGUAGES list; opt in with --languages swift)
+# The bloqr-compiler CLI only defines compile/config/version subcommands today - it has no
+# --benchmark surface (unlike the Rust/.NET/TypeScript/Python wrappers), so there's nothing to
+# invoke yet. Report that explicitly instead of shelling out to flags that don't exist.
+if is_selected swift; then
+    echo -e "${BLUE}--- Swift ---${NC}"
+    echo -e "${YELLOW}⚠ bloqr-compiler (Swift) has no --benchmark flag yet, skipping Swift${NC}"
+    echo ""
+fi
+
 # Merge whatever JSON files landed in $TMP_DIR (each an array of per-size results, tagged
 # with its own language) into one combined summary, and print a comparison table.
 python3 - "$TMP_DIR" "$COMBINED_FILE" << 'PYEOF'
@@ -204,7 +219,7 @@ from pathlib import Path
 tmp_dir, combined_file = Path(sys.argv[1]), Path(sys.argv[2])
 
 combined = []
-for name in ("rust", "dotnet", "typescript", "python", "powershell"):
+for name in ("rust", "dotnet", "typescript", "python", "powershell", "swift"):
     path = tmp_dir / f"{name}.json"
     if not path.exists():
         continue

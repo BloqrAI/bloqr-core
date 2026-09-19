@@ -1,6 +1,16 @@
 # =============================================================================
 # Docker Development Environment for ad-blocking toolkit
 # Includes: .NET 10, Deno 2.x, Python 3.13, Rust 1.85+, PowerShell 7
+#
+# Swift is intentionally NOT included in this image. The Swift rules compiler
+# wrapper (src/compilers/swift/) is a macOS-native Swift Package Manager
+# package built against Xcode 15+; this container is a Linux (Ubuntu/Noble)
+# image, and while an official swift.org Linux toolchain tarball exists, it
+# doesn't give parity with the Xcode toolchain this package targets and would
+# add a large, rarely-used layer to every dev image for a compiler wrapper
+# that can't ship a macOS binary from Linux anyway. Build/test it locally on
+# macOS (`swift build`, `swift test`) or via .github/workflows/swift.yml,
+# which runs on a real macos-14 runner.
 # =============================================================================
 
 FROM mcr.microsoft.com/dotnet/sdk:10.0-noble

@@ -33,8 +33,8 @@ const IndexPage = () => {
           <div className="feature">
             <h3>Multiple Languages</h3>
             <p>
-              Choose from TypeScript, .NET, Python, Rust, or PowerShell
-              compilers - all produce identical results.
+              Choose from TypeScript, .NET, Python, Rust, Swift, or
+              PowerShell compilers - all produce identical results.
             </p>
           </div>
           <div className="feature">

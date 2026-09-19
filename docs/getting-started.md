@@ -20,6 +20,7 @@ This guide will help you get up and running with the ad-blocking toolkit.
 | Python | Python | 3.9+ | [python.org](https://www.python.org/) |
 | Rust | Rust | 1.70+ | [rustup.rs](https://rustup.rs/) |
 | PowerShell | PowerShell | 7+ | [GitHub](https://github.com/PowerShell/PowerShell) |
+| Swift | Swift (Xcode) | 5.9+ (Xcode 15+) | [swift.org](https://www.swift.org/install/) (macOS only) |
 
 ## Quick Installation
 
@@ -92,6 +93,14 @@ Import-Module ./src/compilers/powershell/BloqrCompiler/BloqrCompiler.psd1
 Invoke-BloqrCompiler
 ```
 
+#### Swift (macOS only)
+
+```bash
+cd src/compilers/swift
+swift build
+swift run bloqr-compiler -c config.json
+```
+
 ## First Compilation
 
 ### 1. Create a Configuration File
@@ -135,6 +144,9 @@ bloqr-compiler -c my-config.json -o my-filter.txt
 
 # Rust
 cargo run -- -c my-config.json -o my-filter.txt
+
+# Swift (macOS only)
+swift run bloqr-compiler -c my-config.json
 ```
 
 ### 3. Review the Output
@@ -187,7 +199,7 @@ See [Docker Guide](docker-guide.md) for more details.
 
 ### @bloqr/compiler-core not found
 
-The .NET, Python, and Rust compilers all shell out to `@bloqr/compiler-core` via Deno. Make sure Deno is installed:
+The .NET, Python, Rust, and Swift compilers all shell out to `@bloqr/compiler-core` via Deno. Make sure Deno is installed:
 
 ```bash
 deno --version
@@ -222,6 +234,14 @@ Update Rust to the latest stable:
 
 ```bash
 rustup update stable
+```
+
+### Swift build fails / `swift` not found
+
+The Swift compiler is macOS-native (Xcode 15+) and does not build on Linux or Windows. Install/update Xcode, then verify with:
+
+```bash
+swift --version
 ```
 
 ## Getting Help

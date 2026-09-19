@@ -227,13 +227,14 @@ build_menu() {
             "Build .NET Projects" \
             "Build TypeScript Projects" \
             "Build Python Projects" \
+            "Build Swift Projects (macOS only)" \
             "Run Build Tests" \
             "← Back to Main Menu")
-        
+
         case $choice in
             1) ./build.sh --all --debug; pause ;;
             2) ./build.sh --all --release; pause ;;
-            3) 
+            3)
                 local rust_choice
                 rust_choice=$(show_menu "Rust Build Profile" "Debug" "Release" "← Cancel")
                 case $rust_choice in
@@ -252,11 +253,19 @@ build_menu() {
             5) ./build.sh --typescript; pause ;;
             6) ./build.sh --python; pause ;;
             7)
+                local swift_choice
+                swift_choice=$(show_menu "Swift Build Profile (macOS only)" "Debug" "Release" "← Cancel")
+                case $swift_choice in
+                    1) ./build.sh --swift --debug; pause ;;
+                    2) ./build.sh --swift --release; pause ;;
+                esac
+                ;;
+            8)
                 echo -e "${CYAN}Running build script tests...${NC}"
                 ./tools/test-build-scripts.sh
                 pause
                 ;;
-            8|"") return ;;
+            9|"") return ;;
         esac
     done
 }
@@ -274,6 +283,7 @@ rules_menu() {
             "Compile with .NET" \
             "Compile with Rust" \
             "Compile with Python" \
+            "Compile with Swift (macOS only)" \
             "Run Compiler Tests" \
             "← Back to Main Menu")
         
@@ -347,18 +357,36 @@ rules_menu() {
                 pause
                 ;;
             5)
+                if require_tool swift "Swift toolchain (macOS/Xcode)" \
+                    "Required to build/run the Swift rules compiler; macOS-native (Xcode 15+)." \
+                    'echo "Install Xcode / the Swift toolchain from https://www.swift.org/install/ (macOS only)"'; then
+                    local swift_engine swift_browser_output
+                    swift_engine=$(prompt_engine_choice)
+                    swift_browser_output=$(prompt_browser_output_path)
+                    cd src/compilers/swift
+                    if [ -n "$swift_browser_output" ]; then
+                        swift run bloqr-compiler -c ../typescript/compiler-config.json --engine "$swift_engine" --browser-output "$swift_browser_output"
+                    else
+                        swift run bloqr-compiler -c ../typescript/compiler-config.json --engine "$swift_engine"
+                    fi
+                    cd "$SCRIPT_DIR"
+                fi
+                pause
+                ;;
+            6)
                 echo -e "${CYAN}Choose compiler to test:${NC}"
                 local test_choice
-                test_choice=$(show_menu "Test Which Compiler?" "TypeScript" "Rust" ".NET" "Python" "← Cancel")
+                test_choice=$(show_menu "Test Which Compiler?" "TypeScript" "Rust" ".NET" "Python" "Swift" "← Cancel")
                 case $test_choice in
                     1) cd src/compilers/typescript && deno task test && cd "$SCRIPT_DIR" ;;
                     2) cargo test -p rules-compiler ;;
                     3) cd src/compilers/dotnet && dotnet test CompilerDotnet.slnx && cd "$SCRIPT_DIR" ;;
                     4) cd src/compilers/python && python3 -m pytest && cd "$SCRIPT_DIR" ;;
+                    5) cd src/compilers/swift && swift test && cd "$SCRIPT_DIR" ;;
                 esac
                 pause
                 ;;
-            6|"") return ;;
+            7|"") return ;;
         esac
     done
 }
@@ -402,6 +430,7 @@ benchmark_menu() {
             "TypeScript" \
             "Python" \
             "PowerShell" \
+            "Swift (macOS only)" \
             "← Back to Main Menu")
 
         case $choice in
@@ -411,7 +440,8 @@ benchmark_menu() {
             4) ./benchmark-all.sh --languages typescript; pause ;;
             5) ./benchmark-all.sh --languages python; pause ;;
             6) ./benchmark-all.sh --languages powershell; pause ;;
-            7|"") return ;;
+            7) ./benchmark-all.sh --languages swift; pause ;;
+            8|"") return ;;
         esac
     done
 }
@@ -554,6 +584,7 @@ system_info() {
     echo -e "  Deno:              $(check_tool deno)  $(deno --version 2>/dev/null | head -1 || echo 'Not installed')"
     echo -e "  Python:            $(check_tool python3)  $(python3 --version 2>/dev/null || echo 'Not installed')"
     echo -e "  PowerShell:        $(check_tool pwsh)  $(pwsh --version 2>/dev/null || echo 'Not installed')"
+    echo -e "  Swift:             $(check_tool swift)  $(swift --version 2>/dev/null | head -1 || echo 'Not installed')"
     echo -e "  Git:               $(check_tool git)  $(git --version 2>/dev/null || echo 'Not installed')"
     echo ""
     
@@ -568,6 +599,7 @@ system_info() {
     echo -e "  .NET Projects:     $(find src -name "*.csproj" | wc -l) projects"
     echo -e "  TypeScript:        $(find src -name "deno.json" | wc -l) projects"
     echo -e "  Python:            $(find src -name "pyproject.toml" | wc -l) projects"
+    echo -e "  Swift:             $(find src -name "Package.swift" | wc -l) packages"
     echo ""
     
     pause

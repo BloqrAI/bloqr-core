@@ -4,16 +4,16 @@ This guide helps you choose the right rules compiler for your use case. All comp
 
 ## Quick Comparison
 
-| Feature | TypeScript | .NET | Python | Rust | PowerShell |
-|---------|------------|------|--------|------|------------|
-| Language | TypeScript | C# | Python | Rust | PowerShell |
-| Runtime | Deno 2.0+ | .NET 10 | Python 3.9+ | None | PowerShell 7+ |
-| Config Formats | JSON/JSONC | JSON/JSONC | JSON | JSON | JSON |
-| Library API | Yes | Yes | Yes | Yes | Yes |
-| CLI | Yes | Yes | Yes | Yes | Yes |
-| Interactive Mode | Yes | Yes | No | No | Yes |
-| Tests | Deno test | xUnit | pytest | cargo test | Pester |
-| Binary Distribution | No | No | No | Yes | No |
+| Feature | TypeScript | .NET | Python | Rust | Swift | PowerShell |
+|---------|------------|------|--------|------|-------|------------|
+| Language | TypeScript | C# | Python | Rust | Swift | PowerShell |
+| Runtime | Deno 2.0+ | .NET 10 | Python 3.9+ | None | None (macOS/Xcode 15+) | PowerShell 7+ |
+| Config Formats | JSON/JSONC | JSON/JSONC | JSON | JSON | JSON | JSON |
+| Library API | Yes | Yes | Yes | Yes | Yes | Yes |
+| CLI | Yes | Yes | Yes | Yes | Yes | Yes |
+| Interactive Mode | Yes | Yes | No | No | No | Yes |
+| Tests | Deno test | xUnit | pytest | cargo test | XCTest | Pester |
+| Binary Distribution | No | No | No | Yes | No | No |
 
 ## Detailed Comparison
 
@@ -182,6 +182,44 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 }
 ```
 
+### Swift Compiler
+
+**Best for**: macOS/Apple-platform developers, Swift toolchains, Xcode-based workflows
+
+```bash
+cd src/compilers/swift
+swift build
+swift run bloqr-compiler -c config.json
+```
+
+**Pros**:
+- Native Swift Package Manager package (library + CLI)
+- swift-argument-parser-based CLI with `compile`/`config`/`version` subcommands
+- Type-safe `CompilerConfig`/`FilterSource` model
+- SHA-384 hashing via CryptoKit
+
+**Cons**:
+- macOS-only (Xcode 15+) — does not build on Linux or Windows
+- Requires Deno, since it shells out to the `@bloqr/compiler-core` engine like the .NET/Python/Rust wrappers
+
+**Features**:
+- swift-argument-parser CLI
+- JSON configuration (YAML/TOML supported for backward compatibility only)
+- Library API via `BloqrCompilerCore` (`BloqrCompiler`, `CompilerConfig`, `CompileOptions`)
+- XCTest suite
+
+**Library Usage**:
+
+```swift
+import BloqrCompilerCore
+import Foundation
+
+let compiler = BloqrCompiler()
+let configPath = URL(fileURLWithPath: "config.json")
+let result = try compiler.compile(configPath: configPath)
+print("Compiled \(result.ruleCount) rules")
+```
+
 ### PowerShell Module
 
 **Best for**: Windows administrators, automation scripts, cross-platform PowerShell users
@@ -234,9 +272,10 @@ Get-CompilerVersion | Format-List
 | .NET | Medium | Medium | Medium (dotnet restore) |
 | Python | Medium | Low | Fast (pip install) |
 | Rust | Fast | Low | Slow (cargo build) |
+| Swift | Fast | Low | Medium (swift build) |
 | PowerShell | Fast | Medium | None |
 
-*Note: Actual compilation time depends on `@bloqr/compiler-core` (the shared engine all four compilers dogfood), which is the same for all.*
+*Note: Actual compilation time depends on `@bloqr/compiler-core` (the shared engine all wrapper compilers dogfood), which is the same for all.*
 
 ## Decision Matrix
 
@@ -264,6 +303,12 @@ Get-CompilerVersion | Format-List
 - You want zero runtime dependencies
 - You're embedding in a Rust application
 
+### Choose Swift if:
+- You're on macOS and already have Xcode installed
+- You're embedding compilation in a Swift/Apple-platform app or tool
+- You want a type-safe Swift Package Manager library and CLI
+- You need SHA-384 hashing via CryptoKit rather than a third-party crypto library
+
 ### Choose PowerShell if:
 - You need cross-platform automation scripts (Windows, Linux, or macOS — PowerShell 7+ runs on all three)
 - You want interactive testing
@@ -272,25 +317,25 @@ Get-CompilerVersion | Format-List
 
 ## Feature Matrix
 
-| Feature | TypeScript | .NET | Python | Rust |
-|---------|:----------:|:----:|:------:|:----:|
+| Feature | TypeScript | .NET | Python | Rust | Swift |
+|---------|:----------:|:----:|:------:|:----:|:-----:|
 | **Configuration** |
-| JSON | Yes | Yes | Yes | Yes |
-| JSONC | Yes | Yes | No | No |
-| Validation | No | Yes | No | No |
+| JSON | Yes | Yes | Yes | Yes | Yes |
+| JSONC | Yes | Yes | No | No | Yes |
+| Validation | No | Yes | No | No | No |
 | **CLI** |
-| Config file | Yes | Yes | Yes | Yes |
-| Output file | Yes | Yes | Yes | Yes |
-| Copy to rules | Yes | Yes | Yes | Yes |
-| Debug/Verbose | Yes | Yes | Yes | Yes |
-| Version | Yes | Yes | Yes | Yes |
-| Help | Yes | Yes | Yes | Yes |
+| Config file | Yes | Yes | Yes | Yes | Yes |
+| Output file | Yes | Yes | Yes | Yes | Yes |
+| Copy to rules | Yes | Yes | Yes | Yes | Yes |
+| Debug/Verbose | Yes | Yes | Yes | Yes | Yes |
+| Version | Yes | Yes | Yes | Yes | Yes |
+| Help | Yes | Yes | Yes | Yes | Yes |
 | **Advanced** |
-| Library API | Yes | Yes | Yes | Yes |
-| Interactive | Yes | Yes | No | No |
-| Tests | Deno test | xUnit | pytest | cargo test |
-| DI Support | No | Yes | No | No |
-| Async | Yes | Yes | No | Planned |
+| Library API | Yes | Yes | Yes | Yes | Yes |
+| Interactive | Yes | Yes | No | No | No |
+| Tests | Deno test | xUnit | pytest | cargo test | XCTest |
+| DI Support | No | Yes | No | No | No |
+| Async | Yes | Yes | No | Planned | No |
 
 ## Migration Between Compilers
 
@@ -307,6 +352,9 @@ deno task compile -- -c config.json -o output.txt
 
 # CI/CD with Rust for speed
 ./target/release/bloqr-compiler -c config.json -o output.txt
+
+# macOS-native workflows with Swift
+swift run bloqr-compiler -c config.json
 
 # Automation with PowerShell
 Invoke-BloqrCompiler -ConfigPath config.json

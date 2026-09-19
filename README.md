@@ -1,13 +1,13 @@
 # Bloqr Core
 
-A multi-language toolkit for compiling and validating AdGuard-syntax ad-blocking filter rules. Four independent rules compilers (TypeScript, C#/.NET, Python, Rust), a PowerShell toolkit, a Rust validation library, and a Gatsby documentation site all live here and share one configuration schema.
+A multi-language toolkit for compiling and validating AdGuard-syntax ad-blocking filter rules. Five independent rules compilers (TypeScript, C#/.NET, Python, Rust, Swift), a PowerShell toolkit, a Rust validation library, and a Gatsby documentation site all live here and share one configuration schema.
 
 🚀 **Active development** — multi-language support, a Docker development environment, and CI/CD coverage across every component.
 
 ## What's in this repo
 
-- **Rules compilers** for TypeScript/Deno, C#/.NET, Python, and Rust, plus a PowerShell toolkit — all reading the same JSON/JSONC configuration schema and producing identical output.
-- **`@bloqr/compiler-core`** (`src/compilers/typescript/`) — the canonical, dependency-free compilation engine, published on [JSR](https://jsr.io/@bloqr/compiler-core). The .NET, Python, and Rust compilers shell out to it via Deno rather than reimplementing compilation logic.
+- **Rules compilers** for TypeScript/Deno, C#/.NET, Python, Rust, and Swift, plus a PowerShell toolkit — all reading the same JSON/JSONC configuration schema and producing identical output.
+- **`@bloqr/compiler-core`** (`src/compilers/typescript/`) — the canonical, dependency-free compilation engine, published on [JSR](https://jsr.io/@bloqr/compiler-core). The .NET, Python, Rust, and Swift compilers shell out to it via Deno rather than reimplementing compilation logic.
 - **BloqrCompiler PowerShell toolkit** (`src/compilers/powershell/`) — the sole cross-platform scripting-language compiler (PowerShell 7+ runs on Windows/Linux/macOS); class-based modules (`Common`, `BloqrCompiler`) with Pester test suites.
 - **Validation library** (`src/validation/`) — a Rust validation library (`bloqr-validator-core`) and CLI (`bloqr-validator-core-cli`) for filter/config validation (hash verification, URL security, syntax linting).
 - **Documentation website** (`website/`) — a Gatsby 5 site that builds guides, API reference, and security docs from `docs/` and this README.
@@ -18,11 +18,12 @@ A multi-language toolkit for compiling and validating AdGuard-syntax ad-blocking
 
 | Requirement | Version | Needed for |
 |-------------|---------|------------|
-| Deno | 2.0+ | TypeScript compiler; also shelled out to by .NET/Python/Rust |
+| Deno | 2.0+ | TypeScript compiler; also shelled out to by .NET/Python/Rust/Swift |
 | .NET SDK | 10.0+ | .NET compiler |
 | Python | 3.9+ | Python compiler |
 | Rust | 1.85+ | Rust compiler, validation library |
 | PowerShell | 7+ | PowerShell toolkit |
+| Swift | 5.9+ (Xcode 15+) | Swift compiler (macOS-native) |
 | Docker | 24.0+ | Containerized dev environment (optional) |
 
 ## Quick start
@@ -83,6 +84,15 @@ Import-Module ./src/compilers/powershell/BloqrCompiler/BloqrCompiler.psd1
 Invoke-BloqrCompiler
 ```
 
+### Swift (macOS only)
+
+```bash
+cd src/compilers/swift
+swift build
+swift run bloqr-compiler -c config.json
+swift test
+```
+
 Every compiler supports JSON configuration (the .NET compiler and Dashboard also read JSONC), the full transformation set (`Deduplicate`, `Validate`, `RemoveComments`, `Compress`, and more — see [Configuration Reference](docs/configuration-reference.md)), and per-source inclusions/exclusions/transformations. YAML and TOML remain supported for backward compatibility but are no longer documented — see [Configuration Reference](docs/configuration-reference.md#supported-formats).
 
 ## Docker development environment
@@ -114,6 +124,7 @@ bloqr-core/
 │   ├── compilers/python/         # Python 3.9+ — pip-installable package + CLI
 │   ├── compilers/rust/           # Rust — single-binary CLI, zero runtime deps
 │   ├── compilers/powershell/     # PowerShell modules + Pester tests (cross-platform scripting compiler)
+│   ├── compilers/swift/           # Swift Package (macOS-native) — library + bloqr-compiler CLI, shells out to Deno
 │   ├── validation/                # Rust validation library (core/) + CLI (cli/)
 │   ├── apps/dashboard/            # C#/.NET 10 — Dashboard console app
 │   └── website/                  # Gatsby 5 documentation site
@@ -121,7 +132,7 @@ bloqr-core/
 └── schemas/                      # Shared configuration schema
 ```
 
-The TypeScript compiler is the only one that implements compilation logic directly — it *is* `@bloqr/compiler-core`. The .NET, Python, and Rust compilers are thin wrappers that shell out to it via Deno, so behavior and output stay identical across languages; the PowerShell toolkit calls whichever compiler is available. `src/validation/` provides the shared hash-verification and syntax-validation layer that all of them rely on for security.
+The TypeScript compiler is the only one that implements compilation logic directly — it *is* `@bloqr/compiler-core`. The .NET, Python, Rust, and Swift compilers are thin wrappers that shell out to it via Deno, so behavior and output stay identical across languages; the PowerShell toolkit calls whichever compiler is available. `src/validation/` provides the shared hash-verification and syntax-validation layer that all of them rely on for security.
 
 ### Component relationships and dependencies
 
@@ -134,12 +145,14 @@ flowchart TB
         DotnetCompiler["compilers/dotnet"]
         PythonCompiler["compilers/python"]
         RustCompiler["compilers/rust"]
+        SwiftCompiler["compilers/swift\n(macOS-native)"]
         PowerShellCompiler["compilers/powershell\n(calls whichever compiler is available)"]
     end
 
     DotnetCompiler -->|Deno subprocess| Core
     PythonCompiler -->|Deno subprocess| Core
     RustCompiler -->|Deno subprocess| Core
+    SwiftCompiler -->|Deno subprocess| Core
     PowerShellCompiler -.->|Deno subprocess, or delegates| Core
 
     Common["common/dotnet\nBloqr.Compiler.Abstractions / .Core"]
@@ -161,7 +174,7 @@ flowchart TB
     README["README.md"] --> Website
 ```
 
-`common/dotnet` is a separate solution (`CompilerCommon.slnx`) consumed by both `compilers/dotnet` and `apps/dashboard` via `<ProjectReference>` — it isn't part of either consumer's own solution. `validation/` is reached differently per language: Rust links `bloqr-validator-core` as a Cargo path dependency, .NET P/Invokes the same code through an `extern "C"` FFI surface, and every other wrapper (TypeScript, Python, PowerShell, and the Rust/`.NET` compilers' own compiled output) shells out to the `bloqr-validate` CLI as a subprocess.
+`common/dotnet` is a separate solution (`CompilerCommon.slnx`) consumed by both `compilers/dotnet` and `apps/dashboard` via `<ProjectReference>` — it isn't part of either consumer's own solution. `validation/` is reached differently per language: Rust links `bloqr-validator-core` as a Cargo path dependency, .NET P/Invokes the same code through an `extern "C"` FFI surface, and every other wrapper (TypeScript, Python, PowerShell, Swift, and the Rust/`.NET` compilers' own compiled output) shells out to the `bloqr-validate` CLI as a subprocess.
 
 Since epic #432, a single configuration can route sources through two independent grammars — `dns` (server-side, DNS-sinkholing) and `browser` (client-side, browser-syntax) — via each source's `engine`/the config's `defaultEngine`. The two never merge into one file; a mixed-engine compile produces a DNS artifact and a separate browser-syntax artifact. See [Dual-Engine Compilation](docs/architecture/dual-engine-compilation.md) for the full architecture.
 
@@ -172,7 +185,7 @@ Since epic #432, a single configuration can route sources through two independen
 | Repository | What it holds |
 |---|---|
 | [`BloqrAI/bloqr-blocklists`](https://github.com/BloqrAI/bloqr-blocklists) | Compiled filter lists and their input/output/archive files (`output/adguard_dns_filter.txt`, etc.) — no longer part of this repo |
-| [`BloqrAI/bloqr-apiclients`](https://github.com/BloqrAI/bloqr-apiclients) | AdGuard DNS API clients (.NET, TypeScript, Rust, PowerShell) and the Linear import tool — no longer part of this repo |
+| [`BloqrAI/bloqr-apiclients`](https://github.com/BloqrAI/bloqr-apiclients) | AdGuard DNS API clients (.NET, TypeScript, Rust, PowerShell) and the Linear import tool — no longer part of this repo (Swift API clients were never part of this move) |
 | [`BloqrAI/bloqr-compiler`](https://github.com/BloqrAI/bloqr-compiler) | Bloqr's commercial compiler, built on top of `@bloqr/compiler-core` |
 
 ## Documentation
@@ -195,13 +208,14 @@ cd src/compilers/dotnet && dotnet test CompilerDotnet.slnx
 cd src/compilers/python && pytest
 cargo test --workspace   # bloqr-compiler/-core + validation
 Invoke-Pester -Path ./src/compilers/powershell -Recurse
+cd src/compilers/swift && swift test   # macOS only
 ```
 
 See [`docs/guides/testing-guide.md`](docs/guides/testing-guide.md) for coverage tooling, CI examples, and troubleshooting.
 
 ## CI/CD
 
-GitHub Actions validates every component on push and pull request: `.github/workflows/dotnet.yml`, `typescript.yml`, `python.yml`, `rust-clippy.yml`, `powershell.yml`, `gatsby.yml`, plus consolidated `security.yml` (CodeQL, DevSkim, PSScriptAnalyzer) and `validation-compliance.yml` (runs the Rust validator against fixtures). See [CI/CD Alignment](CLAUDE.md#cicd-alignment) in `CLAUDE.md` for the full list.
+GitHub Actions validates every component on push and pull request: `.github/workflows/dotnet.yml`, `typescript.yml`, `python.yml`, `rust-clippy.yml`, `powershell.yml`, `swift.yml` (macOS-14 runner), `gatsby.yml`, plus consolidated `security.yml` (CodeQL, DevSkim, PSScriptAnalyzer) and `validation-compliance.yml` (runs the Rust validator against fixtures). See [CI/CD Alignment](CLAUDE.md#cicd-alignment) in `CLAUDE.md` for the full list.
 
 ## Contributing
 

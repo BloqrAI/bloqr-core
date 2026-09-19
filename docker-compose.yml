@@ -158,6 +158,15 @@ services:
   # AdGuard Console UI has moved to BloqrAI/bloqr-apiclients along with the
   # rest of the API clients; its docker-compose service now lives there.
 
+  # ---------------------------------------------------------------------------
+  # Swift Rules Compiler service - intentionally NOT defined here.
+  # Dockerfile.warp is a Linux (Ubuntu/Noble) image and doesn't install a
+  # Swift toolchain (see the comment at the top of that file for why), and
+  # the Swift wrapper (src/compilers/swift/) is macOS-native (Xcode 15+)
+  # anyway. Run `swift run bloqr-compiler` locally on macOS instead; CI
+  # coverage is .github/workflows/swift.yml (macos-14).
+  # ---------------------------------------------------------------------------
+
 # =============================================================================
 # Named volumes for dependency caching
 # =============================================================================
