@@ -1,6 +1,6 @@
-import { assertEquals, assertExists, assertRejects } from '@std/assert';
+import { assertEquals, assertExists, assertFalse, assertRejects } from '@std/assert';
 import { fromFileUrl } from '@std/path';
-import { BrowserSyntaxCompiler } from './BrowserSyntaxCompiler.ts';
+import { BROWSER_SAFE_TRANSFORMATIONS, BrowserSyntaxCompiler } from './BrowserSyntaxCompiler.ts';
 import type { IConfiguration } from '../../types/index.ts';
 import { TransformationType } from '../../types/index.ts';
 import { silentLogger } from '../../utils/index.ts';
@@ -78,6 +78,31 @@ Deno.test('BrowserSyntaxCompiler - rejects DNS-only transformations (per-source)
   config.sources[0].transformations = [TransformationType.Validate];
 
   await assertRejects(() => compiler.compile(config), Error, 'Validate');
+});
+
+Deno.test('BrowserSyntaxCompiler - rejects commercial-only transformations that silently no-op (issue #502)', async () => {
+  // ConflictDetection/RuleOptimizer used to be listed in BROWSER_SAFE_TRANSFORMATIONS
+  // even though TransformationRegistry never registers them in this OSS package -
+  // meaning they'd pass this "safe" check and then silently no-op in
+  // TransformationPipeline.transform(). Both are now rejected before compilation -
+  // by ConfigurationValidator (which BrowserSyntaxCompiler.compile() runs first), so
+  // it never reaches assertBrowserSafeTransformations at all in practice, but that
+  // function's own allowlist must stay correct as defense in depth.
+  const compiler = new BrowserSyntaxCompiler({ logger: silentLogger });
+
+  const globalConfig = createTestConfig({
+    transformations: [TransformationType.ConflictDetection],
+  });
+  await assertRejects(() => compiler.compile(globalConfig), Error);
+
+  const sourceConfig = createTestConfig();
+  sourceConfig.sources[0].transformations = [TransformationType.RuleOptimizer];
+  await assertRejects(() => compiler.compile(sourceConfig), Error);
+});
+
+Deno.test('BROWSER_SAFE_TRANSFORMATIONS - excludes unregistered commercial-only transformations (issue #502)', () => {
+  assertFalse(BROWSER_SAFE_TRANSFORMATIONS.has(TransformationType.ConflictDetection));
+  assertFalse(BROWSER_SAFE_TRANSFORMATIONS.has(TransformationType.RuleOptimizer));
 });
 
 Deno.test('BrowserSyntaxCompiler - compileWithMetrics returns metrics when benchmarking', async () => {
