@@ -133,6 +133,26 @@ if result.success {
 }
 ```
 
+### Async Usage
+
+`BloqrCompiler` also exposes an `async` entry point alongside the synchronous one above, for
+callers on Swift Concurrency's cooperative thread pool (a SwiftUI view, a Vapor route handler,
+an `async` CLI command) that shouldn't block a cooperative thread on the underlying Deno
+subprocess:
+
+```swift
+import BloqrCompilerCore
+import Foundation
+
+let options = CompileOptions(copyToRules: true, validate: true)
+let compiler = BloqrCompiler(options: options)
+let result = try await compiler.compile(configPath: URL(fileURLWithPath: "compiler-config.json"))
+
+if result.success {
+    print("Compiled \(result.ruleCount) rules")
+}
+```
+
 ### Reading Configuration
 
 ```swift

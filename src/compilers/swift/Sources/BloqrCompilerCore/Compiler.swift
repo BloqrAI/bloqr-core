@@ -17,6 +17,15 @@ public struct BloqrCompiler: Sendable {
         try Self.compileRules(configPath: configPath, options: options)
     }
 
+    /// Compiles filter rules from the configuration at `configPath`, asynchronously.
+    ///
+    /// Mirrors the other wrappers' async entry points (Rust's `compile_rules_async`,
+    /// .NET's `CompileAsync`, Python's `compile_rules_async`): same pipeline as
+    /// `compile(configPath:)`, just off the calling task.
+    public func compile(configPath: URL) async throws -> CompilerResult {
+        try await Self.compileRules(configPath: configPath, options: options)
+    }
+
     /// Compiles filter rules from the configuration at `configPath` using `options`.
     ///
     /// Mirrors `compile_rules()` in the other wrappers: read config, optionally validate,
@@ -292,6 +301,22 @@ public struct BloqrCompiler: Sendable {
         result.endTime = Date()
         result.elapsedMs = Self.elapsedMs(since: start)
         return result
+    }
+
+    /// Compiles filter rules from the configuration at `configPath` using `options`,
+    /// asynchronously.
+    ///
+    /// Runs the synchronous `compileRules(configPath:options:)` pipeline (config read, Deno
+    /// subprocess, hashing, syntax validation) on a detached background task, so a caller on
+    /// Swift Concurrency's cooperative thread pool - a SwiftUI view, a Vapor route handler, an
+    /// `async` CLI command - never blocks a cooperative thread on process I/O or file access.
+    /// This wrapper shells out to a subprocess for the actual compilation (see the type-level
+    /// doc comment above), so there is no natively-async Deno invocation to await here; offloading
+    /// the whole synchronous pipeline is what the other wrappers' own async entry points do too.
+    public static func compileRules(configPath: URL, options: CompileOptions) async throws -> CompilerResult {
+        try await Task.detached(priority: .userInitiated) {
+            try compileRules(configPath: configPath, options: options)
+        }.value
     }
 
     // MARK: - Helpers

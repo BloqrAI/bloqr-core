@@ -34,6 +34,41 @@ final class CompilerHelperTests: XCTestCase {
         XCTAssertEqual(BloqrCompiler.countRules(path: path), 2)
     }
 
+    func testCompileAsyncPropagatesConfigReadErrors() async {
+        let missingConfig = FileManager.default.temporaryDirectory
+            .appendingPathComponent("bloqr-compiler-missing-\(UUID().uuidString).json")
+
+        do {
+            _ = try await BloqrCompiler().compile(configPath: missingConfig)
+            XCTFail("expected compile(configPath:) to throw for a missing config file")
+        } catch let error as CompilerError {
+            guard case .configNotFound = error else {
+                return XCTFail("expected CompilerError.configNotFound, got \(error)")
+            }
+        } catch {
+            XCTFail("expected CompilerError, got \(error)")
+        }
+    }
+
+    func testStaticCompileRulesAsyncMatchesSyncErrorForMissingConfig() async {
+        let missingConfig = FileManager.default.temporaryDirectory
+            .appendingPathComponent("bloqr-compiler-missing-\(UUID().uuidString).json")
+        let options = CompileOptions()
+
+        let syncResult = Result { try BloqrCompiler.compileRules(configPath: missingConfig, options: options) }
+        let asyncResult = await Task {
+            try await BloqrCompiler.compileRules(configPath: missingConfig, options: options)
+        }.result
+
+        guard case .failure(let syncError as CompilerError) = syncResult,
+              case .failure(let asyncError as CompilerError) = asyncResult,
+              case .configNotFound = syncError,
+              case .configNotFound = asyncError
+        else {
+            return XCTFail("expected both the sync and async APIs to throw CompilerError.configNotFound")
+        }
+    }
+
     func testPrimaryArtifactEngineHonorsForcedEngine() {
         let config = CompilerConfig(name: "Test", sources: [FilterSource(source: "https://example.com")])
         let options = CompileOptions(engine: "browser")
