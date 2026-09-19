@@ -5,7 +5,7 @@
 
 import { isAbsolute, normalize, resolve } from 'node:path';
 import type { IConfiguration } from '../index.ts';
-import { TransformationType } from '../types/index.ts';
+import { CANONICAL_TRANSFORMATION_ORDER } from '../transformations/TransformationRegistry.ts';
 import {
   ConfigurationError,
   ErrorCode,
@@ -100,12 +100,21 @@ function validateSource(source: unknown, index: number): string[] {
 /**
  * Valid transformation names from @bloqr/compiler-core.
  *
- * Derived from {@link TransformationType} rather than a hand-maintained string
- * list, so this validator can never reject a transformation the compiler
- * itself supports (see issue #502 - it previously drifted out of sync when
- * `ConflictDetection`/`RuleOptimizer` were added to the enum).
+ * Derived from {@link CANONICAL_TRANSFORMATION_ORDER} - the set of
+ * transformations `TransformationRegistry` actually registers by default -
+ * rather than a hand-maintained string list, so this validator can never
+ * silently drift out of sync with what `TransformationRegistry.register()`
+ * wires up (see issue #502).
+ *
+ * Deliberately narrower than the full `TransformationType` enum:
+ * `ConflictDetection`/`RuleOptimizer` are commercial-only transformation
+ * types that exist on the enum but are never registered here -
+ * `TransformationPipeline.transform()` silently skips any requested type
+ * that isn't registered, so accepting them here would let a config validate
+ * successfully and then have the transformation quietly no-op at compile
+ * time. See `TransformationRegistry.test.ts`.
  */
-const VALID_TRANSFORMATIONS: string[] = Object.values(TransformationType);
+const VALID_TRANSFORMATIONS: string[] = [...CANONICAL_TRANSFORMATION_ORDER];
 
 /**
  * Validates transformations array
