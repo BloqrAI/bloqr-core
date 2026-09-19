@@ -127,3 +127,89 @@ Describe 'CompilerConfiguration engine/defaultEngine (#439)' {
         $config.ToHashtable().DefaultEngine | Should -Be 'browser'
     }
 }
+
+Describe 'CompilerConfiguration transformation validation (#502)' {
+
+    BeforeEach {
+        $script:tempDir = Join-Path ([System.IO.Path]::GetTempPath()) ([guid]::NewGuid())
+        New-Item -ItemType Directory -Path $script:tempDir | Out-Null
+    }
+
+    AfterEach {
+        Remove-Item -Path $script:tempDir -Recurse -Force -ErrorAction SilentlyContinue
+    }
+
+    It 'Passes validation with every documented transformation' {
+        # Explicit list (not [CompilerConfiguration]::ValidTransformations itself) so this
+        # test actually checks the documented contract - an accidental omission or typo in
+        # the implementation's allowlist would otherwise still pass trivially.
+        $documentedTransformations = @(
+            'RemoveComments',
+            'Compress',
+            'RemoveModifiers',
+            'Validate',
+            'ValidateAllowIp',
+            'Deduplicate',
+            'InvertAllow',
+            'RemoveEmptyLines',
+            'TrimLines',
+            'InsertFinalNewLine',
+            'ConvertToAscii'
+        )
+        $configPath = New-TestConfigFile -Directory $script:tempDir -ConfigData @{
+            name            = 'test-filter'
+            sources         = @(@{ source = 'https://example.com/list.txt' })
+            transformations = $documentedTransformations
+        }
+        $config = [CompilerConfiguration]::new($configPath)
+
+        { $config.Validate() } | Should -Not -Throw
+    }
+
+    It 'Fails validation with an unknown global transformation' {
+        $configPath = New-TestConfigFile -Directory $script:tempDir -ConfigData @{
+            name            = 'test-filter'
+            sources         = @(@{ source = 'https://example.com/list.txt' })
+            transformations = @('NotARealTransformation')
+        }
+        $config = [CompilerConfiguration]::new($configPath)
+
+        { $config.Validate() } | Should -Throw '*NotARealTransformation*'
+    }
+
+    It 'Fails validation with a commercial-only transformation this toolkit does not implement' {
+        # ConflictDetection/RuleOptimizer are browser-engine, commercial-only
+        # transformations that exist in the TypeScript reference implementation's
+        # TransformationType enum but are not registered/implemented anywhere in
+        # this OSS repo - accepting them here would silently no-op at compile time.
+        # Each is asserted independently so an accidental allowlist entry for one
+        # can't slip through unnoticed because only the other was tested.
+        $configPath = New-TestConfigFile -Directory $script:tempDir -ConfigData @{
+            name            = 'test-filter'
+            sources         = @(@{ source = 'https://example.com/list.txt' })
+            transformations = @('ConflictDetection')
+        }
+        $config = [CompilerConfiguration]::new($configPath)
+
+        { $config.Validate() } | Should -Throw '*ConflictDetection*'
+
+        $configPath2 = New-TestConfigFile -Directory $script:tempDir -ConfigData @{
+            name            = 'test-filter'
+            sources         = @(@{ source = 'https://example.com/list.txt' })
+            transformations = @('RuleOptimizer')
+        }
+        $config2 = [CompilerConfiguration]::new($configPath2)
+
+        { $config2.Validate() } | Should -Throw '*RuleOptimizer*'
+    }
+
+    It 'Fails validation with an unknown per-source transformation' {
+        $configPath = New-TestConfigFile -Directory $script:tempDir -ConfigData @{
+            name    = 'test-filter'
+            sources = @(@{ name = 'bad-source'; source = 'https://example.com/list.txt'; transformations = @('NotARealTransformation') })
+        }
+        $config = [CompilerConfiguration]::new($configPath)
+
+        { $config.Validate() } | Should -Throw '*NotARealTransformation*'
+    }
+}

@@ -120,6 +120,29 @@ impl fmt::Display for Transformation {
     }
 }
 
+impl std::str::FromStr for Transformation {
+    type Err = CompilerError;
+
+    fn from_str(s: &str) -> Result<Self> {
+        match s {
+            "RemoveComments" => Ok(Self::RemoveComments),
+            "Compress" => Ok(Self::Compress),
+            "RemoveModifiers" => Ok(Self::RemoveModifiers),
+            "Validate" => Ok(Self::Validate),
+            "ValidateAllowIp" => Ok(Self::ValidateAllowIp),
+            "Deduplicate" => Ok(Self::Deduplicate),
+            "InvertAllow" => Ok(Self::InvertAllow),
+            "RemoveEmptyLines" => Ok(Self::RemoveEmptyLines),
+            "TrimLines" => Ok(Self::TrimLines),
+            "InsertFinalNewLine" => Ok(Self::InsertFinalNewLine),
+            "ConvertToAscii" => Ok(Self::ConvertToAscii),
+            other => Err(CompilerError::validation_failed(format!(
+                "invalid transformation '{other}'"
+            ))),
+        }
+    }
+}
+
 /// Source type for filter lists.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default, Serialize, Deserialize)]
 #[serde(rename_all = "lowercase")]
@@ -376,6 +399,22 @@ impl CompilerConfig {
                     "source[{i}].source is required"
                 )));
             }
+
+            for name in &source.transformations {
+                name.parse::<Transformation>().map_err(|_| {
+                    CompilerError::validation_failed(format!(
+                        "source[{i}].transformations: invalid transformation '{name}'"
+                    ))
+                })?;
+            }
+        }
+
+        for name in &self.transformations {
+            name.parse::<Transformation>().map_err(|_| {
+                CompilerError::validation_failed(format!(
+                    "transformations: invalid transformation '{name}'"
+                ))
+            })?;
         }
 
         Ok(())
@@ -535,6 +574,40 @@ mod tests {
 
         let no_sources = CompilerConfig::new("Test");
         assert!(no_sources.validate().is_err());
+    }
+
+    #[test]
+    fn test_compiler_config_validate_rejects_unknown_transformation() {
+        // Issue #502: an unrecognized transformation name (e.g. a typo, or a
+        // commercial-only/browser-engine-only transformation like
+        // "ConflictDetection" that this OSS compiler doesn't implement)
+        // should fail validation rather than silently pass through to the
+        // external hostlist-compiler invocation.
+        let global_invalid = CompilerConfig::new("Test")
+            .with_source(FilterSource::new("Source", "https://example.com"))
+            .with_transformation("NotARealTransformation");
+        assert!(global_invalid.validate().is_err());
+
+        let mut source_invalid_source = FilterSource::new("Source", "https://example.com");
+        source_invalid_source
+            .transformations
+            .push("ConflictDetection".to_string());
+        let source_invalid = CompilerConfig::new("Test").with_source(source_invalid_source);
+        assert!(source_invalid.validate().is_err());
+
+        // Asserted independently from ConflictDetection above so an accidental
+        // allowlist entry for one commercial-only transformation can't slip
+        // through unnoticed because only the other was tested.
+        let rule_optimizer_invalid = CompilerConfig::new("Test")
+            .with_source(FilterSource::new("Source", "https://example.com"))
+            .with_transformation("RuleOptimizer");
+        assert!(rule_optimizer_invalid.validate().is_err());
+
+        let valid = CompilerConfig::new("Test")
+            .with_source(FilterSource::new("Source", "https://example.com"))
+            .with_transformation("Deduplicate")
+            .with_transformation("Compress");
+        assert!(valid.validate().is_ok());
     }
 
     #[test]
