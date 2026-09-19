@@ -37,7 +37,7 @@ func commandOutput(_ command: String, _ arguments: [String]) -> String? {
 }
 
 /// Runs `command` with `arguments`, waiting for it to exit, and captures stdout/stderr.
-func runProcess(command: String, arguments: [String], currentDirectory: URL?) throws -> ProcessOutput {
+func runProcess(command: String, arguments: [String], currentDirectory: URL?) throws(CompilerError) -> ProcessOutput {
     let process = Process()
     process.executableURL = URL(fileURLWithPath: command)
     process.arguments = arguments

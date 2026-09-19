@@ -10,7 +10,7 @@ public enum ConfigFormat: String, Sendable, Equatable {
     case yaml
     case toml
 
-    public static func from(fileExtension ext: String) throws -> ConfigFormat {
+    public static func from(fileExtension ext: String) throws(CompilerError) -> ConfigFormat {
         switch ext.lowercased() {
         case "json", "jsonc": return .json
         case "yaml", "yml": return .yaml
@@ -19,7 +19,7 @@ public enum ConfigFormat: String, Sendable, Equatable {
         }
     }
 
-    public static func from(path: URL) throws -> ConfigFormat {
+    public static func from(path: URL) throws(CompilerError) -> ConfigFormat {
         try from(fileExtension: path.pathExtension)
     }
 
@@ -208,7 +208,7 @@ public struct CompilerConfig: Codable, Sendable, Equatable {
     }
 
     /// Validates the minimum shape a configuration needs before compiling.
-    public func validate() throws {
+    public func validate() throws(CompilerError) {
         if name.isEmpty {
             throw CompilerError.validationFailed("configuration 'name' is required")
         }

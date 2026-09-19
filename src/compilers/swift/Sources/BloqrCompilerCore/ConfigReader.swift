@@ -7,7 +7,7 @@ import TOMLKit
 public enum ConfigReader {
     /// Reads configuration from a file. When `format` is `nil`, it is detected from the file
     /// extension.
-    public static func readConfig(path: URL, format: ConfigFormat? = nil) throws -> CompilerConfig {
+    public static func readConfig(path: URL, format: ConfigFormat? = nil) throws(CompilerError) -> CompilerConfig {
         guard FileManager.default.fileExists(atPath: path.path) else {
             throw CompilerError.configNotFound(path: path.path)
         }
@@ -29,7 +29,7 @@ public enum ConfigReader {
         return config
     }
 
-    static func parse(_ content: String, format: ConfigFormat) throws -> CompilerConfig {
+    static func parse(_ content: String, format: ConfigFormat) throws(CompilerError) -> CompilerConfig {
         switch format {
         case .json:
             do {
@@ -55,7 +55,7 @@ public enum ConfigReader {
     }
 
     /// Serializes a configuration back to a pretty-printed JSON string.
-    public static func toJSON(_ config: CompilerConfig) throws -> String {
+    public static func toJSON(_ config: CompilerConfig) throws(CompilerError) -> String {
         let encoder = JSONEncoder()
         encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
         do {
@@ -72,19 +72,30 @@ public enum ConfigReader {
     }
 
     /// Serializes a configuration back to a YAML string.
-    public static func toYAML(_ config: CompilerConfig) throws -> String {
+    public static func toYAML(_ config: CompilerConfig) throws(CompilerError) -> String {
         // Round-trip through JSON so key ordering/coding-key rules match the JSON encoder,
         // rather than depending on YAMLEncoder's own Codable handling of optionals.
         let json = try toJSON(config)
-        guard let jsonData = json.data(using: .utf8),
-              let object = try JSONSerialization.jsonObject(with: jsonData) as? [String: Any] else {
+        guard let jsonData = json.data(using: .utf8) else {
             throw CompilerError.serialization("could not round-trip configuration through JSON for YAML output")
         }
-        return try Yams.dump(object: object)
+        // `JSONSerialization.jsonObject` and `Yams.dump` both throw their own untyped error
+        // types (not `CompilerError`) - wrap them explicitly rather than letting either
+        // propagate raw, matching every other serialization path in this file.
+        do {
+            guard let object = try JSONSerialization.jsonObject(with: jsonData) as? [String: Any] else {
+                throw CompilerError.serialization("could not round-trip configuration through JSON for YAML output")
+            }
+            return try Yams.dump(object: object)
+        } catch let error as CompilerError {
+            throw error
+        } catch {
+            throw CompilerError.serialization(String(describing: error))
+        }
     }
 
     /// Serializes a configuration back to a TOML string.
-    public static func toTOML(_ config: CompilerConfig) throws -> String {
+    public static func toTOML(_ config: CompilerConfig) throws(CompilerError) -> String {
         do {
             return try TOMLEncoder().encode(config)
         } catch {
@@ -97,7 +108,7 @@ public enum ConfigReader {
 /// configs with comments can be decoded by `JSONDecoder`, which otherwise rejects them
 /// outright. String literals (including escaped quotes) are left untouched so a `//` or `/*`
 /// inside a string value is never mistaken for a comment.
-func stripJSONCComments(_ content: String) throws -> String {
+func stripJSONCComments(_ content: String) throws(CompilerError) -> String {
     var result = String.UnicodeScalarView()
     var scalars = content.unicodeScalars.makeIterator()
     var pending = scalars.next()

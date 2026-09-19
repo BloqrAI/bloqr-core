@@ -104,4 +104,20 @@ final class ConfigReaderTests: XCTestCase {
         XCTAssertTrue(json.contains("\"name\""))
         XCTAssertTrue(json.contains("Test"))
     }
+
+    func testToYAMLRoundTrip() throws {
+        // Regression test for a real bug this file's typed-throws pass (`throws(CompilerError)`)
+        // surfaced: toYAML used to let `JSONSerialization.jsonObject`/`Yams.dump` propagate
+        // their own untyped errors raw instead of wrapping them in `CompilerError`, unlike every
+        // other serialization path here. Round-tripping back through `ConfigReader.parse`
+        // confirms the fix didn't change the actual YAML output, only its error handling.
+        var config = CompilerConfig(name: "Test", version: "1.0.0")
+        config.sources = [FilterSource(name: "Local", source: "./rules.txt")]
+        let yaml = try ConfigReader.toYAML(config)
+        XCTAssertTrue(yaml.contains("name: Test"))
+
+        let reparsed = try ConfigReader.parse(yaml, format: .yaml)
+        XCTAssertEqual(reparsed.name, "Test")
+        XCTAssertEqual(reparsed.sources.first?.source, "./rules.txt")
+    }
 }

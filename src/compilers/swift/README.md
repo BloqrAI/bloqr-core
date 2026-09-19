@@ -249,6 +249,16 @@ type = "adblock"
 | `SourceType` | `.adblock`, `.hosts` |
 | `CompilerError` | Error cases surfaced by this wrapper |
 
+Every throwing function and method in `BloqrCompilerCore` (`compile(configPath:)`,
+`compileRules(configPath:options:)`, `ConfigReader.readConfig`/`toJSON`/`toYAML`/`toTOML`,
+`ConfigFormat.from`, `CompilerConfig.validate()`, etc.) is declared `throws(CompilerError)`
+(typed throws, [SE-0413](https://github.com/swiftlang/swift-evolution/blob/main/proposals/0413-typed-throws.md)),
+not plain `throws` — a caller that wants to switch exhaustively over every possible failure can
+do so without an `as?`/`as!` cast, since the compiler already knows the concrete error type. The
+two exceptions are `Decodable.init(from:)`/`Encodable.encode(to:)` on `CompilerConfig` and its
+nested types, which stay untyped `throws` because that's the signature the `Codable` protocol
+itself requires.
+
 ### Functions
 
 | Function | Description |

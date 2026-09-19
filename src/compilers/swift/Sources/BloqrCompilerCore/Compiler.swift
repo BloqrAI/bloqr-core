@@ -13,7 +13,7 @@ public struct BloqrCompiler: Sendable {
     }
 
     /// Compiles filter rules from the configuration at `configPath`.
-    public func compile(configPath: URL) throws -> CompilerResult {
+    public func compile(configPath: URL) throws(CompilerError) -> CompilerResult {
         try Self.compileRules(configPath: configPath, options: options)
     }
 
@@ -22,7 +22,7 @@ public struct BloqrCompiler: Sendable {
     /// Mirrors the other wrappers' async entry points (Rust's `compile_rules_async`,
     /// .NET's `CompileAsync`, Python's `compile_rules_async`): same pipeline as
     /// `compile(configPath:)`, just off the calling task.
-    public func compile(configPath: URL) async throws -> CompilerResult {
+    public func compile(configPath: URL) async throws(CompilerError) -> CompilerResult {
         try await Self.compileRules(configPath: configPath, options: options)
     }
 
@@ -32,7 +32,7 @@ public struct BloqrCompiler: Sendable {
     /// write a temp JSON config if the source wasn't already JSON (the underlying compiler
     /// only accepts JSON), shell out to Deno, verify the output, and optionally copy it to the
     /// rules directory.
-    public static func compileRules(configPath: URL, options: CompileOptions) throws -> CompilerResult {
+    public static func compileRules(configPath: URL, options: CompileOptions) throws(CompilerError) -> CompilerResult {
         let start = Date()
         var result = CompilerResult()
         result.startTime = start
@@ -74,7 +74,7 @@ public struct BloqrCompiler: Sendable {
         let compileConfigPath: URL
         let configExtension = resolvedConfigPath.pathExtension.lowercased()
 
-        func writeTempConfig(_ content: String) throws -> URL {
+        func writeTempConfig(_ content: String) throws(CompilerError) -> URL {
             let temp = FileManager.default.temporaryDirectory
                 .appendingPathComponent("compiler-config-\(UUID().uuidString).json")
             do {
@@ -319,16 +319,31 @@ public struct BloqrCompiler: Sendable {
     /// compilation (see the type-level doc comment above), so there is no natively-async Deno
     /// invocation to await here; offloading the whole synchronous pipeline is what the other
     /// wrappers' own async entry points do too.
-    public static func compileRules(configPath: URL, options: CompileOptions) async throws -> CompilerResult {
-        try await withCheckedThrowingContinuation { continuation in
-            DispatchQueue.global(qos: .userInitiated).async {
-                do {
-                    let result = try compileRules(configPath: configPath, options: options)
-                    continuation.resume(returning: result)
-                } catch {
-                    continuation.resume(throwing: error)
+    public static func compileRules(
+        configPath: URL,
+        options: CompileOptions
+    ) async throws(CompilerError) -> CompilerResult {
+        // `withCheckedThrowingContinuation` is untyped-throws in the standard library (there is
+        // no typed-throws overload as of Swift 6.0), so bridge its `any Error` back to
+        // `CompilerError` explicitly rather than widening this function's own signature to
+        // match it. The `catch { }` branch is unreachable in practice: the continuation is only
+        // ever resumed with the error the synchronous `compileRules(configPath:options:)` threw,
+        // which is always a `CompilerError`.
+        do {
+            return try await withCheckedThrowingContinuation { continuation in
+                DispatchQueue.global(qos: .userInitiated).async {
+                    do {
+                        let result = try compileRules(configPath: configPath, options: options)
+                        continuation.resume(returning: result)
+                    } catch {
+                        continuation.resume(throwing: error)
+                    }
                 }
             }
+        } catch let error as CompilerError {
+            throw error
+        } catch {
+            throw CompilerError.serialization(String(describing: error))
         }
     }
 
@@ -347,7 +362,7 @@ public struct BloqrCompiler: Sendable {
         UInt64(max(0, Date().timeIntervalSince(start) * 1000))
     }
 
-    static func createDirectory(_ url: URL) throws {
+    static func createDirectory(_ url: URL) throws(CompilerError) {
         do {
             try FileManager.default.createDirectory(at: url, withIntermediateDirectories: true)
         } catch {
@@ -390,7 +405,7 @@ public struct BloqrCompiler: Sendable {
         outputPath: String,
         engine: String?,
         browserOutputPath: String?
-    ) throws -> (String, [String]) {
+    ) throws(CompilerError) -> (String, [String]) {
         guard let deno = findCommand("deno") else {
             throw CompilerError.compilerNotFound
         }
@@ -466,7 +481,7 @@ public struct BloqrCompiler: Sendable {
     }
 
     /// Computes the SHA-384 hash of a file, matching the other wrappers' hex-encoded digest.
-    public static func computeHash(path: URL) throws -> String {
+    public static func computeHash(path: URL) throws(CompilerError) -> String {
         guard let data = try? Data(contentsOf: path) else {
             throw CompilerError.fileSystem(context: "reading \(path.path) for hashing", underlying: "file not found")
         }
