@@ -51,9 +51,10 @@ public struct BloqrCompiler: Sendable {
         // compiler only accepts strict JSON at a `.json`-named path (a `.jsonc` extension
         // isn't recognized by its own extension-based format detection, and its `JSON.parse`
         // rejects `//`/`/* */` comments outright, even though this wrapper's own JSONC
-        // preprocessing accepts them). This is keyed on the *resolved config path's own
-        // extension and raw contents*, not just the parsed source format: a forced
-        // `--format json` read of a `config.txt` still needs a `.json`-named temp file too.
+        // preprocessing accepts them). This is keyed on `config.sourceFormat` - the format
+        // actually used to parse the file, honoring an explicit `--format` override - not the
+        // path's extension: `-f yaml -c config.json` must still be re-serialized as JSON
+        // rather than handing Deno the raw YAML text under a `.json`-named path.
         var tempConfigPath: URL?
         let compileConfigPath: URL
         let configExtension = resolvedConfigPath.pathExtension.lowercased()
@@ -76,7 +77,7 @@ public struct BloqrCompiler: Sendable {
             return temp
         }
 
-        if configExtension == "json" || configExtension == "jsonc" {
+        if config.sourceFormat == .json {
             // Re-read and de-comment the *raw* file text rather than re-serializing the
             // parsed `config` model: this wrapper's `CompilerConfig` doesn't model every
             // schema field (e.g. `output`/`hashVerification`/`archiving`), and going through
@@ -103,9 +104,10 @@ public struct BloqrCompiler: Sendable {
                 tempConfigPath = temp
             }
         } else {
-            // YAML/TOML - there's no raw JSON text to preserve, so re-serialize the parsed
-            // model (which, like the Rust/.NET/Python wrappers' own YAML/TOML structs,
-            // doesn't carry schema fields this wrapper doesn't model either).
+            // Parsed as YAML or TOML (whatever the file's own extension says) - there's no
+            // raw JSON text to preserve, so re-serialize the parsed model (which, like the
+            // Rust/.NET/Python wrappers' own YAML/TOML structs, doesn't carry schema fields
+            // this wrapper doesn't model either).
             let json = try ConfigReader.toJSON(config)
             let temp = try writeTempConfig(json)
             compileConfigPath = temp
@@ -129,7 +131,7 @@ public struct BloqrCompiler: Sendable {
         // after the run is how we detect whether *this* invocation produced a browser-syntax
         // artifact, and a stale file left over from an earlier mixed-engine compile would
         // otherwise be misreported as this run's output.
-        try? FileManager.default.removeItem(at: browserOutputPath)
+        try Self.removeFileIfPresent(browserOutputPath)
 
         let (command, args) = try Self.compilerCommand(
             configPath: compileConfigPath.path,
@@ -219,7 +221,15 @@ public struct BloqrCompiler: Sendable {
                 let staging = rulesDir.appendingPathComponent(".adguard_user_filter.txt.\(UUID().uuidString).tmp")
                 do {
                     try FileManager.default.copyItem(at: outputPath, to: staging)
-                    _ = try FileManager.default.replaceItemAt(destination, withItemAt: staging)
+                    // `replaceItemAt` requires the destination to already exist (it fails
+                    // otherwise) - a fresh rules directory has no prior
+                    // `adguard_user_filter.txt` to replace, so move the staged file into place
+                    // directly on a first run.
+                    if FileManager.default.fileExists(atPath: destination.path) {
+                        _ = try FileManager.default.replaceItemAt(destination, withItemAt: staging)
+                    } else {
+                        try FileManager.default.moveItem(at: staging, to: destination)
+                    }
                 } catch {
                     try? FileManager.default.removeItem(at: staging)
                     throw CompilerError.fileSystem(
@@ -253,6 +263,24 @@ public struct BloqrCompiler: Sendable {
 
     static func elapsedMs(since start: Date) -> UInt64 {
         UInt64(max(0, Date().timeIntervalSince(start) * 1000))
+    }
+
+    /// Removes the file at `url` if one exists, but refuses to touch a directory:
+    /// `FileManager.removeItem(at:)` deletes directories recursively, and `url` here is
+    /// derived from user-controlled input (`--output`/`--browser-output` or their defaults),
+    /// so silently recursing into a directory the user happened to point at would be
+    /// destructive. A directory at this path is a misuse of the option, not something to
+    /// clean up on its behalf.
+    static func removeFileIfPresent(_ url: URL) throws {
+        var isDirectory: ObjCBool = false
+        guard FileManager.default.fileExists(atPath: url.path, isDirectory: &isDirectory) else { return }
+        guard !isDirectory.boolValue else {
+            throw CompilerError.fileSystem(
+                context: "removing stale artifact at \(url.path)",
+                underlying: "refusing to remove a directory - check --output/--browser-output"
+            )
+        }
+        try FileManager.default.removeItem(at: url)
     }
 
     static func createDirectory(_ url: URL) throws {
