@@ -106,6 +106,41 @@ Deno.test('ConfigurationValidator.validate - should reject invalid transformatio
   assertEquals(result.valid, false);
 });
 
+Deno.test('ConfigurationValidator.validate - should reject commercial-only transformations that silently no-op (issue #502)', () => {
+  // ConflictDetection/RuleOptimizer exist on TransformationType but
+  // TransformationRegistry never registers them in this OSS package, and
+  // TransformationPipeline.transform() silently skips unregistered types.
+  // FilterCompiler/BrowserSyntaxCompiler both validate through this class
+  // before compiling, so accepting either name here would let a config
+  // "pass" and then have the transformation quietly no-op at compile time.
+  const validator = new ConfigurationValidator();
+
+  for (
+    const transformation of [TransformationType.ConflictDetection, TransformationType.RuleOptimizer]
+  ) {
+    const globalConfig = {
+      name: 'Test Filter',
+      sources: [{ source: 'https://example.org/list.txt' }],
+      transformations: [transformation],
+    };
+    assertEquals(
+      validator.validate(globalConfig).valid,
+      false,
+      `expected '${transformation}' to be rejected globally`,
+    );
+
+    const sourceConfig = {
+      name: 'Test Filter',
+      sources: [{ source: 'https://example.org/list.txt', transformations: [transformation] }],
+    };
+    assertEquals(
+      validator.validate(sourceConfig).valid,
+      false,
+      `expected '${transformation}' to be rejected per-source`,
+    );
+  }
+});
+
 // validateAndGet tests
 Deno.test('ConfigurationValidator.validateAndGet - should return configuration for valid input', () => {
   const validator = new ConfigurationValidator();

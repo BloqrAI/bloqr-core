@@ -15,6 +15,7 @@ import {
   validateUrl,
 } from './validation.ts';
 import { ConfigurationError, ResourceLimitError } from './errors.ts';
+import { CANONICAL_TRANSFORMATION_ORDER } from '../transformations/TransformationRegistry.ts';
 
 // validateConfiguration tests
 Deno.test('validateConfiguration - validates a valid minimal configuration', () => {
@@ -134,6 +135,46 @@ Deno.test('validateConfiguration - accepts valid transformations', () => {
   const result = validateConfiguration(config);
 
   assertEquals(result.valid, true);
+});
+
+Deno.test('validateConfiguration - accepts every registered transformation (issue #502 regression)', () => {
+  // Guards against the validator's transformation list drifting out of sync
+  // with TransformationRegistry's actual registered defaults again - it
+  // previously hand-duplicated the list and rejected valid, registered
+  // transformations.
+  for (const transformation of CANONICAL_TRANSFORMATION_ORDER) {
+    const config = {
+      name: 'Test',
+      sources: [{ source: 'https://example.com' }],
+      transformations: [transformation],
+    };
+    const result = validateConfiguration(config);
+
+    assertEquals(
+      result.valid,
+      true,
+      `expected '${transformation}' to be accepted, got errors: ${result.errors.join(', ')}`,
+    );
+  }
+});
+
+Deno.test('validateConfiguration - rejects commercial-only transformations that silently no-op', () => {
+  // ConflictDetection/RuleOptimizer exist on TransformationType but are never
+  // registered by TransformationRegistry in this OSS package, so
+  // TransformationPipeline.transform() would silently skip them at compile
+  // time. Validation must reject them rather than let a config "succeed"
+  // and then quietly drop the requested transformation.
+  for (const transformation of ['ConflictDetection', 'RuleOptimizer']) {
+    const config = {
+      name: 'Test',
+      sources: [{ source: 'https://example.com' }],
+      transformations: [transformation],
+    };
+    const result = validateConfiguration(config);
+
+    assertEquals(result.valid, false);
+    assertEquals(result.errors.some((e) => e.includes(transformation)), true);
+  }
 });
 
 Deno.test('validateConfiguration - warns about invalid homepage URL', () => {

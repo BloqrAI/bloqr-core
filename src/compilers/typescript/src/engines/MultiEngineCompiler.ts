@@ -18,6 +18,25 @@ import {
 import type { BrowserSyntaxCompilerOptions } from './browser/BrowserSyntaxCompiler.ts';
 import { detectSourceEngine } from './EngineDetector.ts';
 import type { EngineKind } from './types.ts';
+import { CANONICAL_TRANSFORMATION_ORDER } from '../transformations/TransformationRegistry.ts';
+
+/**
+ * Transformations that are registered/known but specifically DNS-only - the set this
+ * module intentionally drops from a shared top-level `transformations` list before it
+ * reaches the browser bucket (see {@link filterToBrowserSafe}). Derived as the
+ * complement of {@link BROWSER_SAFE_TRANSFORMATIONS} within
+ * `CANONICAL_TRANSFORMATION_ORDER` rather than hand-listed, so it can't drift out of
+ * sync with either.
+ *
+ * Deliberately narrower than "everything not in `BROWSER_SAFE_TRANSFORMATIONS`":
+ * an unrecognized name (a typo, or a real-but-unimplemented type like
+ * `ConflictDetection`/`RuleOptimizer`) is *not* DNS-only, so it must NOT be silently
+ * dropped here - it needs to survive into the browser bucket's `transformations` so
+ * `ConfigurationValidator` can reject it, per issue #502.
+ */
+const DNS_ONLY_TRANSFORMATIONS: ReadonlySet<TransformationType> = new Set(
+  CANONICAL_TRANSFORMATION_ORDER.filter((t) => !BROWSER_SAFE_TRANSFORMATIONS.has(t)),
+);
 
 /**
  * Result of a multi-engine compilation. Each key is present only when the
@@ -78,32 +97,37 @@ function partitionConfiguration(
 }
 
 /**
- * Filters a top-level transformation list down to the browser-safe subset.
+ * Filters a top-level transformation list by removing known DNS-only entries.
  *
  * The shared `configuration.transformations` field is written with one engine in
  * mind — often the DNS engine's own defaults (e.g. injected by the CLI when the user
- * didn't specify any) — so silently dropping DNS-only entries (`Compress`,
- * `Validate`, `ValidateAllowIp`, `InvertAllow`) here, rather than throwing, lets a
- * single mixed-engine configuration carry one `transformations` list without every
- * browser-syntax source having to opt out explicitly. `undefined` in means
- * `undefined` out, so {@link BrowserSyntaxCompiler} falls back to its own
- * browser-safe defaults. When every entry is already browser-safe (the common case
- * for a config authored with browser sources in mind), the list passes through
- * unchanged.
+ * didn't specify any) — so silently dropping known DNS-only entries (`Compress`,
+ * `Validate`, `ValidateAllowIp`, `InvertAllow`, i.e. {@link DNS_ONLY_TRANSFORMATIONS})
+ * here, rather than throwing, lets a single mixed-engine configuration carry one
+ * `transformations` list without every browser-syntax source having to opt out
+ * explicitly. `undefined` in means `undefined` out, so {@link BrowserSyntaxCompiler}
+ * falls back to its own browser-safe defaults.
+ *
+ * Deliberately filters OUT the known-DNS-only set rather than filtering IN
+ * {@link BROWSER_SAFE_TRANSFORMATIONS}: an unrecognized transformation name (a typo,
+ * or a real-but-unimplemented type such as `ConflictDetection`/`RuleOptimizer`) must
+ * survive this step so it reaches `BrowserSyntaxCompiler`'s `ConfigurationValidator`
+ * and gets rejected there — filtering IN the browser-safe set would instead have
+ * silently discarded it before validation ever saw it (issue #502).
  *
  * Per-source `source.transformations` are deliberately NOT filtered here — a source
  * explicitly tagged `engine: 'browser'` that also explicitly requests an unsafe
  * transformation is a real authoring mistake, and {@link BrowserSyntaxCompiler}
  * throws on it rather than silently dropping it.
  * @param transformations - The shared top-level transformation list, if any.
- * @returns The browser-safe subset, or `undefined` when the input was `undefined` or
- *   nothing survived filtering.
+ * @returns The list with known DNS-only entries removed, or `undefined` when the
+ *   input was `undefined` or nothing survived filtering.
  */
 export function filterToBrowserSafe(
   transformations?: readonly TransformationType[],
 ): TransformationType[] | undefined {
   if (!transformations) return undefined;
-  const filtered = transformations.filter((t) => BROWSER_SAFE_TRANSFORMATIONS.has(t));
+  const filtered = transformations.filter((t) => !DNS_ONLY_TRANSFORMATIONS.has(t));
   return filtered.length > 0 ? filtered : undefined;
 }
 

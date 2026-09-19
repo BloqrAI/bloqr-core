@@ -47,6 +47,13 @@ import type { DownloaderOptions } from '../../downloader/index.ts';
  *   valid browser rules wholesale (e.g. `$script`, `##.selector`).
  * - `InvertAllow` — DNS allow/block semantics don't map 1:1 onto AdGuard exception
  *   rule (`@@`) semantics for every rule category; deferred rather than guessed at.
+ * - `ConflictDetection` / `RuleOptimizer` — commercial-only transformations (see
+ *   `TransformationRegistry.test.ts`) that `TransformationRegistry` never registers
+ *   in this OSS package. Listing them here would let a browser-engine config request
+ *   them, pass this check, and then have `TransformationPipeline.transform()` silently
+ *   skip them as unregistered (issue #502) - excluded until they're actually
+ *   implemented in this package, matching `CANONICAL_TRANSFORMATION_ORDER` and the
+ *   config validators (`ConfigurationValidator`, `orchestration/validation.ts`).
  */
 export const BROWSER_SAFE_TRANSFORMATIONS: ReadonlySet<TransformationType> = new Set([
   TransformationType.RemoveComments,
@@ -56,8 +63,6 @@ export const BROWSER_SAFE_TRANSFORMATIONS: ReadonlySet<TransformationType> = new
   TransformationType.InsertFinalNewLine,
   TransformationType.ConvertToAscii,
   TransformationType.RemoveModifiers,
-  TransformationType.ConflictDetection,
-  TransformationType.RuleOptimizer,
 ]);
 
 /** Default pipeline applied when a browser-syntax source specifies none. */
