@@ -29,10 +29,11 @@ import { CANONICAL_TRANSFORMATION_ORDER } from '../transformations/Transformatio
  * sync with either.
  *
  * Deliberately narrower than "everything not in `BROWSER_SAFE_TRANSFORMATIONS`":
- * an unrecognized name (a typo, or a real-but-unimplemented type like
- * `ConflictDetection`/`RuleOptimizer`) is *not* DNS-only, so it must NOT be silently
- * dropped here - it needs to survive into the browser bucket's `transformations` so
- * `ConfigurationValidator` can reject it, per issue #502.
+ * an unrecognized name (a typo, or a not-yet-implemented future type) is *not*
+ * DNS-only, so it must NOT be silently dropped here - it needs to survive into the
+ * browser bucket's `transformations` so `ConfigurationValidator` can reject it, per
+ * issue #502 (this bit `ConflictDetection`/`RuleOptimizer` before #512 implemented
+ * them).
  */
 const DNS_ONLY_TRANSFORMATIONS: ReadonlySet<TransformationType> = new Set(
   CANONICAL_TRANSFORMATION_ORDER.filter((t) => !BROWSER_SAFE_TRANSFORMATIONS.has(t)),
@@ -110,10 +111,11 @@ function partitionConfiguration(
  *
  * Deliberately filters OUT the known-DNS-only set rather than filtering IN
  * {@link BROWSER_SAFE_TRANSFORMATIONS}: an unrecognized transformation name (a typo,
- * or a real-but-unimplemented type such as `ConflictDetection`/`RuleOptimizer`) must
- * survive this step so it reaches `BrowserSyntaxCompiler`'s `ConfigurationValidator`
- * and gets rejected there — filtering IN the browser-safe set would instead have
- * silently discarded it before validation ever saw it (issue #502).
+ * or a not-yet-implemented future type) must survive this step so it reaches
+ * `BrowserSyntaxCompiler`'s `ConfigurationValidator` and gets rejected there —
+ * filtering IN the browser-safe set would instead have silently discarded it before
+ * validation ever saw it (issue #502; this is exactly what happened to
+ * `ConflictDetection`/`RuleOptimizer` before #512 implemented them).
  *
  * Per-source `source.transformations` are deliberately NOT filtered here — a source
  * explicitly tagged `engine: 'browser'` that also explicitly requests an unsafe

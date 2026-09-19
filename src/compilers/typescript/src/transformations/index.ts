@@ -21,6 +21,8 @@
  * | {@link ValidateTransformation} | Validates DNS-level rules; removes raw IPs |
  * | {@link ValidateAllowIpTransformation} | Like `Validate` but keeps IP rules |
  * | {@link CompressTransformation} | Converts hosts-format entries to adblock syntax |
+ * | {@link ConflictDetectionTransformation} | Detects (logs, doesn't remove) conflicting allow/block rule pairs |
+ * | {@link RuleOptimizerTransformation} | Merges redundant element-hiding rules sharing a domain list |
  * | {@link ExcludeTransformation} | Removes rules matching a user-supplied exclusion list |
  * | {@link IncludeTransformation} | Keeps only rules matching a user-supplied inclusion list |
  */
@@ -41,6 +43,8 @@ export { ValidateAllowIpTransformation, ValidateTransformation } from './Validat
 // reimplementation — it does NOT depend on @adguard/agtree, unlike the
 // commercial bloqr-compiler's version. See docs/compiler-architecture.md.
 export { CompressTransformation } from './CompressTransformation.ts';
+export { ConflictDetectionTransformation } from './ConflictDetectionTransformation.ts';
+export { RuleOptimizerTransformation } from './RuleOptimizerTransformation.ts';
 export { ExcludeTransformation } from './ExcludeTransformation.ts';
 export { IncludeTransformation } from './IncludeTransformation.ts';
 
