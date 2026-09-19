@@ -19,7 +19,7 @@ A single Swift package with a library target and a thin executable target:
 
 | Requirement | Version | Notes |
 |-------------|---------|-------|
-| Swift | 5.9+ (Xcode 15+) | Core language; `platforms: [.macOS(.v13)]` in `Package.swift` |
+| Swift | 6.0+ (Xcode 16+) | Core language, built in the Swift 6 language mode (`swift-tools-version: 6.0`); deploys back to `platforms: [.macOS(.v13)]` in `Package.swift` |
 | Deno | 2.0+ | For the compilation engine (`@bloqr/compiler-core`, via `deno run jsr:@bloqr/compiler-core/cli`) |
 | [`bloqr-validate`](../../validation/cli/) | latest | **Required for a successful compile by default.** This wrapper runs a mandatory, fail-closed rules-validator syntax check on compiled output (matching the other wrappers - see [Security & hardening](#security--hardening) below); install it with `cargo install bloqr-validator-core-cli`. Pass `compile --allow-unvalidated-output` to opt out instead (not recommended - compiled output then goes unchecked) |
 

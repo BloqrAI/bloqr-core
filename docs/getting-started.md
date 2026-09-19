@@ -20,7 +20,7 @@ This guide will help you get up and running with the ad-blocking toolkit.
 | Python | Python | 3.9+ | [python.org](https://www.python.org/) |
 | Rust | Rust | 1.70+ | [rustup.rs](https://rustup.rs/) |
 | PowerShell | PowerShell | 7+ | [GitHub](https://github.com/PowerShell/PowerShell) |
-| Swift | Swift (Xcode) | 5.9+ (Xcode 15+) | [swift.org](https://www.swift.org/install/) (macOS only) |
+| Swift | Swift (Xcode) | 6.0+ (Xcode 16+) | [swift.org](https://www.swift.org/install/) (macOS only) |
 
 ## Quick Installation
 
@@ -238,7 +238,7 @@ rustup update stable
 
 ### Swift build fails / `swift` not found
 
-The Swift compiler is macOS-native (Xcode 15+) and does not build on Linux or Windows. Install/update Xcode, then verify with:
+The Swift compiler is macOS-native (Xcode 16+, Swift 6 language mode) and does not build on Linux or Windows. Install/update Xcode, then verify with:
 
 ```bash
 swift --version

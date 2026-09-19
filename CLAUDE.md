@@ -405,7 +405,7 @@ GitHub Actions workflows validate:
 - `.github/workflows/rust-clippy.yml` - Builds, tests, formats, and lints the Rust workspace (rules compiler, validation library)
 - `.github/workflows/python.yml` - Builds and tests the Python rules compiler across supported Python versions
 - `.github/workflows/powershell.yml` - Pester tests and PSScriptAnalyzer for the PowerShell toolkit
-- `.github/workflows/swift.yml` - Builds and tests the macOS-native Swift compiler wrapper on `macos-14`
+- `.github/workflows/swift.yml` - Builds and tests the macOS-native Swift compiler wrapper on `macos-15` (Swift 6 toolchain)
 - `.github/workflows/build-scripts-tests.yml` - Exercises the root `build.sh`/`build.ps1` launcher scripts
 - `.github/workflows/gatsby.yml` - Builds the `website` documentation site
 - `.github/workflows/security.yml` - Consolidated security scanning (CodeQL, DevSkim, PSScriptAnalyzer)
@@ -541,7 +541,7 @@ GitHub Actions workflows validate:
 | PowerShell | 7+ | PowerShell scripts |
 | Python | 3.9+ | Python compiler |
 | Rust | 1.85+ | Rust compiler (install via rustup) |
-| Swift | 5.9+ (Xcode 15+) | Swift compiler wrapper (macOS-native) |
+| Swift | 6.0+ (Xcode 16+) | Swift compiler wrapper (macOS-native), Swift 6 language mode |
 | @bloqr/compiler-core | 1.0.0 | TypeScript compiler (via JSR: `deno add @bloqr/compiler-core`) |
 | Bun | latest | Optional — formally supported alternative runtime target for `src/compilers/typescript` (not required for this repo's own tooling; see that package's README) |
 | Docker | 24.0+ | Container development (optional but recommended) |
