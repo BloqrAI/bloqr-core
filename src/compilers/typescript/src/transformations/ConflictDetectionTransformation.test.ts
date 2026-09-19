@@ -2,17 +2,18 @@ import { assertEquals, assertStrictEquals } from '@std/assert';
 import { ConflictDetectionTransformation } from './ConflictDetectionTransformation.ts';
 import type { ILogger } from '../types/index.ts';
 
-/** Minimal logger that records warn() calls so tests can assert detection actually fired. */
-function createRecordingLogger(): { logger: ILogger; warnings: string[] } {
+/** Minimal logger that records warn()/debug() calls so tests can assert detection actually fired. */
+function createRecordingLogger(): { logger: ILogger; warnings: string[]; debugs: string[] } {
   const warnings: string[] = [];
+  const debugs: string[] = [];
   const logger: ILogger = {
     info: () => {},
     warn: (message: string) => warnings.push(message),
     error: () => {},
-    debug: () => {},
+    debug: (message: string) => debugs.push(message),
     trace: () => {},
   };
-  return { logger, warnings };
+  return { logger, warnings, debugs };
 }
 
 Deno.test('ConflictDetectionTransformation - detects a network allow/block conflict', async () => {
@@ -105,4 +106,26 @@ Deno.test('ConflictDetectionTransformation - classifies a network exception rule
 
   assertEquals(result, rules);
   assertEquals(warnings.length, 1);
+});
+
+Deno.test('ConflictDetectionTransformation - caps retained conflict messages without losing the true count', async () => {
+  // Regression: the logging cap was applied only when printing, after every
+  // conflict message had already been pushed into an unbounded array - a
+  // pathological input (every rule conflicting) could grow that array without
+  // bound just to compute a count. Cap what's retained while scanning instead.
+  const { logger, warnings, debugs } = createRecordingLogger();
+  const transformation = new ConflictDetectionTransformation(logger);
+
+  const conflictCount = 25; // > the transformation's internal cap of 20
+  const rules: string[] = [];
+  for (let i = 0; i < conflictCount; i++) {
+    rules.push(`||example${i}.com^`, `@@||example${i}.com^`);
+  }
+
+  await transformation.execute(rules);
+
+  assertEquals(warnings, [`Detected ${conflictCount} conflicting allow/block rule pair(s)`]);
+  // 20 individual conflict messages plus one "... and N more" summary line.
+  assertEquals(debugs.length, 21);
+  assertEquals(debugs[20], '... and 5 more');
 });

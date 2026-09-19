@@ -27,20 +27,17 @@
  */
 
 import type { IConfiguration } from '../index.ts';
+import { TransformationType } from '../types/index.ts';
 
 /**
- * Available transformation types
+ * Available transformation types.
+ *
+ * Derived from {@link TransformationType} (rather than a hand-maintained string
+ * union) so this public builder API can't silently drift out of sync with the
+ * compiler's actual transformation set the way it previously did - this union
+ * was missing `ValidateAllowIp` and `ConvertToAscii` entirely before `#512`.
  */
-export type Transformation =
-  | 'RemoveComments'
-  | 'Compress'
-  | 'RemoveModifiers'
-  | 'Validate'
-  | 'Deduplicate'
-  | 'InvertAllow'
-  | 'RemoveEmptyLines'
-  | 'TrimLines'
-  | 'InsertFinalNewLine';
+export type Transformation = keyof typeof TransformationType;
 
 /**
  * Source type for filter sources
@@ -367,19 +364,12 @@ export function createConfiguration(name: string): ConfigurationBuilder {
 }
 
 /**
- * All available transformations
+ * All available transformations, derived from {@link TransformationType} so this
+ * list can't drift out of sync with the enum it's meant to mirror.
  */
-export const AVAILABLE_TRANSFORMATIONS: readonly Transformation[] = [
-  'RemoveComments',
-  'Compress',
-  'RemoveModifiers',
-  'Validate',
-  'Deduplicate',
-  'InvertAllow',
-  'RemoveEmptyLines',
-  'TrimLines',
-  'InsertFinalNewLine',
-] as const;
+export const AVAILABLE_TRANSFORMATIONS: readonly Transformation[] = Object.values(
+  TransformationType,
+) as Transformation[];
 
 /**
  * Transformation descriptions for documentation
@@ -389,9 +379,13 @@ export const TRANSFORMATION_DESCRIPTIONS: Record<Transformation, string> = {
   Compress: 'Converts hosts format to adblock syntax',
   RemoveModifiers: 'Removes unsupported modifiers from rules',
   Validate: 'Removes dangerous/incompatible rules',
+  ValidateAllowIp: 'Like Validate, but keeps IP-address targets',
   Deduplicate: 'Removes duplicate rules',
   InvertAllow: 'Converts @@exceptions to blocking rules',
   RemoveEmptyLines: 'Removes blank lines',
   TrimLines: 'Trims whitespace from lines',
   InsertFinalNewLine: 'Ensures file ends with newline',
+  ConvertToAscii: 'Punycode-encodes non-ASCII domain labels',
+  ConflictDetection: 'Detects (logs) conflicting allow/block rule pairs',
+  RuleOptimizer: 'Merges redundant element-hiding rules sharing a domain list',
 };

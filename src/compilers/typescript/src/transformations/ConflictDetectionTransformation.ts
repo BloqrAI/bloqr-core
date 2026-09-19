@@ -39,7 +39,11 @@ export class ConflictDetectionTransformation extends SyncTransformation {
     // can request ConflictDetection alone, and canonical order only orders
     // transformations that were actually requested together.
     const normalizedSet = new Set(rules.map((rule) => rule.trim()));
+    // Only the first MAX_LOGGED_CONFLICTS messages are ever retained - `totalConflicts`
+    // tracks the true count separately so a pathological input (every rule conflicting)
+    // can't grow `conflicts` unboundedly just to report a number.
     const conflicts: string[] = [];
+    let totalConflicts = 0;
 
     for (const rule of rules) {
       const trimmedRule = rule.trim();
@@ -49,17 +53,20 @@ export class ConflictDetectionTransformation extends SyncTransformation {
       if (
         blockingForm !== null && blockingForm !== trimmedRule && normalizedSet.has(blockingForm)
       ) {
-        conflicts.push(`'${rule}' conflicts with '${blockingForm}'`);
+        totalConflicts += 1;
+        if (conflicts.length < MAX_LOGGED_CONFLICTS) {
+          conflicts.push(`'${rule}' conflicts with '${blockingForm}'`);
+        }
       }
     }
 
-    if (conflicts.length > 0) {
-      this.warn(`Detected ${conflicts.length} conflicting allow/block rule pair(s)`);
-      for (const conflict of conflicts.slice(0, MAX_LOGGED_CONFLICTS)) {
+    if (totalConflicts > 0) {
+      this.warn(`Detected ${totalConflicts} conflicting allow/block rule pair(s)`);
+      for (const conflict of conflicts) {
         this.debug(conflict);
       }
-      if (conflicts.length > MAX_LOGGED_CONFLICTS) {
-        this.debug(`... and ${conflicts.length - MAX_LOGGED_CONFLICTS} more`);
+      if (totalConflicts > MAX_LOGGED_CONFLICTS) {
+        this.debug(`... and ${totalConflicts - MAX_LOGGED_CONFLICTS} more`);
       }
     } else {
       this.debug('No conflicting rules detected');
