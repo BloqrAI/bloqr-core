@@ -30,8 +30,9 @@ const Seo = ({ title, description, pathname = "", image }) => {
 
   const fullTitle = title ? `${title} - ${siteTitle}` : siteTitle
   const metaDescription = description || siteDescription
-  const url = `${siteUrl}${pathname}`
-  const socialImage = `${siteUrl}${image || "/social-preview.png"}`
+  const baseUrl = siteUrl.replace(/\/+$/, "")
+  const url = `${baseUrl}${pathname}`
+  const socialImage = `${baseUrl}${image || "/social-preview.png"}`
 
   return (
     <>
