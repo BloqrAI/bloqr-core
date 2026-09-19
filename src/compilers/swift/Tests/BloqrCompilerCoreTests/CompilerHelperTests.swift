@@ -41,12 +41,12 @@ final class CompilerHelperTests: XCTestCase {
         do {
             _ = try await BloqrCompiler().compile(configPath: missingConfig)
             XCTFail("expected compile(configPath:) to throw for a missing config file")
-        } catch let error as CompilerError {
+        } catch {
+            // `compile(configPath:)` is `throws(CompilerError)`, so `error` is already
+            // concretely typed here - no `as? CompilerError` cast needed or possible.
             guard case .configNotFound = error else {
                 return XCTFail("expected CompilerError.configNotFound, got \(error)")
             }
-        } catch {
-            XCTFail("expected CompilerError, got \(error)")
         }
     }
 

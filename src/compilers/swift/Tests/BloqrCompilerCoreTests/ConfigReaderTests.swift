@@ -104,4 +104,25 @@ final class ConfigReaderTests: XCTestCase {
         XCTAssertTrue(json.contains("\"name\""))
         XCTAssertTrue(json.contains("Test"))
     }
+
+    func testToYAMLRoundTrip() throws {
+        // Regression test for a real bug this file's typed-throws pass (`throws(CompilerError)`)
+        // surfaced: the old toYAML round-tripped through `JSONSerialization.jsonObject` into a
+        // type-erased `[String: Any]` for `Yams.dump(object:)`, which actually failed at
+        // runtime ("Failed to represent 1.0.0") because JSONSerialization's Foundation-bridged
+        // values (e.g. NSString) aren't always ones Yams's `Any`-based encoder recognizes -
+        // there was no test exercising toYAML at all before this one, so nothing had caught it.
+        // toYAML now encodes `CompilerConfig` directly via `YAMLEncoder`, the same `Encodable`
+        // path toJSON/toTOML use, which both fixes the runtime failure and gives toYAML proper
+        // `CompilerError` wrapping for whatever it can still throw. Round-tripping back through
+        // `ConfigReader.parse` confirms the fixed output actually parses back correctly.
+        var config = CompilerConfig(name: "Test", version: "1.0.0")
+        config.sources = [FilterSource(name: "Local", source: "./rules.txt")]
+        let yaml = try ConfigReader.toYAML(config)
+        XCTAssertTrue(yaml.contains("name: Test"))
+
+        let reparsed = try ConfigReader.parse(yaml, format: .yaml)
+        XCTAssertEqual(reparsed.name, "Test")
+        XCTAssertEqual(reparsed.sources.first?.source, "./rules.txt")
+    }
 }
