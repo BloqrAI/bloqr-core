@@ -28,7 +28,7 @@ Install the required tools for the language you're working with:
 - **Python**: [Python 3.9+](https://www.python.org/)
 - **Rust**: [Rust 1.86+](https://rustup.rs/)
 - **PowerShell**: [PowerShell 7+](https://github.com/PowerShell/PowerShell)
-- **Swift**: [Swift 5.9+ / Xcode 15+](https://www.swift.org/install/) (macOS-native; the Swift wrapper only builds on macOS)
+- **Swift**: [Swift 6.0+ / Xcode 16+](https://www.swift.org/install/) (macOS-native; the Swift wrapper only builds on macOS)
 
 ### Initial Setup
 
@@ -182,7 +182,7 @@ git commit -m "Fix: description of what was fixed"
 - Use Pester v5 for tests
 
 #### Swift
-- Swift 5.9+ (Xcode 15+), macOS-native
+- Swift 6.0+ (Xcode 16+), macOS-native, built in the Swift 6 language mode
 - Follow standard Swift API design guidelines
 - Use swift-argument-parser conventions for CLI subcommands
 - Use XCTest for tests

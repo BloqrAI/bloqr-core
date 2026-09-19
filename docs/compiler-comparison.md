@@ -7,7 +7,7 @@ This guide helps you choose the right rules compiler for your use case. All comp
 | Feature | TypeScript | .NET | Python | Rust | Swift | PowerShell |
 |---------|------------|------|--------|------|-------|------------|
 | Language | TypeScript | C# | Python | Rust | Swift | PowerShell |
-| Runtime | Deno 2.0+ | .NET 10 | Python 3.9+ | None | None (macOS/Xcode 15+) | PowerShell 7+ |
+| Runtime | Deno 2.0+ | .NET 10 | Python 3.9+ | None | None (macOS/Xcode 16+, Swift 6) | PowerShell 7+ |
 | Config Formats | JSON/JSONC | JSON/JSONC | JSON | JSON | JSON | JSON |
 | Library API | Yes | Yes | Yes | Yes | Yes | Yes |
 | CLI | Yes | Yes | Yes | Yes | Yes | Yes |
@@ -200,7 +200,7 @@ swift run bloqr-compiler -c config.json
 - `async`/`await` library API alongside the synchronous one, via Swift Concurrency
 
 **Cons**:
-- macOS-only (Xcode 15+) — does not build on Linux or Windows
+- macOS-only (Xcode 16+, Swift 6 language mode) — does not build on Linux or Windows
 - Requires Deno, since it shells out to the `@bloqr/compiler-core` engine like the .NET/Python/Rust wrappers
 - The CLI itself still runs the synchronous API (a single sequential invocation has nothing to gain from `async`); only the library API is async
 

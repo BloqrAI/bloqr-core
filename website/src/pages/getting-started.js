@@ -78,7 +78,7 @@ const GettingStartedPage = () => {
             <strong>PowerShell 7+</strong> for PowerShell scripts
           </li>
           <li>
-            <strong>Swift 5.9+ (Xcode 15+)</strong> for the Swift compiler
+            <strong>Swift 6.0+ (Xcode 16+)</strong> for the Swift compiler
             (macOS-native)
           </li>
         </ul>

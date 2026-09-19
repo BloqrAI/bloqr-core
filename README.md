@@ -23,7 +23,7 @@ A multi-language toolkit for compiling and validating AdGuard-syntax ad-blocking
 | Python | 3.9+ | Python compiler |
 | Rust | 1.85+ | Rust compiler, validation library |
 | PowerShell | 7+ | PowerShell toolkit |
-| Swift | 5.9+ (Xcode 15+) | Swift compiler (macOS-native) |
+| Swift | 6.0+ (Xcode 16+) | Swift compiler (macOS-native), Swift 6 language mode |
 | Docker | 24.0+ | Containerized dev environment (optional) |
 
 ## Quick start

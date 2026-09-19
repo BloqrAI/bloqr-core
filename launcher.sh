@@ -358,7 +358,7 @@ rules_menu() {
                 ;;
             5)
                 if require_tool swift "Swift toolchain (macOS/Xcode)" \
-                    "Required to build/run the Swift rules compiler; macOS-native (Xcode 15+)." \
+                    "Required to build/run the Swift rules compiler; macOS-native (Xcode 16+, Swift 6)." \
                     'echo "Install Xcode / the Swift toolchain from https://www.swift.org/install/ (macOS only)"'; then
                     local swift_engine swift_browser_output
                     swift_engine=$(prompt_engine_choice)

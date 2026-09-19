@@ -388,7 +388,7 @@ function Show-RulesMenu {
             }
             "5" {
                 $ready = Request-Tool -Command swift -Label "Swift toolchain (macOS/Xcode)" `
-                    -Description "Required to build/run the Swift rules compiler; macOS-native (Xcode 15+)." `
+                    -Description "Required to build/run the Swift rules compiler; macOS-native (Xcode 16+, Swift 6)." `
                     -InstallAction { Write-Host "Install Xcode / the Swift toolchain from https://www.swift.org/install/ (macOS only)" }
                 if ($ready) {
                     $swiftEngine = Show-EnginePrompt
