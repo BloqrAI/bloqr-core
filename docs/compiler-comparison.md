@@ -197,15 +197,17 @@ swift run bloqr-compiler -c config.json
 - swift-argument-parser-based CLI with `compile`/`config`/`version` subcommands
 - Type-safe `CompilerConfig`/`FilterSource` model
 - SHA-384 hashing via CryptoKit
+- `async`/`await` library API alongside the synchronous one, via Swift Concurrency
 
 **Cons**:
 - macOS-only (Xcode 15+) — does not build on Linux or Windows
 - Requires Deno, since it shells out to the `@bloqr/compiler-core` engine like the .NET/Python/Rust wrappers
+- The CLI itself still runs the synchronous API (a single sequential invocation has nothing to gain from `async`); only the library API is async
 
 **Features**:
 - swift-argument-parser CLI
 - JSON configuration (YAML/TOML supported for backward compatibility only)
-- Library API via `BloqrCompilerCore` (`BloqrCompiler`, `CompilerConfig`, `CompileOptions`)
+- Library API via `BloqrCompilerCore` (`BloqrCompiler`, `CompilerConfig`, `CompileOptions`), with both synchronous and `async` entry points
 - XCTest suite
 
 **Library Usage**:
@@ -217,6 +219,19 @@ import Foundation
 let compiler = BloqrCompiler()
 let configPath = URL(fileURLWithPath: "config.json")
 let result = try compiler.compile(configPath: configPath)
+print("Compiled \(result.ruleCount) rules")
+```
+
+Or asynchronously, from a Swift Concurrency context (a SwiftUI view, a Vapor route handler, an
+`async` CLI command):
+
+```swift
+import BloqrCompilerCore
+import Foundation
+
+let compiler = BloqrCompiler()
+let configPath = URL(fileURLWithPath: "config.json")
+let result = try await compiler.compile(configPath: configPath)
 print("Compiled \(result.ruleCount) rules")
 ```
 
@@ -335,7 +350,7 @@ Get-CompilerVersion | Format-List
 | Interactive | Yes | Yes | No | No | No |
 | Tests | Deno test | xUnit | pytest | cargo test | XCTest |
 | DI Support | No | Yes | No | No | No |
-| Async | Yes | Yes | No | Planned | No |
+| Async | Yes | Yes | Yes | Yes | Yes |
 
 ## Migration Between Compilers
 

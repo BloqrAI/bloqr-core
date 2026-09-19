@@ -17,6 +17,15 @@ public struct BloqrCompiler: Sendable {
         try Self.compileRules(configPath: configPath, options: options)
     }
 
+    /// Compiles filter rules from the configuration at `configPath`, asynchronously.
+    ///
+    /// Mirrors the other wrappers' async entry points (Rust's `compile_rules_async`,
+    /// .NET's `CompileAsync`, Python's `compile_rules_async`): same pipeline as
+    /// `compile(configPath:)`, just off the calling task.
+    public func compile(configPath: URL) async throws -> CompilerResult {
+        try await Self.compileRules(configPath: configPath, options: options)
+    }
+
     /// Compiles filter rules from the configuration at `configPath` using `options`.
     ///
     /// Mirrors `compile_rules()` in the other wrappers: read config, optionally validate,
@@ -294,6 +303,35 @@ public struct BloqrCompiler: Sendable {
         return result
     }
 
+    /// Compiles filter rules from the configuration at `configPath` using `options`,
+    /// asynchronously.
+    ///
+    /// Runs the synchronous `compileRules(configPath:options:)` pipeline (config read, Deno
+    /// subprocess, hashing, syntax validation) on the global concurrent GCD queue, bridged back
+    /// via a checked continuation - deliberately *not* `Task.detached`, which only detaches
+    /// actor/priority inheritance and still schedules its operation on Swift Concurrency's
+    /// cooperative thread pool. That pool is sized for non-blocking work; this pipeline calls
+    /// `Process.waitUntilExit()`/`DispatchGroup.wait()` under the hood, and blocking a
+    /// cooperative thread on those can starve every other async task sharing the pool. A GCD
+    /// global queue has no such ceiling on blocked threads, so a caller on Swift Concurrency's
+    /// cooperative pool - a SwiftUI view, a Vapor route handler, an `async` CLI command - is
+    /// never at risk of that starvation. This wrapper shells out to a subprocess for the actual
+    /// compilation (see the type-level doc comment above), so there is no natively-async Deno
+    /// invocation to await here; offloading the whole synchronous pipeline is what the other
+    /// wrappers' own async entry points do too.
+    public static func compileRules(configPath: URL, options: CompileOptions) async throws -> CompilerResult {
+        try await withCheckedThrowingContinuation { continuation in
+            DispatchQueue.global(qos: .userInitiated).async {
+                do {
+                    let result = try compileRules(configPath: configPath, options: options)
+                    continuation.resume(returning: result)
+                } catch {
+                    continuation.resume(throwing: error)
+                }
+            }
+        }
+    }
+
     // MARK: - Helpers
 
     /// Resolves a possibly-relative URL against this process's current working directory, so
@@ -383,12 +421,23 @@ public struct BloqrCompiler: Sendable {
         return URL(fileURLWithPath: path + ".browser.txt")
     }
 
+    /// Generates a default output path when the caller didn't pass `options.outputPath`.
+    ///
+    /// The timestamp component is for readability, not uniqueness: a second-resolution
+    /// `yyyyMMdd-HHmmss` alone would let two concurrent compilations for configs in the same
+    /// directory within the same second collide on one output path, with one process
+    /// overwriting the other's output while it's still being hashed or copied - a real risk now
+    /// that `compileRules(configPath:options:)` has an `async` entry point inviting concurrent
+    /// use (e.g. `async let`) rather than only ever running one compilation at a time from a
+    /// single CLI invocation. A short random suffix rules that out without changing the
+    /// filename's readable shape.
     static func generateOutputPath(configPath: URL) -> URL {
         let formatter = DateFormatter()
         formatter.dateFormat = "yyyyMMdd-HHmmss"
         let timestamp = formatter.string(from: Date())
+        let uniqueSuffix = UUID().uuidString.prefix(8).lowercased()
         let outputDir = configPath.deletingLastPathComponent().appendingPathComponent("output")
-        return outputDir.appendingPathComponent("compiled-\(timestamp).txt")
+        return outputDir.appendingPathComponent("compiled-\(timestamp)-\(uniqueSuffix).txt")
     }
 
     static func rulesDirectory(configPath: URL) -> URL {
