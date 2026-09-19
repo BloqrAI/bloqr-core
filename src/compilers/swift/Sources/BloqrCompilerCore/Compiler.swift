@@ -319,13 +319,21 @@ public struct BloqrCompiler: Sendable {
     /// `@bloqr/compiler-core` itself does, which this wrapper doesn't reimplement. Returns
     /// `"browser"` when it's confident every source resolves to the browser engine, `nil`
     /// otherwise (letting `RulesValidator` fall back to its DNS default).
+    ///
+    /// Mirrors the TypeScript engine's own precedence (`EngineDetector.detectSourceEngine`,
+    /// see `docs/architecture/dual-engine-compilation.md`): an explicit per-source `engine`
+    /// wins; otherwise a `hosts`-type source is unconditionally DNS *before*
+    /// `config.defaultEngine` is even considered (hosts-file syntax has no browser-grammar
+    /// equivalent), and only then does `defaultEngine` apply.
     static func primaryArtifactEngine(config: CompilerConfig, options: CompileOptions) -> String? {
         if let engine = options.engine, engine.lowercased() != "auto" {
             return engine
         }
         guard !config.sources.isEmpty else { return nil }
         let allBrowser = config.sources.allSatisfy { source in
-            (source.engine ?? config.defaultEngine) == .browser
+            if let explicitEngine = source.engine { return explicitEngine == .browser }
+            if source.type == .hosts { return false }
+            return config.defaultEngine == .browser
         }
         return allBrowser ? "browser" : nil
     }

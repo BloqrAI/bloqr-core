@@ -61,4 +61,15 @@ final class CompilerHelperTests: XCTestCase {
         )
         XCTAssertNil(BloqrCompiler.primaryArtifactEngine(config: config, options: CompileOptions()))
     }
+
+    func testPrimaryArtifactEngineHostsTypeOverridesDefaultEngine() {
+        // A hosts-type source is unconditionally DNS, even with defaultEngine: browser and no
+        // explicit per-source engine - matching EngineDetector.detectSourceEngine's precedence.
+        let config = CompilerConfig(
+            name: "Test",
+            sources: [FilterSource(source: "https://example.com/hosts.txt", type: .hosts)],
+            defaultEngine: .browser
+        )
+        XCTAssertNil(BloqrCompiler.primaryArtifactEngine(config: config, options: CompileOptions()))
+    }
 }

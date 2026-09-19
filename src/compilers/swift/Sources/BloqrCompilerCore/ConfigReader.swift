@@ -155,6 +155,10 @@ func stripJSONCComments(_ content: String) throws -> String {
                         underlying: "unterminated block comment (/* without a matching */)"
                     )
                 }
+                // Leave a space where the comment was: `{"n": 1/*c*/0}` would otherwise
+                // collapse to `{"n": 10}`, silently merging two adjacent tokens into one.
+                // An extra space is always harmless in JSON; a dropped one can corrupt data.
+                result.append(" ")
                 continue
             }
         }

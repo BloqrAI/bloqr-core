@@ -85,6 +85,16 @@ final class ConfigReaderTests: XCTestCase {
         XCTAssertThrowsError(try stripJSONCComments(input))
     }
 
+    func testStripJSONCCommentsDoesNotMergeAdjacentTokens() throws {
+        // Without a whitespace separator left in place of the comment, this would collapse
+        // to `{"n": 10}` - silently corrupting the value from 1 to 10.
+        let input = #"{"n": 1/*comment*/0}"#
+        let stripped = try stripJSONCComments(input)
+        let data = Data(stripped.utf8)
+        let object = try JSONSerialization.jsonObject(with: data) as? [String: Any]
+        XCTAssertEqual(object?["n"] as? Int, 1)
+    }
+
     func testToJSONRoundTrip() throws {
         var config = CompilerConfig(name: "Test", version: "1.0.0")
         config.sources = [FilterSource(name: "Local", source: "./rules.txt")]
