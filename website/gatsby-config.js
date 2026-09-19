@@ -19,6 +19,8 @@ module.exports = {
     author: `Bloqr Systems`,
     siteUrl: `https://core.bloqr.dev/`,
   },
+  // The site is served from the root of the custom domain, not a GitHub Pages subpath.
+  // Keep this as `/` so links resolve at https://core.bloqr.dev/docs rather than /bloqr-core/docs.
   pathPrefix: `/`,
   plugins: [
     `gatsby-plugin-image`,
