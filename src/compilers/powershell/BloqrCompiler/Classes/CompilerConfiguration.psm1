@@ -137,22 +137,47 @@ class CompilerConfiguration {
         return $detectedFormat
     }
     
+    # Transformations this OSS toolkit actually implements. Mirrors the
+    # RemoveComments..ConvertToAscii set documented in CLAUDE.md and the
+    # shared schemas/compiler-config.schema.json enum. Deliberately excludes
+    # ConflictDetection/RuleOptimizer, which are commercial-only browser-engine
+    # transformations not implemented anywhere in this repo (see issue #502).
+    static [string[]] $ValidTransformations = @(
+        'RemoveComments',
+        'Compress',
+        'RemoveModifiers',
+        'Validate',
+        'ValidateAllowIp',
+        'Deduplicate',
+        'InvertAllow',
+        'RemoveEmptyLines',
+        'TrimLines',
+        'InsertFinalNewLine',
+        'ConvertToAscii'
+    )
+
     # Validate configuration
     [void]Validate() {
         $errors = [List[string]]::new()
-        
+
         if ([string]::IsNullOrWhiteSpace($this.Name)) {
             $errors.Add("Configuration must have a name")
         }
-        
+
         if ($null -eq $this.Sources -or $this.Sources.Count -eq 0) {
             $errors.Add("Configuration must have at least one source")
         }
-        
+
         $validEngines = @('dns', 'browser')
 
         if (-not [string]::IsNullOrWhiteSpace($this.DefaultEngine) -and $this.DefaultEngine -notin $validEngines) {
             $errors.Add("defaultEngine must be one of: $($validEngines -join ', ') (got '$($this.DefaultEngine)')")
+        }
+
+        foreach ($transformation in $this.Transformations) {
+            if ($transformation -notin [CompilerConfiguration]::ValidTransformations) {
+                $errors.Add("transformations: invalid transformation '$transformation'. Valid: $([CompilerConfiguration]::ValidTransformations -join ', ')")
+            }
         }
 
         # Validate each source
@@ -165,6 +190,14 @@ class CompilerConfiguration {
                 -not [string]::IsNullOrWhiteSpace($source.engine) -and
                 $source.engine -notin $validEngines) {
                 $errors.Add("Source '$($source.name)': engine must be one of: $($validEngines -join ', ') (got '$($source.engine)')")
+            }
+
+            if ($source.PSObject.Properties.Match('transformations').Count -gt 0) {
+                foreach ($transformation in $source.transformations) {
+                    if ($transformation -notin [CompilerConfiguration]::ValidTransformations) {
+                        $errors.Add("Source '$($source.name)': invalid transformation '$transformation'. Valid: $([CompilerConfiguration]::ValidTransformations -join ', ')")
+                    }
+                }
             }
         }
 

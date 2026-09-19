@@ -207,6 +207,17 @@ public struct CompilerConfig: Codable, Sendable, Equatable {
         if !exclusions.isEmpty { try container.encode(exclusions, forKey: .exclusions) }
     }
 
+    /// Transformations this wrapper's `@bloqr/compiler-core` shell-out actually implements.
+    /// Mirrors the RemoveComments..ConvertToAscii set documented in CLAUDE.md and the shared
+    /// `schemas/compiler-config.schema.json` enum. Deliberately excludes `ConflictDetection`/
+    /// `RuleOptimizer`, which are commercial-only browser-engine transformations not
+    /// implemented anywhere in this OSS repo (see issue #502).
+    public static let validTransformations: Set<String> = [
+        "RemoveComments", "Compress", "RemoveModifiers", "Validate", "ValidateAllowIp",
+        "Deduplicate", "InvertAllow", "RemoveEmptyLines", "TrimLines", "InsertFinalNewLine",
+        "ConvertToAscii",
+    ]
+
     /// Validates the minimum shape a configuration needs before compiling.
     public func validate() throws(CompilerError) {
         if name.isEmpty {
@@ -217,6 +228,19 @@ public struct CompilerConfig: Codable, Sendable, Equatable {
         }
         for (index, source) in sources.enumerated() where source.source.isEmpty {
             throw CompilerError.validationFailed("source[\(index)].source is required")
+        }
+        for transformation in transformations where !Self.validTransformations.contains(transformation) {
+            throw CompilerError.validationFailed(
+                "transformations: invalid transformation '\(transformation)'"
+            )
+        }
+        for (index, source) in sources.enumerated() {
+            for transformation in source.transformations
+            where !Self.validTransformations.contains(transformation) {
+                throw CompilerError.validationFailed(
+                    "source[\(index)].transformations: invalid transformation '\(transformation)'"
+                )
+            }
         }
     }
 
