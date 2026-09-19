@@ -11,8 +11,21 @@ const NavIcon = () => (
   </svg>
 )
 
+const MOBILE_NAV_QUERY = "(max-width: 768px)"
+
 const Layout = ({ children, pageTitle }) => {
   const [navOpen, setNavOpen] = React.useState(false)
+  const [isMobileNav, setIsMobileNav] = React.useState(false)
+
+  React.useEffect(() => {
+    const mediaQuery = window.matchMedia(MOBILE_NAV_QUERY)
+    const updateIsMobileNav = (event) => setIsMobileNav(event.matches)
+    updateIsMobileNav(mediaQuery)
+    mediaQuery.addEventListener("change", updateIsMobileNav)
+    return () => mediaQuery.removeEventListener("change", updateIsMobileNav)
+  }, [])
+
+  const navCollapsed = isMobileNav && !navOpen
 
   const data = useStaticQuery(graphql`
     query SearchIndexQuery {
@@ -61,7 +74,12 @@ const Layout = ({ children, pageTitle }) => {
           </div>
         </div>
       </header>
-      <nav id="site-nav" className={navOpen ? "nav-open" : undefined}>
+      <nav
+        id="site-nav"
+        className={navOpen ? "nav-open" : undefined}
+        inert={navCollapsed ? "" : undefined}
+        aria-hidden={navCollapsed ? "true" : undefined}
+      >
         <div className="container">
           <ul>
             <li>

@@ -704,10 +704,6 @@ footer a:hover {
 }
 
 @media (max-width: 768px) {
-  nav {
-    top: 58px;
-  }
-
   .hero {
     padding: 3rem 1rem;
     border-radius: 0 0 var(--radius-md) var(--radius-md);
@@ -726,6 +722,7 @@ footer a:hover {
   }
 
   nav {
+    position: static;
     max-height: 0;
     overflow: hidden;
     padding: 0;
