@@ -421,12 +421,23 @@ public struct BloqrCompiler: Sendable {
         return URL(fileURLWithPath: path + ".browser.txt")
     }
 
+    /// Generates a default output path when the caller didn't pass `options.outputPath`.
+    ///
+    /// The timestamp component is for readability, not uniqueness: a second-resolution
+    /// `yyyyMMdd-HHmmss` alone would let two concurrent compilations for configs in the same
+    /// directory within the same second collide on one output path, with one process
+    /// overwriting the other's output while it's still being hashed or copied - a real risk now
+    /// that `compileRules(configPath:options:)` has an `async` entry point inviting concurrent
+    /// use (e.g. `async let`) rather than only ever running one compilation at a time from a
+    /// single CLI invocation. A short random suffix rules that out without changing the
+    /// filename's readable shape.
     static func generateOutputPath(configPath: URL) -> URL {
         let formatter = DateFormatter()
         formatter.dateFormat = "yyyyMMdd-HHmmss"
         let timestamp = formatter.string(from: Date())
+        let uniqueSuffix = UUID().uuidString.prefix(8).lowercased()
         let outputDir = configPath.deletingLastPathComponent().appendingPathComponent("output")
-        return outputDir.appendingPathComponent("compiled-\(timestamp).txt")
+        return outputDir.appendingPathComponent("compiled-\(timestamp)-\(uniqueSuffix).txt")
     }
 
     static func rulesDirectory(configPath: URL) -> URL {
