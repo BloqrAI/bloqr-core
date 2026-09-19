@@ -33,9 +33,11 @@ const AdBlockCompilerPage = () => {
           </a>
           . It replaced the AdGuard-maintained{" "}
           <code>@adguard/hostlist-compiler</code> npm package that the .NET,
-          Python, Rust, and Swift compilers in this repo used to shell out to
-          — they now shell out to <code>@bloqr/compiler-core</code> instead,
-          and the TypeScript compiler <em>is</em> the package, compiling
+          Python, and Rust compilers in this repo used to shell out to — they
+          now shell out to <code>@bloqr/compiler-core</code> instead, and the
+          Swift compiler was introduced afterward already shelling out to{" "}
+          <code>@bloqr/compiler-core</code>. The TypeScript compiler{" "}
+          <em>is</em> the package, compiling
           in-process.
         </p>
         <p>

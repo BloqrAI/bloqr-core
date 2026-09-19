@@ -86,13 +86,11 @@ MAX_PARALLEL_ARGS_DOTNET=""
 MAX_PARALLEL_ARGS_TS=""
 MAX_PARALLEL_ARGS_PY=""
 MAX_PARALLEL_ARGS_RUST=""
-MAX_PARALLEL_ARGS_SWIFT=""
 if [[ -n "$MAX_PARALLEL" ]]; then
     MAX_PARALLEL_ARGS_DOTNET="--benchmark-max-parallel $MAX_PARALLEL"
     MAX_PARALLEL_ARGS_TS="--benchmark-max-parallel $MAX_PARALLEL"
     MAX_PARALLEL_ARGS_PY="--benchmark-max-parallel $MAX_PARALLEL"
     MAX_PARALLEL_ARGS_RUST="--max-parallel $MAX_PARALLEL"
-    MAX_PARALLEL_ARGS_SWIFT="--benchmark-max-parallel $MAX_PARALLEL"
 fi
 
 echo -e "${CYAN}======================================================================${NC}"
@@ -202,21 +200,12 @@ if is_selected powershell; then
 fi
 
 # Swift (macOS only - not in the default LANGUAGES list; opt in with --languages swift)
+# The bloqr-compiler CLI only defines compile/config/version subcommands today - it has no
+# --benchmark surface (unlike the Rust/.NET/TypeScript/Python wrappers), so there's nothing to
+# invoke yet. Report that explicitly instead of shelling out to flags that don't exist.
 if is_selected swift; then
-    if command -v swift &> /dev/null; then
-        echo -e "${BLUE}--- Swift ---${NC}"
-        # shellcheck disable=SC2086
-        if (cd src/compilers/swift && swift run -c release bloqr-compiler \
-            --benchmark --benchmark-size "$SIZE" --benchmark-sources "$SOURCES" $MAX_PARALLEL_ARGS_SWIFT --benchmark-json \
-            > "$TMP_DIR/swift.json" 2>"$TMP_DIR/swift.err"); then
-            echo -e "${GREEN}✓ Swift benchmark complete${NC}"
-        else
-            echo -e "${YELLOW}⚠ Swift benchmark failed:${NC}"
-            cat "$TMP_DIR/swift.err"
-        fi
-    else
-        echo -e "${YELLOW}⚠ swift not found (macOS/Xcode required), skipping Swift${NC}"
-    fi
+    echo -e "${BLUE}--- Swift ---${NC}"
+    echo -e "${YELLOW}⚠ bloqr-compiler (Swift) has no --benchmark flag yet, skipping Swift${NC}"
     echo ""
 fi
 

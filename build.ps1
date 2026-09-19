@@ -262,8 +262,9 @@ function Build-PythonProjects {
 function Build-SwiftProjects {
     Write-Host "Building Swift projects..." -ForegroundColor Blue
 
-    # Check if Swift is installed; skip gracefully on non-macOS runners
-    if (-not (Get-Command swift -ErrorAction SilentlyContinue)) {
+    # Package.swift declares .macOS(.v13); skip gracefully off macOS even if a Linux/Windows
+    # Swift toolchain happens to be on PATH, and if Swift isn't installed at all.
+    if (-not $IsMacOS -or -not (Get-Command swift -ErrorAction SilentlyContinue)) {
         Write-Host "⊘ Swift is not installed (macOS/Xcode required). Skipping Swift build." -ForegroundColor Yellow
         Write-Host ""
         return

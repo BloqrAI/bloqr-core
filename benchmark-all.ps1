@@ -210,31 +210,12 @@ try {
         Write-Host ""
     }
 
+    # The bloqr-compiler CLI only defines compile/config/version subcommands today - it has no
+    # --benchmark surface (unlike the Rust/.NET/TypeScript/Python wrappers), so there's nothing
+    # to invoke yet. Report that explicitly instead of shelling out to flags that don't exist.
     if (& $isSelected 'swift') {
-        if (Get-Command swift -ErrorAction SilentlyContinue) {
-            Write-Host "--- Swift ---" -ForegroundColor Blue
-            Push-Location 'src/compilers/swift'
-            try {
-                $swiftArgs = @('run', '-c', 'release', 'bloqr-compiler',
-                    '--benchmark', '--benchmark-size', $Size, '--benchmark-sources', $Sources, '--benchmark-json')
-                if ($MaxParallel -gt 0) { $swiftArgs += @('--benchmark-max-parallel', $MaxParallel) }
-                $swiftOutput = & swift @swiftArgs 2>"$TempDir/swift.err"
-                if ($LASTEXITCODE -eq 0) {
-                    $swiftOutput | Set-Content -Path (Join-Path $TempDir 'swift.json')
-                    Write-Host "  Swift benchmark complete" -ForegroundColor Green
-                }
-                else {
-                    Write-Host "  Swift benchmark failed:" -ForegroundColor Yellow
-                    Get-Content (Join-Path $TempDir 'swift.err') | Write-Host
-                }
-            }
-            finally {
-                Pop-Location
-            }
-        }
-        else {
-            Write-Host "swift not found (macOS/Xcode required), skipping Swift" -ForegroundColor Yellow
-        }
+        Write-Host "--- Swift ---" -ForegroundColor Blue
+        Write-Host "  bloqr-compiler (Swift) has no --benchmark flag yet, skipping Swift" -ForegroundColor Yellow
         Write-Host ""
     }
 

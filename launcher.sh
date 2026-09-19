@@ -365,9 +365,9 @@ rules_menu() {
                     swift_browser_output=$(prompt_browser_output_path)
                     cd src/compilers/swift
                     if [ -n "$swift_browser_output" ]; then
-                        swift run bloqr-compiler -c config.json --engine "$swift_engine" --browser-output "$swift_browser_output"
+                        swift run bloqr-compiler -c ../typescript/compiler-config.json --engine "$swift_engine" --browser-output "$swift_browser_output"
                     else
-                        swift run bloqr-compiler -c config.json --engine "$swift_engine"
+                        swift run bloqr-compiler -c ../typescript/compiler-config.json --engine "$swift_engine"
                     fi
                     cd "$SCRIPT_DIR"
                 fi

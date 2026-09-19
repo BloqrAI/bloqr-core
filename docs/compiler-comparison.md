@@ -212,9 +212,11 @@ swift run bloqr-compiler -c config.json
 
 ```swift
 import BloqrCompilerCore
+import Foundation
 
 let compiler = BloqrCompiler()
-let result = try await compiler.compile(configPath: "config.json")
+let configPath = URL(fileURLWithPath: "config.json")
+let result = try compiler.compile(configPath: configPath)
 print("Compiled \(result.ruleCount) rules")
 ```
 
@@ -319,7 +321,7 @@ Get-CompilerVersion | Format-List
 |---------|:----------:|:----:|:------:|:----:|:-----:|
 | **Configuration** |
 | JSON | Yes | Yes | Yes | Yes | Yes |
-| JSONC | Yes | Yes | No | No | No |
+| JSONC | Yes | Yes | No | No | Yes |
 | Validation | No | Yes | No | No | No |
 | **CLI** |
 | Config file | Yes | Yes | Yes | Yes | Yes |
@@ -333,7 +335,7 @@ Get-CompilerVersion | Format-List
 | Interactive | Yes | Yes | No | No | No |
 | Tests | Deno test | xUnit | pytest | cargo test | XCTest |
 | DI Support | No | Yes | No | No | No |
-| Async | Yes | Yes | No | Planned | Yes |
+| Async | Yes | Yes | No | Planned | No |
 
 ## Migration Between Compilers
 

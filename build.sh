@@ -242,8 +242,9 @@ build_python() {
 build_swift() {
     echo -e "${BLUE}Building Swift projects...${NC}"
 
-    # Check if Swift is installed; skip gracefully on non-macOS runners
-    if ! command -v swift &> /dev/null; then
+    # Package.swift declares .macOS(.v13); skip gracefully off Darwin even if a Linux/Windows
+    # Swift toolchain happens to be on PATH, and if Swift isn't installed at all.
+    if [[ "$(uname -s)" != "Darwin" ]] || ! command -v swift &> /dev/null; then
         echo -e "${YELLOW}⊘ Swift is not installed (macOS/Xcode required). Skipping Swift build.${NC}"
         echo ""
         return 0

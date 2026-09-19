@@ -397,10 +397,10 @@ function Show-RulesMenu {
                         Push-Location "$Script:RootDir\src\compilers\swift"
                         try {
                             if ($swiftBrowserOutput) {
-                                swift run bloqr-compiler -c config.json --engine $swiftEngine --browser-output $swiftBrowserOutput
+                                swift run bloqr-compiler -c ../typescript/compiler-config.json --engine $swiftEngine --browser-output $swiftBrowserOutput
                             }
                             else {
-                                swift run bloqr-compiler -c config.json --engine $swiftEngine
+                                swift run bloqr-compiler -c ../typescript/compiler-config.json --engine $swiftEngine
                             }
                         }
                         finally {
