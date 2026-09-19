@@ -886,6 +886,48 @@ Deno.test('CliArgumentsSchema - should reject invalid --transformation name', ()
   }
 });
 
+Deno.test('CliArgumentsSchema - should validate with every documented --transformation name (issue #502)', () => {
+  // Explicit list (not derived from TransformationType/CANONICAL_TRANSFORMATION_ORDER)
+  // so this test actually checks the CliArgumentsSchema contract rather than
+  // trivially agreeing with whatever the implementation currently allows.
+  const documentedTransformations = [
+    'RemoveComments',
+    'Compress',
+    'RemoveModifiers',
+    'Validate',
+    'ValidateAllowIp',
+    'Deduplicate',
+    'InvertAllow',
+    'RemoveEmptyLines',
+    'TrimLines',
+    'InsertFinalNewLine',
+    'ConvertToAscii',
+  ];
+  const args = {
+    input: ['https://example.com/list.txt'],
+    output: 'out.txt',
+    transformation: documentedTransformations,
+  };
+  const result = CliArgumentsSchema.safeParse(args);
+  assertEquals(result.success, true);
+});
+
+Deno.test('CliArgumentsSchema - should reject --transformation with commercial-only names (issue #502)', () => {
+  // Guards against CliArgumentsSchema.transformation regressing back to
+  // z.nativeEnum(TransformationType), which would let the CLI accept the same
+  // commercial-only, unregistered transformations that ConfigurationValidator
+  // and orchestration/validation.ts now reject.
+  for (const transformation of ['ConflictDetection', 'RuleOptimizer']) {
+    const args = {
+      input: ['https://example.com/list.txt'],
+      output: 'out.txt',
+      transformation: [transformation],
+    };
+    const result = CliArgumentsSchema.safeParse(args);
+    assertEquals(result.success, false, `expected '${transformation}' to be rejected`);
+  }
+});
+
 Deno.test('CliArgumentsSchema - should validate with filtering flags', () => {
   const args = {
     input: ['https://example.com/list.txt'],
