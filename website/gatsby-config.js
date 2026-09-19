@@ -17,9 +17,9 @@ module.exports = {
     title: `Bloqr Core`,
     description: `The core open-source components that form the foundation of Bloqr AI`,
     author: `Bloqr Systems`,
-    siteUrl: `https://bloqrai.github.io/bloqr-core/`,
+    siteUrl: `https://core.bloqr.dev/`,
   },
-  pathPrefix: `/bloqr-core`,
+  pathPrefix: `/`,
   plugins: [
     `gatsby-plugin-image`,
     `gatsby-plugin-sharp`,
