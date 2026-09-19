@@ -47,19 +47,22 @@ public struct BloqrCompiler: Sendable {
         )
         result.outputPath = outputPath
 
-        // Convert to JSON if needed - the underlying compiler only accepts a `.json`/`.jsonc`
-        // path. This is keyed on the *resolved config path's own extension*, not the parsed
-        // source format: a forced `--format json` read of a `config.txt` still needs a
-        // `.json`-named temp file for Deno's own extension-based format detection.
+        // Convert to a canonical, comment-free `.json` path if needed - the underlying
+        // compiler only accepts strict JSON at a `.json`-named path (a `.jsonc` extension
+        // isn't recognized by its own extension-based format detection, and its `JSON.parse`
+        // rejects `//`/`/* */` comments outright, even though this wrapper's own JSONC
+        // preprocessing accepts them). This is keyed on the *resolved config path's own
+        // extension and raw contents*, not just the parsed source format: a forced
+        // `--format json` read of a `config.txt` still needs a `.json`-named temp file too.
         var tempConfigPath: URL?
         let compileConfigPath: URL
         let configExtension = resolvedConfigPath.pathExtension.lowercased()
-        if configExtension != "json" && configExtension != "jsonc" {
+
+        func writeTempConfig(_ content: String) throws -> URL {
             let temp = FileManager.default.temporaryDirectory
                 .appendingPathComponent("compiler-config-\(UUID().uuidString).json")
-            let json = try ConfigReader.toJSON(config)
             do {
-                try json.write(to: temp, atomically: true, encoding: .utf8)
+                try content.write(to: temp, atomically: true, encoding: .utf8)
             } catch {
                 throw CompilerError.fileSystem(
                     context: "writing temp config to \(temp.path)",
@@ -68,12 +71,45 @@ public struct BloqrCompiler: Sendable {
             }
             if options.debug {
                 FileHandle.standardError.write(Data("[DEBUG] Created temp JSON config: \(temp.path)\n".utf8))
-                FileHandle.standardError.write(Data("[DEBUG] Config content:\n\(json)\n".utf8))
+                FileHandle.standardError.write(Data("[DEBUG] Config content:\n\(content)\n".utf8))
             }
+            return temp
+        }
+
+        if configExtension == "json" || configExtension == "jsonc" {
+            // Re-read and de-comment the *raw* file text rather than re-serializing the
+            // parsed `config` model: this wrapper's `CompilerConfig` doesn't model every
+            // schema field (e.g. `output`/`hashVerification`/`archiving`), and going through
+            // it would silently drop them for every plain, comment-free `.json` config -
+            // reusing the raw text (byte-for-byte when there was nothing to strip) keeps
+            // those fields intact.
+            let rawContent: String
+            do {
+                rawContent = try String(contentsOf: resolvedConfigPath, encoding: .utf8)
+            } catch {
+                throw CompilerError.fileSystem(
+                    context: "reading configuration from \(resolvedConfigPath.path)",
+                    underlying: error.localizedDescription
+                )
+            }
+            let strippedContent = try stripJSONCComments(rawContent)
+
+            if configExtension == "json" && strippedContent == rawContent {
+                // Already a canonical, comment-free `.json` file - hand it to Deno unchanged.
+                compileConfigPath = resolvedConfigPath
+            } else {
+                let temp = try writeTempConfig(strippedContent)
+                compileConfigPath = temp
+                tempConfigPath = temp
+            }
+        } else {
+            // YAML/TOML - there's no raw JSON text to preserve, so re-serialize the parsed
+            // model (which, like the Rust/.NET/Python wrappers' own YAML/TOML structs,
+            // doesn't carry schema fields this wrapper doesn't model either).
+            let json = try ConfigReader.toJSON(config)
+            let temp = try writeTempConfig(json)
             compileConfigPath = temp
             tempConfigPath = temp
-        } else {
-            compileConfigPath = resolvedConfigPath
         }
         // Scoped to cover every exit path below (directory creation, missing Deno, process
         // launch failure, and the ordinary success path alike) - not just the two explicit
@@ -157,7 +193,8 @@ public struct BloqrCompiler: Sendable {
             if let abortReason = RulesValidator.validateOutput(
                 path: browserOutputPath,
                 allowUnvalidated: options.allowUnvalidatedOutput,
-                failOnWarnings: options.failOnWarnings
+                failOnWarnings: options.failOnWarnings,
+                engine: "browser"
             ) {
                 result.errorMessage = "browser-syntax artifact failed syntax validation (DNS " +
                     "artifact was already published successfully at \(outputPath.path)): \(abortReason)"
@@ -281,7 +318,7 @@ public struct BloqrCompiler: Sendable {
             return 0
         }
         return text.split(separator: "\n", omittingEmptySubsequences: false)
-            .map { $0.trimmingCharacters(in: .whitespaces) }
+            .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
             .filter { !$0.isEmpty && !$0.hasPrefix("!") && !$0.hasPrefix("#") }
             .count
     }

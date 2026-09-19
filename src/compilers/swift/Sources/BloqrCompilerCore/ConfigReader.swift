@@ -33,7 +33,7 @@ public enum ConfigReader {
         switch format {
         case .json:
             do {
-                let data = Data(stripJSONCComments(content).utf8)
+                let data = Data(try stripJSONCComments(content).utf8)
                 return try JSONDecoder().decode(CompilerConfig.self, from: data)
             } catch {
                 throw CompilerError.parseFailed(format: "JSON", underlying: String(describing: error))
@@ -97,7 +97,7 @@ public enum ConfigReader {
 /// configs with comments can be decoded by `JSONDecoder`, which otherwise rejects them
 /// outright. String literals (including escaped quotes) are left untouched so a `//` or `/*`
 /// inside a string value is never mistaken for a comment.
-func stripJSONCComments(_ content: String) -> String {
+func stripJSONCComments(_ content: String) throws -> String {
     var result = String.UnicodeScalarView()
     var scalars = content.unicodeScalars.makeIterator()
     var pending = scalars.next()
@@ -141,11 +141,19 @@ func stripJSONCComments(_ content: String) -> String {
             if next == "*" {
                 _ = advance()
                 var previous: Unicode.Scalar?
+                var closed = false
                 while let commentScalar = advance() {
                     if previous == "*", commentScalar == "/" {
+                        closed = true
                         break
                     }
                     previous = commentScalar
+                }
+                guard closed else {
+                    throw CompilerError.parseFailed(
+                        format: "JSON",
+                        underlying: "unterminated block comment (/* without a matching */)"
+                    )
                 }
                 continue
             }

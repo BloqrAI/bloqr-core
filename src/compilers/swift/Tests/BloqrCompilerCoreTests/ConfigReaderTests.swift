@@ -73,11 +73,16 @@ final class ConfigReaderTests: XCTestCase {
         XCTAssertEqual(config.sources.first?.source, "https://example.com/list.txt")
     }
 
-    func testStripJSONCCommentsPreservesStringsWithSlashes() {
+    func testStripJSONCCommentsPreservesStringsWithSlashes() throws {
         let input = #"{"source": "https://example.com/list.txt", "n": 1} // trailing"#
-        let stripped = stripJSONCComments(input)
+        let stripped = try stripJSONCComments(input)
         XCTAssertTrue(stripped.contains("https://example.com/list.txt"))
         XCTAssertFalse(stripped.contains("trailing"))
+    }
+
+    func testStripJSONCCommentsRejectsUnterminatedBlockComment() {
+        let input = #"{"name": "x"} /* unterminated"#
+        XCTAssertThrowsError(try stripJSONCComments(input))
     }
 
     func testToJSONRoundTrip() throws {
