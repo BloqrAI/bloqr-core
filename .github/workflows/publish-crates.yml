@@ -332,7 +332,11 @@ jobs:
         continue-on-error: true
         env:
           CARGO_REGISTRY_TOKEN: ${{ steps.auth.outputs.token }}
-        run: cargo publish -p bloqr-compiler-core --locked
+        # --no-verify: the dry-run step above already built/verified the
+        # package with no registry token in its environment. Rebuilding here
+        # would expose CARGO_REGISTRY_TOKEN to that build (and to any build
+        # script this crate or a dependency runs), for no verification benefit.
+        run: cargo publish -p bloqr-compiler-core --locked --no-verify
 
       # Only fall back to the long-lived bootstrap credential when the crate
       # itself is confirmed absent (404) - never on a generic publish or auth
@@ -362,7 +366,11 @@ jobs:
             exit 1
           fi
           echo "Trusted Publishing failed and bloqr-compiler-core doesn't exist on crates.io yet (404) - falling back to the one-time CARGO_REGISTRY_TOKEN_BOOTSTRAP secret."
-          cargo publish -p bloqr-compiler-core --locked
+          # --no-verify for the same reason as the trusted-publishing attempt
+          # above: don't rebuild (and thus don't expose this long-lived
+          # credential to a build script) when the dry-run already verified
+          # the package without any registry token present.
+          cargo publish -p bloqr-compiler-core --locked --no-verify
 
       - name: Report publish failure
         if: steps.check.outputs.already_published == 'false' && (steps.auth.outcome == 'failure' || steps.publish.outcome == 'failure') && steps.publish_bootstrap.outcome != 'success'
@@ -459,7 +467,11 @@ jobs:
         continue-on-error: true
         env:
           CARGO_REGISTRY_TOKEN: ${{ steps.auth.outputs.token }}
-        run: cargo publish -p bloqr-compiler --locked
+        # --no-verify: the dry-run step above already built/verified the
+        # package with no registry token in its environment. Rebuilding here
+        # would expose CARGO_REGISTRY_TOKEN to that build (and to any build
+        # script this crate or a dependency runs), for no verification benefit.
+        run: cargo publish -p bloqr-compiler --locked --no-verify
 
       # Only fall back to the long-lived bootstrap credential when the crate
       # itself is confirmed absent (404) - never on a generic publish or auth
@@ -489,7 +501,11 @@ jobs:
             exit 1
           fi
           echo "Trusted Publishing failed and bloqr-compiler doesn't exist on crates.io yet (404) - falling back to the one-time CARGO_REGISTRY_TOKEN_BOOTSTRAP secret."
-          cargo publish -p bloqr-compiler --locked
+          # --no-verify for the same reason as the trusted-publishing attempt
+          # above: don't rebuild (and thus don't expose this long-lived
+          # credential to a build script) when the dry-run already verified
+          # the package without any registry token present.
+          cargo publish -p bloqr-compiler --locked --no-verify
 
       - name: Report publish failure
         if: steps.check.outputs.already_published == 'false' && (steps.auth.outcome == 'failure' || steps.publish.outcome == 'failure') && steps.publish_bootstrap.outcome != 'success'
