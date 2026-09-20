@@ -42,5 +42,11 @@ tokio = { workspace = true }
 # Temp file naming (for `benchmark`'s temp config/output files)
 uuid = { workspace = true }
 
+# Logging/tracing - installs the subscriber that surfaces bloqr-compiler-core's
+# tracing spans/events (which otherwise go nowhere without one), driven by
+# RUST_LOG/LOG_LEVEL and LOG_FORMAT per the root CLAUDE.md conventions.
+tracing = { workspace = true }
+tracing-subscriber = { workspace = true }
+
 [dev-dependencies]
 tempfile = { workspace = true }

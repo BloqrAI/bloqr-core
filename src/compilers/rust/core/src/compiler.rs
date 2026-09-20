@@ -821,8 +821,8 @@ pub fn compile_rules<P: AsRef<Path>>(
         })?;
 
         if options.debug {
-            eprintln!("[DEBUG] Created temp JSON config: {}", temp_path.display());
-            eprintln!("[DEBUG] Config content:\n{json}");
+            tracing::debug!("Created temp JSON config: {}", temp_path.display());
+            tracing::debug!("Config content:\n{json}");
         }
 
         (temp_path.clone(), Some(temp_path))
@@ -862,7 +862,7 @@ pub fn compile_rules<P: AsRef<Path>>(
     )?;
 
     if options.debug {
-        eprintln!("[DEBUG] Running: {cmd} {}", args.join(" "));
+        tracing::debug!("Running: {cmd} {}", args.join(" "));
     }
 
     // Run compilation
@@ -1048,8 +1048,8 @@ pub fn compile_rules_with_events<P: AsRef<Path>>(
         })?;
 
         if options.debug {
-            eprintln!("[DEBUG] Created temp JSON config: {}", temp_path.display());
-            eprintln!("[DEBUG] Config content:\n{json}");
+            tracing::debug!("Created temp JSON config: {}", temp_path.display());
+            tracing::debug!("Config content:\n{json}");
         }
 
         (temp_path.clone(), Some(temp_path))
@@ -1087,7 +1087,7 @@ pub fn compile_rules_with_events<P: AsRef<Path>>(
     )?;
 
     if options.debug {
-        eprintln!("[DEBUG] Running: {cmd} {}", args.join(" "));
+        tracing::debug!("Running: {cmd} {}", args.join(" "));
     }
 
     // Run compilation
@@ -1273,8 +1273,8 @@ pub async fn compile_rules_async<P: AsRef<Path>>(
         })?;
 
         if options.debug {
-            eprintln!("[DEBUG] Created temp JSON config: {}", temp_path.display());
-            eprintln!("[DEBUG] Config content:\n{json}");
+            tracing::debug!("Created temp JSON config: {}", temp_path.display());
+            tracing::debug!("Config content:\n{json}");
         }
 
         (temp_path.clone(), Some(temp_path))
@@ -1312,7 +1312,7 @@ pub async fn compile_rules_async<P: AsRef<Path>>(
     )?;
 
     if options.debug {
-        eprintln!("[DEBUG] Running: {cmd} {}", args.join(" "));
+        tracing::debug!("Running: {cmd} {}", args.join(" "));
     }
 
     // Run compilation asynchronously

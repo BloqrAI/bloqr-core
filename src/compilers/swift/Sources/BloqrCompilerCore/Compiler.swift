@@ -1,5 +1,13 @@
 import Foundation
 import CryptoKit
+import os
+
+/// Unified-logging (`os.Logger`) sink for this package's own diagnostics, replacing ad hoc
+/// `FileHandle.standardError.write([DEBUG] ...)` calls. Messages are visible via `log stream`/
+/// Console.app filtered to this subsystem; unlike stderr writes they don't require the caller
+/// to redirect or capture the process's own stderr to see them, and `debug`-level messages
+/// aren't persisted to disk by default, matching this package's own `debug`-flag-gated intent.
+let compilerLogger = Logger(subsystem: "dev.bloqr.compiler", category: "Compiler")
 
 /// Compiles filter rules by shelling out to Deno + the `@bloqr/compiler-core` JSR package -
 /// the same underlying compiler the Rust, .NET, and Python wrappers invoke. This wrapper does
@@ -86,8 +94,8 @@ public struct BloqrCompiler: Sendable {
                 )
             }
             if options.debug {
-                FileHandle.standardError.write(Data("[DEBUG] Created temp JSON config: \(temp.path)\n".utf8))
-                FileHandle.standardError.write(Data("[DEBUG] Config content:\n\(content)\n".utf8))
+                compilerLogger.debug("Created temp JSON config: \(temp.path, privacy: .public)")
+                compilerLogger.debug("Config content:\n\(content, privacy: .public)")
             }
             return temp
         }
@@ -164,7 +172,7 @@ public struct BloqrCompiler: Sendable {
         )
 
         if options.debug {
-            FileHandle.standardError.write(Data("[DEBUG] Running: \(command) \(args.joined(separator: " "))\n".utf8))
+            compilerLogger.debug("Running: \(command, privacy: .public) \(args.joined(separator: " "), privacy: .public)")
         }
 
         let processOutput = try runProcess(

@@ -892,8 +892,59 @@ fn run_interactive_menu(initial_config: Option<PathBuf>) -> ExitCode {
     }
 }
 
+/// Installs a `tracing` subscriber for the process, so `bloqr-compiler-core`'s
+/// tracing spans/events (previously silently discarded - nothing installed a
+/// subscriber for them) become visible. Verbosity is resolved in priority
+/// order: `RUST_LOG` (tracing's own convention) first, then this repo's
+/// `LOG_LEVEL`/`DEBUG` env vars (see root `CLAUDE.md`), then the `-d`/`--debug`
+/// CLI flag, defaulting to `warn`. `LOG_FORMAT=json` switches to structured
+/// JSON output, matching the other compiler wrappers' `LOG_FORMAT` convention.
+fn init_logging(debug: bool) {
+    let filter = std::env::var("RUST_LOG")
+        .ok()
+        .filter(|v| !v.is_empty())
+        .or_else(|| {
+            std::env::var("LOG_LEVEL")
+                .ok()
+                .filter(|v| !v.is_empty())
+                .map(|level| match level.to_ascii_uppercase().as_str() {
+                    "SILENT" => "off".to_string(),
+                    _ => level.to_ascii_lowercase(),
+                })
+        })
+        .or_else(|| std::env::var("DEBUG").ok().map(|_| "debug".to_string()))
+        .unwrap_or_else(|| {
+            if debug {
+                "debug".to_string()
+            } else {
+                "warn".to_string()
+            }
+        });
+
+    let env_filter = tracing_subscriber::EnvFilter::try_new(&filter)
+        .unwrap_or_else(|_| tracing_subscriber::EnvFilter::new("warn"));
+
+    let json_format = std::env::var("LOG_FORMAT")
+        .map(|v| v.eq_ignore_ascii_case("json"))
+        .unwrap_or(false);
+
+    if json_format {
+        tracing_subscriber::fmt()
+            .with_env_filter(env_filter)
+            .with_writer(std::io::stderr)
+            .json()
+            .init();
+    } else {
+        tracing_subscriber::fmt()
+            .with_env_filter(env_filter)
+            .with_writer(std::io::stderr)
+            .init();
+    }
+}
+
 fn main() -> ExitCode {
     let cli = Cli::parse();
+    init_logging(cli.debug);
 
     // Parse format if provided
     let format = cli.format.as_deref().and_then(parse_format);
