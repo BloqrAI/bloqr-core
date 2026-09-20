@@ -126,15 +126,14 @@ const FilterableSchema: z.ZodObject<{
 
 /**
  * Transformation names `TransformationRegistry` actually registers by default in this
- * package, as opposed to every member of the broader `TransformationType` enum.
+ * package, as opposed to a hardcoded `Object.values(TransformationType)`.
  *
- * `z.nativeEnum(TransformationType)` would also accept `ConflictDetection`/
- * `RuleOptimizer` - commercial-only, browser-engine transformations that exist on the
- * enum but are never registered here. `TransformationPipeline.transform()` silently
- * skips any requested type that isn't registered, so a schema that accepted them would
- * let a config validate successfully and then have the transformation quietly no-op at
- * compile time (see issue #502). Kept as a `[T, ...T[]]` tuple because `z.enum` requires
- * a non-empty literal list.
+ * `TransformationPipeline.transform()` silently skips any requested type that isn't
+ * registered, so a schema that accepted an unregistered name would let a config
+ * validate successfully and then have the transformation quietly no-op at compile
+ * time (this bit `ConflictDetection`/`RuleOptimizer` before they were implemented in
+ * #512 - see issue #502). Kept as a `[T, ...T[]]` tuple because `z.enum` requires a
+ * non-empty literal list.
  */
 const SUPPORTED_TRANSFORMATIONS = CANONICAL_TRANSFORMATION_ORDER as [
   TransformationType,

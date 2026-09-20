@@ -116,27 +116,40 @@ Deno.test('filterToBrowserSafe - drops known DNS-only entries', () => {
   assertEquals(result, [TransformationType.RemoveComments]);
 });
 
-Deno.test('filterToBrowserSafe - preserves unrecognized/commercial-only transformations (issue #502)', () => {
+Deno.test('filterToBrowserSafe - preserves unrecognized transformations (issue #502)', () => {
   // Previously filtered IN only BROWSER_SAFE_TRANSFORMATIONS, which meant an
-  // unrecognized top-level transformation (a typo, or ConflictDetection/
-  // RuleOptimizer) was silently dropped here before BrowserSyntaxCompiler's
+  // unrecognized top-level transformation (a typo, or a real-but-then-unimplemented
+  // type - see #512) was silently dropped here before BrowserSyntaxCompiler's
   // ConfigurationValidator ever ran - the request just vanished instead of being
   // rejected. It must now survive this filter so validation can reject it.
   const result = filterToBrowserSafe([
     TransformationType.RemoveComments,
-    TransformationType.ConflictDetection,
+    'NotARealTransformation' as TransformationType,
   ]);
-  assertEquals(result, [TransformationType.RemoveComments, TransformationType.ConflictDetection]);
+  assertEquals(result, [
+    TransformationType.RemoveComments,
+    'NotARealTransformation' as TransformationType,
+  ]);
 });
 
-Deno.test('MultiEngineCompiler - rejects a top-level commercial-only transformation instead of silently dropping it (issue #502)', async () => {
+Deno.test('filterToBrowserSafe - preserves ConflictDetection/RuleOptimizer (issue #512)', () => {
+  // Both are grammar-independent and registered - they must never be filtered
+  // out of the browser bucket's transformation list.
+  const result = filterToBrowserSafe([
+    TransformationType.ConflictDetection,
+    TransformationType.RuleOptimizer,
+  ]);
+  assertEquals(result, [TransformationType.ConflictDetection, TransformationType.RuleOptimizer]);
+});
+
+Deno.test('MultiEngineCompiler - rejects a top-level unrecognized transformation instead of silently dropping it (issue #502)', async () => {
   const compiler = new MultiEngineCompiler({
     filterCompilerOptions: { logger: silentLogger },
     browserSyntaxCompilerOptions: { logger: silentLogger },
   });
 
   const config = createBrowserOnlyConfig();
-  config.transformations = [TransformationType.ConflictDetection];
+  config.transformations = ['NotARealTransformation' as TransformationType];
 
   await assertRejects(() => compiler.compile(config), Error);
 });

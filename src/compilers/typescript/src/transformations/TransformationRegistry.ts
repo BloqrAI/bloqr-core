@@ -21,6 +21,8 @@ import { RemoveModifiersTransformation } from './RemoveModifiersTransformation.t
 import { DeduplicateTransformation } from './DeduplicateTransformation.ts';
 import { ValidateAllowIpTransformation, ValidateTransformation } from './ValidateTransformation.ts';
 import { CompressTransformation } from './CompressTransformation.ts';
+import { ConflictDetectionTransformation } from './ConflictDetectionTransformation.ts';
+import { RuleOptimizerTransformation } from './RuleOptimizerTransformation.ts';
 import { FilterService } from '../services/FilterService.ts';
 import {
   createEventBridgeHook,
@@ -73,6 +75,11 @@ export class TransformationRegistry {
       new ValidateAllowIpTransformation(this.logger),
     );
     this.register(TransformationType.Compress, new CompressTransformation(this.logger));
+    this.register(
+      TransformationType.ConflictDetection,
+      new ConflictDetectionTransformation(this.logger),
+    );
+    this.register(TransformationType.RuleOptimizer, new RuleOptimizerTransformation(this.logger));
   }
 
   /**
@@ -137,6 +144,8 @@ export const CANONICAL_TRANSFORMATION_ORDER: readonly TransformationType[] = [
   TransformationType.Validate,
   TransformationType.ValidateAllowIp,
   TransformationType.Deduplicate,
+  TransformationType.ConflictDetection,
+  TransformationType.RuleOptimizer,
   TransformationType.RemoveEmptyLines,
   TransformationType.InsertFinalNewLine,
 ];

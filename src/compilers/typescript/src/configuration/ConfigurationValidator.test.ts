@@ -106,13 +106,10 @@ Deno.test('ConfigurationValidator.validate - should reject invalid transformatio
   assertEquals(result.valid, false);
 });
 
-Deno.test('ConfigurationValidator.validate - should reject commercial-only transformations that silently no-op (issue #502)', () => {
-  // ConflictDetection/RuleOptimizer exist on TransformationType but
-  // TransformationRegistry never registers them in this OSS package, and
-  // TransformationPipeline.transform() silently skips unregistered types.
-  // FilterCompiler/BrowserSyntaxCompiler both validate through this class
-  // before compiling, so accepting either name here would let a config
-  // "pass" and then have the transformation quietly no-op at compile time.
+Deno.test('ConfigurationValidator.validate - accepts ConflictDetection/RuleOptimizer (issue #512)', () => {
+  // ConflictDetection/RuleOptimizer are implemented and registered by
+  // TransformationRegistry as of #512 - they must validate like any other
+  // built-in transformation, both globally and per-source.
   const validator = new ConfigurationValidator();
 
   for (
@@ -125,8 +122,8 @@ Deno.test('ConfigurationValidator.validate - should reject commercial-only trans
     };
     assertEquals(
       validator.validate(globalConfig).valid,
-      false,
-      `expected '${transformation}' to be rejected globally`,
+      true,
+      `expected '${transformation}' to be accepted globally`,
     );
 
     const sourceConfig = {
@@ -135,10 +132,23 @@ Deno.test('ConfigurationValidator.validate - should reject commercial-only trans
     };
     assertEquals(
       validator.validate(sourceConfig).valid,
-      false,
-      `expected '${transformation}' to be rejected per-source`,
+      true,
+      `expected '${transformation}' to be accepted per-source`,
     );
   }
+});
+
+Deno.test('ConfigurationValidator.validate - rejects transformation names that are not registered (issue #502)', () => {
+  // Guards against the validator accepting a name TransformationRegistry
+  // wouldn't actually register - which would let a config "pass" and then
+  // have TransformationPipeline.transform() silently skip it at compile time.
+  const validator = new ConfigurationValidator();
+  const config = {
+    name: 'Test Filter',
+    sources: [{ source: 'https://example.org/list.txt' }],
+    transformations: ['NotARealTransformation'],
+  };
+  assertEquals(validator.validate(config).valid, false);
 });
 
 // validateAndGet tests

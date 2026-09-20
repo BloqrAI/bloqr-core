@@ -58,6 +58,13 @@ export abstract class Transformation {
   }
 
   /**
+   * Log a warning message
+   */
+  protected warn(message: string): void {
+    this.logger.warn(message);
+  }
+
+  /**
    * Log an error message
    */
   protected error(message: string): void {

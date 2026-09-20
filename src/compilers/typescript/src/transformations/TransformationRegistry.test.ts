@@ -26,8 +26,10 @@ Deno.test('TransformationRegistry - should have all default transformations regi
   assertEquals(registry.has(TransformationType.Validate), true);
   assertEquals(registry.has(TransformationType.ValidateAllowIp), true);
   assertEquals(registry.has(TransformationType.Compress), true);
-  // NOTE: ConflictDetection and RuleOptimizer are commercial-only
-  // transformations, not part of compiler-core.
+  // Implemented in OSS core as of issue #512 - see ConflictDetectionTransformation.ts
+  // and RuleOptimizerTransformation.ts.
+  assertEquals(registry.has(TransformationType.ConflictDetection), true);
+  assertEquals(registry.has(TransformationType.RuleOptimizer), true);
 });
 
 Deno.test('TransformationRegistry - should get transformation by type', () => {
@@ -48,14 +50,12 @@ Deno.test('TransformationRegistry - should get all registered types', () => {
   const registry = new TransformationRegistry();
 
   const types = registry.getRegisteredTypes();
-  assertEquals(types.length, 11); // All default transformations (excludes commercial-only ConflictDetection/RuleOptimizer)
+  assertEquals(types.length, 13); // All default transformations, including ConflictDetection/RuleOptimizer (#512)
   assertEquals(types.includes(TransformationType.RemoveComments), true);
   assertEquals(types.includes(TransformationType.Deduplicate), true);
+  assertEquals(types.includes(TransformationType.ConflictDetection), true);
+  assertEquals(types.includes(TransformationType.RuleOptimizer), true);
 });
-
-// NOTE: bloqr-compiler's "should execute ConflictDetection and RuleOptimizer
-// when requested" test doesn't apply here — those are commercial-only
-// transformations, not part of compiler-core.
 
 Deno.test('TransformationPipeline - should create pipeline with default registry', () => {
   const pipeline = new TransformationPipeline();

@@ -50,7 +50,9 @@
           "RemoveEmptyLines",
           "TrimLines",
           "InsertFinalNewLine",
-          "ConvertToAscii"
+          "ConvertToAscii",
+          "ConflictDetection",
+          "RuleOptimizer"
         ]
       }
     },
@@ -132,7 +134,9 @@
               "RemoveEmptyLines",
               "TrimLines",
               "InsertFinalNewLine",
-              "ConvertToAscii"
+              "ConvertToAscii",
+              "ConflictDetection",
+              "RuleOptimizer"
             ]
           }
         },
