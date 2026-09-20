@@ -43,6 +43,24 @@ name: Publish Rust Crates to crates.io
 # same "Unsupported JWT issuer" error again, check whether that Enterprise
 # setting got re-enabled before assuming this workflow is broken.
 #
+# BOOTSTRAPPING A BRAND-NEW CRATE NAME: crates.io Trusted Publishing can only
+# publish new *versions* of a crate that already exists - it refuses outright
+# to create a crate under a name that's never been published before ("403:
+# Trusted Publishing tokens do not support creating new crates. Publish the
+# crate manually, first"), as an anti-squatting safeguard. This bit
+# bloqr-compiler-core and bloqr-compiler when the compiler crate was split
+# into core+CLI (#173) and re-added to this workflow under those two names -
+# every run failed at that step until a human manually bootstrapped each
+# name's first publish. The publish-compiler-core and publish-compiler-cli
+# jobs below fall back to the CARGO_REGISTRY_TOKEN_BOOTSTRAP repo secret (a
+# classic crates.io API token, added once via crates.io's web UI - no local
+# `cargo`/CLI required) only when the Trusted Publishing attempt fails, which
+# is exactly the brand-new-crate case. Once a crate has been published at
+# least once (by this fallback or manually), Trusted Publishing handles every
+# subsequent version on its own and the fallback branch never fires again -
+# the secret can stay in place indefinitely as a harmless dormant fallback,
+# or be removed once both crates exist on crates.io.
+#
 
 # VERSIONING: each crate's own Cargo.toml `version` field is the source of
 # truth, bumped by hand today (no automated Conventional-Commits bump
@@ -290,17 +308,29 @@ jobs:
         if: steps.check.outputs.already_published == 'false'
         uses: rust-lang/crates-io-auth-action@v1
 
+      # Tries Trusted Publishing first; falls back to the CARGO_REGISTRY_TOKEN_BOOTSTRAP
+      # secret only if that fails - see this file's "BOOTSTRAPPING A BRAND-NEW
+      # CRATE NAME" note above for why a brand-new crate needs this.
       - name: Publish bloqr-compiler-core to crates.io
         id: publish
         if: steps.check.outputs.already_published == 'false'
         env:
           CARGO_REGISTRY_TOKEN: ${{ steps.auth.outputs.token }}
-        run: cargo publish -p bloqr-compiler-core --locked
+        run: |
+          if cargo publish -p bloqr-compiler-core --locked; then
+            exit 0
+          fi
+          if [ -z "${{ secrets.CARGO_REGISTRY_TOKEN_BOOTSTRAP }}" ]; then
+            echo "::error::Trusted Publishing failed and no CARGO_REGISTRY_TOKEN_BOOTSTRAP secret is set to fall back to (only needed to bootstrap a brand-new crate's first publish - see this file's comments)."
+            exit 1
+          fi
+          echo "Trusted Publishing failed - likely because bloqr-compiler-core doesn't exist on crates.io yet and Trusted Publishing can't create new crates. Falling back to the one-time CARGO_REGISTRY_TOKEN_BOOTSTRAP secret."
+          CARGO_REGISTRY_TOKEN="${{ secrets.CARGO_REGISTRY_TOKEN_BOOTSTRAP }}" cargo publish -p bloqr-compiler-core --locked
 
       - name: Report publish failure
         if: failure() && steps.publish.outcome == 'failure'
         run: |
-          echo "::error::crates.io publish failed. Check bloqr-compiler-core's Trusted Publisher entry on crates.io points at BloqrAI/bloqr-core, workflow publish-crates.yml, and that the enterprise custom-OIDC-issuer setting is still disabled."
+          echo "::error::crates.io publish failed even with the CARGO_REGISTRY_TOKEN_BOOTSTRAP fallback (or that secret isn't set). Check bloqr-compiler-core's Trusted Publisher entry on crates.io points at BloqrAI/bloqr-core, workflow publish-crates.yml, that the enterprise custom-OIDC-issuer setting is still disabled, and that CARGO_REGISTRY_TOKEN_BOOTSTRAP is a valid crates.io API token with publish-new rights if this is the crate's first-ever publish."
           exit 1
 
   publish-compiler-cli:
@@ -373,15 +403,27 @@ jobs:
         if: steps.check.outputs.already_published == 'false'
         uses: rust-lang/crates-io-auth-action@v1
 
+      # Tries Trusted Publishing first; falls back to the CARGO_REGISTRY_TOKEN_BOOTSTRAP
+      # secret only if that fails - see this file's "BOOTSTRAPPING A BRAND-NEW
+      # CRATE NAME" note above for why a brand-new crate needs this.
       - name: Publish bloqr-compiler to crates.io
         id: publish
         if: steps.check.outputs.already_published == 'false'
         env:
           CARGO_REGISTRY_TOKEN: ${{ steps.auth.outputs.token }}
-        run: cargo publish -p bloqr-compiler --locked
+        run: |
+          if cargo publish -p bloqr-compiler --locked; then
+            exit 0
+          fi
+          if [ -z "${{ secrets.CARGO_REGISTRY_TOKEN_BOOTSTRAP }}" ]; then
+            echo "::error::Trusted Publishing failed and no CARGO_REGISTRY_TOKEN_BOOTSTRAP secret is set to fall back to (only needed to bootstrap a brand-new crate's first publish - see this file's comments)."
+            exit 1
+          fi
+          echo "Trusted Publishing failed - likely because bloqr-compiler doesn't exist on crates.io yet and Trusted Publishing can't create new crates. Falling back to the one-time CARGO_REGISTRY_TOKEN_BOOTSTRAP secret."
+          CARGO_REGISTRY_TOKEN="${{ secrets.CARGO_REGISTRY_TOKEN_BOOTSTRAP }}" cargo publish -p bloqr-compiler --locked
 
       - name: Report publish failure
         if: failure() && steps.publish.outcome == 'failure'
         run: |
-          echo "::error::crates.io publish failed. Check bloqr-compiler's Trusted Publisher entry on crates.io points at BloqrAI/bloqr-core, workflow publish-crates.yml, and that the enterprise custom-OIDC-issuer setting is still disabled."
+          echo "::error::crates.io publish failed even with the CARGO_REGISTRY_TOKEN_BOOTSTRAP fallback (or that secret isn't set). Check bloqr-compiler's Trusted Publisher entry on crates.io points at BloqrAI/bloqr-core, workflow publish-crates.yml, that the enterprise custom-OIDC-issuer setting is still disabled, and that CARGO_REGISTRY_TOKEN_BOOTSTRAP is a valid crates.io API token with publish-new rights if this is the crate's first-ever publish."
           exit 1
