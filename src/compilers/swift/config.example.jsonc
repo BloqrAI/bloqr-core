@@ -1,8 +1,13 @@
 {
-  // JSON Schema reference for editor autocompletion/validation. See the schema
-  // itself at ../../../schemas/compiler-config.schema.json for the
-  // canonical, always-up-to-date list of properties/enums/defaults.
-  "$schema": "../../../schemas/compiler-config.schema.json",
+  // No "$schema" key here on purpose: this wrapper shells out to the
+  // TypeScript compiler-core (@bloqr/compiler-core via Deno), whose runtime
+  // configuration validator is strict and rejects unrecognized top-level
+  // keys, so "$schema" would fail compilation even though it's a documented
+  // convention elsewhere. For editor autocompletion, point your editor at
+  // ../../../schemas/compiler-config.schema.json manually instead (that
+  // schema documents the full config surface, including a few
+  // forward-looking properties like "output"/"hashVerification"/"archiving"
+  // the strict validator doesn't accept yet).
 
   // Filter list name. Required, non-empty string.
   "name": "EasyList",
@@ -27,19 +32,21 @@
   // compiler auto-detects browser-syntax content per source.
   // "defaultEngine": "dns",
 
-  // Optional output configuration.
-  "output": {
-    // Where the compiled filter list is written, relative to the working
-    // directory the compiler is run from. Change this to point wherever you
-    // want the compiled list to end up.
-    "path": "output/filter.txt",
-
-    // What to do if the output file already exists. One of:
-    //   "rename"    - write to a new, non-colliding filename (default)
-    //   "overwrite" - replace the existing file
-    //   "error"     - fail the compilation
-    "conflictStrategy": "rename"
-  },
+  // Optional output configuration. NOTE: the strict runtime validator this
+  // wrapper's config ultimately goes through does not yet accept an
+  // "output" key (see the note at the top of this file) - control the
+  // output path with the wrapper's own -o/--output CLI flag instead. Left
+  // commented out here to keep this file itself compilable:
+  // "output": {
+  //   // Where the compiled filter list is written, relative to the working
+  //   // directory the compiler is run from.
+  //   "path": "output/filter.txt",
+  //   // What to do if the output file already exists. One of:
+  //   //   "rename"    - write to a new, non-colliding filename (default)
+  //   //   "overwrite" - replace the existing file
+  //   //   "error"     - fail the compilation
+  //   "conflictStrategy": "rename"
+  // },
 
   // Optional hash-verification configuration, useful once you start pulling
   // in remote sources you want to detect unexpected changes in. Left out of

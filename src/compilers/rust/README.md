@@ -72,7 +72,7 @@ The compiler automatically searches for configuration files in the following ord
 
 This means you can run the compiler from any subdirectory and it will find the nearest configuration file in the directory hierarchy.
 
-New to this compiler? [`cli/config.example.jsonc`](cli/config.example.jsonc) is a fully-commented, ready-to-run starter config (compiles EasyList out of the box); [`cli/config.example.json`](cli/config.example.json) is the same config as strict JSON.
+New to this compiler? [`cli/config.example.json`](cli/config.example.json) is a ready-to-run starter config (compiles EasyList out of the box) — this compiler's format detection only recognizes `.json`/`.yaml`/`.yml`/`.toml`, so copy/rename it to a `.json` path to use it directly. [`cli/config.example.jsonc`](cli/config.example.jsonc) is the same config with every option explained inline; strip the `.jsonc` comments (or copy the values into your own `.json` file) before pointing the compiler at it.
 
 ### Examples
 

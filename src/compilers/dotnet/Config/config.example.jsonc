@@ -2,7 +2,7 @@
   // JSON Schema reference for editor autocompletion/validation. See the schema
   // itself at ../../../../schemas/compiler-config.schema.json for the
   // canonical, always-up-to-date list of properties/enums/defaults.
-  "$schema": "../../../schemas/compiler-config.schema.json",
+  "$schema": "../../../../schemas/compiler-config.schema.json",
 
   // Filter list name. Required, non-empty string.
   "name": "EasyList",
