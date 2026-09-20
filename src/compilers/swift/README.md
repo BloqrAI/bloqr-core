@@ -115,6 +115,8 @@ log stream --predicate 'subsystem == "dev.bloqr.compiler"' --level debug
 
 or filter for `dev.bloqr.compiler` in Console.app. Unlike the previous stderr writes, `debug`-level messages aren't persisted to disk by default and don't require redirecting the process's own stderr to capture.
 
+The logged config content is *not* marked public: a configuration's `source` values are arbitrary caller-supplied URLs that may carry query tokens or embedded credentials, so by default the unified logging system redacts it (shown as `<private>`) unless the Mac has been explicitly configured to collect private data (`sudo log config --mode "private_data:on"`, or an MDM-deployed profile) - the file paths logged alongside it are not redacted, since they carry no such risk.
+
 ## Library Usage
 
 Add to your `Package.swift`:

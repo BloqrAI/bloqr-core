@@ -236,10 +236,10 @@ pub struct CompileOptions {
     pub format: Option<ConfigFormat>,
     /// Historically gated this crate's own `[DEBUG]` diagnostic output. That output is now
     /// emitted unconditionally via `tracing::debug!` (see `compile_rules`), with visibility
-    /// controlled entirely by whatever `tracing` subscriber the caller has installed - this
-    /// field is kept for API compatibility and is what the CLI (`bloqr-compiler`)'s `-d`/
-    /// `--debug` flag maps onto to seed its own subscriber's default verbosity floor, but no
-    /// longer gates emission inside this library itself.
+    /// controlled entirely by whatever `tracing` subscriber the caller has installed. This
+    /// field is kept for API compatibility; the CLI (`bloqr-compiler`)'s `-d`/`--debug` flag
+    /// still sets it, but only uses it to seed its own subscriber's default verbosity floor -
+    /// it no longer gates emission inside this library itself.
     pub debug: bool,
     /// Validate configuration before compiling.
     pub validate: bool,

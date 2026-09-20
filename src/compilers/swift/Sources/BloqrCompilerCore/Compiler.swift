@@ -95,7 +95,12 @@ public struct BloqrCompiler: Sendable {
             }
             if options.debug {
                 compilerLogger.debug("Created temp JSON config: \(temp.path, privacy: .public)")
-                compilerLogger.debug("Config content:\n\(content, privacy: .public)")
+                // Not marked .public (os.Logger's default is .private): `content` is the
+                // resolved config, and its `source` fields are arbitrary caller-supplied
+                // URLs that may carry query tokens or userinfo credentials - unlike the
+                // local file paths logged elsewhere here, this can't be assumed safe to
+                // persist to the unified log's backing store in the clear.
+                compilerLogger.debug("Config content:\n\(content)")
             }
             return temp
         }

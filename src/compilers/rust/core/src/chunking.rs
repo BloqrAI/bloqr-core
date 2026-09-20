@@ -322,6 +322,11 @@ pub fn estimate_speedup(total_rules: usize, options: &ChunkingOptions) -> f64 {
 
 /// Compile chunks in parallel.
 ///
+/// `debug` is kept for API compatibility but no longer gates diagnostic output itself -
+/// see [`crate::compiler::CompileOptions::debug`]'s doc comment for why: per-chunk debug
+/// diagnostics are now unconditional `tracing::debug!` events, with visibility controlled
+/// entirely by whatever `tracing` subscriber the caller has installed.
+///
 /// # Errors
 ///
 /// Returns an error if any chunk fails to compile.
@@ -417,7 +422,9 @@ pub async fn compile_chunks_async(
 async fn compile_single_chunk_async(
     config: CompilerConfig,
     mut metadata: ChunkMetadata,
-    debug: bool,
+    // No longer read: see compile_chunks_async's doc comment - kept only so its caller's
+    // own `debug` argument still has somewhere positional to go without changing arity.
+    _debug: bool,
 ) -> Result<(Vec<String>, ChunkMetadata)> {
     let start = Instant::now();
 
@@ -474,9 +481,9 @@ async fn compile_single_chunk_async(
         None,
     )?;
 
-    if debug {
-        eprintln!("[DEBUG] Running: {} {}", cmd, args.join(" "));
-    }
+    // Unconditional: see the equivalent comment in compiler.rs::compile_rules - tracing's
+    // own subscriber-level filtering, not `debug`, decides whether this is shown.
+    tracing::debug!("Running: {} {}", cmd, args.join(" "));
 
     // Execute compiler asynchronously
     let output =
