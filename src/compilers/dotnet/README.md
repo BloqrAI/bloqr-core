@@ -139,6 +139,8 @@ above: micro-benchmarks of internal hot paths vs. an end-to-end real-compilation
 
 Configuration schema, all properties, transformations, and pattern-matching syntax are documented once, canonically, in [`docs/configuration-reference.md`](../../../docs/configuration-reference.md) — this compiler reads the same JSON/JSONC schema every other compiler in this repo reads. `Config/compiler-config.json` in this project is a ready-to-edit starting point.
 
+New to this compiler? [`Config/config.example.jsonc`](Config/config.example.jsonc) is a fully-commented starter config using EasyList; [`Config/config.example.json`](Config/config.example.json) is the same config as strict JSON. EasyList mixes cosmetic (browser-engine) rules with plain domain-blocking rules, so this starter routes it to the browser engine explicitly (see the `.jsonc` comments). **Note:** `bloqr-validate` doesn't yet validate browser syntax natively (tracked separately; see [Dual-Engine Compilation](../../../docs/architecture/dual-engine-compilation.md)), and unlike the other wrappers this console app doesn't currently expose a `--allow-unvalidated-output` CLI switch for the underlying `CompilerOptions.AllowUnvalidatedOutput` escape hatch — so compiling this starter via the CLI will fail closed on EasyList's cosmetic rules until either lands. Set `AllowUnvalidatedOutput` yourself if embedding via `IBloqrCompilerService`/`IDashboardService`, or use a DNS-only source with the CLI in the meantime.
+
 YAML and TOML remain readable by `ConfigurationReader` for backward compatibility, but JSON/JSONC is the only documented format — see [Supported Formats](../../../docs/configuration-reference.md#supported-formats) for which compilers tolerate `.jsonc` comments today.
 
 ## Library Usage
