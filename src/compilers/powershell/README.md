@@ -49,7 +49,7 @@ Modern OOP-based rules compiler module.
 
 **Usage:**
 
-New to this compiler? [`config.example.json`](config.example.json) is a ready-to-run starter config (compiles EasyList out of the box) — `Invoke-BloqrCompiler`'s format detection only recognizes `.json`/`.yaml`/`.yml`/`.toml`, so copy/rename it to a `.json` path to use it directly. [`config.example.jsonc`](config.example.jsonc) is the same config with every option explained inline; strip the `.jsonc` comments (or copy the values into your own `.json` file) before pointing the compiler at it.
+New to this compiler? [`config.example.json`](config.example.json) is a ready-to-run starter config (compiles EasyList out of the box) — `Invoke-BloqrCompiler`'s format detection only recognizes `.json`/`.yaml`/`.yml`/`.toml`, so copy/rename it to a `.json` path to use it directly. [`config.example.jsonc`](config.example.jsonc) is the same config with every option explained inline; strip the `.jsonc` comments (or copy the values into your own `.json` file) before pointing the compiler at it. EasyList mixes cosmetic (browser-engine) rules with plain domain-blocking rules, so this starter routes it to the browser engine explicitly (see the `.jsonc` comments) — compiling it therefore also needs `-AllowUnvalidatedOutput` for now, since `bloqr-validate` doesn't yet validate browser syntax natively (tracked separately; see [Dual-Engine Compilation](../../../docs/architecture/dual-engine-compilation.md)).
 
 ```powershell
 Import-Module ./src/compilers/powershell/BloqrCompiler/BloqrCompiler.psd1

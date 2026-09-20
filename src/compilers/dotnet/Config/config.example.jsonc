@@ -82,7 +82,18 @@
   //   type            - "adblock" (default) or "hosts"
   //   engine          - optional per-source override: "dns" | "browser"
   //                     (overrides auto-detection/defaultEngine for just
-  //                     this source)
+  //                     this source). Explicitly set to "browser" below:
+  //                     EasyList mixes plain domain-blocking rules with
+  //                     browser-only cosmetic rules (e.g. "##" element-hiding
+  //                     selectors), and per-source engine bucketing consults
+  //                     only declarative signals (explicit "engine", "type",
+  //                     "defaultEngine") before a source is downloaded - it
+  //                     does not sniff fetched content - so an untagged
+  //                     adblock source here would otherwise be routed
+  //                     wholesale to the DNS engine and fail validation on
+  //                     its cosmetic rules. See
+  //                     docs/architecture/dual-engine-compilation.md for the
+  //                     full routing/bucketing rules.
   //   transformations - optional source-specific transformations (same enum
   //                     as the global "transformations" list below; applied
   //                     in addition to/instead of the global ones for this
@@ -95,7 +106,8 @@
     {
       "name": "EasyList",
       "source": "https://easylist.to/easylist/easylist.txt",
-      "type": "adblock"
+      "type": "adblock",
+      "engine": "browser"
     }
   ],
 

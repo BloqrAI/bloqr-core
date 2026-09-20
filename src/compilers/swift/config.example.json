@@ -8,7 +8,8 @@
     {
       "name": "EasyList",
       "source": "https://easylist.to/easylist/easylist.txt",
-      "type": "adblock"
+      "type": "adblock",
+      "engine": "browser"
     }
   ],
   "transformations": [

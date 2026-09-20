@@ -139,7 +139,7 @@ above: micro-benchmarks of internal hot paths vs. an end-to-end real-compilation
 
 Configuration schema, all properties, transformations, and pattern-matching syntax are documented once, canonically, in [`docs/configuration-reference.md`](../../../docs/configuration-reference.md) — this compiler reads the same JSON/JSONC schema every other compiler in this repo reads. `Config/compiler-config.json` in this project is a ready-to-edit starting point.
 
-New to this compiler? [`Config/config.example.jsonc`](Config/config.example.jsonc) is a fully-commented, ready-to-run starter config (compiles EasyList out of the box); [`Config/config.example.json`](Config/config.example.json) is the same config as strict JSON.
+New to this compiler? [`Config/config.example.jsonc`](Config/config.example.jsonc) is a fully-commented, ready-to-run starter config (compiles EasyList out of the box); [`Config/config.example.json`](Config/config.example.json) is the same config as strict JSON. EasyList mixes cosmetic (browser-engine) rules with plain domain-blocking rules, so this starter routes it to the browser engine explicitly (see the `.jsonc` comments) — compiling it therefore also needs `--allow-unvalidated-output` for now, since `bloqr-validate` doesn't yet validate browser syntax natively (tracked separately; see [Dual-Engine Compilation](../../../docs/architecture/dual-engine-compilation.md)).
 
 YAML and TOML remain readable by `ConfigurationReader` for backward compatibility, but JSON/JSONC is the only documented format — see [Supported Formats](../../../docs/configuration-reference.md#supported-formats) for which compilers tolerate `.jsonc` comments today.
 
