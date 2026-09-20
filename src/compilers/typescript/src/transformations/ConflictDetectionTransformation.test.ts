@@ -108,6 +108,23 @@ Deno.test('ConflictDetectionTransformation - classifies a network exception rule
   assertEquals(warnings.length, 1);
 });
 
+Deno.test('ConflictDetectionTransformation - does not fabricate a conflict from a regex rule containing #@# with no matching allow/cosmetic rule', async () => {
+  // Regression: a bare substring check for '#@#' anywhere in the rule matched
+  // a network rule like '/banner#@#ad/' (no '@@' prefix, not a real cosmetic
+  // exception) and rewrote it to a fabricated blocking form '/banner##ad/' by
+  // naively replacing the marker - reporting a false conflict against any
+  // unrelated rule that happened to equal that fabricated text. The cosmetic
+  // marker must only match when preceded by a valid domain-list prefix.
+  const { logger, warnings } = createRecordingLogger();
+  const transformation = new ConflictDetectionTransformation(logger);
+  const rules = ['/banner#@#ad/', '/banner##ad/'];
+
+  const result = await transformation.execute(rules);
+
+  assertEquals(result, rules);
+  assertEquals(warnings.length, 0);
+});
+
 Deno.test('ConflictDetectionTransformation - caps retained conflict messages without losing the true count', async () => {
   // Regression: the logging cap was applied only when printing, after every
   // conflict message had already been pushed into an unbounded array - a

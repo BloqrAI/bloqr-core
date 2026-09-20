@@ -6,6 +6,16 @@ import { SyncTransformation } from './base/Transformation.ts';
 const MAX_LOGGED_CONFLICTS = 20;
 
 /**
+ * Matches a cosmetic exception rule (`domain-list#@#selector`), anchored so the
+ * `#@#` marker must be immediately preceded by a valid domain-list prefix (or
+ * none, for a global rule) - not merely present anywhere in the string. This
+ * excludes non-cosmetic rules (e.g. a regex-delimited network rule) that
+ * happen to contain the `#@#` substring inside their pattern.
+ */
+const COSMETIC_EXCEPTION_REGEX =
+  /^((?:~?[a-zA-Z0-9*][a-zA-Z0-9*_.-]*(?:,~?[a-zA-Z0-9*][a-zA-Z0-9*_.-]*)*)?)#@#(.+)$/;
+
+/**
  * Transformation that detects (but does not resolve) contradictory rule pairs —
  * an exception/allow rule and a blocking rule that target the exact same pattern.
  *
@@ -79,20 +89,23 @@ export class ConflictDetectionTransformation extends SyncTransformation {
    * Returns the blocking-rule text an exception rule would conflict with, or
    * `null` if the rule isn't an exception rule (nothing to check).
    *
-   * Checks the explicit `@@` network-exception prefix before falling back to the
-   * substring-based cosmetic marker check: {@link RuleUtils.isCosmeticRule} matches
-   * `#@#` *anywhere* in the rule, so a network rule (e.g. a regex rule delimited by
-   * `/…/`) that merely contains that substring in its pattern - not as a cosmetic
-   * marker - would otherwise be misclassified as cosmetic instead of as the network
-   * exception it actually is.
+   * Checks the explicit `@@` network-exception prefix before the cosmetic
+   * exception check, and matches the cosmetic marker with
+   * {@link COSMETIC_EXCEPTION_REGEX} rather than a bare substring test: a
+   * network rule (e.g. a regex rule delimited by `/…/`) that merely contains
+   * `#@#` inside its pattern - not preceded by a valid domain-list - is
+   * neither an allow rule nor a cosmetic exception, and must not be
+   * misclassified as either.
    * @param trimmedRule - A rule with leading/trailing whitespace already removed.
    */
   private static toBlockingForm(trimmedRule: string): string | null {
     if (RuleUtils.isAllowRule(trimmedRule)) {
       return trimmedRule.slice(2);
     }
-    if (RuleUtils.isCosmeticRule(trimmedRule) && trimmedRule.includes('#@#')) {
-      return trimmedRule.replace('#@#', '##');
+    const match = COSMETIC_EXCEPTION_REGEX.exec(trimmedRule);
+    if (match) {
+      const [, domains, selector] = match;
+      return `${domains}##${selector}`;
     }
     return null;
   }
