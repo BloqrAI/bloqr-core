@@ -4,7 +4,8 @@
  */
 
 import { assertEquals, assertThrows } from '@std/assert';
-import { parseArgs } from './cli.ts';
+import { getVersionInfo, parseArgs } from './cli.ts';
+import { VERSION } from '../version.ts';
 
 Deno.test('parseArgs - returns default options with no arguments', () => {
   const options = parseArgs([]);
@@ -115,4 +116,13 @@ Deno.test('parseArgs - parses multiple flags together', () => {
 Deno.test('parseArgs - parses --rules-dir flag', () => {
   const options = parseArgs(['--rules-dir', '/custom/rules']);
   assertEquals(options.rulesDirectory, '/custom/rules');
+});
+
+Deno.test('getVersionInfo - reports the shared package VERSION, not a local duplicate', () => {
+  // Regression: this module previously hard-coded its own `const VERSION = '1.0.0'`,
+  // independent of ../version.ts (the package's single source of truth). CLI
+  // --version/--version-info output kept advertising 1.0.0 forever, regardless of
+  // how many times the published package version was bumped.
+  const info = getVersionInfo();
+  assertEquals(info.moduleVersion, VERSION);
 });

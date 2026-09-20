@@ -16,6 +16,12 @@ All notable changes to `@bloqr/compiler-core` (formerly `@jk-com/adblock-compile
 
 - **Breaking**: package renamed from `@jk-com/adblock-compiler` to `@bloqr/compiler-core`. `@jk-com` was a personal-project JSR scope; all Bloqr JSR packages (this one, and future ones like `@bloqr/diagnostics`) now live under the `@bloqr` scope. No functional changes — same package contents, same exports, just a new name and scope. See `README.md`'s Architecture section for the full story.
 
+## [1.4.0] - 2026-09-20
+
+### Added
+
+- **typescript**: implement ConflictDetection/RuleOptimizer transformations (#514)
+
 ## [1.3.1] - 2026-09-19
 
 ### Fixed
