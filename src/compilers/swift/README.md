@@ -46,6 +46,8 @@ Like the other wrappers, `bloqr-compiler` searches for a configuration file when
 4. **Parent directories**: traverses up the directory tree looking for
    `compiler-config.{json,yaml,toml}` (like git)
 
+New to this compiler? [`config.example.jsonc`](config.example.jsonc) is a fully-commented, ready-to-run starter config (compiles EasyList out of the box); [`config.example.json`](config.example.json) is the same config as strict JSON.
+
 ### Examples
 
 ```bash

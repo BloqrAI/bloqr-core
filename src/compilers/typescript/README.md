@@ -52,6 +52,8 @@ deno task interactive
 deno task compile
 ```
 
+New to this compiler? [`config.example.jsonc`](config.example.jsonc) is a fully-commented, ready-to-run starter config (compiles EasyList out of the box); [`config.example.json`](config.example.json) is the same config as strict JSON.
+
 ### Command-Line Options
 
 ```bash

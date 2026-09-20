@@ -72,6 +72,8 @@ The compiler automatically searches for configuration files in the following ord
 
 This means you can run the compiler from any subdirectory and it will find the nearest configuration file in the directory hierarchy.
 
+New to this compiler? [`cli/config.example.jsonc`](cli/config.example.jsonc) is a fully-commented, ready-to-run starter config (compiles EasyList out of the box); [`cli/config.example.json`](cli/config.example.json) is the same config as strict JSON.
+
 ### Examples
 
 ```bash

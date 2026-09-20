@@ -48,6 +48,9 @@ Modern OOP-based rules compiler module.
 - Environment variable support
 
 **Usage:**
+
+New to this compiler? [`config.example.jsonc`](config.example.jsonc) is a fully-commented, ready-to-run starter config (compiles EasyList out of the box); [`config.example.json`](config.example.json) is the same config as strict JSON.
+
 ```powershell
 Import-Module ./src/compilers/powershell/BloqrCompiler/BloqrCompiler.psd1
 Invoke-BloqrCompiler -ConfigPath config.json
