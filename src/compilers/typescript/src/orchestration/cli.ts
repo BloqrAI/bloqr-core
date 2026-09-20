@@ -34,9 +34,7 @@ import { isCompilerError } from './errors.ts';
 import { runInteractive } from '../console/app.ts';
 import { runBenchmark } from './benchmark.ts';
 import type { BenchmarkRunResult } from './benchmark.ts';
-
-/** Package version */
-const VERSION = '1.0.0';
+import { VERSION } from '../version.ts';
 
 /**
  * Parses command line arguments
