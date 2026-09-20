@@ -7,7 +7,11 @@ name = "bloqr-compiler"
 # directly, but `cargo install bloqr-compiler` and the `bloqr-compiler`
 # binary's CLI surface are unchanged - see the core/cli split note in
 # src/compilers/rust/README.md.
-version = "1.1.0"
+# Bumped to 1.2.0 for #517/#516: installs a tracing subscriber at startup, adding
+# RUST_LOG/LOG_LEVEL/DEBUG/LOG_FORMAT env var support alongside the existing -d
+# flag - new, backward-compatible CLI functionality (existing invocations behave
+# identically; -d alone still shows debug output exactly as before).
+version = "1.2.0"
 edition.workspace = true
 authors.workspace = true
 license.workspace = true
@@ -41,6 +45,12 @@ tokio = { workspace = true }
 
 # Temp file naming (for `benchmark`'s temp config/output files)
 uuid = { workspace = true }
+
+# Logging/tracing - installs the subscriber that surfaces bloqr-compiler-core's
+# tracing spans/events (which otherwise go nowhere without one), driven by
+# RUST_LOG/LOG_LEVEL and LOG_FORMAT per the root CLAUDE.md conventions.
+tracing = { workspace = true }
+tracing-subscriber = { workspace = true }
 
 [dev-dependencies]
 tempfile = { workspace = true }

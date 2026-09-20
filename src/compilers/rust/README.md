@@ -131,6 +131,18 @@ See [Dual-Engine Compilation](../../../docs/architecture/dual-engine-compilation
 | `--engine ENGINE` | Compilation engine/grammar to use (`dns` or `browser`). Omit (or `auto`) to use the configuration's own `defaultEngine`/per-source `engine` resolution |
 | `--browser-output PATH` | Output path for the browser-syntax artifact, when the configuration mixes engines. Defaults to the DNS output path with a `.browser.txt` suffix |
 
+### Logging
+
+The CLI installs a [`tracing`](https://docs.rs/tracing) subscriber on startup, so `bloqr-compiler-core`'s internal tracing spans/events (previously discarded - nothing installed a subscriber for them) are visible. Verbosity is resolved in priority order:
+
+1. `RUST_LOG` (tracing's own convention, e.g. `RUST_LOG=debug` or `RUST_LOG=bloqr_compiler=trace`)
+2. `LOG_LEVEL` (this repo's cross-wrapper convention: `DEBUG`/`INFO`/`WARN`/`ERROR`/`SILENT`)
+3. `DEBUG` (set to any value to enable debug logging, matching the other wrappers)
+4. The `-d`/`--debug` flag (equivalent to `debug` level)
+5. Default: `warn`
+
+Set `LOG_FORMAT=json` for structured JSON log output instead of the default human-readable format, matching the other compiler wrappers. Logs are written to stderr, never stdout.
+
 ## Library Usage
 
 Add to your `Cargo.toml`:

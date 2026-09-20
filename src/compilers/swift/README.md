@@ -105,6 +105,18 @@ what `dns`/`browser` mean and how sources are routed.
 | `--engine ENGINE` | Compilation engine/grammar to use (`dns` or `browser`). Omit (or `auto`) to use the configuration's own `defaultEngine`/per-source `engine` resolution |
 | `--browser-output PATH` | Output path for the browser-syntax artifact, when the configuration mixes engines. Defaults to the DNS output path with a `.browser.txt` suffix |
 
+### Logging
+
+`BloqrCompilerCore`'s internal diagnostics (previously ad hoc `[DEBUG]` writes to stderr, gated on `-d`/`--debug`) go through `os.Logger` (subsystem `dev.bloqr.compiler`, category `Compiler`) instead. `-d`/`--debug` still gates whether they're emitted at all; once emitted, view them with:
+
+```bash
+log stream --predicate 'subsystem == "dev.bloqr.compiler"' --level debug
+```
+
+or filter for `dev.bloqr.compiler` in Console.app. Unlike the previous stderr writes, `debug`-level messages aren't persisted to disk by default and don't require redirecting the process's own stderr to capture.
+
+The logged config content is *not* marked public: a configuration's `source` values are arbitrary caller-supplied URLs that may carry query tokens or embedded credentials, so by default the unified logging system redacts it (shown as `<private>`) unless the Mac has been explicitly configured to collect private data (`sudo log config --mode "private_data:on"`, or an MDM-deployed profile) - the file paths logged alongside it are not redacted, since they carry no such risk.
+
 ## Library Usage
 
 Add to your `Package.swift`:
