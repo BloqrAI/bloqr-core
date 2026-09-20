@@ -6,7 +6,17 @@ name = "bloqr-compiler-core"
 # so the library and the CLI can version and publish independently, mirroring
 # bloqr-validator-core/-cli), not a republish of anything previously on
 # crates.io under this name.
-version = "1.0.0"
+#
+# Bumped to 1.1.0 for #517/#516: CompileOptions::debug no longer gates this crate's
+# own diagnostic output via eprintln! - diagnostics are now unconditional
+# tracing::debug! events, with visibility controlled entirely by whatever tracing
+# subscriber the caller installs. A direct library consumer that sets
+# with_debug(true) without installing a subscriber now sees nothing (previously
+# saw stderr output); see CompileOptions::debug's doc comment. Not treated as a
+# major bump: the type-level public API (signatures, struct shape) is unchanged,
+# but this is a real behavioral compatibility note for anyone relying on the old
+# implicit stderr side effect.
+version = "1.1.0"
 edition.workspace = true
 authors.workspace = true
 license.workspace = true

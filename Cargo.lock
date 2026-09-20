@@ -111,7 +111,7 @@ dependencies = [
 
 [[package]]
 name = "bloqr-compiler"
-version = "1.1.0"
+version = "1.2.0"
 dependencies = [
  "bloqr-compiler-core",
  "clap",
@@ -127,7 +127,7 @@ dependencies = [
 
 [[package]]
 name = "bloqr-compiler-core"
-version = "1.0.0"
+version = "1.1.0"
 dependencies = [
  "bloqr-validator-core",
  "chrono",
