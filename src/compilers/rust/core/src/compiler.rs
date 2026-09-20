@@ -830,8 +830,13 @@ pub fn compile_rules<P: AsRef<Path>>(
         // whether this is actually shown, not options.debug. Gating the emit itself
         // on options.debug would make purely environment-driven verbosity impossible:
         // a caller with no CLI flag but RUST_LOG=debug set still expects to see this.
+        //
+        // Deliberately NOT logging `json` (the serialized config) itself: a source's URL
+        // can carry query tokens or userinfo credentials, and unlike os.Logger on the Swift
+        // side, `tracing` has no built-in redaction a subscriber can't just turn off - once
+        // emitted, a JSON/file-based subscriber will happily persist it verbatim. The temp
+        // path is enough to let a developer inspect the file's contents directly if needed.
         tracing::debug!("Created temp JSON config: {}", temp_path.display());
-        tracing::debug!("Config content:\n{json}");
 
         (temp_path.clone(), Some(temp_path))
     } else {
@@ -1059,8 +1064,13 @@ pub fn compile_rules_with_events<P: AsRef<Path>>(
         // whether this is actually shown, not options.debug. Gating the emit itself
         // on options.debug would make purely environment-driven verbosity impossible:
         // a caller with no CLI flag but RUST_LOG=debug set still expects to see this.
+        //
+        // Deliberately NOT logging `json` (the serialized config) itself: a source's URL
+        // can carry query tokens or userinfo credentials, and unlike os.Logger on the Swift
+        // side, `tracing` has no built-in redaction a subscriber can't just turn off - once
+        // emitted, a JSON/file-based subscriber will happily persist it verbatim. The temp
+        // path is enough to let a developer inspect the file's contents directly if needed.
         tracing::debug!("Created temp JSON config: {}", temp_path.display());
-        tracing::debug!("Config content:\n{json}");
 
         (temp_path.clone(), Some(temp_path))
     } else {
@@ -1286,8 +1296,13 @@ pub async fn compile_rules_async<P: AsRef<Path>>(
         // whether this is actually shown, not options.debug. Gating the emit itself
         // on options.debug would make purely environment-driven verbosity impossible:
         // a caller with no CLI flag but RUST_LOG=debug set still expects to see this.
+        //
+        // Deliberately NOT logging `json` (the serialized config) itself: a source's URL
+        // can carry query tokens or userinfo credentials, and unlike os.Logger on the Swift
+        // side, `tracing` has no built-in redaction a subscriber can't just turn off - once
+        // emitted, a JSON/file-based subscriber will happily persist it verbatim. The temp
+        // path is enough to let a developer inspect the file's contents directly if needed.
         tracing::debug!("Created temp JSON config: {}", temp_path.display());
-        tracing::debug!("Config content:\n{json}");
 
         (temp_path.clone(), Some(temp_path))
     } else {
