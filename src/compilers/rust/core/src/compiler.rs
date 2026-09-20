@@ -234,7 +234,12 @@ pub struct CompileOptions {
     pub rules_directory: Option<PathBuf>,
     /// Force configuration format.
     pub format: Option<ConfigFormat>,
-    /// Enable debug output.
+    /// Historically gated this crate's own `[DEBUG]` diagnostic output. That output is now
+    /// emitted unconditionally via `tracing::debug!` (see `compile_rules`), with visibility
+    /// controlled entirely by whatever `tracing` subscriber the caller has installed - this
+    /// field is kept for API compatibility and is what the CLI (`bloqr-compiler`)'s `-d`/
+    /// `--debug` flag maps onto to seed its own subscriber's default verbosity floor, but no
+    /// longer gates emission inside this library itself.
     pub debug: bool,
     /// Validate configuration before compiling.
     pub validate: bool,
@@ -820,10 +825,13 @@ pub fn compile_rules<P: AsRef<Path>>(
             CompilerError::file_system(format!("writing temp config to {}", temp_path.display()), e)
         })?;
 
-        if options.debug {
-            tracing::debug!("Created temp JSON config: {}", temp_path.display());
-            tracing::debug!("Config content:\n{json}");
-        }
+        // Unconditional: tracing's own subscriber-level filtering (RUST_LOG/LOG_LEVEL/
+        // DEBUG, or the CLI's -d flag - see cli/src/main.rs's init_logging) decides
+        // whether this is actually shown, not options.debug. Gating the emit itself
+        // on options.debug would make purely environment-driven verbosity impossible:
+        // a caller with no CLI flag but RUST_LOG=debug set still expects to see this.
+        tracing::debug!("Created temp JSON config: {}", temp_path.display());
+        tracing::debug!("Config content:\n{json}");
 
         (temp_path.clone(), Some(temp_path))
     } else {
@@ -861,9 +869,8 @@ pub fn compile_rules<P: AsRef<Path>>(
             .and_then(|p| p.to_str()),
     )?;
 
-    if options.debug {
-        tracing::debug!("Running: {cmd} {}", args.join(" "));
-    }
+    // See the comment above the temp-config debug!() calls: unconditional by design.
+    tracing::debug!("Running: {cmd} {}", args.join(" "));
 
     // Run compilation
     let output = Command::new(&cmd)
@@ -1047,10 +1054,13 @@ pub fn compile_rules_with_events<P: AsRef<Path>>(
             CompilerError::file_system(format!("writing temp config to {}", temp_path.display()), e)
         })?;
 
-        if options.debug {
-            tracing::debug!("Created temp JSON config: {}", temp_path.display());
-            tracing::debug!("Config content:\n{json}");
-        }
+        // Unconditional: tracing's own subscriber-level filtering (RUST_LOG/LOG_LEVEL/
+        // DEBUG, or the CLI's -d flag - see cli/src/main.rs's init_logging) decides
+        // whether this is actually shown, not options.debug. Gating the emit itself
+        // on options.debug would make purely environment-driven verbosity impossible:
+        // a caller with no CLI flag but RUST_LOG=debug set still expects to see this.
+        tracing::debug!("Created temp JSON config: {}", temp_path.display());
+        tracing::debug!("Config content:\n{json}");
 
         (temp_path.clone(), Some(temp_path))
     } else {
@@ -1086,9 +1096,8 @@ pub fn compile_rules_with_events<P: AsRef<Path>>(
             .and_then(|p| p.to_str()),
     )?;
 
-    if options.debug {
-        tracing::debug!("Running: {cmd} {}", args.join(" "));
-    }
+    // See the comment above the temp-config debug!() calls: unconditional by design.
+    tracing::debug!("Running: {cmd} {}", args.join(" "));
 
     // Run compilation
     let output = Command::new(&cmd)
@@ -1272,10 +1281,13 @@ pub async fn compile_rules_async<P: AsRef<Path>>(
             CompilerError::file_system(format!("writing temp config to {}", temp_path.display()), e)
         })?;
 
-        if options.debug {
-            tracing::debug!("Created temp JSON config: {}", temp_path.display());
-            tracing::debug!("Config content:\n{json}");
-        }
+        // Unconditional: tracing's own subscriber-level filtering (RUST_LOG/LOG_LEVEL/
+        // DEBUG, or the CLI's -d flag - see cli/src/main.rs's init_logging) decides
+        // whether this is actually shown, not options.debug. Gating the emit itself
+        // on options.debug would make purely environment-driven verbosity impossible:
+        // a caller with no CLI flag but RUST_LOG=debug set still expects to see this.
+        tracing::debug!("Created temp JSON config: {}", temp_path.display());
+        tracing::debug!("Config content:\n{json}");
 
         (temp_path.clone(), Some(temp_path))
     } else {
@@ -1311,9 +1323,8 @@ pub async fn compile_rules_async<P: AsRef<Path>>(
             .and_then(|p| p.to_str()),
     )?;
 
-    if options.debug {
-        tracing::debug!("Running: {cmd} {}", args.join(" "));
-    }
+    // See the comment above the temp-config debug!() calls: unconditional by design.
+    tracing::debug!("Running: {cmd} {}", args.join(" "));
 
     // Run compilation asynchronously
     let output = tokio::process::Command::new(&cmd)
