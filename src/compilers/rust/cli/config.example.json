@@ -1,14 +1,9 @@
 {
-  "$schema": "../../../../schemas/compiler-config.schema.json",
   "name": "EasyList",
   "description": "Starter/default filter list configuration using EasyList, the most widely used community ad-blocking list. Copy this file, point --config/-c at it, and compile — no editing required.",
   "homepage": "https://easylist.to/",
   "license": "GPL-3.0",
   "version": "1.0.0",
-  "output": {
-    "path": "output/filter.txt",
-    "conflictStrategy": "rename"
-  },
   "sources": [
     {
       "name": "EasyList",
