@@ -37,7 +37,7 @@ jobs:
         dotnet-version: 10.0.x
     
     - name: Setup Rust
-      uses: actions-rust-lang/setup-rust-toolchain@v1
+      uses: actions-rust-lang/setup-rust-toolchain@v2
       with:
         toolchain: stable
     
@@ -69,7 +69,7 @@ jobs:
         dotnet-version: 10.0.x
     
     - name: Setup Rust
-      uses: actions-rust-lang/setup-rust-toolchain@v1
+      uses: actions-rust-lang/setup-rust-toolchain@v2
       with:
         toolchain: stable
     
@@ -89,7 +89,7 @@ jobs:
         dotnet-version: 10.0.x
     
     - name: Setup Rust
-      uses: actions-rust-lang/setup-rust-toolchain@v1
+      uses: actions-rust-lang/setup-rust-toolchain@v2
       with:
         toolchain: stable
     
@@ -114,7 +114,7 @@ jobs:
         dotnet-version: 10.0.x
     
     - name: Setup Rust
-      uses: actions-rust-lang/setup-rust-toolchain@v1
+      uses: actions-rust-lang/setup-rust-toolchain@v2
       with:
         toolchain: stable
     
