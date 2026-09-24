@@ -22,7 +22,7 @@ let package = Package(
             dependencies: [
                 "Yams",
                 "TOMLKit",
-                .product(name: "JSONSchema", package: "JSONSchema"),
+                .product(name: "JSONSchema", package: "JSONSchema.swift"),
             ],
             resources: [
                 .copy("compiler-config.schema.json")
