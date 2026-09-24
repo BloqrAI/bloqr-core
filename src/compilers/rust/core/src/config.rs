@@ -382,6 +382,17 @@ impl CompilerConfig {
     ///
     /// Returns an error if validation fails.
     pub fn validate(&self) -> Result<()> {
+        // Schema validation runs first so this covers every caller of validate() - not just
+        // read_config()'s file-based path, which schema-validates the raw parsed value before
+        // this struct even exists - including a directly constructed CompilerConfig that never
+        // went through a file at all (e.g. one built via the builder methods below).
+        let value = serde_json::to_value(self).map_err(|e| {
+            CompilerError::validation_failed(format!(
+                "failed to serialize configuration for schema validation: {e}"
+            ))
+        })?;
+        assert_json_schema_valid(&value)?;
+
         if self.name.is_empty() {
             return Err(CompilerError::validation_failed(
                 "configuration 'name' is required",
@@ -583,6 +594,18 @@ mod tests {
 
         let no_sources = CompilerConfig::new("Test");
         assert!(no_sources.validate().is_err());
+    }
+
+    #[test]
+    fn test_compiler_config_validate_rejects_schema_invalid_homepage_on_directly_built_config() {
+        // Regression coverage for #518: validate() now runs schema validation - not just
+        // read_config()'s file-based path - so a directly constructed CompilerConfig (never
+        // read from a file) with a schema-invalid field like a non-URI homepage is rejected
+        // too, not just what the hand-written checks below happen to look at.
+        let mut config = CompilerConfig::new("Test")
+            .with_source(FilterSource::new("Source", "https://example.com"));
+        config.homepage = "not a uri".to_string();
+        assert!(config.validate().is_err());
     }
 
     #[test]
