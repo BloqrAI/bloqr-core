@@ -107,3 +107,53 @@ Deno.test('assertJsonSchemaValidConfiguration - accepts ConflictDetection/RuleOp
     'config.json',
   );
 });
+
+Deno.test('assertJsonSchemaValidConfiguration - accepts the shipped compiler-config-chunked.json shape', () => {
+  // Regression coverage: ExtendedConfiguration.chunking (orchestration/types.ts) is read by
+  // compileFilters() (compiler.ts's config.chunking?.* accesses) and documented in the
+  // README, and is exactly what compiler-config-chunked.json - shipped alongside this
+  // package - uses. The schema previously had no `chunking` property at all, so turning on
+  // real validation would have rejected this file outright.
+  assertJsonSchemaValidConfiguration(
+    {
+      name: 'Test Chunked Compilation',
+      version: '1.0.0',
+      description: 'Test configuration for chunked parallel compilation',
+      license: 'MIT',
+      chunking: { enabled: true, strategy: 'source', maxParallel: 4 },
+      sources: [{
+        name: 'AdGuard Base',
+        source: 'https://filters.adtidy.org/extension/chromium/filters/2.txt',
+      }],
+      transformations: ['RemoveComments', 'Compress', 'Validate'],
+    },
+    'compiler-config-chunked.json',
+  );
+});
+
+Deno.test('assertJsonSchemaValidConfiguration - accepts top-level extensions and per-source useBrowser', () => {
+  // Regression coverage: IConfiguration.extensions and ISource.useBrowser (types/index.ts)
+  // are both part of the public configuration contract - the existing Zod ConfigurationSchema
+  // already accepts them - but were missing from the JSON schema.
+  assertJsonSchemaValidConfiguration(
+    {
+      name: 'Test',
+      extensions: { customKey: 'customValue' },
+      sources: [{ source: 'https://example.com/list.txt', useBrowser: true }],
+    },
+    'config.json',
+  );
+});
+
+Deno.test('assertJsonSchemaValidConfiguration - accepts output.fileName', () => {
+  // Regression coverage: OutputConfig.fileName (orchestration/types.ts) is a documented
+  // alternative to output.path, but was missing from the JSON schema.
+  assertJsonSchemaValidConfiguration(
+    {
+      name: 'Test',
+      output: { fileName: 'output.txt', conflictStrategy: 'overwrite' },
+      sources: [{ source: 'https://example.com/list.txt' }],
+    },
+    'config.json',
+  );
+});

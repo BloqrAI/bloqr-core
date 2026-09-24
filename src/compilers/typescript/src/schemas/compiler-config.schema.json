@@ -44,6 +44,11 @@
           "description": "Output file path",
           "minLength": 1
         },
+        "fileName": {
+          "type": "string",
+          "description": "Output file name (if not using full path)",
+          "minLength": 1
+        },
         "conflictStrategy": {
           "type": "string",
           "description": "Strategy when output file already exists",
@@ -108,6 +113,37 @@
       "description": "Default compilation engine/grammar for sources that don't set 'engine' explicitly and whose content can't be confidently auto-detected. Defaults to 'dns'.",
       "enum": ["dns", "browser"]
     },
+    "chunking": {
+      "type": "object",
+      "description": "Chunking configuration for parallel compilation of large rule lists",
+      "additionalProperties": false,
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "description": "Enable chunking for large rule lists"
+        },
+        "chunkSize": {
+          "type": "integer",
+          "description": "Number of rules per chunk (default: 100000)",
+          "minimum": 1
+        },
+        "maxParallel": {
+          "type": "integer",
+          "description": "Maximum number of chunks to process in parallel (default: CPU count)",
+          "minimum": 1
+        },
+        "strategy": {
+          "type": "string",
+          "description": "Strategy for determining chunk boundaries",
+          "enum": ["line-count", "source"]
+        }
+      }
+    },
+    "extensions": {
+      "type": "object",
+      "description": "Extensible key-value pairs for custom configuration metadata. Allows users to add custom metadata without breaking schema validation.",
+      "additionalProperties": true
+    },
     "sources": {
       "type": "array",
       "description": "Filter sources (required)",
@@ -136,6 +172,10 @@
             "type": "string",
             "description": "Compilation engine/grammar this source uses. Overrides auto-detection when set; unset sources fall back to content sniffing, then defaultEngine, then 'dns'.",
             "enum": ["dns", "browser"]
+          },
+          "useBrowser": {
+            "type": "boolean",
+            "description": "When true, fetch via Cloudflare Browser Run instead of plain HTTP (WorkerCompiler only)"
           },
           "transformations": {
             "type": "array",
