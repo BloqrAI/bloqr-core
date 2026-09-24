@@ -62,12 +62,20 @@ mod tests {
 
     #[test]
     fn bundled_schema_copy_stays_in_sync_with_canonical() {
-        let bundled = SCHEMA_JSON;
+        // A crates.io package of this crate does not contain the rest of the monorepo (in
+        // particular the repo-root schemas/ directory this compares against), so `cargo test`
+        // against the published/packaged source must not panic here - only the repo's own CI
+        // (running from a full checkout) can meaningfully enforce this drift guard.
         let canonical_path = Path::new(env!("CARGO_MANIFEST_DIR"))
             .join("../../../../schemas/compiler-config.schema.json");
-        let canonical = std::fs::read_to_string(&canonical_path).unwrap_or_else(|e| {
-            panic!("failed to read canonical schema at {canonical_path:?}: {e}")
-        });
+        let Ok(canonical) = std::fs::read_to_string(&canonical_path) else {
+            eprintln!(
+                "skipping: {canonical_path:?} not present (not running from a full \
+                 bloqr-core checkout, e.g. a packaged/published crate)"
+            );
+            return;
+        };
+        let bundled = SCHEMA_JSON;
         assert_eq!(
             bundled, canonical,
             "src/compilers/rust/core/schemas/compiler-config.schema.json has drifted from the \
