@@ -6,19 +6,38 @@
  * published `@bloqr/compiler-core` package carries its own copy) that the .NET
  * compiler's `CompilerConfigJsonSchemaValidator` validates against - see issue #518
  * (follow-up to #502). Kept in sync with the repo-root schema by
- * `schema-sync.test.ts`, which fails if the two files diverge.
+ * `schema-validation.test.ts`, which fails if the two files diverge.
  */
 
-import Ajv, { type ValidateFunction } from 'ajv';
+import type { ErrorObject, ValidateFunction } from 'ajv';
+import * as AjvNamespace from 'ajv';
 import schema from '../schemas/compiler-config.schema.json' with { type: 'json' };
 import { ConfigurationError, ErrorCode } from './errors.ts';
 
-const ajv = new Ajv({ allErrors: true, strict: false });
+/** The subset of the `ajv` instance API this module relies on. */
+interface AjvLike {
+  compile(schema: unknown): ValidateFunction;
+}
+
+/**
+ * `ajv` ships as a CommonJS module (`module.exports = Ajv`, with `.default` set to the
+ * same value for ESM interop). Under `deno check`, a default import of it (`import Ajv
+ * from 'ajv'`) types the binding as the whole module namespace rather than the exported
+ * class - a `.d.ts` resolution mismatch in Deno's npm compat layer, not a runtime bug (the
+ * namespace *value* really is the constructable class at runtime; only its inferred type
+ * is wrong). Importing the namespace and casting it past that mistyping avoids relying on
+ * the broken default-import type while keeping the real runtime value.
+ */
+const AjvCtor = AjvNamespace as unknown as new (options?: Record<string, unknown>) => AjvLike;
+
+const ajv: AjvLike = new AjvCtor({ allErrors: true, strict: false });
 let validateFn: ValidateFunction | undefined;
 
 function getValidator(): ValidateFunction {
-  validateFn ??= ajv.compile(schema);
-  return validateFn;
+  if (validateFn === undefined) {
+    validateFn = ajv.compile(schema);
+  }
+  return validateFn as ValidateFunction;
 }
 
 /**
@@ -36,7 +55,8 @@ function getValidator(): ValidateFunction {
 export function assertJsonSchemaValidConfiguration(config: unknown, filePath: string): void {
   const validate = getValidator();
   if (!validate(config)) {
-    const issues = (validate.errors ?? [])
+    const errors: ErrorObject[] = validate.errors ?? [];
+    const issues = errors
       .map((err) => `  ${err.instancePath || '(root)'}: ${err.message}`)
       .join('\n');
     throw new ConfigurationError(
