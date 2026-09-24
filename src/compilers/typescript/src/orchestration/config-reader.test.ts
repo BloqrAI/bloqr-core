@@ -3,9 +3,24 @@
  * Deno-native testing implementation
  */
 
+import { mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+import { join } from 'node:path';
+import { tmpdir } from 'node:os';
 import { assertEquals, assertThrows } from '@std/assert';
-import { detectFormat, stripInternalMetadata, toJson } from './config-reader.ts';
+import { detectFormat, readConfiguration, stripInternalMetadata, toJson } from './config-reader.ts';
+import { ConfigurationError } from './errors.ts';
 import type { IConfiguration } from '../index.ts';
+
+function withTempConfigFile<T>(content: unknown, fn: (configPath: string) => T): T {
+  const dir = mkdtempSync(join(tmpdir(), 'config-reader-test-'));
+  try {
+    const configPath = join(dir, 'config.json');
+    writeFileSync(configPath, JSON.stringify(content));
+    return fn(configPath);
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+}
 
 Deno.test('detectFormat - detects JSON format from .json extension', () => {
   assertEquals(detectFormat('config.json'), 'json');
@@ -113,4 +128,39 @@ Deno.test('toJson - serialized output never contains internal metadata keys', ()
   assertEquals(json.includes('_sourceFormat'), false);
   assertEquals(json.includes('_sourcePath'), false);
   assertEquals(json.includes('_chunkMetadata'), false);
+});
+
+// Regression coverage for #518: proves readConfiguration() itself - not just
+// assertJsonSchemaValidConfiguration() called directly - rejects a schema-invalid
+// config. Without this, removing or reordering the schema-validation call inside
+// readConfiguration() would leave schema-validation.test.ts green while the actual
+// CLI/compile config-read path silently stopped enforcing the canonical schema.
+Deno.test('readConfiguration - rejects a schema-invalid config file (invalid transformation enum value)', () => {
+  withTempConfigFile(
+    {
+      name: 'Test',
+      sources: [{ source: 'https://example.com/list.txt' }],
+      transformations: ['NotARealTransformation'],
+    },
+    (configPath) => {
+      assertThrows(
+        () => readConfiguration(configPath),
+        ConfigurationError,
+      );
+    },
+  );
+});
+
+Deno.test('readConfiguration - accepts a schema-valid config file', () => {
+  withTempConfigFile(
+    {
+      name: 'Test',
+      sources: [{ source: 'https://example.com/list.txt' }],
+      transformations: ['Deduplicate'],
+    },
+    (configPath) => {
+      const config = readConfiguration(configPath);
+      assertEquals(config.name, 'Test');
+    },
+  );
 });
