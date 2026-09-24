@@ -18,6 +18,7 @@ import {
   checkSourceCount,
   DEFAULT_RESOURCE_LIMITS,
 } from './validation.ts';
+import { assertJsonSchemaValidConfiguration } from './schema-validation.ts';
 
 /**
  * Detects configuration format from file extension
@@ -201,8 +202,12 @@ export function readConfiguration(
     }
   }
 
-  // Validate configuration schema unless explicitly skipped
+  // Validate configuration schema unless explicitly skipped. JSON Schema validation
+  // runs first, against the same canonical schema every other compiler wrapper
+  // validates against (see issue #518); the hand-written checks then catch anything
+  // specific to this orchestration layer.
   if (!options.skipValidation) {
+    assertJsonSchemaValidConfiguration(config, resolvedPath);
     assertValidConfiguration(config, resolvedPath);
   }
 

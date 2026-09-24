@@ -13,6 +13,7 @@
   "publish": {
     "include": [
       "src/**/*.ts",
+      "src/**/*.json",
       "README.md",
       "LICENSE",
       "CHANGELOG.md"
@@ -64,7 +65,10 @@
     // and this module's interactive flows have no automated test coverage to verify behavioral parity
     // against a real TTY. Left in place pending a dedicated follow-up with manual/e2e verification
     // (audited for #294).
-    "@inquirer/prompts": "npm:@inquirer/prompts@^8.7.2"
+    "@inquirer/prompts": "npm:@inquirer/prompts@^8.7.2",
+    // ajv: no JSR-native JSON Schema (draft-07) validator of comparable maturity exists; used to
+    // validate parsed configuration against the canonical schema in src/schemas/ (see issue #518).
+    "ajv": "npm:ajv@^8.17.1"
   },
   "allowScripts": ["npm:core-js@3.47.0"],
   "fmt": {
