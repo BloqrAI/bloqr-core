@@ -69,6 +69,35 @@ Deno.test('assertJsonSchemaValidConfiguration - rejects a config missing require
   );
 });
 
+Deno.test('assertJsonSchemaValidConfiguration - rejects a non-URI homepage', () => {
+  // Regression coverage: ajv does not implement "format" keywords (e.g. homepage's
+  // format: "uri") at all without ajv-formats registered - without it, this would
+  // silently pass.
+  assertThrows(
+    () =>
+      assertJsonSchemaValidConfiguration(
+        {
+          name: 'Test',
+          homepage: 'not a uri',
+          sources: [{ source: 'https://example.com/list.txt' }],
+        },
+        'config.json',
+      ),
+    ConfigurationError,
+  );
+});
+
+Deno.test('assertJsonSchemaValidConfiguration - accepts a valid homepage URI', () => {
+  assertJsonSchemaValidConfiguration(
+    {
+      name: 'Test',
+      homepage: 'https://github.com/BloqrAI/bloqr-core',
+      sources: [{ source: 'https://example.com/list.txt' }],
+    },
+    'config.json',
+  );
+});
+
 Deno.test('assertJsonSchemaValidConfiguration - rejects an invalid transformation enum value', () => {
   assertThrows(
     () =>

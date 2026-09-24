@@ -11,6 +11,7 @@
 
 import type { ErrorObject, ValidateFunction } from 'ajv';
 import * as AjvNamespace from 'ajv';
+import * as AjvFormatsNamespace from 'ajv-formats';
 import schema from '../schemas/compiler-config.schema.json' with { type: 'json' };
 import { ConfigurationError, ErrorCode } from './errors.ts';
 
@@ -18,6 +19,16 @@ import { ConfigurationError, ErrorCode } from './errors.ts';
 interface AjvLike {
   compile(schema: unknown): ValidateFunction;
 }
+
+/**
+ * `ajv`'s own package does not implement `format` keywords (e.g. this schema's
+ * `homepage: { format: "uri" }`) at all - they're silently never checked without
+ * `ajv-formats` registered. Resolved through the same namespace/`.default` interop
+ * dance as `AjvCtor` below, since `ajv-formats` is also a CJS module with a default
+ * export.
+ */
+const addFormats = ((AjvFormatsNamespace as unknown as { default?: unknown }).default ??
+  AjvFormatsNamespace) as (ajv: AjvLike, options?: unknown) => void;
 
 /** Shape of the `ajv` module namespace once ESM/CJS interop unwraps it. */
 interface AjvModuleShape {
@@ -40,6 +51,7 @@ const AjvCtor = ((AjvNamespace as unknown as AjvModuleShape).default ??
   AjvNamespace) as unknown as new (options?: Record<string, unknown>) => AjvLike;
 
 const ajv: AjvLike = new AjvCtor({ allErrors: true, strict: false });
+addFormats(ajv);
 let validateFn: ValidateFunction | undefined;
 
 function getValidator(): ValidateFunction {

@@ -18,7 +18,12 @@ const SCHEMA_JSON: &str = include_str!("../schemas/compiler-config.schema.json")
 static VALIDATOR: LazyLock<jsonschema::Validator> = LazyLock::new(|| {
     let schema: serde_json::Value = serde_json::from_str(SCHEMA_JSON)
         .expect("bundled compiler-config.schema.json is valid JSON");
-    jsonschema::validator_for(&schema)
+    // `format` keywords (e.g. `homepage`'s `format: "uri"`) are NOT validated by this crate
+    // unless `should_validate_formats(true)` is set explicitly - without it, `validator_for`
+    // silently accepts any string regardless of the schema's `format` constraint.
+    jsonschema::options()
+        .should_validate_formats(true)
+        .build(&schema)
         .expect("bundled compiler-config.schema.json is a valid JSON Schema")
 });
 
@@ -90,6 +95,29 @@ mod tests {
             "name": "Test",
             "sources": [{"source": "https://example.com/list.txt"}],
             "transformations": ["ConflictDetection", "RuleOptimizer"],
+        });
+        assert!(assert_json_schema_valid(&value).is_ok());
+    }
+
+    #[test]
+    fn rejects_non_uri_homepage() {
+        // Regression coverage: jsonschema (the Rust crate) does not validate `format`
+        // keywords unless `should_validate_formats(true)` is set explicitly - without it,
+        // this would silently pass.
+        let value = json!({
+            "name": "Test",
+            "homepage": "not a uri",
+            "sources": [{"source": "https://example.com/list.txt"}],
+        });
+        assert!(assert_json_schema_valid(&value).is_err());
+    }
+
+    #[test]
+    fn accepts_valid_homepage_uri() {
+        let value = json!({
+            "name": "Test",
+            "homepage": "https://github.com/BloqrAI/bloqr-core",
+            "sources": [{"source": "https://example.com/list.txt"}],
         });
         assert!(assert_json_schema_valid(&value).is_ok());
     }

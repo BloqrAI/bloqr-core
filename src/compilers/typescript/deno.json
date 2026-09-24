@@ -68,7 +68,10 @@
     "@inquirer/prompts": "npm:@inquirer/prompts@^8.7.2",
     // ajv: no JSR-native JSON Schema (draft-07) validator of comparable maturity exists; used to
     // validate parsed configuration against the canonical schema in src/schemas/ (see issue #518).
-    "ajv": "npm:ajv@^8.17.1"
+    "ajv": "npm:ajv@^8.17.1",
+    // ajv-formats: ajv's own package does not implement "format" keywords (e.g. the schema's
+    // homepage: {format: "uri"}) at all - without this, they're silently never checked.
+    "ajv-formats": "npm:ajv-formats@^3.0.1"
   },
   "allowScripts": ["npm:core-js@3.47.0"],
   "fmt": {
