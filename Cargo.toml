@@ -59,6 +59,10 @@ dirs = "5.0"
 # Regex
 regex = "1.11"
 
+# JSON Schema validation (no-default-features: local schema only, no remote
+# $ref resolution needed, so the reqwest/resolve-http machinery is skipped)
+jsonschema = { version = "0.57", default-features = false }
+
 # Cross-platform utilities
 which = "8.0"
 
