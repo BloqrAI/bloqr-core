@@ -15,6 +15,7 @@ from typing import Any
 from bloqr_compiler.errors import (
     ParseError,
     UnknownExtensionError,
+    ValidationError,
     ValidationResult,
 )
 from bloqr_compiler.schema_validation import assert_json_schema_valid_configuration
@@ -359,6 +360,16 @@ class CompilerConfiguration:
             ValidationResult with errors and warnings.
         """
         result = ValidationResult()
+
+        # Schema validation runs first so this covers every caller of validate() - not just
+        # read_configuration()'s file-based path, which validates the raw parsed dict before
+        # this object even exists - including validate_config() on a directly constructed
+        # CompilerConfiguration that never went through a file at all.
+        try:
+            assert_json_schema_valid_configuration(self.to_dict())
+        except ValidationError as e:
+            for message in e.errors:
+                result.add_error(message)
 
         # Check required fields
         if not self.name or not self.name.strip():

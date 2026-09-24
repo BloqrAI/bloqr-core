@@ -349,14 +349,36 @@ class TestCompilerConfiguration:
         assert result.is_valid is False
         assert any("source" in e.lower() for e in result.errors)
 
-    def test_validate_invalid_transformation(self) -> None:
+    def test_validate_rejects_unrecognized_transformation_name(self) -> None:
+        # Updated for #518: validate() now runs schema validation first, so a name the
+        # canonical schema doesn't recognize at all (a typo, as opposed to a name the
+        # schema allows but this engine doesn't implement - see
+        # test_validate_warns_but_does_not_error_on_schema_valid_unsupported_transformation
+        # below) is now a hard error, not just a warning.
         config = CompilerConfiguration(
             name="Test",
             sources=[FilterSource(source="./rules.txt")],
             transformations=["Deduplicate", "InvalidTransform"],
         )
         result = config.validate()
-        assert result.is_valid is True  # Invalid transformations are warnings
+        assert result.is_valid is False
+        assert any("InvalidTransform" in e for e in result.errors)
+
+    def test_validate_warns_but_does_not_error_on_schema_valid_unsupported_transformation(
+        self,
+    ) -> None:
+        # ConflictDetection/RuleOptimizer are valid per the canonical schema (the TypeScript
+        # reference implementation supports them) but this Python engine doesn't implement
+        # them (Transformation enum in config.py has no such members) - schema validation
+        # correctly accepts the config, and the existing hand-written check continues to only
+        # warn, exactly as it already did for any unsupported name before #518.
+        config = CompilerConfiguration(
+            name="Test",
+            sources=[FilterSource(source="./rules.txt")],
+            transformations=["Deduplicate", "ConflictDetection"],
+        )
+        result = config.validate()
+        assert result.is_valid is True
         assert len(result.warnings) > 0
 
     def test_validate_invalid_default_engine(self) -> None:

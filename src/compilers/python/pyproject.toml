@@ -33,6 +33,9 @@ dependencies = [
     "tomli>=2.2.1; python_version < '3.11'",
     "aiofiles>=24.1.0",
     "jsonschema>=4.23.0",
+    # rfc3987 registers jsonschema's "uri" format checker (jsonschema does not validate
+    # the "uri" format at all without it) - needed for the schema's homepage: {format: uri}.
+    "rfc3987>=1.3.8",
 ]
 
 [project.optional-dependencies]

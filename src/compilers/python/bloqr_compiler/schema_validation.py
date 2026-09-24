@@ -30,7 +30,10 @@ def _get_validator() -> jsonschema.protocols.Validator:
         schema = json.load(f)
     validator_cls = jsonschema.validators.validator_for(schema)
     validator_cls.check_schema(schema)
-    return validator_cls(schema)
+    # jsonschema does not enforce "format" keywords (e.g. homepage's format: "uri")
+    # unless a FormatChecker is explicitly supplied - without this, format
+    # constraints in the schema would silently never be checked.
+    return validator_cls(schema, format_checker=validator_cls.FORMAT_CHECKER)
 
 
 def assert_json_schema_valid_configuration(data: dict[str, Any]) -> None:

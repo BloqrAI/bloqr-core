@@ -106,6 +106,24 @@ class TestAssertJsonSchemaValidConfiguration:
                 "bogusField": True,
             })
 
+    def test_rejects_non_uri_homepage(self) -> None:
+        # Regression coverage: jsonschema does not enforce "format" keywords (e.g.
+        # homepage's format: "uri") unless a FormatChecker is explicitly supplied to the
+        # validator - without it, this would silently pass.
+        with pytest.raises(ValidationError):
+            assert_json_schema_valid_configuration({
+                "name": "Test",
+                "homepage": "not a uri",
+                "sources": [{"source": "https://example.com/list.txt"}],
+            })
+
+    def test_accepts_valid_homepage_uri(self) -> None:
+        assert_json_schema_valid_configuration({
+            "name": "Test",
+            "homepage": "https://github.com/BloqrAI/bloqr-core",
+            "sources": [{"source": "https://example.com/list.txt"}],
+        })
+
 
 class TestReadConfigurationSchemaValidation:
     """Integration coverage: read_configuration() now runs schema validation."""
@@ -142,3 +160,26 @@ class TestReadConfigurationSchemaValidation:
 
         config = read_configuration(config_file, format=ConfigurationFormat.JSON)
         assert config.name == "Test"
+
+
+class TestDirectlyConstructedConfigurationSchemaValidation:
+    """Integration coverage: CompilerConfiguration.validate() also runs schema validation,
+    not just read_configuration()'s file-based path - see the "Public config validation
+    bypasses schema validation" finding on #518's PR: a directly constructed configuration
+    (e.g. via BloqrCompiler.validate_config(), which never goes through read_configuration())
+    must be checked too.
+    """
+
+    def test_validate_rejects_schema_invalid_transformation_on_a_directly_built_config(
+        self,
+    ) -> None:
+        from bloqr_compiler.config import CompilerConfiguration, FilterSource
+
+        config = CompilerConfiguration(
+            name="Test",
+            sources=[FilterSource(source="https://example.com/list.txt")],
+            transformations=["NotARealTransformation"],
+        )
+        result = config.validate()
+        assert result.is_valid is False
+        assert any("NotARealTransformation" in e for e in result.errors)
