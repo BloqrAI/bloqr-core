@@ -32,6 +32,7 @@ dependencies = [
     "pyyaml>=6.0.2",
     "tomli>=2.2.1; python_version < '3.11'",
     "aiofiles>=24.1.0",
+    "jsonschema>=4.23.0",
 ]
 
 [project.optional-dependencies]
@@ -65,6 +66,9 @@ Changelog = "https://github.com/BloqrAI/bloqr-core/releases"
 
 [tool.setuptools.packages.find]
 where = ["."]
+
+[tool.setuptools.package-data]
+bloqr_compiler = ["schemas/*.json"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

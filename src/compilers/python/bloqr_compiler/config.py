@@ -17,6 +17,7 @@ from bloqr_compiler.errors import (
     UnknownExtensionError,
     ValidationResult,
 )
+from bloqr_compiler.schema_validation import assert_json_schema_valid_configuration
 
 
 class ConfigurationFormat(Enum):
@@ -609,6 +610,7 @@ def read_configuration(
         FileNotFoundError: If the file doesn't exist.
         ParseError: If parsing fails.
         UnknownExtensionError: If extension is not recognized.
+        ValidationError: If the parsed configuration fails JSON Schema validation.
     """
     path = Path(config_path)
 
@@ -625,6 +627,7 @@ def read_configuration(
     }
 
     data = parsers[detected_format](content, str(path))
+    assert_json_schema_valid_configuration(data)
     config = CompilerConfiguration.from_dict(data)
     config._source_format = detected_format
     config._source_path = str(path)

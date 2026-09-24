@@ -103,7 +103,8 @@ transformations:
         yaml_content = """
 name: Override Test
 version: 1.0.0
-sources: []
+sources:
+  - source: https://example.com/list.txt
 transformations: []
 """
         # Write YAML content with .txt extension
