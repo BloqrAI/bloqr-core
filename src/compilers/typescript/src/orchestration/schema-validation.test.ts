@@ -46,9 +46,16 @@ Deno.test('assertJsonSchemaValidConfiguration - accepts the shipped default comp
       description: 'Custom filter rules for AdGuard DNS',
       license: 'MIT',
       homepage: 'https://github.com/BloqrAI/bloqr-lists',
-      output: { path: '../bloqr-blocklists/output/adguard_user_filter.txt', conflictStrategy: 'rename' },
+      output: {
+        path: '../bloqr-blocklists/output/adguard_user_filter.txt',
+        conflictStrategy: 'rename',
+      },
       archiving: { enabled: true, mode: 'automatic', retentionDays: 90 },
-      sources: [{ name: 'User Rules', source: '../bloqr-blocklists/input/user-rules.txt', type: 'adblock' }],
+      sources: [{
+        name: 'User Rules',
+        source: '../bloqr-blocklists/input/user-rules.txt',
+        type: 'adblock',
+      }],
       transformations: ['RemoveComments', 'Compress', 'Validate'],
     },
     'compiler-config.json',

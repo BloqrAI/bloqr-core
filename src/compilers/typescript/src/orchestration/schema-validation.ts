@@ -19,16 +19,25 @@ interface AjvLike {
   compile(schema: unknown): ValidateFunction;
 }
 
+/** Shape of the `ajv` module namespace once ESM/CJS interop unwraps it. */
+interface AjvModuleShape {
+  default: new (options?: Record<string, unknown>) => AjvLike;
+}
+
 /**
- * `ajv` ships as a CommonJS module (`module.exports = Ajv`, with `.default` set to the
- * same value for ESM interop). Under `deno check`, a default import of it (`import Ajv
- * from 'ajv'`) types the binding as the whole module namespace rather than the exported
- * class - a `.d.ts` resolution mismatch in Deno's npm compat layer, not a runtime bug (the
- * namespace *value* really is the constructable class at runtime; only its inferred type
- * is wrong). Importing the namespace and casting it past that mistyping avoids relying on
- * the broken default-import type while keeping the real runtime value.
+ * `ajv` ships as a CommonJS module (`module.exports = Ajv`, with `.default` also set to
+ * the same class for ESM interop). A plain default import of it (`import Ajv from 'ajv'`)
+ * both mistypes under `deno check` (the binding types as the whole module namespace, which
+ * has no construct signature - a `.d.ts` resolution quirk in Deno's npm compat layer) *and*
+ * fails at runtime under real ESM interop (Bun/Node resolve the default import to the
+ * namespace object itself, not the class it wraps: `new Ajv(...)` throws "Module is not a
+ * constructor"). Importing the namespace and reading `.default` off it explicitly - which is
+ * where ESM interop actually places the class - avoids both problems; the `?? AjvNamespace`
+ * fallback covers any runtime where the namespace import unwraps directly to `module.exports`
+ * instead.
  */
-const AjvCtor = AjvNamespace as unknown as new (options?: Record<string, unknown>) => AjvLike;
+const AjvCtor = ((AjvNamespace as unknown as AjvModuleShape).default ??
+  AjvNamespace) as unknown as new (options?: Record<string, unknown>) => AjvLike;
 
 const ajv: AjvLike = new AjvCtor({ allErrors: true, strict: false });
 let validateFn: ValidateFunction | undefined;
