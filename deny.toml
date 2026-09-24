@@ -20,6 +20,9 @@ allow = [
     "BSD-2-Clause",
     "BSD-3-Clause",
     "ISC",
+    # Pulled in transitively via jsonschema -> referencing -> fluent-uri -> borrow-or-share
+    # (see issue #518). Strictly more permissive than plain MIT (no attribution required).
+    "MIT-0",
     "Unicode-3.0",
     "CDLA-Permissive-2.0",
     "BSL-1.0",
