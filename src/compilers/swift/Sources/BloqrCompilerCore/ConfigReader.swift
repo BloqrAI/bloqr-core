@@ -24,6 +24,7 @@ public enum ConfigReader {
         }
 
         var config = try parse(content, format: resolvedFormat)
+        try SchemaValidation.assertValid(config)
         config.sourceFormat = resolvedFormat
         config.sourcePath = path
         return config
