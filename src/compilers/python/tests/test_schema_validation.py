@@ -183,3 +183,25 @@ class TestDirectlyConstructedConfigurationSchemaValidation:
         result = config.validate()
         assert result.is_valid is False
         assert any("NotARealTransformation" in e for e in result.errors)
+
+    def test_output_file_name_round_trips_without_breaking_validate(self) -> None:
+        # Regression coverage: OutputSettings.to_dict() used to always emit `path` (even
+        # `""` when only `fileName` was set), which violates the schema's `path`
+        # `minLength: 1` constraint - a config using the newly schema-supported `fileName`
+        # form would pass read_configuration()'s raw-dict check but then fail the second
+        # schema check inside validate() (which re-validates self.to_dict()). Fixed by only
+        # emitting `path`/`fileName` in to_dict() when actually set.
+        from bloqr_compiler.config import CompilerConfiguration, FilterSource, OutputSettings
+
+        config = CompilerConfiguration(
+            name="Test",
+            sources=[FilterSource(source="https://example.com/list.txt")],
+            output=OutputSettings(file_name="output.txt", conflict_strategy="overwrite"),
+        )
+        result = config.validate()
+        assert result.is_valid is True
+        assert result.errors == []
+        assert config.to_dict()["output"] == {
+            "fileName": "output.txt",
+            "conflictStrategy": "overwrite",
+        }
