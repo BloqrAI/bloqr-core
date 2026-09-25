@@ -50,7 +50,11 @@ def publish_output(
     if output.path:
         destination_path = Path(output.path).resolve()
     elif output.file_name:
-        destination_path = (compiled_path.parent / output.file_name).resolve()
+        # Path(...).name strips any directory components file_name might contain,
+        # including a rooted/absolute value - pathlib's `/` operator otherwise silently
+        # discards the left-hand side entirely when the right-hand side is absolute,
+        # resolving to that rooted path instead of compiled_path's directory.
+        destination_path = (compiled_path.parent / Path(output.file_name).name).resolve()
     else:
         return OutputPublishResult(success=True, final_path=str(compiled_path))
 

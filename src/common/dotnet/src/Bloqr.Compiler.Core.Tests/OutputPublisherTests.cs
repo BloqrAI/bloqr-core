@@ -62,6 +62,23 @@ public sealed class OutputPublisherTests : IDisposable
     }
 
     [Fact]
+    public async Task PublishAsync_WithRootedFileName_IsConfinedToTheCompiledDirectory()
+    {
+        // Security-relevant regression coverage: Path.Combine silently discards its earlier
+        // arguments when a later one is rooted/absolute, so a rooted FileName must be
+        // reduced to just its file-name component, not honored as a path in its own right.
+        var compiled = WriteFile("compiled.txt", "v1");
+        var outsidePath = Path.Combine(Path.GetTempPath(), "escaped-" + Guid.NewGuid() + ".txt");
+        var output = new OutputSettings { FileName = outsidePath };
+
+        var result = await _publisher.PublishAsync(compiled, output, archiving: null);
+
+        Assert.True(result.Success);
+        Assert.Equal(Path.Combine(_tempDirectory, Path.GetFileName(outsidePath)), result.FinalPath);
+        Assert.False(File.Exists(outsidePath));
+    }
+
+    [Fact]
     public async Task PublishAsync_WithPathAndFileName_PathTakesPrecedence()
     {
         var compiled = WriteFile("compiled.txt", "v1");

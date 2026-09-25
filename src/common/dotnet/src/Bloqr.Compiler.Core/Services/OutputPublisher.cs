@@ -31,11 +31,16 @@ public class OutputPublisher : IOutputPublisher
         // `FileName` is documented as an alternative to a full `Path`, not combined with
         // one - a `Path` (a full file path) takes precedence when both are set. When only
         // `FileName` is set, the destination stays in the compiled file's own directory
-        // with its name replaced by `FileName`.
+        // with its name replaced by `FileName`. `Path.GetFileName` strips any directory
+        // components `FileName` might contain (including a rooted/absolute value), since
+        // otherwise `Path.Combine` would silently discard the compiled file's directory
+        // and resolve to that rooted path instead.
         string? effectivePath = !string.IsNullOrWhiteSpace(output.Path)
             ? output.Path
             : !string.IsNullOrWhiteSpace(output.FileName)
-                ? Path.Combine(Path.GetDirectoryName(Path.GetFullPath(compiledFilePath)) ?? ".", output.FileName)
+                ? Path.Combine(
+                    Path.GetDirectoryName(Path.GetFullPath(compiledFilePath)) ?? ".",
+                    Path.GetFileName(output.FileName))
                 : null;
 
         if (effectivePath is null)
