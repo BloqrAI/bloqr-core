@@ -13,6 +13,7 @@ import {
   ResourceLimitError,
   ValidationError,
 } from './errors.ts';
+import { getJsonSchemaValidationErrors } from './schema-validation.ts';
 
 /**
  * Validation result
@@ -157,7 +158,15 @@ function validateStringArray(value: unknown, fieldName: string): string[] {
 }
 
 /**
- * Validates configuration schema at runtime
+ * Validates configuration schema at runtime.
+ *
+ * Runs the canonical JSON Schema check first (see issue #518) and folds any violations
+ * into `errors`, so every public API built on this function - not just
+ * `readConfiguration()`'s file-reading path, which schema-validates independently via
+ * `assertJsonSchemaValidConfiguration()` - rejects a schema-invalid configuration. This
+ * closes the gap where `BloqrCompiler.validateConfig()`/`.validate()` (in-memory,
+ * `ValidationResult`-returning APIs) could otherwise report a schema-invalid config
+ * (unrecognized properties, an invalid `homepage`, etc.) as valid.
  */
 export function validateConfiguration(config: unknown): ValidationResult {
   const errors: string[] = [];
@@ -168,6 +177,8 @@ export function validateConfiguration(config: unknown): ValidationResult {
     errors.push('Configuration must be an object');
     return { valid: false, errors, warnings };
   }
+
+  errors.push(...getJsonSchemaValidationErrors(config));
 
   const configObj = config as Record<string, unknown>;
 

@@ -48,11 +48,33 @@ function Test-BloqrCompilerConfigSchema {
     $schemaErrors = $null
     $isValid = Test-Json -Json $jsonText -Schema $schemaText -ErrorVariable schemaErrors -ErrorAction SilentlyContinue
 
+    $messages = [System.Collections.Generic.List[string]]::new()
     if (-not $isValid) {
-        $messages = @($schemaErrors | ForEach-Object { $_.Exception.Message })
-        if ($messages.Count -eq 0) {
-            $messages = @('configuration does not conform to the schema')
+        $testJsonMessages = @($schemaErrors | ForEach-Object { $_.Exception.Message })
+        if ($testJsonMessages.Count -eq 0) {
+            $testJsonMessages = @('configuration does not conform to the schema')
         }
+        $messages.AddRange([string[]]$testJsonMessages)
+    }
+
+    # PowerShell 7's built-in Test-Json does not evaluate the schema's "format" keyword at
+    # all (unlike ajv/jsonschema-python/the Rust jsonschema crate, which all needed an
+    # explicit opt-in, or JSONSchema.swift, which enforces it by default) and exposes no
+    # parameter to enable it - so the schema's one format-constrained property
+    # (homepage's format: "uri") is checked manually here to close that gap.
+    # Dot-access (rather than PSObject.Properties.Match) works uniformly whether $Data is a
+    # Hashtable (from ToSchemaHashtable(), for a directly-constructed CompilerConfiguration)
+    # or a PSCustomObject (from ConvertFrom-Json/ConvertFrom-Yaml, for a file-based load) -
+    # both return $null for a key/property that isn't present.
+    $homepageValue = $Data.homepage
+    if (-not [string]::IsNullOrWhiteSpace($homepageValue)) {
+        $parsedUri = $null
+        if (-not [System.Uri]::TryCreate($homepageValue, [System.UriKind]::Absolute, [ref]$parsedUri)) {
+            $messages.Add("/homepage: '$homepageValue' is not a valid absolute URI (format: uri)")
+        }
+    }
+
+    if ($messages.Count -gt 0) {
         throw "Configuration schema validation failed:`n" + ($messages -join "`n")
     }
 }

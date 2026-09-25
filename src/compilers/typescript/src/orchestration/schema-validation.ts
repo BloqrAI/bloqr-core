@@ -62,6 +62,23 @@ function getValidator(): ValidateFunction {
 }
 
 /**
+ * Validates `config` against the canonical JSON Schema and returns one message per
+ * violation (empty array if `config` conforms). Used both by
+ * {@linkcode assertJsonSchemaValidConfiguration} (the throwing form used by the
+ * file-reading path) and by `validation.ts`'s `validateConfiguration()` (the
+ * `ValidationResult`-returning form used by every public in-memory validation API), so
+ * schema validation can't be bypassed by calling one instead of the other.
+ */
+export function getJsonSchemaValidationErrors(config: unknown): string[] {
+  const validate = getValidator();
+  if (validate(config)) {
+    return [];
+  }
+  const errors: ErrorObject[] = validate.errors ?? [];
+  return errors.map((err) => `${err.instancePath || '(root)'}: ${err.message}`);
+}
+
+/**
  * Validates `config` against the canonical JSON Schema and throws a
  * {@linkcode ConfigurationError} with every violation if it doesn't conform.
  *
@@ -74,14 +91,10 @@ function getValidator(): ValidateFunction {
  * @throws ConfigurationError if `config` fails schema validation.
  */
 export function assertJsonSchemaValidConfiguration(config: unknown, filePath: string): void {
-  const validate = getValidator();
-  if (!validate(config)) {
-    const errors: ErrorObject[] = validate.errors ?? [];
-    const issues = errors
-      .map((err) => `  ${err.instancePath || '(root)'}: ${err.message}`)
-      .join('\n');
+  const issues = getJsonSchemaValidationErrors(config);
+  if (issues.length > 0) {
     throw new ConfigurationError(
-      `Configuration schema validation failed:\n${issues}`,
+      `Configuration schema validation failed:\n${issues.map((i) => `  ${i}`).join('\n')}`,
       ErrorCode.CONFIG_VALIDATION_ERROR,
       { filePath },
     );

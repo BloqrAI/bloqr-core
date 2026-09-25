@@ -316,3 +316,42 @@ Deno.test('DEFAULT_RESOURCE_LIMITS - has reasonable defaults', () => {
   assertEquals(DEFAULT_RESOURCE_LIMITS.compilationTimeoutMs > 0, true);
   assertEquals(DEFAULT_RESOURCE_LIMITS.maxPathLength > 0, true);
 });
+
+// Regression coverage (Copilot review on #528/#518): validateConfiguration() is the shared
+// implementation behind every public in-memory ValidationResult API (BloqrCompiler.validate()/
+// .validateConfig()), which previously ran only the hand-written checks below and could report
+// a schema-invalid configuration as valid - unlike readConfiguration()'s file-reading path,
+// which schema-validates independently. validateConfiguration() now runs the same canonical
+// JSON Schema check first and folds violations into `errors`.
+
+Deno.test('validateConfiguration - rejects an unrecognized top-level property', () => {
+  const config = {
+    name: 'x',
+    sources: [{ source: 's' }],
+    bogusField: true,
+  };
+
+  const result = validateConfiguration(config);
+  assertEquals(result.valid, false);
+});
+
+Deno.test('validateConfiguration - rejects an unrecognized source property', () => {
+  const config = {
+    name: 'x',
+    sources: [{ source: 's', bogus: true }],
+  };
+
+  const result = validateConfiguration(config);
+  assertEquals(result.valid, false);
+});
+
+Deno.test('validateConfiguration - rejects a schema-invalid version string', () => {
+  const config = {
+    name: 'x',
+    version: 'not-a-semver',
+    sources: [{ source: 's' }],
+  };
+
+  const result = validateConfiguration(config);
+  assertEquals(result.valid, false);
+});

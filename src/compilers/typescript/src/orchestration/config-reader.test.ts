@@ -7,7 +7,13 @@ import { mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 import { assertEquals, assertThrows } from '@std/assert';
-import { detectFormat, readConfiguration, stripInternalMetadata, toJson } from './config-reader.ts';
+import {
+  detectFormat,
+  readConfiguration,
+  stripForCoreCompile,
+  stripInternalMetadata,
+  toJson,
+} from './config-reader.ts';
 import { ConfigurationError } from './errors.ts';
 import type { IConfiguration } from '../index.ts';
 
@@ -112,6 +118,80 @@ Deno.test('stripInternalMetadata - leaves ordinary configuration fields untouche
   assertEquals(clean.description, 'A test config');
   assertEquals(clean.version, '1.0.0');
   assertEquals(clean.sources.length, 1);
+});
+
+// Regression coverage (Copilot review on #528/#518): output/chunking/archiving/
+// hashVerification/$schema are all valid per the canonical schema (a config using them
+// passes readConfiguration()'s schema check), but the core engine's ConfigurationSchema
+// (configuration/schemas.ts) is `.strict()` and doesn't model any of them - so they must
+// be stripped before compile(), same as internal metadata, or a schema-valid config
+// fails at the actual compile call. stripForCoreCompile() is the function that does that;
+// stripInternalMetadata()/toJson() deliberately do NOT strip them, since those sections
+// are user-visible configuration, not internal bookkeeping.
+
+Deno.test('stripForCoreCompile - removes output/chunking/archiving/hashVerification/$schema', () => {
+  const config = {
+    name: 'Test',
+    sources: [],
+    output: { fileName: 'out.txt' },
+    chunking: { enabled: true },
+    archiving: { enabled: true },
+    hashVerification: { mode: 'strict' },
+    $schema: '../../../../../schemas/compiler-config.schema.json',
+  } as unknown as IConfiguration;
+
+  const clean = stripForCoreCompile(config);
+
+  assertEquals(Object.hasOwn(clean, 'output'), false);
+  assertEquals(Object.hasOwn(clean, 'chunking'), false);
+  assertEquals(Object.hasOwn(clean, 'archiving'), false);
+  assertEquals(Object.hasOwn(clean, 'hashVerification'), false);
+  assertEquals(Object.hasOwn(clean, '$schema'), false);
+  assertEquals(clean.name, 'Test');
+});
+
+Deno.test('stripForCoreCompile - also removes internal metadata', () => {
+  const config = {
+    name: 'Test',
+    sources: [],
+    _sourceFormat: 'json',
+    _sourcePath: '/tmp/config.json',
+    chunking: { enabled: true },
+  } as unknown as IConfiguration;
+
+  const clean = stripForCoreCompile(config);
+
+  assertEquals(Object.hasOwn(clean, '_sourceFormat'), false);
+  assertEquals(Object.hasOwn(clean, '_sourcePath'), false);
+  assertEquals(Object.hasOwn(clean, 'chunking'), false);
+});
+
+Deno.test('stripForCoreCompile - leaves extensions (allowed by the core schema) untouched', () => {
+  const config = {
+    name: 'Test',
+    sources: [],
+    extensions: { team: 'security' },
+  } as unknown as IConfiguration;
+
+  const clean = stripForCoreCompile(config) as IConfiguration & {
+    extensions?: Record<string, unknown>;
+  };
+
+  assertEquals(clean.extensions, { team: 'security' });
+});
+
+Deno.test('toJson - keeps output/chunking (user-visible, unlike internal metadata)', () => {
+  const config = {
+    name: 'Test',
+    sources: [],
+    output: { fileName: 'out.txt' },
+    chunking: { enabled: true },
+  } as unknown as IConfiguration;
+
+  const json = toJson(config);
+
+  assertEquals(json.includes('output'), true);
+  assertEquals(json.includes('chunking'), true);
 });
 
 Deno.test('toJson - serialized output never contains internal metadata keys', () => {
