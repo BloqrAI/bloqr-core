@@ -62,14 +62,24 @@ function Test-BloqrCompilerConfigSchema {
     # explicit opt-in, or JSONSchema.swift, which enforces it by default) and exposes no
     # parameter to enable it - so the schema's one format-constrained property
     # (homepage's format: "uri") is checked manually here to close that gap.
-    # Dot-access (rather than PSObject.Properties.Match) works uniformly whether $Data is a
+    #
+    # Checked whenever the property is actually present, not merely non-blank - a config
+    # with `"homepage": ""` is schema-invalid too (an empty string is never a valid absolute
+    # URI), and gating on IsNullOrWhiteSpace instead would let it through. $Data can be a
     # Hashtable (from ToSchemaHashtable(), for a directly-constructed CompilerConfiguration)
-    # or a PSCustomObject (from ConvertFrom-Json/ConvertFrom-Yaml, for a file-based load) -
-    # both return $null for a key/property that isn't present.
-    $homepageValue = $Data.homepage
-    if (-not [string]::IsNullOrWhiteSpace($homepageValue)) {
+    # or a PSCustomObject (from ConvertFrom-Json/ConvertFrom-Yaml, for a file-based load), so
+    # presence is checked differently for each - dot-access alone can't distinguish "absent"
+    # from "present but null/empty" on either type.
+    $homepagePresent = if ($Data -is [System.Collections.IDictionary]) {
+        $Data.Contains('homepage')
+    } else {
+        $Data.PSObject.Properties.Match('homepage').Count -gt 0
+    }
+    if ($homepagePresent) {
+        $homepageValue = $Data.homepage
         $parsedUri = $null
-        if (-not [System.Uri]::TryCreate($homepageValue, [System.UriKind]::Absolute, [ref]$parsedUri)) {
+        if ([string]::IsNullOrWhiteSpace($homepageValue) -or
+            -not [System.Uri]::TryCreate($homepageValue, [System.UriKind]::Absolute, [ref]$parsedUri)) {
             $messages.Add("/homepage: '$homepageValue' is not a valid absolute URI (format: uri)")
         }
     }

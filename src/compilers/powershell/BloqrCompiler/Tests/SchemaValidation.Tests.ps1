@@ -104,6 +104,19 @@ Describe 'CompilerConfiguration schema validation (#518)' {
         { [CompilerConfiguration]::new($configPath) } | Should -Throw '*homepage*'
     }
 
+    It 'Rejects a config file with an empty-string homepage' {
+        # Regression coverage: gating the format check on IsNullOrWhiteSpace instead of
+        # property presence would let "homepage": "" through, since an empty string is
+        # never a valid absolute URI but also isn't "blank enough" to skip checking.
+        $configPath = New-TestConfigFile -Directory $script:tempDir -ConfigData @{
+            name     = 'test-filter'
+            homepage = ''
+            sources  = @(@{ source = 'https://example.com/list.txt' })
+        }
+
+        { [CompilerConfiguration]::new($configPath) } | Should -Throw '*homepage*'
+    }
+
     It 'Accepts a valid absolute URI homepage' {
         $configPath = New-TestConfigFile -Directory $script:tempDir -ConfigData @{
             name     = 'test-filter'
