@@ -46,6 +46,8 @@ Like the other wrappers, `bloqr-compiler` searches for a configuration file when
 4. **Parent directories**: traverses up the directory tree looking for
    `compiler-config.{json,yaml,toml}` (like git)
 
+New to this compiler? [`config.example.jsonc`](config.example.jsonc) is a fully-commented, ready-to-run starter config (compiles EasyList out of the box); [`config.example.json`](config.example.json) is the same config as strict JSON. EasyList mixes cosmetic (browser-engine) rules with plain domain-blocking rules, so this starter routes it to the browser engine explicitly (see the `.jsonc` comments) — unlike some of the other wrappers, this one already resolves and passes that engine through to `bloqr-validate` for the primary artifact too (`Compiler.swift`'s `primaryArtifactEngine`), so no extra flag is needed here.
+
 ### Examples
 
 ```bash

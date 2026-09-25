@@ -1,0 +1,141 @@
+{
+  // No "$schema" key here on purpose: this wrapper shells out to the
+  // TypeScript compiler-core (@bloqr/compiler-core via Deno), whose runtime
+  // configuration validator is strict and rejects unrecognized top-level
+  // keys, so "$schema" would fail compilation even though it's a documented
+  // convention elsewhere. For editor autocompletion, point your editor at
+  // ../../../schemas/compiler-config.schema.json manually instead (that
+  // schema documents the full config surface, including a few
+  // forward-looking properties like "output"/"hashVerification"/"archiving"
+  // the strict validator doesn't accept yet).
+
+  // Filter list name. Required, non-empty string.
+  "name": "EasyList",
+
+  // Optional human-readable description of the filter list.
+  "description": "Starter/default filter list configuration using EasyList, the most widely used community ad-blocking list. Copy this file, point --config/-c at it, and compile — no editing required.",
+
+  // Optional homepage URL for the filter list (must be a valid URI).
+  "homepage": "https://easylist.to/",
+
+  // Optional license identifier for the filter list (e.g. "MIT", "Apache-2.0",
+  // "ISC", "GPL-3.0"). EasyList itself is GPL-3.0 licensed.
+  "license": "GPL-3.0",
+
+  // Optional semantic version (e.g. "1.0.0", "2.1.0-beta.1").
+  "version": "1.0.0",
+
+  // Optional: default compilation engine/grammar used for any source that
+  // doesn't set its own "engine" and whose content can't be confidently
+  // auto-detected. One of: "dns" | "browser". Defaults to "dns" when omitted.
+  // Leave this unset for a typical adblock-syntax list like EasyList; the
+  // compiler auto-detects browser-syntax content per source.
+  // "defaultEngine": "dns",
+
+  // Optional output configuration. NOTE: the strict runtime validator this
+  // wrapper's config ultimately goes through does not yet accept an
+  // "output" key (see the note at the top of this file) - control the
+  // output path with the wrapper's own -o/--output CLI flag instead. Left
+  // commented out here to keep this file itself compilable:
+  // "output": {
+  //   // Where the compiled filter list is written, relative to the working
+  //   // directory the compiler is run from.
+  //   "path": "output/filter.txt",
+  //   // What to do if the output file already exists. One of:
+  //   //   "rename"    - write to a new, non-colliding filename (default)
+  //   //   "overwrite" - replace the existing file
+  //   //   "error"     - fail the compilation
+  //   "conflictStrategy": "rename"
+  // },
+
+  // Optional hash-verification configuration, useful once you start pulling
+  // in remote sources you want to detect unexpected changes in. Left out of
+  // this starter config since it isn't needed to compile EasyList out of the
+  // box. Uncomment and adjust if you want it:
+  // "hashVerification": {
+  //   // One of: "strict" (fail on any unverified remote source),
+  //   // "warning" (warn only, default), "disabled" (skip verification).
+  //   "mode": "warning",
+  //   // Require every remote source to have a recorded hash. Default: false.
+  //   "requireHashesForRemote": false,
+  //   // Fail compilation outright if a source's hash doesn't match. Default: false.
+  //   "failOnMismatch": false,
+  //   // Path to the JSON file tracking known-good hashes per source.
+  //   "hashDatabasePath": "output/.hashes.json"
+  // },
+
+  // Optional archiving configuration: keep timestamped copies of past
+  // compiled outputs. Left disabled by default for this starter config.
+  // "archiving": {
+  //   "enabled": false,
+  //   // One of: "automatic" (default), "interactive", "disabled".
+  //   "mode": "automatic",
+  //   // How many days to keep archived outputs. Default: 90.
+  //   "retentionDays": 90
+  // },
+
+  // Filter sources (required, at least one). Each entry:
+  //   name            - optional identifier for the source
+  //   source          - required: a URL or local file path
+  //   type            - "adblock" (default) or "hosts"
+  //   engine          - optional per-source override: "dns" | "browser"
+  //                     (overrides auto-detection/defaultEngine for just
+  //                     this source). Explicitly set to "browser" below:
+  //                     EasyList mixes plain domain-blocking rules with
+  //                     browser-only cosmetic rules (e.g. "##" element-hiding
+  //                     selectors), and per-source engine bucketing consults
+  //                     only declarative signals (explicit "engine", "type",
+  //                     "defaultEngine") before a source is downloaded - it
+  //                     does not sniff fetched content - so an untagged
+  //                     adblock source here would otherwise be routed
+  //                     wholesale to the DNS engine and fail validation on
+  //                     its cosmetic rules. See
+  //                     docs/architecture/dual-engine-compilation.md for the
+  //                     full routing/bucketing rules.
+  //   transformations - optional source-specific transformations (same enum
+  //                     as the global "transformations" list below; applied
+  //                     in addition to/instead of the global ones for this
+  //                     source only)
+  //   inclusions / exclusions           - optional source-specific pattern
+  //                                       lists (plain strings/patterns)
+  //   inclusions_sources / exclusions_sources - optional files containing
+  //                                             such patterns, one per line
+  "sources": [
+    {
+      "name": "EasyList",
+      "source": "https://easylist.to/easylist/easylist.txt",
+      "type": "adblock",
+      "engine": "browser"
+    }
+  ],
+
+  // Global transformations applied to every source, in order. Available
+  // values (not every one is used here — add any of the others as needed):
+  //   "RemoveComments"    - strip comment lines
+  //   "Compress"          - DNS-only; minifies hosts-style rule syntax
+  //   "RemoveModifiers"   - strip adblock rule modifiers (e.g. $third-party)
+  //   "Validate"          - DNS-only; drops rules that fail DNS-rule validation
+  //   "ValidateAllowIp"   - DNS-only; like Validate but allows IP-based rules
+  //   "Deduplicate"       - remove duplicate rules
+  //   "InvertAllow"       - DNS-only; inverts allow-rule semantics
+  //   "RemoveEmptyLines"  - strip blank lines
+  //   "TrimLines"         - trim leading/trailing whitespace per line
+  //   "InsertFinalNewLine"- ensure the output ends with a newline
+  //   "ConvertToAscii"    - transliterate non-ASCII characters
+  // Note: "Compress", "Validate"/"ValidateAllowIp", and "InvertAllow" are
+  // DNS-only and will be rejected on a browser-engine source — see
+  // docs/architecture/dual-engine-compilation.md for the full breakdown.
+  "transformations": [
+    "RemoveComments",
+    "Deduplicate",
+    "RemoveEmptyLines",
+    "TrimLines",
+    "InsertFinalNewLine"
+  ]
+
+  // Optional global "inclusions"/"exclusions" (arrays of patterns) and
+  // "inclusions_sources"/"exclusions_sources" (arrays of files containing
+  // such patterns) can be added here to filter rules across all sources.
+  // Omitted from this starter config since EasyList needs no filtering to
+  // compile cleanly out of the box.
+}
