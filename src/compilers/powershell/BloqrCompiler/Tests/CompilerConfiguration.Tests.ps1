@@ -86,24 +86,26 @@ Describe 'CompilerConfiguration engine/defaultEngine (#439)' {
     }
 
     It 'Fails validation with an invalid DefaultEngine' {
+        # Since #518, schema validation (which also enforces defaultEngine's enum) runs inside
+        # LoadFromFile itself, ahead of Validate() - so this now throws at construction, not at
+        # the later Validate() call this test originally exercised.
         $configPath = New-TestConfigFile -Directory $script:tempDir -ConfigData @{
             name          = 'test-filter'
             defaultEngine = 'not-a-real-engine'
             sources       = @(@{ source = 'https://example.com/list.txt' })
         }
-        $config = [CompilerConfiguration]::new($configPath)
 
-        { $config.Validate() } | Should -Throw '*defaultEngine*'
+        { [CompilerConfiguration]::new($configPath) } | Should -Throw '*defaultEngine*'
     }
 
     It 'Fails validation with an invalid per-source engine' {
+        # See the DefaultEngine test above - same reason this now throws at construction.
         $configPath = New-TestConfigFile -Directory $script:tempDir -ConfigData @{
             name    = 'test-filter'
             sources = @(@{ name = 'bad-source'; source = 'https://example.com/list.txt'; engine = 'not-a-real-engine' })
         }
-        $config = [CompilerConfiguration]::new($configPath)
 
-        { $config.Validate() } | Should -Throw '*engine*'
+        { [CompilerConfiguration]::new($configPath) } | Should -Throw '*engine*'
     }
 
     It 'Passes validation when engine/defaultEngine are absent (existing all-DNS configs)' {
@@ -167,14 +169,19 @@ Describe 'CompilerConfiguration transformation validation (#502)' {
     }
 
     It 'Fails validation with an unknown global transformation' {
+        # Since #518, schema validation (whose transformations enum doesn't include
+        # 'NotARealTransformation' either) runs inside LoadFromFile itself, ahead of Validate() -
+        # so this now throws at construction. PowerShell's built-in Test-Json reports only the
+        # violated JSON pointer/keyword, not the offending value, unlike Validate()'s own
+        # ValidTransformations check (still exercised, with the specific value in its message,
+        # by 'Fails validation with a commercial-only transformation' below).
         $configPath = New-TestConfigFile -Directory $script:tempDir -ConfigData @{
             name            = 'test-filter'
             sources         = @(@{ source = 'https://example.com/list.txt' })
             transformations = @('NotARealTransformation')
         }
-        $config = [CompilerConfiguration]::new($configPath)
 
-        { $config.Validate() } | Should -Throw '*NotARealTransformation*'
+        { [CompilerConfiguration]::new($configPath) } | Should -Throw '*schema*'
     }
 
     It 'Fails validation with a commercial-only transformation this toolkit does not implement' {
@@ -204,12 +211,12 @@ Describe 'CompilerConfiguration transformation validation (#502)' {
     }
 
     It 'Fails validation with an unknown per-source transformation' {
+        # See the global-transformation test above - same reason this now throws at construction.
         $configPath = New-TestConfigFile -Directory $script:tempDir -ConfigData @{
             name    = 'test-filter'
             sources = @(@{ name = 'bad-source'; source = 'https://example.com/list.txt'; transformations = @('NotARealTransformation') })
         }
-        $config = [CompilerConfiguration]::new($configPath)
 
-        { $config.Validate() } | Should -Throw '*NotARealTransformation*'
+        { [CompilerConfiguration]::new($configPath) } | Should -Throw '*schema*'
     }
 }
