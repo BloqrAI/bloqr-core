@@ -107,6 +107,20 @@ final class ConfigReaderSchemaValidationTests: XCTestCase {
         XCTAssertThrowsError(try ConfigReader.readConfig(path: path))
     }
 
+    func testReadConfigRejectsUnrecognizedSourcePropertyDroppedByDecoding() throws {
+        // Regression coverage: CompilerConfig/FilterSource's explicit CodingKeys silently drop
+        // any key they don't model, so validating only the re-encoded CompilerConfig can't catch
+        // a config that adds an unrecognized property - ConfigReader.readConfig must validate the
+        // raw parsed JSON too (see SchemaValidation.assertValid(rawValue:)).
+        let path = try writeConfig("""
+        {
+          "name": "Test",
+          "sources": [{"source": "https://example.com/list.txt", "bogus": true}]
+        }
+        """)
+        XCTAssertThrowsError(try ConfigReader.readConfig(path: path))
+    }
+
     func testReadConfigAcceptsSchemaValidConfiguration() throws {
         let path = try writeConfig("""
         {

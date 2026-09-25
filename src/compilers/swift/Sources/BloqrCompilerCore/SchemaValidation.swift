@@ -70,6 +70,21 @@ enum SchemaValidation {
             )
         }
 
+        try assertValid(rawValue: value)
+    }
+
+    /// Validates an already-parsed JSON-compatible value (a `[String: Any]`/array/scalar tree,
+    /// as produced by `JSONSerialization`) directly against the schema, without going through
+    /// `CompilerConfig`'s `Decodable` conformance first.
+    ///
+    /// This matters because `CompilerConfig`/`FilterSource` use explicit `CodingKeys` that omit
+    /// several schema properties (`output`, `hashVerification`, `archiving`, `chunking`,
+    /// `extensions`, `$schema`, per-source `useBrowser`) - `Decodable` silently drops any key it
+    /// doesn't model, so validating only the re-encoded `CompilerConfig` (as `assertValid(_:)`
+    /// above does) can't catch a config that misuses one of those keys or adds an unrecognized
+    /// one. `ConfigReader.readConfig` calls this on the raw parsed JSON ahead of decoding for
+    /// that reason, in addition to the model-level check every caller of `validate()` gets.
+    static func assertValid(rawValue value: Any) throws(CompilerError) {
         let result: ValidationResult
         do {
             result = try JSONSchema.validate(value, schema: schema)

@@ -23,11 +23,33 @@ public enum ConfigReader {
             )
         }
 
+        if let rawValue = try parseRawValue(content, format: resolvedFormat) {
+            try SchemaValidation.assertValid(rawValue: rawValue)
+        }
+
         var config = try parse(content, format: resolvedFormat)
         try SchemaValidation.assertValid(config)
         config.sourceFormat = resolvedFormat
         config.sourcePath = path
         return config
+    }
+
+    /// Parses `content` into a JSON-compatible `[String: Any]`/array/scalar tree - the raw
+    /// document, before `CompilerConfig`'s `Decodable` conformance can silently drop any key it
+    /// doesn't model - so `SchemaValidation` can validate every key actually present in the
+    /// file, not just the subset `CompilerConfig` re-encodes.
+    ///
+    /// JSON only for now: `JSONSerialization` gives an exact, order-independent bridge from the
+    /// stripped-of-comments source text. YAML/TOML remain functionally supported but
+    /// undocumented (see CLAUDE.md), and unlike JSON there's no already-vetted bridge from
+    /// Yams/TOMLKit's own tree types to `Any` in this codebase - `nil` here just means those two
+    /// formats fall back to the existing model-level `SchemaValidation.assertValid(_:)` check
+    /// after decoding, same as before this change.
+    static func parseRawValue(_ content: String, format: ConfigFormat) throws(CompilerError) -> Any? {
+        guard format == .json else { return nil }
+        let stripped = try stripJSONCComments(content)
+        guard let data = stripped.data(using: .utf8) else { return nil }
+        return try? JSONSerialization.jsonObject(with: data)
     }
 
     static func parse(_ content: String, format: ConfigFormat) throws(CompilerError) -> CompilerConfig {
