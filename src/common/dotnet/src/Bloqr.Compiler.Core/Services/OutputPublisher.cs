@@ -34,14 +34,36 @@ public class OutputPublisher : IOutputPublisher
         // with its name replaced by `FileName`. `Path.GetFileName` strips any directory
         // components `FileName` might contain (including a rooted/absolute value), since
         // otherwise `Path.Combine` would silently discard the compiled file's directory
-        // and resolve to that rooted path instead.
-        string? effectivePath = !string.IsNullOrWhiteSpace(output.Path)
-            ? output.Path
-            : !string.IsNullOrWhiteSpace(output.FileName)
-                ? Path.Combine(
-                    Path.GetDirectoryName(Path.GetFullPath(compiledFilePath)) ?? ".",
-                    Path.GetFileName(output.FileName))
-                : null;
+        // and resolve to that rooted path instead - but `GetFileName` does NOT resolve
+        // "." or ".." specially, so those two values (or an all-whitespace name, which
+        // GetFileName can also return unchanged) must be rejected explicitly: combined
+        // with a real directory and passed through GetFullPath, either would resolve
+        // outside the compiled file's directory instead of naming a file inside it.
+        string? effectivePath;
+        if (!string.IsNullOrWhiteSpace(output.Path))
+        {
+            effectivePath = output.Path;
+        }
+        else if (!string.IsNullOrWhiteSpace(output.FileName))
+        {
+            var sanitizedFileName = Path.GetFileName(output.FileName);
+            if (string.IsNullOrWhiteSpace(sanitizedFileName) || sanitizedFileName is "." or "..")
+            {
+                return new OutputPublishResult
+                {
+                    Success = false,
+                    ErrorMessage = $"output.fileName '{output.FileName}' is not a valid file name.",
+                };
+            }
+
+            effectivePath = Path.Combine(
+                Path.GetDirectoryName(Path.GetFullPath(compiledFilePath)) ?? ".",
+                sanitizedFileName);
+        }
+        else
+        {
+            effectivePath = null;
+        }
 
         if (effectivePath is null)
         {

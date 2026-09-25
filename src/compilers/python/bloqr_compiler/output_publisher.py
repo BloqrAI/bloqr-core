@@ -53,8 +53,18 @@ def publish_output(
         # Path(...).name strips any directory components file_name might contain,
         # including a rooted/absolute value - pathlib's `/` operator otherwise silently
         # discards the left-hand side entirely when the right-hand side is absolute,
-        # resolving to that rooted path instead of compiled_path's directory.
-        destination_path = (compiled_path.parent / Path(output.file_name).name).resolve()
+        # resolving to that rooted path instead of compiled_path's directory. It does NOT,
+        # however, resolve "." or ".." specially (Path("..").name == ".."), so those two
+        # values (or an empty name, e.g. from file_name=".") must be rejected explicitly -
+        # combined with a real directory and resolved, either would escape
+        # compiled_path.parent instead of naming a file inside it.
+        sanitized_file_name = Path(output.file_name).name
+        if not sanitized_file_name or sanitized_file_name in (".", ".."):
+            return OutputPublishResult(
+                success=False,
+                error_message=f"output.fileName '{output.file_name}' is not a valid file name.",
+            )
+        destination_path = (compiled_path.parent / sanitized_file_name).resolve()
     else:
         return OutputPublishResult(success=True, final_path=str(compiled_path))
 

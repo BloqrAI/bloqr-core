@@ -62,6 +62,33 @@ public sealed class OutputPublisherTests : IDisposable
     }
 
     [Fact]
+    public async Task PublishAsync_WithFileNameOfDotDot_Fails()
+    {
+        // Regression coverage: Path.GetFileName("..") returns ".." unchanged (it does not
+        // resolve "." or ".." specially), so a naive Path.Combine(directory, "..") would
+        // let FileName: ".." escape the compiled directory entirely once GetFullPath runs.
+        var compiled = WriteFile("compiled.txt", "v1");
+        var output = new OutputSettings { FileName = ".." };
+
+        var result = await _publisher.PublishAsync(compiled, output, archiving: null);
+
+        Assert.False(result.Success);
+        Assert.NotNull(result.ErrorMessage);
+    }
+
+    [Fact]
+    public async Task PublishAsync_WithFileNameOfDot_Fails()
+    {
+        var compiled = WriteFile("compiled.txt", "v1");
+        var output = new OutputSettings { FileName = "." };
+
+        var result = await _publisher.PublishAsync(compiled, output, archiving: null);
+
+        Assert.False(result.Success);
+        Assert.NotNull(result.ErrorMessage);
+    }
+
+    [Fact]
     public async Task PublishAsync_WithRootedFileName_IsConfinedToTheCompiledDirectory()
     {
         // Security-relevant regression coverage: Path.Combine silently discards its earlier

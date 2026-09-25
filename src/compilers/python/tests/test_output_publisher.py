@@ -40,6 +40,27 @@ class TestPublishOutput:
         assert result.final_path == str(tmp_path / "renamed.txt")
         assert Path(result.final_path).read_text() == "rules"
 
+    def test_file_name_of_dotdot_is_rejected(self, tmp_path: Path) -> None:
+        # Regression coverage: Path("..").name == ".." (pathlib does not resolve "." or
+        # ".." specially), so a naive compiled_path.parent / file_name would let
+        # fileName: ".." escape the compiled directory entirely once resolved.
+        compiled = tmp_path / "compiled.txt"
+        compiled.write_text("rules")
+
+        result = publish_output(compiled, OutputSettings(file_name=".."), None)
+
+        assert not result.success
+        assert result.error_message is not None
+
+    def test_file_name_of_dot_is_rejected(self, tmp_path: Path) -> None:
+        compiled = tmp_path / "compiled.txt"
+        compiled.write_text("rules")
+
+        result = publish_output(compiled, OutputSettings(file_name="."), None)
+
+        assert not result.success
+        assert result.error_message is not None
+
     def test_file_name_with_a_rooted_path_is_confined_to_the_compiled_directory(
         self, tmp_path: Path
     ) -> None:
