@@ -28,12 +28,22 @@ public class OutputPublisher : IOutputPublisher
         ArgumentException.ThrowIfNullOrWhiteSpace(compiledFilePath);
         ArgumentNullException.ThrowIfNull(output);
 
-        if (string.IsNullOrWhiteSpace(output.Path))
+        // `FileName` is documented as an alternative to a full `Path`, not combined with
+        // one - a `Path` (a full file path) takes precedence when both are set. When only
+        // `FileName` is set, the destination stays in the compiled file's own directory
+        // with its name replaced by `FileName`.
+        string? effectivePath = !string.IsNullOrWhiteSpace(output.Path)
+            ? output.Path
+            : !string.IsNullOrWhiteSpace(output.FileName)
+                ? Path.Combine(Path.GetDirectoryName(Path.GetFullPath(compiledFilePath)) ?? ".", output.FileName)
+                : null;
+
+        if (effectivePath is null)
         {
             return new OutputPublishResult { Success = true, FinalPath = compiledFilePath };
         }
 
-        var destinationPath = Path.GetFullPath(output.Path);
+        var destinationPath = Path.GetFullPath(effectivePath);
         var destinationDirectory = Path.GetDirectoryName(destinationPath);
         if (!string.IsNullOrEmpty(destinationDirectory) && !Directory.Exists(destinationDirectory))
         {

@@ -36,15 +36,24 @@ def publish_output(
     archiving: ArchivingSettings | None,
 ) -> OutputPublishResult:
     """
-    Publish a compiled file to `output.path`, applying its conflict strategy and,
-    for "overwrite", the archiving policy first.
+    Publish a compiled file to its configured destination, applying `output`'s conflict
+    strategy and, for "overwrite", the archiving policy first.
+
+    The destination is `output.path` (a full file path) when set; otherwise, if
+    `output.file_name` is set, the destination is the compiled file's own directory with
+    its name replaced by `file_name` - `fileName` is documented as an alternative to a full
+    `path`, not combined with one, so a `path` takes precedence when both are present. When
+    neither is set, the compiled file is left exactly where it was compiled to.
     """
     compiled_path = Path(compiled_file_path)
 
-    if not output.path:
+    if output.path:
+        destination_path = Path(output.path).resolve()
+    elif output.file_name:
+        destination_path = (compiled_path.parent / output.file_name).resolve()
+    else:
         return OutputPublishResult(success=True, final_path=str(compiled_path))
 
-    destination_path = Path(output.path).resolve()
     destination_path.parent.mkdir(parents=True, exist_ok=True)
 
     if not destination_path.exists():

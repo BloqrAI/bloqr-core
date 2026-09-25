@@ -208,11 +208,19 @@ public class BloqrCompilerService : IBloqrCompilerService
 
         // Publish to the configured durable destination, if any, applying the
         // conflict strategy and archiving policy before anything downstream sees the file.
-        if (config.Output is { } output && !string.IsNullOrWhiteSpace(output.Path))
+        if (config.Output is { } output &&
+            (!string.IsNullOrWhiteSpace(output.Path) || !string.IsNullOrWhiteSpace(output.FileName)))
         {
+            // Only `Path` (a full file path) is resolved relative to the config file -
+            // `FileName` is a bare name PublishAsync joins with the compiled file's own
+            // directory, so it needs no such resolution. `Path` takes precedence when both
+            // are set (see OutputSettings.FileName).
             var resolvedOutput = new OutputSettings
             {
-                Path = ResolvePathRelativeToConfig(output.Path, actualConfigPath),
+                Path = !string.IsNullOrWhiteSpace(output.Path)
+                    ? ResolvePathRelativeToConfig(output.Path, actualConfigPath)
+                    : null,
+                FileName = output.FileName,
                 ConflictStrategy = output.ConflictStrategy,
             };
 
@@ -361,14 +369,24 @@ public class BloqrCompilerService : IBloqrCompilerService
     {
         var browserOutputPath = result.BrowserOutputPath!;
 
-        if (config.Output is { } output && !string.IsNullOrWhiteSpace(output.Path))
+        if (config.Output is { } output &&
+            (!string.IsNullOrWhiteSpace(output.Path) || !string.IsNullOrWhiteSpace(output.FileName)))
         {
-            var resolvedPrimaryPath = ResolvePathRelativeToConfig(output.Path, actualConfigPath);
-            var resolvedBrowserDestination = new OutputSettings
-            {
-                Path = DeriveBrowserArtifactPath(resolvedPrimaryPath),
-                ConflictStrategy = output.ConflictStrategy,
-            };
+            // DeriveBrowserArtifactPath is a pure string-suffix transform, so it applies
+            // equally to a full path or a bare file name - mirrors the primary-artifact
+            // Path/FileName precedence above.
+            var resolvedBrowserDestination = !string.IsNullOrWhiteSpace(output.Path)
+                ? new OutputSettings
+                {
+                    Path = DeriveBrowserArtifactPath(
+                        ResolvePathRelativeToConfig(output.Path, actualConfigPath)),
+                    ConflictStrategy = output.ConflictStrategy,
+                }
+                : new OutputSettings
+                {
+                    FileName = DeriveBrowserArtifactPath(output.FileName!),
+                    ConflictStrategy = output.ConflictStrategy,
+                };
 
             var publishResult = await _outputPublisher.PublishAsync(
                 browserOutputPath, resolvedBrowserDestination, config.Archiving, cancellationToken);

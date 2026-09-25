@@ -46,6 +46,35 @@ public sealed class OutputPublisherTests : IDisposable
     }
 
     [Fact]
+    public async Task PublishAsync_WithFileNameOnly_RenamesWithinTheCompiledDirectory()
+    {
+        // Regression coverage: FileName is documented ("Output file name, if not using a
+        // full path") as an alternative to Path, but previously had no effect at all -
+        // PublishAsync ignored it entirely.
+        var compiled = WriteFile("compiled.txt", "v1");
+        var output = new OutputSettings { FileName = "renamed.txt" };
+
+        var result = await _publisher.PublishAsync(compiled, output, archiving: null);
+
+        Assert.True(result.Success);
+        Assert.Equal(Path.Combine(_tempDirectory, "renamed.txt"), result.FinalPath);
+        Assert.Equal("v1", await File.ReadAllTextAsync(result.FinalPath!));
+    }
+
+    [Fact]
+    public async Task PublishAsync_WithPathAndFileName_PathTakesPrecedence()
+    {
+        var compiled = WriteFile("compiled.txt", "v1");
+        var destination = Path.Combine(_tempDirectory, "published", "output.txt");
+        var output = new OutputSettings { Path = destination, FileName = "ignored.txt" };
+
+        var result = await _publisher.PublishAsync(compiled, output, archiving: null);
+
+        Assert.True(result.Success);
+        Assert.Equal(destination, result.FinalPath);
+    }
+
+    [Fact]
     public async Task PublishAsync_WithErrorStrategy_FailsWithoutTouchingExistingFile()
     {
         var compiled = WriteFile("compiled.txt", "new");
