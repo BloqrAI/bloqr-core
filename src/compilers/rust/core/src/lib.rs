@@ -61,6 +61,7 @@ pub mod compiler;
 pub mod config;
 pub mod error;
 pub mod events;
+pub mod schema_validation;
 
 // Re-export main types from config module
 pub use config::{
@@ -77,6 +78,9 @@ pub use compiler::{
 
 // Re-export error types
 pub use error::{CompilerError, Result};
+
+// Re-export JSON Schema validation
+pub use schema_validation::assert_json_schema_valid;
 
 // Re-export chunking types
 pub use chunking::{

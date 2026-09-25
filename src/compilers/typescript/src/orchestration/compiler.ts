@@ -28,7 +28,7 @@ import type {
   ValidationEvent,
   ValidationFinding,
 } from './types.ts';
-import { readConfiguration, stripInternalMetadata } from './config-reader.ts';
+import { readConfiguration, stripForCoreCompile } from './config-reader.ts';
 import { logger as defaultLogger } from './logger.ts';
 import { CompilationError, ErrorCode, isCompilerError } from './errors.ts';
 import { withTimeout } from './timeout.ts';
@@ -429,12 +429,13 @@ export async function compileFilters(
 
   try {
     // Wrap compilation with timeout. `compile()` is the core engine's strict-schema
-    // boundary - it rejects unrecognized properties, so any orchestration-layer metadata
-    // (`_sourceFormat`/`_sourcePath`, added by readConfiguration()) must be stripped
-    // before the config object reaches it, even though `config`'s declared type here is
-    // already the clean `IConfiguration` (the actual object at runtime may carry more).
+    // boundary - it rejects unrecognized properties, so any orchestration-layer-only
+    // fields (internal metadata like `_sourceFormat`/`_sourcePath`, plus schema-valid
+    // sections the core doesn't model, like `output`/`chunking`) must be stripped before
+    // the config object reaches it, even though `config`'s declared type here is already
+    // the clean `IConfiguration` (the actual object at runtime may carry more).
     const result = await withTimeout(
-      compile(stripInternalMetadata(config)),
+      compile(stripForCoreCompile(config)),
       resolvedOptions.timeoutMs ?? DEFAULT_RESOURCE_LIMITS.compilationTimeoutMs,
       { configName: config.name },
     );
@@ -603,11 +604,12 @@ export async function runCompiler(options: ExtendedCompileOptions): Promise<Comp
       // default logger rather than threading this one through - engine
       // compilation logging uses its own default logger too.
       const multiEngineCompiler = new MultiEngineCompiler({ forceEngine });
-      // Mirrors compileFilters()'s stripInternalMetadata() call: the strict-schema
+      // Mirrors compileFilters()'s stripForCoreCompile() call: the strict-schema
       // validators inside FilterCompiler/BrowserSyntaxCompiler reject unrecognized
-      // properties, so readConfiguration()'s orchestration-layer metadata
-      // (_sourceFormat/_sourcePath) must not reach them.
-      const multiResult = await multiEngineCompiler.compile(stripInternalMetadata(config));
+      // properties, so neither readConfiguration()'s orchestration-layer metadata
+      // (_sourceFormat/_sourcePath) nor its schema-valid-but-core-unmodeled sections
+      // (output/chunking/archiving/hashVerification/$schema) may reach them.
+      const multiResult = await multiEngineCompiler.compile(stripForCoreCompile(config));
 
       // Both buckets present: dns writes to the primary output path, browser
       // writes to its own (default-derived or explicit) path. Only one

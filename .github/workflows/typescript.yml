@@ -97,11 +97,11 @@ jobs:
       - name: Install zod (aliased) for Bun
         run: bun add zod@npm:@jsr/zod__zod@^4.4.3
 
-      # ora, figlet, and @inquirer/prompts are npm-native (no JSR-native
-      # equivalent exists — see the comments next to these entries in
+      # ora, figlet, @inquirer/prompts, ajv, and ajv-formats are npm-native (no
+      # JSR-native equivalent exists — see the comments next to these entries in
       # deno.json), so they install directly.
       - name: Install npm-native CLI dependencies for Bun
-        run: bun add ora figlet @inquirer/prompts
+        run: bun add ora figlet @inquirer/prompts ajv@^8.17.1 ajv-formats@^3.0.1
 
       - name: Smoke test — Bun entry point reports itself correctly
         run: |

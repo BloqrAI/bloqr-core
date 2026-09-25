@@ -46,6 +46,79 @@ public sealed class OutputPublisherTests : IDisposable
     }
 
     [Fact]
+    public async Task PublishAsync_WithFileNameOnly_RenamesWithinTheCompiledDirectory()
+    {
+        // Regression coverage: FileName is documented ("Output file name, if not using a
+        // full path") as an alternative to Path, but previously had no effect at all -
+        // PublishAsync ignored it entirely.
+        var compiled = WriteFile("compiled.txt", "v1");
+        var output = new OutputSettings { FileName = "renamed.txt" };
+
+        var result = await _publisher.PublishAsync(compiled, output, archiving: null);
+
+        Assert.True(result.Success);
+        Assert.Equal(Path.Combine(_tempDirectory, "renamed.txt"), result.FinalPath);
+        Assert.Equal("v1", await File.ReadAllTextAsync(result.FinalPath!));
+    }
+
+    [Fact]
+    public async Task PublishAsync_WithFileNameOfDotDot_Fails()
+    {
+        // Regression coverage: Path.GetFileName("..") returns ".." unchanged (it does not
+        // resolve "." or ".." specially), so a naive Path.Combine(directory, "..") would
+        // let FileName: ".." escape the compiled directory entirely once GetFullPath runs.
+        var compiled = WriteFile("compiled.txt", "v1");
+        var output = new OutputSettings { FileName = ".." };
+
+        var result = await _publisher.PublishAsync(compiled, output, archiving: null);
+
+        Assert.False(result.Success);
+        Assert.NotNull(result.ErrorMessage);
+    }
+
+    [Fact]
+    public async Task PublishAsync_WithFileNameOfDot_Fails()
+    {
+        var compiled = WriteFile("compiled.txt", "v1");
+        var output = new OutputSettings { FileName = "." };
+
+        var result = await _publisher.PublishAsync(compiled, output, archiving: null);
+
+        Assert.False(result.Success);
+        Assert.NotNull(result.ErrorMessage);
+    }
+
+    [Fact]
+    public async Task PublishAsync_WithRootedFileName_IsConfinedToTheCompiledDirectory()
+    {
+        // Security-relevant regression coverage: Path.Combine silently discards its earlier
+        // arguments when a later one is rooted/absolute, so a rooted FileName must be
+        // reduced to just its file-name component, not honored as a path in its own right.
+        var compiled = WriteFile("compiled.txt", "v1");
+        var outsidePath = Path.Combine(Path.GetTempPath(), "escaped-" + Guid.NewGuid() + ".txt");
+        var output = new OutputSettings { FileName = outsidePath };
+
+        var result = await _publisher.PublishAsync(compiled, output, archiving: null);
+
+        Assert.True(result.Success);
+        Assert.Equal(Path.Combine(_tempDirectory, Path.GetFileName(outsidePath)), result.FinalPath);
+        Assert.False(File.Exists(outsidePath));
+    }
+
+    [Fact]
+    public async Task PublishAsync_WithPathAndFileName_PathTakesPrecedence()
+    {
+        var compiled = WriteFile("compiled.txt", "v1");
+        var destination = Path.Combine(_tempDirectory, "published", "output.txt");
+        var output = new OutputSettings { Path = destination, FileName = "ignored.txt" };
+
+        var result = await _publisher.PublishAsync(compiled, output, archiving: null);
+
+        Assert.True(result.Success);
+        Assert.Equal(destination, result.FinalPath);
+    }
+
+    [Fact]
     public async Task PublishAsync_WithErrorStrategy_FailsWithoutTouchingExistingFile()
     {
         var compiled = WriteFile("compiled.txt", "new");

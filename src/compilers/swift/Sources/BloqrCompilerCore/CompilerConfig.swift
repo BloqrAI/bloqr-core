@@ -219,7 +219,13 @@ public struct CompilerConfig: Codable, Sendable, Equatable {
     ]
 
     /// Validates the minimum shape a configuration needs before compiling.
+    ///
+    /// Schema validation runs first so this covers every caller of `validate()` - not just
+    /// `ConfigReader.readConfig()`'s file-based path, which schema-validates independently -
+    /// including a directly constructed `CompilerConfig` that never went through a file at all.
     public func validate() throws(CompilerError) {
+        try SchemaValidation.assertValid(self)
+
         if name.isEmpty {
             throw CompilerError.validationFailed("configuration 'name' is required")
         }

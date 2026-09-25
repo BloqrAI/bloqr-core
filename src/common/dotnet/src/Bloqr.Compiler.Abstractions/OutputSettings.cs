@@ -14,6 +14,14 @@ public class OutputSettings
     public string? Path { get; set; }
 
     /// <summary>
+    /// Gets or sets an alternative to <see cref="Path"/>: a bare file name to publish the
+    /// compiled result under, kept in the same directory the compile run already wrote to.
+    /// Ignored when <see cref="Path"/> (a full file path) is also set.
+    /// </summary>
+    [JsonPropertyName("fileName")]
+    public string? FileName { get; set; }
+
+    /// <summary>
     /// Gets or sets the strategy used when <see cref="Path"/> already has a file.
     /// </summary>
     /// <remarks>

@@ -36,6 +36,7 @@ export {
   detectFormat,
   findDefaultConfig,
   readConfiguration,
+  stripForCoreCompile,
   stripInternalMetadata,
   toJson,
 } from './config-reader.ts';
