@@ -14,6 +14,49 @@ using namespace System.Collections.Generic
     Version: 1.0.0
 #>
 
+# Bundled copy of the canonical schema (schemas/compiler-config.schema.json at the repo root) -
+# see issue #518 (follow-up to #502). Kept in sync by a drift-guard Pester test that diffs the
+# two files. Resolved once at module-load time via $PSScriptRoot (available here because this is
+# top-level module script code, not a class method body) and read lazily by
+# Test-BloqrCompilerConfigSchema so a missing/unreadable file fails with a clear message instead
+# of a null-schema Test-Json call.
+$script:BloqrCompilerConfigSchemaPath = Join-Path $PSScriptRoot '..' 'schemas' 'compiler-config.schema.json'
+
+# JSON Schema (draft-07) validation for parsed/constructed configuration data, chained ahead of
+# CompilerConfiguration's own hand-written Validate() checks - matches the .NET, TypeScript,
+# Python, Rust, and Swift compilers, which all validate against the same canonical schema.
+# Uses PowerShell 7's built-in Test-Json cmdlet rather than an external module, so there's no new
+# dependency to install.
+#
+# $data is whatever ConvertFrom-Json/ConvertFrom-Yaml/a hand-built hashtable produced - it is
+# converted to a JSON string and validated as-is, so (unlike a typed Decodable/dataclass
+# round-trip) every property actually present in the source document is checked, including ones
+# this class doesn't model.
+function Test-BloqrCompilerConfigSchema {
+    param(
+        [Parameter(Mandatory = $true)]
+        $Data
+    )
+
+    if (-not (Test-Path -LiteralPath $script:BloqrCompilerConfigSchemaPath)) {
+        throw "Bundled compiler-config.schema.json is missing at $script:BloqrCompilerConfigSchemaPath"
+    }
+
+    $schemaText = Get-Content -LiteralPath $script:BloqrCompilerConfigSchemaPath -Raw -Encoding UTF8
+    $jsonText = $Data | ConvertTo-Json -Depth 20 -Compress
+
+    $schemaErrors = $null
+    $isValid = Test-Json -Json $jsonText -Schema $schemaText -ErrorVariable schemaErrors -ErrorAction SilentlyContinue
+
+    if (-not $isValid) {
+        $messages = @($schemaErrors | ForEach-Object { $_.Exception.Message })
+        if ($messages.Count -eq 0) {
+            $messages = @('configuration does not conform to the schema')
+        }
+        throw "Configuration schema validation failed:`n" + ($messages -join "`n")
+    }
+}
+
 class CompilerConfiguration {
     # Properties
     [string]$Name
@@ -93,6 +136,12 @@ class CompilerConfiguration {
             }
         }
         
+        # Schema validation runs on the raw parsed document, ahead of populating this class's
+        # typed properties, so it catches every property actually present in the file -
+        # including ones this class doesn't model (output, chunking, extensions, etc.) - not
+        # just the subset ToSchemaHashtable() below re-derives from populated properties.
+        Test-BloqrCompilerConfigSchema -Data $data
+
         # Populate properties
         $this.Name = $data.name
         $this.Version = $data.version
@@ -156,8 +205,32 @@ class CompilerConfiguration {
         'ConvertToAscii'
     )
 
+    # Schema-shaped hashtable built from this instance's populated properties, for schema
+    # validation of a directly-constructed CompilerConfiguration (one never loaded from a file,
+    # so LoadFromFile's Test-BloqrCompilerConfigSchema call never ran). Deliberately narrower
+    # than ToHashtable(): ConfigPath/Format aren't schema properties (the schema's root
+    # additionalProperties is false), and null/empty optional fields are omitted so an unset
+    # Version, say, doesn't fail the schema's "version" string pattern.
+    [hashtable]ToSchemaHashtable() {
+        $result = @{ name = $this.Name; sources = @($this.Sources) }
+        if (-not [string]::IsNullOrWhiteSpace($this.Description)) { $result.description = $this.Description }
+        if (-not [string]::IsNullOrWhiteSpace($this.Homepage)) { $result.homepage = $this.Homepage }
+        if (-not [string]::IsNullOrWhiteSpace($this.License)) { $result.license = $this.License }
+        if (-not [string]::IsNullOrWhiteSpace($this.Version)) { $result.version = $this.Version }
+        if (-not [string]::IsNullOrWhiteSpace($this.DefaultEngine)) { $result.defaultEngine = $this.DefaultEngine }
+        if ($this.Transformations -and $this.Transformations.Count -gt 0) { $result.transformations = @($this.Transformations) }
+        if ($this.Inclusions -and $this.Inclusions.Count -gt 0) { $result.inclusions = @($this.Inclusions) }
+        if ($this.Exclusions -and $this.Exclusions.Count -gt 0) { $result.exclusions = @($this.Exclusions) }
+        return $result
+    }
+
     # Validate configuration
     [void]Validate() {
+        # Runs first so this covers every caller of Validate() - not just LoadFromFile's
+        # file-based path, which schema-validates the raw document independently - including a
+        # directly constructed CompilerConfiguration that never went through a file at all.
+        Test-BloqrCompilerConfigSchema -Data $this.ToSchemaHashtable()
+
         $errors = [List[string]]::new()
 
         if ([string]::IsNullOrWhiteSpace($this.Name)) {
