@@ -355,3 +355,22 @@ Deno.test('validateConfiguration - rejects a schema-invalid version string', () 
   const result = validateConfiguration(config);
   assertEquals(result.valid, false);
 });
+
+// Regression coverage: readConfiguration() returns an ExtendedConfiguration tagged with
+// _sourceFormat/_sourcePath (and splitIntoChunks() adds _chunkMetadata) - internal
+// bookkeeping added *after* its own schema check runs. validateConfiguration() must not
+// re-reject that same object as schema-invalid "additional properties" when called on it
+// directly, as runValidationMode() (the --validate CLI flag) does - this was a real CI
+// failure caught by the Bun smoke test running against the shipped compiler-config.json.
+Deno.test('validateConfiguration - does not reject internal metadata as additional properties', () => {
+  const config = {
+    name: 'Test',
+    sources: [{ source: 'https://example.com/list.txt' }],
+    _sourceFormat: 'json',
+    _sourcePath: '/tmp/compiler-config.json',
+  };
+
+  const result = validateConfiguration(config);
+  assertEquals(result.valid, true);
+  assertEquals(result.errors.length, 0);
+});
