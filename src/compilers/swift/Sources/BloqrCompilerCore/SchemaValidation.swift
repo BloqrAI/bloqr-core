@@ -24,15 +24,18 @@ enum SchemaValidation {
     }()
 
     /// Lazily parsed once; the schema itself never changes at runtime.
-    private static let schema: [String: Any] = {
+    ///
+    /// `nonisolated(unsafe)`: `[String: Any]` isn't `Sendable`, but this value is only ever
+    /// written once, by this initializer closure, before any code can read it (Swift's static
+    /// `let` initialization is itself synchronized) - safe to read concurrently thereafter.
+    nonisolated(unsafe) private static let schema: [String: Any] = {
         guard
             let data = schemaJSONText.data(using: .utf8),
-            let object = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
-            let schema = object
+            let object = try? JSONSerialization.jsonObject(with: data) as? [String: Any]
         else {
             fatalError("bundled compiler-config.schema.json is not a valid JSON object")
         }
-        return schema
+        return object
     }()
 
     /// Validates a `CompilerConfig` against the canonical JSON Schema and throws a
