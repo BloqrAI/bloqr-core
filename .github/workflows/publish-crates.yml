@@ -43,6 +43,29 @@ name: Publish Rust Crates to crates.io
 # same "Unsupported JWT issuer" error again, check whether that Enterprise
 # setting got re-enabled before assuming this workflow is broken.
 #
+# BOOTSTRAPPING A BRAND-NEW CRATE NAME: crates.io Trusted Publishing can only
+# publish new *versions* of a crate that already exists - it refuses outright
+# to create a crate under a name that's never been published before ("403:
+# Trusted Publishing tokens do not support creating new crates. Publish the
+# crate manually, first"), as an anti-squatting safeguard. This hit
+# bloqr-compiler-core and bloqr-compiler when the compiler crate was split
+# into core+CLI (#173) and re-added to this workflow under those two names -
+# every run failed at that step until a human manually bootstrapped each
+# name's first publish. The publish-compiler-core and publish-compiler-cli
+# jobs below fall back to the CARGO_REGISTRY_TOKEN_BOOTSTRAP repo secret (a
+# classic crates.io API token, added once via crates.io's web UI - no local
+# `cargo`/CLI required) only when the Trusted Publishing attempt fails AND
+# the crate name itself doesn't exist on crates.io yet (a 404 on
+# crates.io/api/v1/crates/<name>, checked before touching the fallback
+# token) - not on every publish failure, so a real outage, misconfigured
+# Trusted Publisher, or transient error can't silently reach for the
+# long-lived credential once the crate exists. Once a crate has been
+# published at least once (by this fallback or manually), Trusted Publishing
+# handles every subsequent version on its own and the fallback branch never
+# fires again -
+# the secret can stay in place indefinitely as a harmless dormant fallback,
+# or be removed once both crates exist on crates.io.
+#
 
 # VERSIONING: each crate's own Cargo.toml `version` field is the source of
 # truth, bumped by hand today (no automated Conventional-Commits bump
@@ -285,22 +308,74 @@ jobs:
       # crates.io token (auto-revoked when the job ends) - requires the
       # Trusted Publisher entry on bloqr-compiler-core's crates.io settings
       # page to reference this exact repo + workflow filename.
+      # continue-on-error: the OIDC exchange itself can fail (misconfigured
+      # Trusted Publisher, issuer problems) independently of the cargo-level
+      # "can't create a new crate" case below - both need to reach the same
+      # 404-gated bootstrap fallback, not just a cargo publish failure.
       - name: Authenticate with crates.io
         id: auth
         if: steps.check.outputs.already_published == 'false'
+        continue-on-error: true
         uses: rust-lang/crates-io-auth-action@v1
 
+      # Trusted Publishing attempt only - falls back to the
+      # CARGO_REGISTRY_TOKEN_BOOTSTRAP secret in a later step only if this
+      # fails (see this file's "BOOTSTRAPPING A BRAND-NEW CRATE NAME" note
+      # above). Deliberately does NOT have BOOTSTRAP_TOKEN in scope here, so
+      # cargo's package verification build (and any dependency build scripts
+      # it runs) can never read the long-lived bootstrap secret on this, the
+      # common-case path. Skipped (not attempted) if authentication itself
+      # already failed, since there'd be no valid token to publish with.
       - name: Publish bloqr-compiler-core to crates.io
         id: publish
-        if: steps.check.outputs.already_published == 'false'
+        if: steps.check.outputs.already_published == 'false' && steps.auth.outcome == 'success'
+        continue-on-error: true
         env:
           CARGO_REGISTRY_TOKEN: ${{ steps.auth.outputs.token }}
-        run: cargo publish -p bloqr-compiler-core --locked
+        # --no-verify: the dry-run step above already built/verified the
+        # package with no registry token in its environment. Rebuilding here
+        # would expose CARGO_REGISTRY_TOKEN to that build (and to any build
+        # script this crate or a dependency runs), for no verification benefit.
+        run: cargo publish -p bloqr-compiler-core --locked --no-verify
+
+      # Only fall back to the long-lived bootstrap credential when the crate
+      # itself is confirmed absent (404) - never on a generic publish or auth
+      # failure, so an outage or misconfigured Trusted Publisher can't
+      # silently reach for it once the crate exists. Runs on either a failed
+      # OIDC auth or a failed trusted-token publish.
+      - name: Check whether bloqr-compiler-core exists on crates.io
+        id: exists_check
+        if: steps.check.outputs.already_published == 'false' && (steps.auth.outcome == 'failure' || steps.publish.outcome == 'failure')
+        run: |
+          status=$(curl -s -o /dev/null -w "%{http_code}" -A "bloqr-core-ci (https://github.com/BloqrAI/bloqr-core)" "https://crates.io/api/v1/crates/bloqr-compiler-core")
+          echo "status=${status}" >> "$GITHUB_OUTPUT"
+          if [ "$status" != "404" ]; then
+            echo "::error::Trusted Publishing failed, but bloqr-compiler-core already exists on crates.io (status ${status}), so this isn't the brand-new-crate case - not falling back to CARGO_REGISTRY_TOKEN_BOOTSTRAP. Check the Trusted Publisher entry / OIDC issuer setting instead."
+          fi
+
+      # This step - and only this step - has the bootstrap secret in scope,
+      # and only runs at all once the crate's absence (404) is confirmed above.
+      - name: Publish bloqr-compiler-core to crates.io (bootstrap fallback)
+        id: publish_bootstrap
+        if: steps.exists_check.outputs.status == '404'
+        env:
+          CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN_BOOTSTRAP }}
+        run: |
+          if [ -z "$CARGO_REGISTRY_TOKEN" ]; then
+            echo "::error::Trusted Publishing failed because bloqr-compiler-core doesn't exist on crates.io yet (404), and no CARGO_REGISTRY_TOKEN_BOOTSTRAP secret is set to bootstrap its first publish."
+            exit 1
+          fi
+          echo "Trusted Publishing failed and bloqr-compiler-core doesn't exist on crates.io yet (404) - falling back to the one-time CARGO_REGISTRY_TOKEN_BOOTSTRAP secret."
+          # --no-verify for the same reason as the trusted-publishing attempt
+          # above: don't rebuild (and thus don't expose this long-lived
+          # credential to a build script) when the dry-run already verified
+          # the package without any registry token present.
+          cargo publish -p bloqr-compiler-core --locked --no-verify
 
       - name: Report publish failure
-        if: failure() && steps.publish.outcome == 'failure'
+        if: steps.check.outputs.already_published == 'false' && (steps.auth.outcome == 'failure' || steps.publish.outcome == 'failure') && steps.publish_bootstrap.outcome != 'success'
         run: |
-          echo "::error::crates.io publish failed. Check bloqr-compiler-core's Trusted Publisher entry on crates.io points at BloqrAI/bloqr-core, workflow publish-crates.yml, and that the enterprise custom-OIDC-issuer setting is still disabled."
+          echo "::error::crates.io publish failed even with the CARGO_REGISTRY_TOKEN_BOOTSTRAP fallback (or that secret isn't set, or the crate already exists so the fallback was correctly skipped). Check bloqr-compiler-core's Trusted Publisher entry on crates.io points at BloqrAI/bloqr-core, workflow publish-crates.yml, that the enterprise custom-OIDC-issuer setting is still disabled, and that CARGO_REGISTRY_TOKEN_BOOTSTRAP is a valid crates.io API token with publish-new rights if this is the crate's first-ever publish."
           exit 1
 
   publish-compiler-cli:
@@ -368,20 +443,72 @@ jobs:
       # crates.io token (auto-revoked when the job ends) - requires the
       # Trusted Publisher entry on bloqr-compiler's crates.io settings
       # page to reference this exact repo + workflow filename.
+      # continue-on-error: the OIDC exchange itself can fail (misconfigured
+      # Trusted Publisher, issuer problems) independently of the cargo-level
+      # "can't create a new crate" case below - both need to reach the same
+      # 404-gated bootstrap fallback, not just a cargo publish failure.
       - name: Authenticate with crates.io
         id: auth
         if: steps.check.outputs.already_published == 'false'
+        continue-on-error: true
         uses: rust-lang/crates-io-auth-action@v1
 
+      # Trusted Publishing attempt only - falls back to the
+      # CARGO_REGISTRY_TOKEN_BOOTSTRAP secret in a later step only if this
+      # fails (see this file's "BOOTSTRAPPING A BRAND-NEW CRATE NAME" note
+      # above). Deliberately does NOT have BOOTSTRAP_TOKEN in scope here, so
+      # cargo's package verification build (and any dependency build scripts
+      # it runs) can never read the long-lived bootstrap secret on this, the
+      # common-case path. Skipped (not attempted) if authentication itself
+      # already failed, since there'd be no valid token to publish with.
       - name: Publish bloqr-compiler to crates.io
         id: publish
-        if: steps.check.outputs.already_published == 'false'
+        if: steps.check.outputs.already_published == 'false' && steps.auth.outcome == 'success'
+        continue-on-error: true
         env:
           CARGO_REGISTRY_TOKEN: ${{ steps.auth.outputs.token }}
-        run: cargo publish -p bloqr-compiler --locked
+        # --no-verify: the dry-run step above already built/verified the
+        # package with no registry token in its environment. Rebuilding here
+        # would expose CARGO_REGISTRY_TOKEN to that build (and to any build
+        # script this crate or a dependency runs), for no verification benefit.
+        run: cargo publish -p bloqr-compiler --locked --no-verify
+
+      # Only fall back to the long-lived bootstrap credential when the crate
+      # itself is confirmed absent (404) - never on a generic publish or auth
+      # failure, so an outage or misconfigured Trusted Publisher can't
+      # silently reach for it once the crate exists. Runs on either a failed
+      # OIDC auth or a failed trusted-token publish.
+      - name: Check whether bloqr-compiler exists on crates.io
+        id: exists_check
+        if: steps.check.outputs.already_published == 'false' && (steps.auth.outcome == 'failure' || steps.publish.outcome == 'failure')
+        run: |
+          status=$(curl -s -o /dev/null -w "%{http_code}" -A "bloqr-core-ci (https://github.com/BloqrAI/bloqr-core)" "https://crates.io/api/v1/crates/bloqr-compiler")
+          echo "status=${status}" >> "$GITHUB_OUTPUT"
+          if [ "$status" != "404" ]; then
+            echo "::error::Trusted Publishing failed, but bloqr-compiler already exists on crates.io (status ${status}), so this isn't the brand-new-crate case - not falling back to CARGO_REGISTRY_TOKEN_BOOTSTRAP. Check the Trusted Publisher entry / OIDC issuer setting instead."
+          fi
+
+      # This step - and only this step - has the bootstrap secret in scope,
+      # and only runs at all once the crate's absence (404) is confirmed above.
+      - name: Publish bloqr-compiler to crates.io (bootstrap fallback)
+        id: publish_bootstrap
+        if: steps.exists_check.outputs.status == '404'
+        env:
+          CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN_BOOTSTRAP }}
+        run: |
+          if [ -z "$CARGO_REGISTRY_TOKEN" ]; then
+            echo "::error::Trusted Publishing failed because bloqr-compiler doesn't exist on crates.io yet (404), and no CARGO_REGISTRY_TOKEN_BOOTSTRAP secret is set to bootstrap its first publish."
+            exit 1
+          fi
+          echo "Trusted Publishing failed and bloqr-compiler doesn't exist on crates.io yet (404) - falling back to the one-time CARGO_REGISTRY_TOKEN_BOOTSTRAP secret."
+          # --no-verify for the same reason as the trusted-publishing attempt
+          # above: don't rebuild (and thus don't expose this long-lived
+          # credential to a build script) when the dry-run already verified
+          # the package without any registry token present.
+          cargo publish -p bloqr-compiler --locked --no-verify
 
       - name: Report publish failure
-        if: failure() && steps.publish.outcome == 'failure'
+        if: steps.check.outputs.already_published == 'false' && (steps.auth.outcome == 'failure' || steps.publish.outcome == 'failure') && steps.publish_bootstrap.outcome != 'success'
         run: |
-          echo "::error::crates.io publish failed. Check bloqr-compiler's Trusted Publisher entry on crates.io points at BloqrAI/bloqr-core, workflow publish-crates.yml, and that the enterprise custom-OIDC-issuer setting is still disabled."
+          echo "::error::crates.io publish failed even with the CARGO_REGISTRY_TOKEN_BOOTSTRAP fallback (or that secret isn't set, or the crate already exists so the fallback was correctly skipped). Check bloqr-compiler's Trusted Publisher entry on crates.io points at BloqrAI/bloqr-core, workflow publish-crates.yml, that the enterprise custom-OIDC-issuer setting is still disabled, and that CARGO_REGISTRY_TOKEN_BOOTSTRAP is a valid crates.io API token with publish-new rights if this is the crate's first-ever publish."
           exit 1

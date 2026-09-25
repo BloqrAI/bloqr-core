@@ -4,7 +4,17 @@ name = "bloqr-validator-core"
 # own published crates.io artifact (#365) and must be bumpable on its own
 # cadence, decoupled from bloqr-validator-core-cli and bloqr-compiler - see
 # docs/architecture/versioning-strategy.md.
-version = "1.1.1"
+#
+# Bumped to 1.2.0: #457 added the native browser-syntax validation engine
+# (`ValidationEngine`, `validate_local_file_with_engine`, and friends in
+# `syntax.rs`) without bumping this version, so the version already
+# published to crates.io as 1.1.1 predates that public API - the
+# publish-crates.yml idempotency check then skipped re-publishing on every
+# subsequent push, leaving bloqr-validator-core-cli's `cargo publish
+# --dry-run` failing against the stale registry content (no `ValidationEngine`
+# in the root, no `validate_local_file_with_engine` method). This bump lets
+# CI actually publish the new API.
+version = "1.2.0"
 edition.workspace = true
 authors.workspace = true
 license.workspace = true

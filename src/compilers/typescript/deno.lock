@@ -1,7 +1,7 @@
 {
   "version": "5",
   "specifiers": {
-    "jsr:@cliffy/table@^1.2.1": "1.2.1",
+    "jsr:@cliffy/table@^1.3.1": "1.3.1",
     "jsr:@std/assert@^1.0.19": "1.0.19",
     "jsr:@std/async@^1.5.0": "1.5.0",
     "jsr:@std/collections@^1.1.3": "1.3.0",
@@ -15,14 +15,14 @@
     "jsr:@std/testing@^1.0.20": "1.0.20",
     "jsr:@std/toml@^1.0.11": "1.0.11",
     "jsr:@std/yaml@^1.2.0": "1.2.0",
-    "jsr:@zod/zod@^4.6.4": "4.6.4",
+    "jsr:@zod/zod@^4.6.5": "4.6.5",
     "npm:@inquirer/prompts@^8.7.2": "8.7.2",
     "npm:figlet@^1.11.4": "1.11.4",
     "npm:ora@^9.4.1": "9.4.1"
   },
   "jsr": {
-    "@cliffy/table@1.2.1": {
-      "integrity": "be333e62f2c754f8bf75a38c8177515b152040572c9f75298e9bcef1314b82ff",
+    "@cliffy/table@1.3.1": {
+      "integrity": "483c43936b9be148cbedd8bd39e5c0d098c9c87c4667fe2ad9b8acff77f79b8b",
       "dependencies": [
         "jsr:@std/fmt"
       ]
@@ -80,8 +80,8 @@
     "@std/yaml@1.2.0": {
       "integrity": "20beb41e4983ba3437dbefac62b14061ab058e8a187596f19d28ff9035f6e6cf"
     },
-    "@zod/zod@4.6.4": {
-      "integrity": "8aa86e393548c9cf0e66c89136de363db1d13e8fc42fde9e74ce39f38046dcb8"
+    "@zod/zod@4.6.5": {
+      "integrity": "de9ee54513b84efecbdf2988f5a01eca0e2883be4b5625cf320bc0d6dbbade3e"
     }
   },
   "npm": {
@@ -333,14 +333,14 @@
   },
   "workspace": {
     "dependencies": [
-      "jsr:@cliffy/table@^1.2.1",
+      "jsr:@cliffy/table@^1.3.1",
       "jsr:@std/assert@^1.0.19",
       "jsr:@std/fmt@^1.0.10",
       "jsr:@std/path@^1.1.6",
       "jsr:@std/testing@^1.0.20",
       "jsr:@std/toml@^1.0.11",
       "jsr:@std/yaml@^1.2.0",
-      "jsr:@zod/zod@^4.6.4",
+      "jsr:@zod/zod@^4.6.5",
       "npm:@inquirer/prompts@^8.7.2",
       "npm:figlet@^1.11.4",
       "npm:ora@^9.4.1"
