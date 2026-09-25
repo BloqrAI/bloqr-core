@@ -13,6 +13,7 @@ import {
   ResourceLimitError,
   ValidationError,
 } from './errors.ts';
+import { getJsonSchemaValidationErrors } from './schema-validation.ts';
 
 /**
  * Validation result
@@ -157,7 +158,24 @@ function validateStringArray(value: unknown, fieldName: string): string[] {
 }
 
 /**
- * Validates configuration schema at runtime
+ * Validates configuration schema at runtime.
+ *
+ * Runs the canonical JSON Schema check first (see issue #518) and folds any violations
+ * into `errors`, so every public API built on this function - not just
+ * `readConfiguration()`'s file-reading path, which schema-validates independently via
+ * `assertJsonSchemaValidConfiguration()` - rejects a schema-invalid configuration. This
+ * closes the gap where `BloqrCompiler.validateConfig()`/`.validate()` (in-memory,
+ * `ValidationResult`-returning APIs) could otherwise report a schema-invalid config
+ * (unrecognized properties, an invalid `homepage`, etc.) as valid.
+ *
+ * The schema check runs against `config` with `_sourceFormat`/`_sourcePath`/
+ * `_chunkMetadata` stripped first (inlined here, rather than importing
+ * `stripInternalMetadata` from `config-reader.ts`, to avoid a circular import - that module
+ * already imports from this one). Without this, calling `validateConfiguration()` on the
+ * `ExtendedConfiguration` `readConfiguration()` itself returns - which tags the object with
+ * that internal metadata only *after* its own schema check runs - would report those two
+ * bookkeeping fields as schema-invalid "additional properties", exactly the false failure
+ * `runValidationMode()`'s `--validate` CLI flag hit in CI (#528).
  */
 export function validateConfiguration(config: unknown): ValidationResult {
   const errors: string[] = [];
@@ -168,6 +186,14 @@ export function validateConfiguration(config: unknown): ValidationResult {
     errors.push('Configuration must be an object');
     return { valid: false, errors, warnings };
   }
+
+  const { _sourceFormat, _sourcePath, _chunkMetadata, ...schemaCheckTarget } = config as
+    & Record<string, unknown>
+    & { _sourceFormat?: unknown; _sourcePath?: unknown; _chunkMetadata?: unknown };
+  void _sourceFormat;
+  void _sourcePath;
+  void _chunkMetadata;
+  errors.push(...getJsonSchemaValidationErrors(schemaCheckTarget));
 
   const configObj = config as Record<string, unknown>;
 

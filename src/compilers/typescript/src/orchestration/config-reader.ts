@@ -18,6 +18,7 @@ import {
   checkSourceCount,
   DEFAULT_RESOURCE_LIMITS,
 } from './validation.ts';
+import { assertJsonSchemaValidConfiguration } from './schema-validation.ts';
 
 /**
  * Detects configuration format from file extension
@@ -201,8 +202,12 @@ export function readConfiguration(
     }
   }
 
-  // Validate configuration schema unless explicitly skipped
+  // Validate configuration schema unless explicitly skipped. JSON Schema validation
+  // runs first, against the same canonical schema every other compiler wrapper
+  // validates against (see issue #518); the hand-written checks then catch anything
+  // specific to this orchestration layer.
   if (!options.skipValidation) {
+    assertJsonSchemaValidConfiguration(config, resolvedPath);
     assertValidConfiguration(config, resolvedPath);
   }
 
@@ -231,11 +236,11 @@ export function readConfiguration(
  * {@linkcode readConfiguration}, and `_chunkMetadata`, added by
  * {@linkcode [chunking].splitIntoChunks}) from a configuration object.
  *
- * The core compilation engine's schema validator rejects unrecognized properties, so
- * anything that hands a configuration object to {@linkcode [index].compile} - not just
- * {@linkcode toJson} - needs a clean {@linkcode IConfiguration}, not the
- * {@linkcode ExtendedConfiguration}/`ChunkedConfiguration` the orchestration layer works
- * with internally.
+ * Used by {@linkcode toJson} and anywhere else that wants a human/JSON-facing view of
+ * the configuration - it deliberately keeps schema-valid, user-visible sections like
+ * `output`/`chunking`/`archiving`/`hashVerification` intact. To prepare a configuration
+ * for the core engine's strict compile boundary instead, use
+ * {@linkcode stripForCoreCompile}.
  *
  * @param config - Configuration object, possibly carrying internal metadata.
  * @returns A shallow copy of `config` with internal metadata fields removed.
@@ -248,6 +253,46 @@ export function stripInternalMetadata(config: IConfiguration): IConfiguration {
   void _sourcePath;
   void _chunkMetadata;
   return cleanConfig;
+}
+
+/**
+ * Strips every orchestration-layer-only field from a configuration object before it
+ * reaches the core compilation engine: {@linkcode stripInternalMetadata}'s internal
+ * metadata, plus the schema-valid top-level sections (`output`, `hashVerification`,
+ * `archiving`, `chunking`, `$schema`) that this orchestration layer reads directly off
+ * {@linkcode ExtendedConfiguration} but that the core engine's `IConfiguration` type
+ * doesn't model at all.
+ *
+ * The core compilation engine's schema validator (`ConfigurationSchema`, in
+ * `configuration/schemas.ts`) is `.strict()` and rejects unrecognized properties, so
+ * anything that hands a configuration object to {@linkcode [index].compile} needs a
+ * clean {@linkcode IConfiguration}, not the
+ * {@linkcode ExtendedConfiguration}/`ChunkedConfiguration` the orchestration layer works
+ * with internally. Without this, a config file using any of those sections - all valid
+ * per the canonical `schemas/compiler-config.schema.json` (see issue #518) - would pass
+ * `readConfiguration()`'s schema check yet still fail at the actual compile call.
+ *
+ * @param config - Configuration object, possibly carrying internal metadata and/or
+ * orchestration-only sections.
+ * @returns A shallow copy of `config` with those fields removed.
+ */
+export function stripForCoreCompile(config: IConfiguration): IConfiguration {
+  const {
+    output,
+    hashVerification,
+    archiving,
+    chunking,
+    $schema,
+    ...rest
+  } = stripInternalMetadata(config) as
+    & ExtendedConfiguration
+    & { $schema?: unknown };
+  void output;
+  void hashVerification;
+  void archiving;
+  void chunking;
+  void $schema;
+  return rest;
 }
 
 /**

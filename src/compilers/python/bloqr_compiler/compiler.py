@@ -964,9 +964,18 @@ def compile_rules(
         # Publish to the configured durable destination, if any, applying the conflict
         # strategy and archiving policy before anything downstream (hashing, copying) sees
         # the file.
-        if config.output is not None and config.output.path:
-            resolved_path = _resolve_relative_to_config(config.output.path, config_path)
-            resolved_output = replace(config.output, path=str(resolved_path))
+        if config.output is not None and (config.output.path or config.output.file_name):
+            # Only `path` (a full file path) is resolved relative to the config file -
+            # `file_name` is a bare name publish_output() joins with the compiled file's
+            # own directory, so it needs no such resolution.
+            resolved_output = (
+                replace(
+                    config.output,
+                    path=str(_resolve_relative_to_config(config.output.path, config_path)),
+                )
+                if config.output.path
+                else config.output
+            )
             publish_result = publish_output(actual_output, resolved_output, config.archiving)
 
             if not publish_result.success or publish_result.final_path is None:
@@ -1299,9 +1308,18 @@ async def compile_rules_async(
         # Publish to the configured durable destination, if any, applying the conflict
         # strategy and archiving policy before anything downstream (hashing, copying) sees
         # the file.
-        if config.output is not None and config.output.path:
-            resolved_path = _resolve_relative_to_config(config.output.path, config_path)
-            resolved_output = replace(config.output, path=str(resolved_path))
+        if config.output is not None and (config.output.path or config.output.file_name):
+            # Only `path` (a full file path) is resolved relative to the config file -
+            # `file_name` is a bare name publish_output() joins with the compiled file's
+            # own directory, so it needs no such resolution.
+            resolved_output = (
+                replace(
+                    config.output,
+                    path=str(_resolve_relative_to_config(config.output.path, config_path)),
+                )
+                if config.output.path
+                else config.output
+            )
             loop = asyncio.get_event_loop()
             publish_result = await loop.run_in_executor(
                 None, publish_output, actual_output, resolved_output, config.archiving

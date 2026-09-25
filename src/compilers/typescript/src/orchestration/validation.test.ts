@@ -316,3 +316,61 @@ Deno.test('DEFAULT_RESOURCE_LIMITS - has reasonable defaults', () => {
   assertEquals(DEFAULT_RESOURCE_LIMITS.compilationTimeoutMs > 0, true);
   assertEquals(DEFAULT_RESOURCE_LIMITS.maxPathLength > 0, true);
 });
+
+// Regression coverage (Copilot review on #528/#518): validateConfiguration() is the shared
+// implementation behind every public in-memory ValidationResult API (BloqrCompiler.validate()/
+// .validateConfig()), which previously ran only the hand-written checks below and could report
+// a schema-invalid configuration as valid - unlike readConfiguration()'s file-reading path,
+// which schema-validates independently. validateConfiguration() now runs the same canonical
+// JSON Schema check first and folds violations into `errors`.
+
+Deno.test('validateConfiguration - rejects an unrecognized top-level property', () => {
+  const config = {
+    name: 'x',
+    sources: [{ source: 's' }],
+    bogusField: true,
+  };
+
+  const result = validateConfiguration(config);
+  assertEquals(result.valid, false);
+});
+
+Deno.test('validateConfiguration - rejects an unrecognized source property', () => {
+  const config = {
+    name: 'x',
+    sources: [{ source: 's', bogus: true }],
+  };
+
+  const result = validateConfiguration(config);
+  assertEquals(result.valid, false);
+});
+
+Deno.test('validateConfiguration - rejects a schema-invalid version string', () => {
+  const config = {
+    name: 'x',
+    version: 'not-a-semver',
+    sources: [{ source: 's' }],
+  };
+
+  const result = validateConfiguration(config);
+  assertEquals(result.valid, false);
+});
+
+// Regression coverage: readConfiguration() returns an ExtendedConfiguration tagged with
+// _sourceFormat/_sourcePath (and splitIntoChunks() adds _chunkMetadata) - internal
+// bookkeeping added *after* its own schema check runs. validateConfiguration() must not
+// re-reject that same object as schema-invalid "additional properties" when called on it
+// directly, as runValidationMode() (the --validate CLI flag) does - this was a real CI
+// failure caught by the Bun smoke test running against the shipped compiler-config.json.
+Deno.test('validateConfiguration - does not reject internal metadata as additional properties', () => {
+  const config = {
+    name: 'Test',
+    sources: [{ source: 'https://example.com/list.txt' }],
+    _sourceFormat: 'json',
+    _sourcePath: '/tmp/compiler-config.json',
+  };
+
+  const result = validateConfiguration(config);
+  assertEquals(result.valid, true);
+  assertEquals(result.errors.length, 0);
+});

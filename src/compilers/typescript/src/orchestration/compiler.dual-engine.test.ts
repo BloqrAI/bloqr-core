@@ -169,3 +169,37 @@ Deno.test('runCompiler - engine: browser forces every source through the browser
     assertEquals(existsSync(outputPath), true);
   });
 });
+
+// Regression coverage (#518/#528): a config using output/archiving/chunking sections -
+// all valid per the canonical schema, and exactly the shape of the shipped
+// src/compilers/typescript/compiler-config.json - must compile successfully through
+// runCompiler() with its default validateConfig: true. This previously failed because
+// validateConfiguration() schema-checked the ExtendedConfiguration readConfiguration()
+// returns, which is tagged with _sourceFormat/_sourcePath *after* its own schema check
+// runs - the root schema's additionalProperties: false then rejected those two
+// internal-bookkeeping fields as unknown, failing every normal compilation.
+Deno.test('runCompiler - succeeds (validateConfig: true) for a config using output/archiving/chunking', async () => {
+  await withTempDir(async (dir) => {
+    const sourcePath = join(dir, 'rules.txt');
+    writeFileSync(sourcePath, '||example.com^\n||test.org^\n');
+
+    const configPath = writeConfig(dir, 'compiler-config.json', {
+      name: 'Test Filter',
+      sources: [{ source: sourcePath, type: 'adblock' }],
+      output: { conflictStrategy: 'rename' },
+      archiving: { enabled: true, mode: 'automatic', retentionDays: 90 },
+      chunking: { enabled: false },
+    });
+    const outputPath = join(dir, 'output.txt');
+
+    const result = await runCompiler({
+      configPath,
+      outputPath,
+      logger,
+      allowUnvalidatedOutput: true,
+    });
+
+    assertEquals(result.success, true);
+    assertEquals(existsSync(outputPath), true);
+  });
+});

@@ -9,6 +9,7 @@ use std::fs;
 use std::path::{Path, PathBuf};
 
 use crate::error::{CompilerError, Result};
+use crate::schema_validation::assert_json_schema_valid;
 
 /// Supported configuration file formats.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Default)]
@@ -381,6 +382,17 @@ impl CompilerConfig {
     ///
     /// Returns an error if validation fails.
     pub fn validate(&self) -> Result<()> {
+        // Schema validation runs first so this covers every caller of validate() - not just
+        // read_config()'s file-based path, which schema-validates the raw parsed value before
+        // this struct even exists - including a directly constructed CompilerConfig that never
+        // went through a file at all (e.g. one built via the builder methods below).
+        let value = serde_json::to_value(self).map_err(|e| {
+            CompilerError::validation_failed(format!(
+                "failed to serialize configuration for schema validation: {e}"
+            ))
+        })?;
+        assert_json_schema_valid(&value)?;
+
         if self.name.is_empty() {
             return Err(CompilerError::validation_failed(
                 "configuration 'name' is required",
@@ -458,11 +470,19 @@ pub fn read_config<P: AsRef<Path>>(
         CompilerError::file_system(format!("reading configuration from {}", path.display()), e)
     })?;
 
-    let mut config: CompilerConfig = match format {
+    // Parse into a generic JSON value first (rather than straight into `CompilerConfig`) so it
+    // can be checked against the canonical JSON Schema - the same schema every other compiler
+    // wrapper validates against (see issue #518) - ahead of the struct-specific hand-written
+    // checks in `CompilerConfig::validate()`. Parse errors are still format-specific.
+    let value: serde_json::Value = match format {
         ConfigFormat::Json => serde_json::from_str(&content)?,
         ConfigFormat::Yaml => serde_yaml::from_str(&content)?,
         ConfigFormat::Toml => toml::from_str(&content)?,
     };
+
+    assert_json_schema_valid(&value)?;
+
+    let mut config: CompilerConfig = serde_json::from_value(value)?;
 
     config.source_format = Some(format);
     config.source_path = Some(path.to_path_buf());
@@ -577,6 +597,18 @@ mod tests {
     }
 
     #[test]
+    fn test_compiler_config_validate_rejects_schema_invalid_homepage_on_directly_built_config() {
+        // Regression coverage for #518: validate() now runs schema validation - not just
+        // read_config()'s file-based path - so a directly constructed CompilerConfig (never
+        // read from a file) with a schema-invalid field like a non-URI homepage is rejected
+        // too, not just what the hand-written checks below happen to look at.
+        let mut config = CompilerConfig::new("Test")
+            .with_source(FilterSource::new("Source", "https://example.com"));
+        config.homepage = "not a uri".to_string();
+        assert!(config.validate().is_err());
+    }
+
+    #[test]
     fn test_compiler_config_validate_rejects_unknown_transformation() {
         // Issue #502: an unrecognized transformation name (e.g. a typo, or a
         // commercial-only/browser-engine-only transformation like
@@ -608,6 +640,27 @@ mod tests {
             .with_transformation("Deduplicate")
             .with_transformation("Compress");
         assert!(valid.validate().is_ok());
+    }
+
+    #[test]
+    fn test_read_config_rejects_schema_invalid_transformation() {
+        // Regression coverage for #518: proves read_config() itself - not just
+        // assert_json_schema_valid() called directly (schema_validation.rs) - rejects a
+        // schema-invalid config, and does so *before* the format-specific struct even
+        // finishes constructing. Without this, removing or reordering the schema-validation
+        // call inside read_config() would leave schema_validation's own tests green while
+        // this crate's actual config-read path silently stopped enforcing the canonical
+        // schema.
+        let dir = TempDir::new().unwrap();
+        let path = dir.path().join("config.json");
+        let mut file = File::create(&path).unwrap();
+        writeln!(
+            file,
+            r#"{{"name": "Test", "sources": [{{"source": "test.txt"}}], "transformations": ["NotARealTransformation"]}}"#
+        )
+        .unwrap();
+
+        assert!(read_config(&path, None).is_err());
     }
 
     #[test]

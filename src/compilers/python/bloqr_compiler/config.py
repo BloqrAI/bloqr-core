@@ -15,8 +15,10 @@ from typing import Any
 from bloqr_compiler.errors import (
     ParseError,
     UnknownExtensionError,
+    ValidationError,
     ValidationResult,
 )
+from bloqr_compiler.schema_validation import assert_json_schema_valid_configuration
 
 
 class ConfigurationFormat(Enum):
@@ -195,6 +197,7 @@ class FilterSource:
 class OutputSettings:
     """Output file settings: destination path and conflict-handling strategy."""
     path: str = ""
+    file_name: str = ""
     conflict_strategy: str = "rename"
 
     VALID_CONFLICT_STRATEGIES = ("rename", "overwrite", "error")
@@ -203,11 +206,16 @@ class OutputSettings:
     def from_dict(cls, data: dict[str, Any]) -> OutputSettings:
         return cls(
             path=data.get("path", ""),
+            file_name=data.get("fileName", ""),
             conflict_strategy=data.get("conflictStrategy", "rename"),
         )
 
     def to_dict(self) -> dict[str, Any]:
-        result: dict[str, Any] = {"path": self.path}
+        result: dict[str, Any] = {}
+        if self.path:
+            result["path"] = self.path
+        if self.file_name:
+            result["fileName"] = self.file_name
         if self.conflict_strategy != "rename":
             result["conflictStrategy"] = self.conflict_strategy
         return result
@@ -358,6 +366,16 @@ class CompilerConfiguration:
             ValidationResult with errors and warnings.
         """
         result = ValidationResult()
+
+        # Schema validation runs first so this covers every caller of validate() - not just
+        # read_configuration()'s file-based path, which validates the raw parsed dict before
+        # this object even exists - including validate_config() on a directly constructed
+        # CompilerConfiguration that never went through a file at all.
+        try:
+            assert_json_schema_valid_configuration(self.to_dict())
+        except ValidationError as e:
+            for message in e.errors:
+                result.add_error(message)
 
         # Check required fields
         if not self.name or not self.name.strip():
@@ -609,6 +627,7 @@ def read_configuration(
         FileNotFoundError: If the file doesn't exist.
         ParseError: If parsing fails.
         UnknownExtensionError: If extension is not recognized.
+        ValidationError: If the parsed configuration fails JSON Schema validation.
     """
     path = Path(config_path)
 
@@ -625,6 +644,7 @@ def read_configuration(
     }
 
     data = parsers[detected_format](content, str(path))
+    assert_json_schema_valid_configuration(data)
     config = CompilerConfiguration.from_dict(data)
     config._source_format = detected_format
     config._source_path = str(path)
