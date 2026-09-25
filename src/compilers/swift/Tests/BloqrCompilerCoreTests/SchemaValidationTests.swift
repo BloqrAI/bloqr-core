@@ -9,11 +9,12 @@ final class SchemaValidationTests: XCTestCase {
     /// current working directory the test runner is invoked from.
     private static var repoRoot: URL {
         URL(fileURLWithPath: #filePath)
-            .deletingLastPathComponent() // BloqrCompilerCoreTests/
-            .deletingLastPathComponent() // Tests/
-            .deletingLastPathComponent() // swift/
-            .deletingLastPathComponent() // compilers/
-            .deletingLastPathComponent() // src/
+            .deletingLastPathComponent() // SchemaValidationTests.swift -> BloqrCompilerCoreTests/
+            .deletingLastPathComponent() // BloqrCompilerCoreTests/ -> Tests/
+            .deletingLastPathComponent() // Tests/ -> swift/
+            .deletingLastPathComponent() // swift/ -> compilers/
+            .deletingLastPathComponent() // compilers/ -> src/
+            .deletingLastPathComponent() // src/ -> repo root
     }
 
     func testBundledSchemaCopyStaysInSyncWithCanonical() throws {
