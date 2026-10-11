@@ -1,0 +1,18 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "services": {
+    "python": {
+      "root": "src/compilers/python",
+      "runtime": "python"
+    },
+    "cli": {
+      "root": "src/validation/cli",
+      "runtime": "rust"
+    },
+    "website": {
+      "root": "website",
+      "framework": "gatsby"
+    }
+  },
+  "rewrites": []
+}
