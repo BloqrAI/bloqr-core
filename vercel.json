@@ -1,0 +1,12 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "services": {
+    "website": {
+      "root": "website",
+      "framework": "gatsby"
+    }
+  },
+  "rewrites": [
+    { "source": "/(.*)", "destination": { "service": "website" } }
+  ]
+}
