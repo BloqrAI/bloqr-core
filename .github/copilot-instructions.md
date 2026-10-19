@@ -521,3 +521,8 @@ See `docs/release-guide.md` for full process.
 - **Guides**: `docs/guides/` - consoleui-architecture.md, adblock-compiler-guide.md, troubleshooting-guide.md, and more
 - **Comparison**: `docs/compiler-comparison.md` - Choose the right compiler
 - **Docker**: `docs/docker-guide.md` - Container development setup
+## Additional Rules
+
+- Bun is a supported runtime target for consumer-facing TypeScript packages: no unguarded `Deno.*` references outside code documented as Deno-only.
+- JSONC support varies by compiler. The TypeScript reader only accepts plain `.json`, `.yaml`, `.yml` or `.toml`, so never suggest a `.jsonc` config for it without stripping comments first.
+- Packages published to JSR (for example `@bloqr/compiler-core`) follow the per-package versioning standard: their own `VERSION`, `version:sync` script and tag prefix. .NET packages take their version from the csproj `<Version>` and Rust crates from `Cargo.toml`. Never add a single repo-wide version.
