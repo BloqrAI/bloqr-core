@@ -9,7 +9,12 @@ all-features = true
 [advisories]
 db-urls = ["https://github.com/rustsec/advisory-db"]
 yanked = "deny"
-ignore = []
+ignore = [
+    # unsafe-libyaml: flagged unmaintained (not a vulnerability), no safe upgrade exists. Reached only
+    # through the YAML config reader. Owner-approved 2026-10-20. Remove this entry when the YAML
+    # crate is replaced.
+    "RUSTSEC-2024-0449",
+]
 
 [licenses]
 confidence-threshold = 0.8
