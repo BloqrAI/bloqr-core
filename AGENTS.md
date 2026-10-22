@@ -1,0 +1,60 @@
+# AGENTS.md
+
+Standing instructions for AI agents in this repository. `CLAUDE.md` imports this file.
+
+## Autonomous Operating Policy (standing, from the owner, 2026-10-22)
+
+This section is the owner's standing authorization and process for every BloqrAI repository. Read it at the start of every session and follow it without being reminded. For everything it authorizes, do not ask permission ("can I merge?", "can I write this key?"): just do it. It governs process and authority; the code rules elsewhere in this repository still apply. The same text lives in each BloqrAI repository's `AGENTS.md`; when you change it, change every copy.
+
+### When it applies
+
+- Autonomous backlog work starts only when the owner asks (for example "go work on small backlog issues that don't need back and forth", or "autonomous backlog mode"). Never start it unprompted. When asked, keep working eligible issues until none remain or the owner says stop.
+- Work strictly serially: one BLO at a time, to Done, before the next. Never work issues in parallel and never spawn background agents or parallel branches for backlog work (it was tried once and the cleanup cost more than working serially).
+- Ignore PRs that neither you nor the owner created (Dependabot and other automation). Do not review, comment on, update or merge them.
+
+### Eligibility
+
+- Estimates are Fibonacci, 13 is the cap (extended estimates are off). Size like a competent human engineer would: complexity, uncertainty and blast radius. Do not size by AI time, and never count waiting time (CI, review, merges).
+- **5 SP or fewer:** take it start to finish with no human involvement. **More than 5:** the owner participates; label `needs-human` and move on.
+- Re-estimate after reading the issue. If it is larger or less clear than its estimate, change the estimate, label `needs-human`, leave a two-line comment saying why, and pick the next issue.
+- `needs-human` at any size: auth; billing; a requirement that needs back and forth; any `one-way` change (irreversible, see below) except a dev migration that meets the conditions below; a change CI cannot cover (code with no test you can add, Cloudflare binding or `wrangler` config behavior, behavior against real third-party APIs, visual changes without visual tests, timing or races); a change to the release gate itself (the CI jobs that gate release or deploy, their `if:` conditions, `permissions:`, or secret handling).
+- Other workflow edits are allowed.
+- **Data migrations** are allowed against the dev (not live) Neon project when all three hold: the change is additive (new tables, columns, indexes); you take a Neon snapshot or branch first; you run it on a branch, verify, then apply it. Drops, type changes and table rewrites are `one-way`. This flips to "always `needs-human`" once the product is live.
+- Labels (create them if missing): `claude` (every issue you work), `needs-human`, `needs-secret`, `one-way`. Keep these names neutral: they can appear in dashboards.
+
+### Lifecycle of one issue (work it like a human; every transition happens in Linear)
+
+1. Look for an existing PR for the issue that was never linked (search PRs for the BLO id in title, branch and body). If one exists, link it to the issue and advance the status to match its real state.
+2. Assign to the owner, add `claude`, move to In Progress.
+3. Set the estimate, type labels and priority. Leave the cycle empty until the owner says a sprint exists. Ignore other fields.
+4. Branch from the latest `origin/main`, one branch per issue, named from the issue's Linear branch name. If the session fixes a branch name, reuse it serially and reset it onto fresh `origin/main` after each merge (never stack on merged history).
+5. Do the work. Every change ships with tests where the repository has a test setup. Run the repository's own fast checks (lint, format, typecheck, tests; see its README or CLAUDE.md for the commands) before pushing.
+6. Open the PR as a draft, filling in the repository's PR template if it has one. The title is a Conventional Commit (it becomes the squash commit message and can drive version bumps). The body contains `Fixes BLO-n`. After opening, confirm the PR shows on the Linear issue; if it does not, attach it with the Linear attachment tool. A PR that is not linked to its issue is a defect.
+7. When CI is green (or immediately, if the repository has no CI), mark the PR ready for review. Copilot reviews once per PR (draft and new-push review are off). Move the issue to In Review.
+8. Fix every valid Copilot finding, reply with the reason for any you decline, resolve every thread, and keep CI green. If no Copilot review appears, request one once with the review tool; if still none, merge on green and note it on the issue.
+9. Merge when CI is green on the head commit, every thread is resolved and there is no conflict. Squash only. No human approval is required or sought. Move the issue to Merged.
+10. After merging, find the workflow run(s) for the merge commit on `main`. If the repository has a release or deploy gate (in `bloqr-compiler`, the `ci-gate` then `deploy` jobs of `ci.yml`, which is the only path to Cloudflare), the issue is Done only when that run is green. If the repository has no CI, move the issue to Done once merged and say so in the batch summary. If a run is red, leave the issue in Merged and fix forward or open a revert PR, whichever is faster and safer. A red `main` never stops new work: keep picking up issues and let work pile up, or fix `main` first when your own merge broke it (new branches inherit the failure, so fixing it first is usually the shortest path).
+
+Linear's GitHub integration may also move statuses on PR events; set statuses explicitly and reconcile any difference. Merge conflicts are yours to resolve: merge `main` into the branch, regenerate lock files with the tooling (never by hand), re-run checks, push. Almost all conflicts come from bot PRs that landed after you branched.
+
+### Secrets and 1Password
+
+- **1Password replaces environment variables for secrets.** The single exception is the bootstrap `OP_SERVICE_ACCOUNT_TOKEN`. Do not ask the owner to put any other key in the environment; do not use environment-variable secrets for new work.
+- **Scope:** use only the `Claude-*` vaults (`Claude-Dev` now; `Claude-Prod` later with its own service account). Never list, read or write any other vault (Engineering, Finance, Root and Recovery, personal or employee vaults). If the service account can see another vault, stop and tell the owner.
+- **The `op` CLI** may be missing in a fresh container. If `op` is not on PATH, install it from `cache.agilebits.com` into a temp directory (it is version-pinned, currently 2.30.0) and continue.
+- **Standing permission, no asking:** read keys from 1Password, write and update keys in 1Password, mint keys through any connector that allows it (immediately store the new key in 1Password), set Cloudflare Worker secrets, and use a key right after reading it.
+- **Never reveal a value.** Read it into the one command that needs it (`op read`, `op run`) and never echo, log or write it to disk. Never put a value in Linear, GitHub, a PR, a commit, a comment or chat. Refer to a key only by its item name.
+- **Naming and tags:** item title `<system>/<purpose>/<env>` (for example `cloudflare/worker-deploy/dev`). Tags: `owner:claude`, `env:<dev|prod>`, `minted-by:claude` when you minted it, `created-for:BLO-n`, `rotate-by:<date>`. Notes: where the key is used and its scopes.
+- **GitHub Actions secrets** are the one manual step. If `github/actions-secrets-writer/dev` exists in `Claude-Dev`, use it to set Actions secrets through the REST API (sealed-box encrypted); otherwise follow the `needs-secret` flow below.
+- **`needs-secret` flow:** a missing key never stops your work. Push the issue as far as it can go (PR open, Copilot review done, every thread resolved), hold the merge if CI needs the key, add `needs-secret`, and comment the exact secret names, where each goes, and a ready-to-paste brief for the owner. The owner supplies keys in one batch at the end of the day, re-runs the failed jobs, and the green run wakes you to merge. Do not add skip logic that lets a job pass without its secret.
+- If a connector can mint a key but you lack the permission, treat that as a missing key (`needs-secret`), not a blocker.
+
+### Standing authorizations and hard stops
+
+- Authorized without asking: create branches and PRs, merge your own PRs under the rules above, fix CI on `main`, resolve merge conflicts, create and edit labels, update Linear (status, estimates, labels, priority, assignee, links), run dev migrations under the conditions above, edit workflows except the release gate, mint and store keys, delete branches and anything else you created yourself.
+- Always flag instead of acting: auth; billing; `one-way` changes outside the dev-migration case; anything over 5 SP; exposing a secret; spending money or changing a plan; deleting anything you did not create (repos, DNS, data, vault items, Linear issues). Flag by labeling `needs-human` and moving on.
+
+### Communication
+
+- **Autonomous backlog runs are silent by default.** The owner may remind you; if they say they are watching or ask for updates, narrate normally. In a silent run, do not narrate: no progress chatter and no per-ticket messages. Work the batch, then give one summary at the end: what merged, what is Merged but not yet Done, every `needs-human` and `needs-secret` item with its reason, and anything red. For a long batch also write the same summary as a Markdown file (not a Google Doc) in a `Claude Run Reports` folder in the owner's Google Drive, creating the folder if it is missing, and link it; if Drive is unavailable, the final message alone is the summary. Stop mid-batch only for a hard stop above. The owner then reviews, chats through any issues, and starts the next cycle.
+- Outside a backlog run, give normal working updates (the owner often watches), terse in wording. Put anything the owner must do in one block headed "For your scratchpad", with no urgency and no deadlines. Do not end replies with a list of what you are waiting on. The owner batches context switches, so never ask for something one item at a time.
