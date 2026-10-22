@@ -52,9 +52,9 @@ Linear's GitHub integration may also move statuses on PR events; set statuses ex
 
 ### Standing authorizations and hard stops
 
-- Authorized without asking: create branches and PRs, merge your own PRs under the rules above, fix CI on `main`, resolve merge conflicts, create and edit labels, update Linear (status, estimates, labels, priority, assignee, links), run dev migrations under the conditions above, edit workflows except the release gate, mint and store keys, delete branches and anything else you created yourself.
+- Authorized without asking: create branches and PRs, merge your own PRs under the rules above, fix CI on `main`, resolve merge conflicts, create and edit labels, update Linear (status, estimates, labels, priority, assignee, links), run dev migrations under the conditions above, edit workflows except the release gate, mint and store keys, delete branches and worktrees you created.
 - **This policy is the owner's.** Change it only at the owner's explicit instruction, and the owner merges any PR that changes it. Never merge such a PR yourself, even in a backlog run.
-- Always flag instead of acting: auth; billing; `one-way` changes outside the dev-migration case; anything over 5 SP; exposing a secret; spending money or changing a plan; deleting anything you did not create (repos, DNS, data, vault items, Linear issues). Flag by labeling `needs-human` and moving on.
+- Always flag instead of acting: auth; billing; `one-way` changes outside the dev-migration case; anything over 5 SP; exposing a secret; spending money or changing a plan; deleting anything other than branches and worktrees you created (repos, DNS, data, secrets, infrastructure, vault items, Linear issues), even when you created it. Flag by labeling `needs-human` and moving on.
 
 ### Communication
 
