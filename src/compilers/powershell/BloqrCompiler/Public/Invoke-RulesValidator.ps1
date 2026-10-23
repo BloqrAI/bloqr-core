@@ -23,6 +23,14 @@ function Invoke-RulesValidator {
         Path to the hash database file used for remote-source hash verification.
         Defaults to a `.hashes.json` file alongside Path.
 
+    .PARAMETER Engine
+        Which syntax grammar to validate against: 'dns' (the validator's default,
+        rejects cosmetic/browser-only syntax) or 'browser' (accepts cosmetic rules,
+        extended CSS, scriptlet injection, and browser-only modifiers). When omitted,
+        no --engine flag is passed and the validator's default applies. The
+        browser-syntax artifact of a dual-engine compile is validated with 'browser'
+        (BLO-459).
+
     .OUTPUTS
         RulesValidatorResult, or $null if validation was skipped.
 
@@ -36,7 +44,11 @@ function Invoke-RulesValidator {
         [string]$Path,
 
         [Parameter(Mandatory = $false)]
-        [string]$HashDatabasePath
+        [string]$HashDatabasePath,
+
+        [Parameter(Mandatory = $false)]
+        [ValidateSet('dns', 'browser')]
+        [string]$Engine
     )
 
     $binary = Find-RulesValidateBinary
@@ -49,10 +61,15 @@ function Invoke-RulesValidator {
         $HashDatabasePath = Join-Path (Split-Path -Parent $Path) '.hashes.json'
     }
 
+    $validatorArgs = @('--json', 'file', $Path, '--hash-db', $HashDatabasePath)
+    if ($Engine) {
+        $validatorArgs += @('--engine', $Engine)
+    }
+
     try {
         $stderrFile = [System.IO.Path]::GetTempFileName()
         try {
-            $stdout = & $binary --json file $Path --hash-db $HashDatabasePath 2>$stderrFile
+            $stdout = & $binary @validatorArgs 2>$stderrFile
             $exitCode = $LASTEXITCODE
             $stderrContent = Get-Content -LiteralPath $stderrFile -Raw -ErrorAction SilentlyContinue
             if (-not [string]::IsNullOrWhiteSpace($stderrContent)) {

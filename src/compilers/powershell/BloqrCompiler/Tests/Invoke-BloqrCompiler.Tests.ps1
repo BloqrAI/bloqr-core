@@ -321,6 +321,25 @@ Describe 'Invoke-BloqrCompiler' {
             }
         }
 
+        It 'Validates the browser artifact with -Engine browser and the DNS artifact without one (BLO-459)' {
+            $configPath = New-TestConfig -Directory $script:tempDir
+            $outputPath = Join-Path $script:tempDir 'output.txt'
+            $browserOutputPath = Join-Path $script:tempDir 'custom.browser.txt'
+            $fakeCompiler = New-FakeCompilerCore -Directory $script:tempDir -BrowserRulesContent "||ads.example.com^`n"
+            Register-FakeCompilerMock -FakeCompiler $fakeCompiler
+            Mock -ModuleName BloqrCompiler Invoke-RulesValidator { New-ValidRulesValidatorResult }
+
+            $result = Invoke-BloqrCompiler -ConfigPath $configPath -OutputPath $outputPath -Engine browser -BrowserOutputPath $browserOutputPath
+
+            $result.Success | Should -Be $true
+            Should -Invoke -ModuleName BloqrCompiler Invoke-RulesValidator -Times 1 -Exactly -ParameterFilter {
+                $Path -eq $browserOutputPath -and $Engine -eq 'browser'
+            }
+            Should -Invoke -ModuleName BloqrCompiler Invoke-RulesValidator -Times 1 -Exactly -ParameterFilter {
+                $Path -eq $outputPath -and -not $Engine
+            }
+        }
+
         It 'Does not pass -BrowserOutputPath through to Get-BloqrCompilerCommand when not explicitly requested' {
             $configPath = New-TestConfig -Directory $script:tempDir
             $outputPath = Join-Path $script:tempDir 'output.txt'

@@ -445,10 +445,16 @@ async def _run_rules_validator(
     event_dispatcher: EventDispatcher | None,
     allow_unvalidated: bool = False,
     fail_on_warnings: bool = False,
+    engine: str | None = None,
 ) -> tuple[bool, str | None]:
     """
     Shell out to the native `bloqr-validate` CLI to run its syntax check against the
     compiled output, and raise a `Validation` event with its findings.
+
+    `engine` selects the validator's grammar (`"dns"` or `"browser"`). It is forwarded as
+    `--engine` only when set, so the DNS artifact keeps the validator's default; the
+    browser-syntax artifact passes `"browser"` explicitly (BLO-459, matching the
+    .NET/TypeScript wrappers) rather than relying on that default.
 
     Fail-closed by default: any Error/Critical finding (`not validation_args.passed`)
     aborts compilation, and so does a missing/failed/unparseable validator run - a
@@ -476,9 +482,12 @@ async def _run_rules_validator(
         )
 
     hash_db_path = output_path.parent / ".hashes.json"
+    command = [binary, "--json", "file", str(output_path), "--hash-db", str(hash_db_path)]
+    if engine is not None:
+        command += ["--engine", engine]
     try:
         proc = subprocess.run(
-            [binary, "--json", "file", str(output_path), "--hash-db", str(hash_db_path)],
+            command,
             capture_output=True,
             text=True,
             timeout=60,
@@ -1066,7 +1075,7 @@ def compile_rules(
             can_continue, error_message = asyncio.run(
                 _run_rules_validator(
                     resolved_browser_output, event_dispatcher, allow_unvalidated_output,
-                    fail_on_warnings,
+                    fail_on_warnings, engine="browser",
                 )
             )
             if not can_continue:
@@ -1410,7 +1419,7 @@ async def compile_rules_async(
 
             can_continue, error_message = await _run_rules_validator(
                 resolved_browser_output, event_dispatcher, allow_unvalidated_output,
-                fail_on_warnings,
+                fail_on_warnings, engine="browser",
             )
             if not can_continue:
                 result.success = False

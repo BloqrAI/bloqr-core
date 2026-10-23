@@ -24,11 +24,13 @@ BeforeAll {
         param(
             [Parameter(Mandatory = $true)][string]$Directory,
             [Parameter(Mandatory = $true)][string]$Stdout,
-            [int]$ExitCode = 0
+            [int]$ExitCode = 0,
+            [string]$ArgsLogPath
         )
 
         $scriptPath = Join-Path $Directory 'bloqr-validate'
-        $body = "#!/bin/sh`ncat <<'RVEOF'`n$Stdout`nRVEOF`nexit $ExitCode`n"
+        $logLine = if ($ArgsLogPath) { "echo `"`$@`" > '$ArgsLogPath'`n" } else { '' }
+        $body = "#!/bin/sh`n${logLine}cat <<'RVEOF'`n$Stdout`nRVEOF`nexit $ExitCode`n"
         Set-Content -Path $scriptPath -Value $body -NoNewline
         if (-not $IsWindows) {
             & chmod +x $scriptPath
@@ -93,6 +95,28 @@ Describe 'Invoke-RulesValidator' {
         $result = Invoke-RulesValidator -Path $script:outputFile -HashDatabasePath $customHashDb
 
         $result.IsValid | Should -Be $true
+    }
+
+    It 'Passes --engine through to the CLI when -Engine is set' -Skip:$IsWindows {
+        $argsLog = Join-Path $script:tempDir 'args.log'
+        $binary = New-FakeRulesValidateBinary -Directory $script:tempDir -ArgsLogPath $argsLog `
+            -Stdout '{"is_valid":true,"format":"adblock","valid_rules":1,"invalid_rules":0,"messages":[]}'
+        Mock -ModuleName BloqrCompiler Find-RulesValidateBinary { $binary }.GetNewClosure()
+
+        $null = Invoke-RulesValidator -Path $script:outputFile -Engine browser
+
+        (Get-Content -LiteralPath $argsLog -Raw) | Should -Match '--engine browser'
+    }
+
+    It 'Omits --engine when -Engine is not set' -Skip:$IsWindows {
+        $argsLog = Join-Path $script:tempDir 'args.log'
+        $binary = New-FakeRulesValidateBinary -Directory $script:tempDir -ArgsLogPath $argsLog `
+            -Stdout '{"is_valid":true,"format":"adblock","valid_rules":1,"invalid_rules":0,"messages":[]}'
+        Mock -ModuleName BloqrCompiler Find-RulesValidateBinary { $binary }.GetNewClosure()
+
+        $null = Invoke-RulesValidator -Path $script:outputFile
+
+        (Get-Content -LiteralPath $argsLog -Raw) | Should -Not -Match '--engine'
     }
 
     It 'Returns $null when the CLI produces non-JSON output' {
