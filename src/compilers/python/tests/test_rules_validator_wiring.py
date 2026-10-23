@@ -301,3 +301,79 @@ class TestRunRulesValidator:
 
         assert not can_continue
         assert error is not None
+
+
+class TestCompileRulesValidatesBrowserArtifactWithBrowserEngine:
+    """`compile_rules`/`compile_rules_async` must validate the browser-syntax artifact with
+    `engine="browser"` and the DNS artifact without an engine (BLO-459).
+
+    The compiler subprocess is replaced with a tiny script that writes both artifacts, and
+    `_run_rules_validator` with a recorder, so the assertions pin the argument each call
+    site passes rather than the validator's own behavior (covered above).
+    """
+
+    @staticmethod
+    def _wire(
+        tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> tuple[Path, Path, Path, list[tuple[str, str | None]]]:
+        import sys
+
+        config = tmp_path / "config.json"
+        config.write_text(
+            json.dumps({"name": "t", "sources": [{"source": "https://example.com/list.txt"}]})
+        )
+        dns_output = tmp_path / "output.txt"
+        browser_output = tmp_path / "output.browser.txt"
+        script = tmp_path / "fake_compiler.py"
+        script.write_text(
+            "import sys\n"
+            "open(sys.argv[1], 'w').write('||example.com^\\n')\n"
+            "open(sys.argv[2], 'w').write('example.com##.ad\\n')\n"
+        )
+
+        def fake_command(
+            _config: str, output: str, _engine: str | None, browser: str | None
+        ) -> tuple[list[str], str]:
+            return [sys.executable, str(script), output, str(browser)], str(tmp_path)
+
+        calls: list[tuple[str, str | None]] = []
+
+        async def fake_validator(
+            output_path: Path,
+            _dispatcher: EventDispatcher | None,
+            _allow_unvalidated: bool = False,
+            _fail_on_warnings: bool = False,
+            engine: str | None = None,
+        ) -> tuple[bool, str | None]:
+            calls.append((output_path.name, engine))
+            return True, None
+
+        monkeypatch.setattr(compiler_module, "_get_compiler_command", fake_command)
+        monkeypatch.setattr(compiler_module, "_run_rules_validator", fake_validator)
+        return config, dns_output, browser_output, calls
+
+    def test_sync_compile_validates_browser_artifact_with_browser_engine(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        config, dns_output, browser_output, calls = self._wire(tmp_path, monkeypatch)
+
+        result = compiler_module.compile_rules(
+            config, output_path=dns_output, browser_output_path=browser_output, validate=False
+        )
+
+        assert result.success, result.error_message
+        assert calls == [("output.txt", None), ("output.browser.txt", "browser")]
+
+    def test_async_compile_validates_browser_artifact_with_browser_engine(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        config, dns_output, browser_output, calls = self._wire(tmp_path, monkeypatch)
+
+        result = asyncio.run(
+            compiler_module.compile_rules_async(
+                config, output_path=dns_output, browser_output_path=browser_output, validate=False
+            )
+        )
+
+        assert result.success, result.error_message
+        assert calls == [("output.txt", None), ("output.browser.txt", "browser")]
