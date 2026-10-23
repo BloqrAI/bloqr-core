@@ -106,6 +106,49 @@ class TestRunRulesValidator:
         assert handler.validations[0].passed
         assert handler.validations[0].items_validated == 1
 
+    def test_engine_is_forwarded_to_the_cli_when_set(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        monkeypatch.setattr(compiler_module, "find_rules_validate_binary", lambda: "bloqr-validate")
+        payload = json.dumps(
+            {"is_valid": True, "format": "adblock", "valid_rules": 1, "invalid_rules": 0, "messages": []}
+        )
+        commands: list[list[str]] = []
+
+        def fake_run(command: list[str], **_kwargs: object) -> subprocess.CompletedProcess:
+            commands.append(command)
+            return _fake_completed_process(payload)
+
+        monkeypatch.setattr(subprocess, "run", fake_run)
+        output = tmp_path / "output.browser.txt"
+        output.write_text("example.com##.ad\n")
+
+        can_continue, _ = asyncio.run(_run_rules_validator(output, None, engine="browser"))
+
+        assert can_continue
+        assert commands[0][-2:] == ["--engine", "browser"]
+
+    def test_engine_flag_is_omitted_when_not_set(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        monkeypatch.setattr(compiler_module, "find_rules_validate_binary", lambda: "bloqr-validate")
+        payload = json.dumps(
+            {"is_valid": True, "format": "adblock", "valid_rules": 1, "invalid_rules": 0, "messages": []}
+        )
+        commands: list[list[str]] = []
+
+        def fake_run(command: list[str], **_kwargs: object) -> subprocess.CompletedProcess:
+            commands.append(command)
+            return _fake_completed_process(payload)
+
+        monkeypatch.setattr(subprocess, "run", fake_run)
+        output = tmp_path / "output.txt"
+        output.write_text("||example.com^\n")
+
+        asyncio.run(_run_rules_validator(output, None))
+
+        assert "--engine" not in commands[0]
+
     def test_invalid_syntax_with_messages_fails_closed_by_default(
         self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
     ) -> None:

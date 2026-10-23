@@ -18,7 +18,7 @@ use crate::events::{
     EventDispatcher, EventTimestamp, HashComputedEventArgs, HashMismatchEventArgs,
     HashVerifiedEventArgs, ValidationEventArgs, ValidationSeverity,
 };
-use bloqr_validator::{ValidationConfig, Validator};
+use bloqr_validator::{ValidationConfig, ValidationEngine, Validator};
 
 /// JSR package specifier for the compiler CLI, run via `deno run`.
 const JSR_PACKAGE_SPECIFIER: &str = "jsr:@bloqr/compiler-core/cli";
@@ -705,11 +705,12 @@ fn validate_output_with_events<P: AsRef<Path>>(
     config: &ValidationConfig,
     allow_unvalidated: bool,
     fail_on_warnings: bool,
+    engine: ValidationEngine,
 ) -> Option<String> {
     let path = path.as_ref();
     let mut validator = Validator::new(config.clone());
 
-    let syntax_result = match validator.validate_local_file(path) {
+    let syntax_result = match validator.validate_local_file_with_engine(path, engine) {
         Ok(result) => result,
         Err(e) => {
             return if allow_unvalidated {
@@ -927,6 +928,7 @@ pub fn compile_rules<P: AsRef<Path>>(
         &ValidationConfig::default(),
         options.allow_unvalidated_output,
         options.fail_on_warnings,
+        ValidationEngine::Dns,
     ) {
         result.error_message = Some(abort_reason);
         result.success = false;
@@ -949,6 +951,7 @@ pub fn compile_rules<P: AsRef<Path>>(
             &ValidationConfig::default(),
             options.allow_unvalidated_output,
             options.fail_on_warnings,
+            ValidationEngine::Browser,
         ) {
             result.error_message = Some(format!(
                 "browser-syntax artifact failed syntax validation (DNS artifact was already \
@@ -1158,6 +1161,7 @@ pub fn compile_rules_with_events<P: AsRef<Path>>(
         &ValidationConfig::default(),
         options.allow_unvalidated_output,
         options.fail_on_warnings,
+        ValidationEngine::Dns,
     ) {
         result.error_message = Some(abort_reason);
         result.success = false;
@@ -1182,6 +1186,7 @@ pub fn compile_rules_with_events<P: AsRef<Path>>(
             &ValidationConfig::default(),
             options.allow_unvalidated_output,
             options.fail_on_warnings,
+            ValidationEngine::Browser,
         ) {
             result.error_message = Some(format!(
                 "browser-syntax artifact failed syntax validation (DNS artifact was already \
@@ -1570,7 +1575,14 @@ mod tests {
 
         // No handlers registered, and the content is valid - nothing to abort over.
         assert_eq!(
-            validate_output_with_events(&path, &dispatcher, &config, false, false),
+            validate_output_with_events(
+                &path,
+                &dispatcher,
+                &config,
+                false,
+                false,
+                ValidationEngine::Dns
+            ),
             None
         );
     }
@@ -1588,7 +1600,15 @@ mod tests {
 
         // Fail-closed by default: an Error/Critical finding aborts even with zero
         // handlers registered - this is the gap the fail-closed rewrite closes.
-        assert!(validate_output_with_events(&path, &dispatcher, &config, false, false).is_some());
+        assert!(validate_output_with_events(
+            &path,
+            &dispatcher,
+            &config,
+            false,
+            false,
+            ValidationEngine::Dns
+        )
+        .is_some());
     }
 
     #[test]
@@ -1602,7 +1622,14 @@ mod tests {
 
         // Explicit opt-out reverts to legacy behavior: only a handler-set abort counts.
         assert_eq!(
-            validate_output_with_events(&path, &dispatcher, &config, true, false),
+            validate_output_with_events(
+                &path,
+                &dispatcher,
+                &config,
+                true,
+                false,
+                ValidationEngine::Dns
+            ),
             None
         );
     }
@@ -1618,7 +1645,14 @@ mod tests {
         let config = scoped_validation_config(&dir);
 
         assert_eq!(
-            validate_output_with_events(&path, &dispatcher, &config, false, false),
+            validate_output_with_events(
+                &path,
+                &dispatcher,
+                &config,
+                false,
+                false,
+                ValidationEngine::Dns
+            ),
             Some("aborted by test handler".to_string())
         );
     }
@@ -1635,7 +1669,8 @@ mod tests {
             &dispatcher,
             &config,
             false,
-            false
+            false,
+            ValidationEngine::Dns
         )
         .is_some());
     }
@@ -1651,10 +1686,43 @@ mod tests {
                 &dispatcher,
                 &config,
                 true,
-                false
+                false,
+                ValidationEngine::Dns
             ),
             None
         );
+    }
+
+    #[test]
+    fn test_validate_output_with_events_forwards_engine_to_validator() {
+        let dir = TempDir::new().unwrap();
+        let path = dir.path().join("output.browser.txt");
+        // Cosmetic rule: valid browser-engine syntax, rejected by the DNS grammar.
+        fs::write(&path, "example.com##.ad-banner\n").unwrap();
+
+        let dispatcher = EventDispatcher::new();
+        let config = scoped_validation_config(&dir);
+
+        assert_eq!(
+            validate_output_with_events(
+                &path,
+                &dispatcher,
+                &config,
+                false,
+                false,
+                ValidationEngine::Browser
+            ),
+            None
+        );
+        assert!(validate_output_with_events(
+            &path,
+            &dispatcher,
+            &config,
+            false,
+            false,
+            ValidationEngine::Dns
+        )
+        .is_some());
     }
 
     #[test]

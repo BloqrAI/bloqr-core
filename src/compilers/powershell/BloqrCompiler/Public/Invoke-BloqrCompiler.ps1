@@ -236,7 +236,7 @@ function Invoke-BloqrCompiler {
         $browserRuleCount = Get-RuleCount -Path $resolvedBrowserOutputPath
         $browserHash = Get-RulesFileHash -Path $resolvedBrowserOutputPath
 
-        $browserValidation = Invoke-RulesValidator -Path $resolvedBrowserOutputPath
+        $browserValidation = Invoke-RulesValidator -Path $resolvedBrowserOutputPath -Engine 'browser'
         if (-not $browserValidation) {
             if (-not $AllowUnvalidatedOutput) {
                 return [CompilerResult]::CreateFailure(
