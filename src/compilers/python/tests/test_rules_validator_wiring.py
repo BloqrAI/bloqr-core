@@ -8,6 +8,8 @@ environment - consistent with the rest of this suite not exercising `compile_rul
 end-to-end (see test_hash_verification_wiring.py's docstring).
 """
 
+from __future__ import annotations
+
 import asyncio
 import json
 import subprocess
