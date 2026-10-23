@@ -182,8 +182,9 @@ one enormous change:
 - **Native AOT for the .NET apps.** Evaluated and deliberately deferred
   (`docs/architecture/release-packaging-strategy.md`) — YAML/TOML support
   and `AnsiConsole.WriteException` are both real blockers, not busywork.
-- **WPF UI layer on top of Dashboard** — explicitly named in the epic's
-  original scope as a follow-on, not started.
+- **.NET MAUI UI layer on top of Dashboard** — explicitly named in the epic's
+  original scope as a follow-on (drafted there as a WPF app; .NET MAUI replaced
+  it because WPF isn't cross-platform and is largely legacy), not started.
 - **`website/`'s eventual extraction into its own repository**, and CLAUDE.md's
   existing note that it's expected to eventually move to Starlight in
   `bloqr-compiler` rather than staying on Gatsby indefinitely — two separate

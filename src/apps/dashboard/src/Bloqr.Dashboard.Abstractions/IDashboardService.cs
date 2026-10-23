@@ -3,7 +3,8 @@ namespace Bloqr.Dashboard.Abstractions;
 /// <summary>
 /// The Dashboard's embeddable-library API boundary: every operation the interactive menus and
 /// the CLI surface expose, available as plain async calls with no dependency on Spectre.Console
-/// or terminal rendering. Per the epic: "the WPF application will have the Dashboard console
+/// or terminal rendering. Per the epic (which drafted the host as a WPF app; .NET MAUI has since
+/// replaced WPF): "the WPF application will have the Dashboard console
 /// application embedded as a library... Dashboard should expose all inner operations via CLI
 /// switches, APIs, etc." (#271). A future .NET MAUI host depends on this interface (and the rest of
 /// <c>Bloqr.Dashboard.Abstractions</c>/<c>Bloqr.Dashboard.Core</c>) instead of anything in
@@ -24,7 +25,7 @@ public interface IDashboardService
     /// <see cref="CompilerResult.OutputHash"/>, <see cref="CompilerResult.RuleCount"/>) plus the
     /// browser ones (<see cref="CompilerResult.BrowserOutputPath"/>,
     /// <see cref="CompilerResult.BrowserOutputHash"/>, <see cref="CompilerResult.BrowserRuleCount"/>,
-    /// populated only when the config mixed both source types). A future MAUI/WPF host can render
+    /// populated only when the config mixed both source types). A future .NET MAUI host can render
     /// both artifacts - with their independent hashes and paths - straight off one result, with no
     /// need to correlate two separate calls or two result objects.
     /// </para>
