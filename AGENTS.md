@@ -66,12 +66,26 @@ None are live yet (owner, 2026-10-22). Resources with a production-style name ar
 - **Autonomous backlog runs are silent by default.** The owner may remind you; if they say they are watching or ask for updates, narrate normally. In a silent run, do not narrate: no progress chatter and no per-ticket messages. Work the batch, then give one summary at the end: what merged, what is Merged but not yet Done, every `needs-human` and `needs-secret` item with its reason, and anything red. For a long batch also write the same summary as a Markdown file (not a Google Doc) in a `Claude Run Reports` folder in the owner's Google Drive, creating the folder if it is missing, and link it; if Drive is unavailable, the final message alone is the summary. Stop mid-batch only for a hard stop above. The owner then reviews, chats through any issues, and starts the next cycle.
 - Outside a backlog run, give normal working updates (the owner often watches), terse in wording. Put anything the owner must do in one block headed "For your scratchpad", with no urgency and no deadlines. Do not end replies with a list of what you are waiting on. The owner batches context switches, so never ask for something one item at a time.
 
-## Org-level repositories (`.github`, `.github-private`)
+## Org-level repositories (`.github`, `.github-private`): process and rule (not yet policy)
 
-Standing note from the owner, 2026-10-25. Read this so it does not need repeating.
+Standing note from the owner, 2026-10-25. This is a process/rule for how agents handle these repositories. It is not policy yet; the owner expects to promote it to policy because shared work is being duplicated across repositories and will get worse as more repositories come online. Read this so it does not need repeating, and be ready to advise on it.
 
-- BloqrAI has organization-level repositories whose names start with a dot: `.github` and `.github-private`. GitHub defines these names. They cannot be renamed, because GitHub only reads its org-wide features from a repository with exactly that name. Do not suggest renaming them, and do not propose an alternative name.
-- They are shared across every repository in the organization. The owner uses them to centralize anything shared: workflows, templates, the org profile and, as planned, skills. What GitHub itself inherits from `.github` is a fixed set (default community health files, default issue and PR templates, workflow templates, the org profile README) and reusable workflows can be called from other repos. Do not assume anything else, such as `.claude/skills`, is picked up automatically. Verify before relying on it.
-- **Claude Code cloud sessions cannot attach them.** `add_repo` refuses any repository whose name begins with `.` (the clone directory would be hidden). This is a known limitation of the cloud-session tool, not a permission problem. Dot-directories inside an attached repo (`.github/`, `.claude/`) work normally.
-- Therefore: do not try to `add_repo` these repositories, and do not work around the block by reading or writing them through the GitHub API tools when a session is scoped to other repositories. Say plainly that the change has to be made in a session or checkout that has the repository (a local Claude Code session, or the owner), and give the exact change to make.
-- Shared skills must not be copied into every repository. Where a skill needs to live across repos, prefer one shared source (for example a single plugin repository with a normal name) over per-repo copies.
+**What they are**
+
+- BloqrAI has two organization-level repositories whose names start with a dot: `.github` and `.github-private`. GitHub defines these names and reads org-wide features only from repositories with exactly these names, so they cannot be renamed. Do not suggest renaming them or propose alternative names.
+- They are shared across every repository in the organization. The owner's intent is to centralize anything shared there (workflows, templates, profile content and, as planned, skills) instead of repeating it in each repository.
+- The owner's shared content goes to **`BloqrAI/.github-private`**, not `BloqrAI/.github`. Treat `.github-private` as the primary shared home, and treat `.github` as the public-facing one.
+
+**What each one can power** (from josh-ops.com, "GitHub .github repository", read via a summary, to be re-checked against the full article and GitHub's docs)
+
+- `.github`: default community health files (`CONTRIBUTING.md`, `SECURITY.md`, `SUPPORT.md` and similar), the public org profile README (`profile/README.md`, public repo), default issue/PR templates (these need a public repo), and workflow templates (`workflow-templates/`). Enterprise Managed Users orgs have limits here.
+- `.github-private`: the member-only org profile README (`profile/README.md`, private repo), and, when it is the enterprise-designated repo, Copilot custom agents (`agents/`) and enterprise-managed Copilot settings (`copilot/managed-settings.json`).
+- **Not inherited:** per-repository `AGENTS.md`, skills, hooks, prompts and `copilot-instructions.md` do not flow from either repository into other repositories. Do not assume a skill placed there reaches every repo. Verify before relying on it, and say so when advising.
+
+**How agents must treat them**
+
+1. Cloud sessions cannot attach them: `add_repo` refuses any repository whose name begins with `.`. This is a tool limit, not a permission problem. Dot-directories inside an attached repo (`.github/`, `.claude/`) work normally.
+2. Do not try `add_repo` on them, and do not read or write them through the GitHub API tools when the session is scoped to other repositories.
+3. Planned workaround (owner, 2026-10-25): the owner forks each one under a normal name, attaches the forks to cloud sessions, work happens there, and changes are merged back by pull request. Same-organization forking is supported on GitHub.com (shipped 2022) and the fork can be renamed. Fork names are not chosen yet; add them here when the owner decides. The merges are content only, so they stay simple.
+4. When work is duplicated across repositories (workflows, templates, skills, instructions), advise whether it belongs in one of these repositories, and which one (public content in `.github`, anything member-only in `.github-private`), and what GitHub will and will not inherit. Do not copy it into every repository.
+5. For shared skills, prefer one shared source with a normal name (for example a single plugin repository) over per-repo copies, because skills are not inherited.
