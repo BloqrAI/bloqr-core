@@ -10,11 +10,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile.warp
-      args:
-        DENO_VERSION: 2.x
-        RUST_VERSION: stable
     image: ad-blocking-dev:latest
-    container_name: ad-blocking-dev
     volumes:
       - .:/workspace
       # Named volumes for dependency caching
@@ -24,7 +20,6 @@ services:
       - nuget_packages:/root/.nuget/packages
     environment:
       - DEBUG=${DEBUG:-}
-      - AdGuard__ApiKey=${ADGUARD_API_KEY:-}
       - DOTNET_CLI_TELEMETRY_OPTOUT=1
     working_dir: /workspace
     stdin_open: true
@@ -40,14 +35,11 @@ services:
       context: .
       dockerfile: Dockerfile.warp
     image: ad-blocking-dev:latest
-    container_name: ad-blocking-typescript
     volumes:
       - .:/workspace
       - deno_cache:/root/.deno
     working_dir: /workspace/src/compilers/typescript
     command: deno task compile
-    depends_on:
-      - dev
     profiles:
       - compile
     networks:
@@ -61,14 +53,11 @@ services:
       context: .
       dockerfile: Dockerfile.warp
     image: ad-blocking-dev:latest
-    container_name: ad-blocking-dotnet
     volumes:
       - .:/workspace
       - nuget_packages:/root/.nuget/packages
     working_dir: /workspace/src/compilers/dotnet
     command: dotnet run --project src/Bloqr.Compiler.Dotnet.Console
-    depends_on:
-      - dev
     profiles:
       - compile
     networks:
@@ -82,13 +71,10 @@ services:
       context: .
       dockerfile: Dockerfile.warp
     image: ad-blocking-dev:latest
-    container_name: ad-blocking-python
     volumes:
       - .:/workspace
     working_dir: /workspace/src/compilers/python
     command: python -m bloqr_compiler
-    depends_on:
-      - dev
     profiles:
       - compile
     networks:
@@ -102,7 +88,6 @@ services:
       context: .
       dockerfile: Dockerfile.warp
     image: ad-blocking-dev:latest
-    container_name: ad-blocking-rust
     volumes:
       - .:/workspace
       - cargo_registry:/root/.cargo/registry
@@ -111,8 +96,6 @@ services:
     # src/compilers/rust/cli; the library it wraps is src/compilers/rust/core.
     working_dir: /workspace/src/compilers/rust/cli
     command: cargo run --release
-    depends_on:
-      - dev
     profiles:
       - compile
     networks:
@@ -126,7 +109,6 @@ services:
       context: .
       dockerfile: Dockerfile.warp
     image: ad-blocking-dev:latest
-    container_name: ad-blocking-test
     volumes:
       - .:/workspace
       - deno_cache:/root/.deno
@@ -138,18 +120,22 @@ services:
       bash -c "
         echo '=== Running TypeScript Tests ===' &&
         cd /workspace/src/compilers/typescript && deno task test &&
-        echo '=== Running .NET Tests ===' &&
+        echo '=== Running Shared .NET Library Tests ===' &&
+        cd /workspace/src/common/dotnet && dotnet test CompilerCommon.slnx &&
+        echo '=== Running .NET Compiler Tests ===' &&
         cd /workspace/src/compilers/dotnet && dotnet test CompilerDotnet.slnx &&
+        echo '=== Running Dashboard Tests ===' &&
+        cd /workspace/src/apps/dashboard && dotnet test BloqrDashboard.slnx &&
         echo '=== Running Python Tests ===' &&
-        cd /workspace/src/compilers/python && pytest &&
-        echo '=== Running Rust Tests ===' &&
-        cargo test -p bloqr-compiler -p bloqr-compiler-core &&
+        cd /workspace/src/compilers/python &&
+        python3 -m pip install --break-system-packages -e '.[dev]' &&
+        pytest &&
+        echo '=== Running Rust Workspace Tests ===' &&
+        cd /workspace && cargo test --workspace &&
         echo '=== Running PowerShell Tests ===' &&
-        pwsh -Command 'Invoke-Pester -Path /workspace/src/compilers/powershell -PassThru' &&
-        echo '=== All Tests Complete ==='
+        pwsh -NoLogo -NoProfile -Command '$result = Invoke-Pester -Path /workspace/src/compilers/powershell -Recurse -PassThru; if ($result.FailedCount -gt 0) { exit 1 }' &&
+        echo '=== All Linux-supported Tests Complete ==='
       "
-    depends_on:
-      - dev
     profiles:
       - test
     networks:
