@@ -92,3 +92,17 @@ Standing note from the owner, 2026-10-25. This is a process/rule for how agents 
 3. Planned workaround (owner, 2026-10-25): the owner forks each one under a normal name, attaches the forks to cloud sessions, work happens there, and changes are merged back by pull request. Same-organization forking is supported on GitHub.com (shipped 2022) and the fork can be renamed. The org must allow forking of private repositories for `.github-private`. The forks are `BloqrAI/global-org-private` (fork of `.github-private`) and `BloqrAI/global-org-public` (fork of `.github`). Work in the forks; changes reach the real org repos by pull request. The merges are content only, so they stay simple.
 4. When work is duplicated across repositories (workflows, templates, skills, instructions), advise whether it belongs in one of these repositories, and which one, and say plainly what GitHub will and will not inherit. Do not copy it into every repository.
 5. For skills shared across repos, prefer one shared source with a normal name (for example a single plugin repository) over per-repo copies, because skills are not inherited.
+## Web research and reading: TinyFish (standing, from the owner, 2026-10-28)
+
+For agents' own use only: TinyFish is never integrated into any BloqrAI project. It is free for search and fetch, returns clean markdown without page chrome (far fewer tokens), and the owner tracks usage on a central dashboard, so always go through the API, not the connector.
+
+- **Search:** always the TinyFish Search API. **Reading a page:** always the TinyFish Fetch API. Never read a search result or a link the owner sends with `WebFetch`, `curl` or a browser; fetch it. Fetch several URLs in one call (`urls` array, up to 10).
+- **Formats:** `markdown` (default). `html` only when code snippets matter. `json` for your own processing, or when the owner asks.
+- **Do not print fetched content or save it to a file or document** unless the owner asks. Pull out only what the task needs.
+- **How:** the key is the 1Password item `tinyfish/api-key/prod` in `Claude-Dev`. Read it inline, never print it, send it as the `X-API-Key` header:
+  - search: `GET https://api.search.tinyfish.ai?query=...`
+  - fetch: `POST https://api.fetch.tinyfish.ai` with JSON `{"urls": ["https://..."], "format": "markdown"}`. Results come back in `results[].text`; failures in `errors`.
+  - read the key with `op item get 7srbrplorilzoq62xavz47ta4q --vault Claude-Dev --fields label=credential --reveal` inside the one command that needs it.
+- **Connector fallback:** use the TinyFish connector only when the API cannot do the job. The **TinyFish Docs** connector may be used freely; its documentation is comprehensive (`https://docs.tinyfish.ai/for-coding-agents`).
+- **Research API:** for complex research, together with Fetch to read what it finds. If it falls short, fall back to whatever works.
+- **Costs money, ask the owner for a yes/no first:** the Browser API (a hosted browser driven with Playwright; use it to check UI work live) and the Agent API (natural-language web tasks; also on the owner's command).
