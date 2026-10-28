@@ -92,6 +92,7 @@ Standing note from the owner, 2026-10-25. This is a process/rule for how agents 
 3. Planned workaround (owner, 2026-10-25): the owner forks each one under a normal name, attaches the forks to cloud sessions, work happens there, and changes are merged back by pull request. Same-organization forking is supported on GitHub.com (shipped 2022) and the fork can be renamed. The org must allow forking of private repositories for `.github-private`. The forks are `BloqrAI/global-org-private` (fork of `.github-private`) and `BloqrAI/global-org-public` (fork of `.github`). Work in the forks; changes reach the real org repos by pull request. The merges are content only, so they stay simple.
 4. When work is duplicated across repositories (workflows, templates, skills, instructions), advise whether it belongs in one of these repositories, and which one, and say plainly what GitHub will and will not inherit. Do not copy it into every repository.
 5. For skills shared across repos, prefer one shared source with a normal name (for example a single plugin repository) over per-repo copies, because skills are not inherited.
+
 ## Web research and reading: TinyFish (standing, from the owner, 2026-10-28)
 
 For agents' own use only: TinyFish is never integrated into any BloqrAI project. It is free for search and fetch, returns clean markdown without page chrome (far fewer tokens), and the owner tracks usage on a central dashboard, so always go through the API, not the connector.
