@@ -93,18 +93,29 @@ Standing note from the owner, 2026-10-25. This is a process/rule for how agents 
 4. When work is duplicated across repositories (workflows, templates, skills, instructions), advise whether it belongs in one of these repositories, and which one, and say plainly what GitHub will and will not inherit. Do not copy it into every repository.
 5. For skills shared across repos, prefer one shared source with a normal name (for example a single plugin repository) over per-repo copies, because skills are not inherited.
 
-## Web research and reading: TinyFish (standing, from the owner, 2026-10-28)
+## Web research and reading: TinyFish (guidance from the owner, 2026-10-28)
 
-For agents' own use only: TinyFish is never integrated into any BloqrAI project. It is free for search and fetch, returns clean markdown without page chrome (far fewer tokens), and the owner tracks usage on a central dashboard, so always go through the API, not the connector.
+This is a rule of thumb, not policy. For agents' own use only: TinyFish is never integrated into any BloqrAI project. Search and fetch are free, return clean markdown without page chrome (far fewer tokens), and the owner tracks usage on a central dashboard, so go through the API, not the connector. Waiting a few seconds is fine; the cost saving is the point.
 
-- **Search:** always the TinyFish Search API. **Reading a page:** always the TinyFish Fetch API. Never read a search result or a link the owner sends with `WebFetch`, `curl` or a browser; fetch it. Fetch several URLs in one call (`urls` array, up to 10).
-- **Formats:** `markdown` (default). `html` only when code snippets matter. `json` for your own processing, or when the owner asks.
-- **Do not print fetched content or save it to a file or document** unless the owner asks. Pull out only what the task needs.
+- **Search:** the TinyFish Search API. **Reading a page, or any link the owner sends:** the TinyFish Fetch API, never `WebFetch`, `curl` or a browser first. Up to 10 URLs per call (`urls` array).
+- **Do not print fetched content or save it to a file or document** unless the owner asks. Pull out only what the task needs, and filter large results with a script instead of reading them.
 - **How:** the key is the 1Password item `tinyfish/api-key/prod` in `Claude-Dev`. Read it inline, never print it, send it as the `X-API-Key` header:
   - search: `GET https://api.search.tinyfish.ai?query=...`
-  - fetch: `POST https://api.fetch.tinyfish.ai` with JSON `{"urls": ["https://..."], "format": "markdown"}`. Results come back in `results[].text`; failures in `errors`.
+  - fetch: `POST https://api.fetch.tinyfish.ai`. Results come back in `results[].text`, failures in `errors[]` (`page_not_found`, `invalid_url`, `selector_not_matched`, `target_unreachable`).
   - read the key with `op item get 7srbrplorilzoq62xavz47ta4q --vault Claude-Dev --fields label=credential --reveal` inside the one command that needs it.
-- **Connector fallback:** use the TinyFish connector only when the API cannot do the job. The **TinyFish Docs** connector may be used freely; its documentation is comprehensive (`https://docs.tinyfish.ai/for-coding-agents`).
+- **Fetch parameters** (all optional except `urls`):
+  - `format`: `markdown` (default), `html` (only when code snippets matter), `json` (document tree, for your own processing or when the owner asks).
+  - `links`, `image_links`, `iframe_links`: add absolute URL arrays (`links[]`, `image_links[]`, `iframe_links[]`). The markdown itself carries no link URLs, so set `links` whenever you need them.
+  - `ttl`: cache freshness in seconds; `0` for a live fetch (status pages, dashboards).
+  - `include_selectors` / `exclude_selectors`: CSS selectors (max 20). Exclude runs first, then include scopes what is left. Misses are listed in `unmatched_selectors`; if nothing matches the URL fails with `selector_not_matched` and `candidate_selectors` hints to retry with.
+  - `highlights`: `{"query": "...", "max_snippets": 5}` with `format: "markdown"`. Returns ranked passages quoted verbatim from the page (and no full text), or an empty list when the page does not answer. Put the entity or topic in the query ("who founded Acme Corp", not "who founded this company"). Best way to spend the fewest tokens on a big page.
+  - `purpose`: one short sentence on why you are fetching; gives TinyFish extra signal for better results.
+  - `if_none_match` / `if_modified_since` (single URL only) with `include_etag_and_last_modified: true`: skip unchanged pages (`not_modified: true`). You store the validators; many sites send none.
+  - `per_url_timeout_ms`: for slow pages.
+  - Content types: HTML, PDF (text), JSON, plain text. Images and other binaries are not supported.
+- **If you suspect Fetch is not returning everything** (live dashboards, collapsed lists, empty shells): first try `ttl: 0`, selectors, `links` or `highlights`. If it still looks incomplete, fall back to the built-in fetch tools and tell the owner you did; no need to ask first.
+- **Pages behind a login:** the owner sets up credentials in the TinyFish Vault (integrated with 1Password); ask the owner rather than working around it.
+- **Before assuming TinyFish cannot do something,** search the **TinyFish Docs** connector (free to use as much as needed; `https://docs.tinyfish.ai/for-coding-agents`). The Docs connector is the only connector to use freely: use the Fetch and Search APIs, not the TinyFish connector, unless the API cannot do the job.
 - **Research API:** for complex research, together with Fetch to read what it finds. If it falls short, fall back to whatever works.
 - **Costs money, ask the owner for a yes/no first:** the Browser API and the Agent API (natural-language web tasks; also on the owner's command).
 - **Browser API, to check UI work live** (after the owner says yes): `POST https://api.browser.tinyfish.ai` with `{"url": "https://..."}`, same `X-API-Key`, HTTP timeout of at least 60 seconds (creating a session takes 10 to 30 seconds). The default exit is a US residential proxy; `{"proxy_config": {"enabled": false}}` connects without one. The response has `session_id`, `cdp_url` and `base_url`. Connect Playwright to the **`cdp_url`** (never `base_url`) with `chromium.connectOverCDP(cdp_url)`, wait about 2 seconds, then `waitForLoadState("domcontentloaded")` on `contexts()[0].pages()[0]`. Save screenshots in the scratchpad. When finished, end the session with `DELETE https://api.browser.tinyfish.ai/{session_id}` (idle sessions also expire on their own). Playwright is preinstalled in cloud sessions: do not install it again.
