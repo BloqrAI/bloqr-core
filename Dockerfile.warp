@@ -1,6 +1,6 @@
 # =============================================================================
 # Docker Development Environment for Bloqr Core
-# Includes: .NET 10, Deno 2.x, Python 3.12, Rust 1.86, PowerShell 7
+# Includes: .NET 10, Deno 2.6.3, Python 3.12, Rust 1.86, PowerShell 7
 #
 # Swift is intentionally NOT included in this image. The Swift rules compiler
 # wrapper (src/compilers/swift/) is a macOS-native Swift Package Manager
@@ -15,7 +15,7 @@
 
 FROM mcr.microsoft.com/dotnet/sdk:10.0-noble
 
-# Keep these versions aligned with deno.json and rust-toolchain.toml.
+# Keep the Rust version aligned with rust-toolchain.toml.
 ARG DENO_VERSION=2.6.3
 ARG RUST_VERSION=1.86
 

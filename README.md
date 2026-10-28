@@ -109,9 +109,12 @@ Or with Docker Compose:
 ```bash
 docker compose up -d dev            # start the dev environment
 docker compose exec dev bash        # shell into it
-docker compose --profile compile up # run every compiler once
-docker compose --profile test run --rm test   # run all tests
+docker compose --profile compile run --rm typescript-compiler
+docker compose --profile test run --rm test   # run Linux-supported test suites
 ```
+
+Swift tests run separately on macOS. See the [Docker guide](docs/docker-guide.md)
+for the supported services, toolchain versions, and commands.
 
 ## Architecture
 

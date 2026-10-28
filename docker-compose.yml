@@ -1,5 +1,5 @@
 # =============================================================================
-# Docker Compose for ad-blocking toolkit development
+# Docker Compose for Bloqr Core development
 # =============================================================================
 
 services:
@@ -74,7 +74,10 @@ services:
     volumes:
       - .:/workspace
     working_dir: /workspace/src/compilers/python
-    command: python -m bloqr_compiler
+    command:
+      - bash
+      - -lc
+      - python3 -m pip install --break-system-packages -e . && python3 -m bloqr_compiler
     profiles:
       - compile
     networks:
@@ -102,7 +105,29 @@ services:
       - ad-blocking-net
 
   # ---------------------------------------------------------------------------
-  # Test runner service (runs all tests)
+  # PowerShell Compiler service
+  # ---------------------------------------------------------------------------
+  powershell-compiler:
+    build:
+      context: .
+      dockerfile: Dockerfile.warp
+    image: ad-blocking-dev:latest
+    volumes:
+      - .:/workspace
+    working_dir: /workspace
+    command:
+      - pwsh
+      - -NoLogo
+      - -NoProfile
+      - -Command
+      - "Import-Module '/workspace/src/compilers/powershell/BloqrCompiler/BloqrCompiler.psd1'; Invoke-BloqrCompiler"
+    profiles:
+      - compile
+    networks:
+      - ad-blocking-net
+
+  # ---------------------------------------------------------------------------
+  # Test runner service (runs the Linux-supported test suites)
   # ---------------------------------------------------------------------------
   test:
     build:
@@ -133,7 +158,7 @@ services:
         echo '=== Running Rust Workspace Tests ===' &&
         cd /workspace && cargo test --workspace &&
         echo '=== Running PowerShell Tests ===' &&
-        pwsh -NoLogo -NoProfile -Command '$result = Invoke-Pester -Path /workspace/src/compilers/powershell -Recurse -PassThru; if ($result.FailedCount -gt 0) { exit 1 }' &&
+        pwsh -NoLogo -NoProfile -Command '$$result = Invoke-Pester -Path /workspace/src/compilers/powershell -Recurse -PassThru; if ($$result.FailedCount -gt 0) { exit 1 }' &&
         echo '=== All Linux-supported Tests Complete ==='
       "
     profiles:
