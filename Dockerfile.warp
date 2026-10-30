@@ -1,6 +1,6 @@
 # =============================================================================
-# Docker Development Environment for ad-blocking toolkit
-# Includes: .NET 10, Deno 2.x, Python 3.13, Rust 1.85+, PowerShell 7
+# Docker Development Environment for Bloqr Core
+# Includes: .NET 10, Deno 2.6.3, Python 3.12, Rust 1.86, PowerShell 7
 #
 # Swift is intentionally NOT included in this image. The Swift rules compiler
 # wrapper (src/compilers/swift/) is a macOS-native Swift Package Manager
@@ -15,11 +15,9 @@
 
 FROM mcr.microsoft.com/dotnet/sdk:10.0-noble
 
-# Build arguments for version control
+# Keep the Rust version aligned with rust-toolchain.toml.
 ARG DENO_VERSION=2.6.3
-ARG PYTHON_VERSION=3.13
-ARG RUST_VERSION=1.85
-ARG PWSH_VERSION=7.5.4
+ARG RUST_VERSION=1.86
 
 # Environment variables
 ENV DEBIAN_FRONTEND=noninteractive \
@@ -54,34 +52,15 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
 # =============================================================================
-# Deno 2.6.3
+# Deno
 # =============================================================================
 RUN curl -fsSL https://deno.land/install.sh | DENO_INSTALL=/usr/local sh -s v${DENO_VERSION} && \
     deno --version
 
-# Pre-cache @bloqr/compiler-core (the compilation engine .NET/Python/Rust
-# shell out to via `deno run jsr:@bloqr/compiler-core/cli`) and its npm
-# dependencies, plus the npm dependencies of the other Deno-based TS tools
-# in this repo (AdGuard API client, Linear import tool).
-#
-# The adblock-compiler-core v1.0.0 rewrite hasn't been published to JSR yet
-# under its new @bloqr scope (see .github/workflows/publish-jsr.yml's header
-# comment: it needs a one-time manual "link this repo" step on jsr.io before
-# OIDC publish can run) — `jsr:@bloqr/compiler-core` won't resolve until
-# then. Tolerate that failure here so the image still builds in the
-# meantime; this line will start actually warming the cache once published.
-RUN (deno cache jsr:@bloqr/compiler-core/cli || \
-     echo "warning: jsr:@bloqr/compiler-core/cli not published yet (see comment above) - skipping pre-cache") && \
-    deno cache npm:commander@^14.0.2 && \
-    deno cache npm:inquirer@^13.1.0 && \
-    deno cache npm:axios@^1.13.2 && \
-    deno cache npm:axios-retry@^4.5.0 && \
-    deno cache npm:@linear/sdk@^68.1.0 && \
-    deno cache npm:dotenv@^17.2.3 && \
-    deno cache npm:marked@^17.0.1
+RUN deno cache jsr:@bloqr/compiler-core/cli
 
 # =============================================================================
-# Python 3.13
+# Python 3.12 (Ubuntu Noble default)
 # =============================================================================
 RUN apt-get update && apt-get install -y --no-install-recommends \
     python3 \
@@ -89,21 +68,21 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     python3-venv \
     python3-dev \
     && ln -sf /usr/bin/python3 /usr/bin/python \
-    && pip3 install --no-cache-dir --break-system-packages \
-        pip>=24.0 \
-        setuptools>=61.0 \
+    && python3 -m pip install --no-cache-dir --break-system-packages \
+        'pip>=24.0' \
+        'setuptools>=61.0' \
         wheel \
-        pytest>=7.0 \
-        pytest-cov>=4.0 \
-        mypy>=1.0 \
-        ruff>=0.1.0 \
-        pyyaml>=6.0 \
-        tomlkit>=0.12.0 \
-        types-PyYAML>=6.0 \
+        'pytest>=8.3.4' \
+        'pytest-cov>=6.0.0' \
+        'mypy>=1.15.0' \
+        'ruff>=0.9.4' \
+        'pyyaml>=6.0.2' \
+        'tomlkit>=0.14.0' \
+        'types-PyYAML>=6.0.12.20250114' \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
 # =============================================================================
-# Rust 1.85+ (required by Cargo.toml)
+# Rust 1.86 (required by Cargo.toml and rust-toolchain.toml)
 # =============================================================================
 RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --default-toolchain ${RUST_VERSION} && \
     . "$CARGO_HOME/env" && \
@@ -112,7 +91,7 @@ RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --de
     cargo --version
 
 # =============================================================================
-# PowerShell 7.5.4
+# PowerShell 7
 # =============================================================================
 RUN wget -q "https://packages.microsoft.com/config/ubuntu/$(lsb_release -rs)/packages-microsoft-prod.deb" -O packages-microsoft-prod.deb && \
     dpkg -i packages-microsoft-prod.deb && \
@@ -154,4 +133,3 @@ WORKDIR /workspace
 
 # Default command
 CMD ["/bin/bash"]
-

@@ -38,13 +38,13 @@ The AdGuard DNS API clients (.NET, TypeScript, Rust, PowerShell) and the Linear 
 
 ## Docker Development Environment
 
-A fully-featured Docker environment with all compilers and tools:
+A Linux development environment for the supported toolchains:
 
 ```dockerfile
 # Dockerfile.warp
 FROM mcr.microsoft.com/dotnet/sdk:10.0-noble
-# Includes: .NET 10 SDK, Deno 2.x, Python 3.12, Rust stable, PowerShell 7
-# Pre-installed: hostlist-compiler (via Deno), pytest, ruff, clippy, Pester
+# Includes: .NET 10 SDK, Deno 2.6.3, Python 3.12, Rust 1.86, PowerShell 7
+# Pre-installed: pytest, ruff, clippy, rustfmt, Pester, PSScriptAnalyzer
 ```
 
 Build and run:
@@ -57,7 +57,7 @@ Docker Compose (recommended):
 ```bash
 docker compose up -d dev           # Start dev environment
 docker compose exec dev bash       # Enter container
-docker compose --profile test run --rm test  # Run all tests
+docker compose --profile test run --rm test  # Linux-supported test suites
 ```
 
 Warp Environment: `jaysonknight/warp-env:ad-blocking` (ID: `Egji4sZU4TNIOwNasFU73A`)

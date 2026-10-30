@@ -1,5 +1,5 @@
 # =============================================================================
-# Docker Ignore File
+# Bloqr Core Docker build context exclusions
 # Excludes files from Docker build context to optimize build times
 # =============================================================================
 
@@ -47,7 +47,6 @@ yarn-error.log*
 # Rust
 **/target/
 **/*.rs.bk
-**/Cargo.lock
 
 # .NET
 **/bin/
@@ -62,6 +61,7 @@ yarn-error.log*
 # Build outputs
 **/build/
 **/out/
+**/.build/
 **/public/
 **/.cache/
 **/.gatsby-cache/
