@@ -1,6 +1,6 @@
-# Contributing to Ad-Blocking Repository
+# Contributing to Bloqr Core
 
-Thank you for your interest in contributing to the ad-blocking repository! This document provides guidelines for contributing to this multi-language monorepo.
+Thank you for your interest in contributing to the Bloqr Coreing repository! This document provides guidelines for contributing to this multi-language monorepo.
 
 ## Table of Contents
 
