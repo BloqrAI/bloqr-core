@@ -1,46 +1,30 @@
 # Docker Guide
 
-This guide covers using Docker for development with the ad-blocking toolkit.
+This guide covers the development container for Bloqr Core. The repository does
+not provide a production service image; deployable services belong in their
+own repositories and environments.
 
 ## Docker Development Environment
 
-The repository includes a pre-configured Docker environment with all necessary dependencies for all compilers (TypeScript, .NET, Python, Rust) and tools.
-
-### Dockerfile.warp
-
-```dockerfile
-FROM mcr.microsoft.com/dotnet/sdk:10.0-noble
-
-# Build arguments for version control
-ARG DENO_VERSION=2.x
-ARG RUST_VERSION=stable
-
-# Includes installation of:
-# - Deno 2.x
-# - Python 3.12 with pip
-# - Rust stable toolchain
-# - PowerShell 7
-# - @bloqr/compiler-core (via Deno JSR integration)
-
-WORKDIR /workspace
-```
+The repository includes a pre-configured Linux development environment for
+TypeScript/Deno, .NET, Python, Rust, and PowerShell. Swift is macOS-native and
+is built and tested on the macOS CI runner.
 
 ### Included Components
 
 | Component | Version | Purpose |
 |-----------|---------|---------|
-| .NET SDK | 10.0 | .NET compiler, API client |
-| Deno | 2.x | TypeScript compiler, `@bloqr/compiler-core` |
+| .NET SDK | 10.0 | .NET compiler, common library, and Dashboard |
+| Deno | 2.6.3 | TypeScript compiler and `@bloqr/compiler-core` |
 | Python | 3.12 | Python compiler |
-| Rust | Stable | Rust compiler |
+| Rust | 1.86 | Rust compiler and validator |
 | PowerShell | 7.x | PowerShell scripts and modules |
 | Git | Latest | Version control |
-| @bloqr/compiler-core | 1.0.0 | Via Deno JSR integration; the .NET/Python/Rust compilers all shell out to it (`deno run jsr:@bloqr/compiler-core/cli`) |
 | Ubuntu | 24.04 (Noble) | Base OS |
 
 ### Pre-installed Tools
 
-- **Deno packages**: `@bloqr/compiler-core` (via JSR)
+- **Deno packages**: `@bloqr/compiler-core` (cached from JSR)
 - **Python packages**: `pytest`, `pytest-cov`, `mypy`, `ruff`, `pyyaml`, `tomlkit`
 - **Rust components**: `clippy`, `rustfmt`
 - **PowerShell modules**: `Pester`, `PSScriptAnalyzer`
@@ -53,12 +37,14 @@ WORKDIR /workspace
 docker build -f Dockerfile.warp -t ad-blocking-dev .
 ```
 
-### With Build Arguments
+The image versions are defined in `Dockerfile.warp` and aligned with
+`rust-toolchain.toml`. Override them only when intentionally testing another
+toolchain version.
 
 ```bash
 docker build -f Dockerfile.warp \
-  --build-arg DENO_VERSION=2.x \
-  --build-arg RUST_VERSION=stable \
+  --build-arg DENO_VERSION=2.6.3 \
+  --build-arg RUST_VERSION=1.86 \
   -t ad-blocking-dev:custom .
 ```
 
@@ -83,10 +69,12 @@ docker run -it -v $(pwd):/workspace ad-blocking-dev
 ```bash
 docker run -it \
   -v $(pwd):/workspace \
-  -e "AdGuard__ApiKey=your-api-key" \
   -e "DEBUG=1" \
   ad-blocking-dev
 ```
+
+Do not pass credentials through the Compose configuration. The compilers in
+this repository do not require AdGuard API credentials.
 
 ### Detached Mode
 
@@ -117,7 +105,8 @@ The repository includes a `docker-compose.yml` for multi-service orchestration.
 | `dotnet-compiler` | .NET compiler | compile |
 | `python-compiler` | Python rules compiler | compile |
 | `rust-compiler` | Rust rules compiler | compile |
-| `test` | Run all tests | test |
+| `powershell-compiler` | PowerShell compiler toolkit | compile |
+| `test` | Run Linux-supported repository test suites | test |
 
 ### Basic Usage
 
@@ -138,8 +127,11 @@ docker compose down
 # Run TypeScript compiler
 docker compose --profile compile run --rm typescript-compiler
 
-# Run all compilers
-docker compose --profile compile up
+# Run a compiler once (choose one service)
+docker compose --profile compile run --rm dotnet-compiler
+docker compose --profile compile run --rm python-compiler
+docker compose --profile compile run --rm rust-compiler
+docker compose --profile compile run --rm powershell-compiler
 
 # Run all tests
 docker compose --profile test run --rm test
@@ -149,7 +141,7 @@ docker compose --profile test run --rm test
 
 ### Environment Variables
 
-Create a `.env` file in the project root:
+The optional `DEBUG` variable can be set in a root `.env` file:
 
 ```bash
 # .env
@@ -165,13 +157,9 @@ DEBUG=1
 cd /workspace/src/compilers/typescript
 deno cache src/mod.ts
 
-# .NET projects
-cd /workspace/src/compilers/dotnet
-dotnet restore CompilerDotnet.slnx
-
 # Python compiler
 cd /workspace/src/compilers/python
-pip install -e ".[dev]"
+python3 -m pip install --break-system-packages -e ".[dev]"
 
 # Rust compiler (core lib + CLI crate)
 cargo build -p bloqr-compiler-core -p bloqr-compiler
@@ -208,16 +196,20 @@ pwsh -Command "Import-Module ./src/compilers/powershell/BloqrCompiler/BloqrCompi
 cd /workspace/src/compilers/typescript
 deno task test
 
-# .NET tests
+# Shared .NET library, compiler, and Dashboard tests
+cd /workspace/src/common/dotnet
+dotnet test CompilerCommon.slnx
 cd /workspace/src/compilers/dotnet
 dotnet test CompilerDotnet.slnx
+cd /workspace/src/apps/dashboard
+dotnet test BloqrDashboard.slnx
 
 # Python tests
 cd /workspace/src/compilers/python
 pytest
 
-# Rust tests (from repo root - core and cli are separate workspace members)
-cargo test -p bloqr-compiler-core -p bloqr-compiler
+# Rust workspace tests (compiler and validator)
+cargo test --workspace
 
 # PowerShell tests
 cd /workspace
@@ -227,72 +219,14 @@ pwsh -Command "Invoke-Pester -Path ./src/compilers/powershell -Recurse"
 docker compose --profile test run --rm test
 ```
 
-## Warp Environment
-
-For [Warp](https://www.warp.dev/) terminal users, a pre-built environment is available.
-
-### Environment Details
-
-| Property | Value |
-|----------|-------|
-| Docker Image | `jaysonknight/warp-env:ad-blocking` |
-| Environment ID | `Egji4sZU4TNIOwNasFU73A` |
-
-### Using with Warp
-
-```bash
-# The environment automatically runs these setup commands:
-cd bloqr-core/src/compilers/typescript && deno cache src/mod.ts
-cd bloqr-core/src/compilers/dotnet && dotnet restore CompilerDotnet.slnx
-```
+The Docker test profile covers Linux-supported test suites. Run Swift tests
+separately on macOS with `cd src/compilers/swift && swift test`.
 
 ## CI/CD with Docker
 
-### GitHub Actions Example
-
-```yaml
-name: Build with Docker
-
-on: [push, pull_request]
-
-jobs:
-  build:
-    runs-on: ubuntu-latest
-
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Build Docker image
-        run: docker build -f Dockerfile.warp -t ad-blocking-dev .
-
-      - name: Run TypeScript tests
-        run: |
-          docker run --rm \
-            -v ${{ github.workspace }}:/workspace \
-            ad-blocking-dev \
-            bash -c "cd /workspace/src/compilers/typescript && deno task test"
-
-      - name: Run .NET tests
-        run: |
-          docker run --rm \
-            -v ${{ github.workspace }}:/workspace \
-            ad-blocking-dev \
-            bash -c "cd /workspace/src/compilers/dotnet && dotnet restore && dotnet test"
-
-      - name: Run Python tests
-        run: |
-          docker run --rm \
-            -v ${{ github.workspace }}:/workspace \
-            ad-blocking-dev \
-            bash -c "cd /workspace/src/compilers/python && pip install -e '.[dev]' && pytest"
-
-      - name: Run Rust tests
-        run: |
-          docker run --rm \
-            -v ${{ github.workspace }}:/workspace \
-            ad-blocking-dev \
-            bash -c "cd /workspace && cargo test -p bloqr-compiler-core -p bloqr-compiler"
-```
+The repository workflow at `.github/workflows/docker-image.yml` validates the
+Compose configuration and builds the development image when Docker artifacts
+change.
 
 ## Troubleshooting
 
@@ -358,11 +292,11 @@ docker build --no-cache -f Dockerfile.warp -t ad-blocking-dev .
 
 ### Volume Caching Issues
 
-Reset named volumes if caching causes problems:
+Reset the named caches if dependency caching causes problems:
 
 ```bash
-# Remove all ad-blocking volumes
-docker volume rm ad-blocking-deno-cache ad-blocking-node-web ad-blocking-cargo-registry ad-blocking-cargo-git ad-blocking-nuget
+# Remove the repository's named dependency caches
+docker volume rm ad-blocking-deno-cache ad-blocking-cargo-registry ad-blocking-cargo-git ad-blocking-nuget
 
 # Or remove all unused volumes
 docker volume prune

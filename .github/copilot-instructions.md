@@ -447,7 +447,7 @@ cargo test -p bloqr-compiler-core -p bloqr-compiler
 - Compilers use this, handling config parsing and result formatting
 
 ### Docker Development
-- **Dockerfile**: `Dockerfile.warp` (multi-stage with .NET 8 SDK + Node 20 + PowerShell 7)
+- **Dockerfile**: `Dockerfile.warp` (Linux development image with .NET 10, Deno 2.6.3, Python 3.12, Rust 1.86, and PowerShell 7)
 - **Warp image**: `jaysonknight/warp-env:ad-blocking` (pre-configured)
 - **Usage**:
   ```bash

@@ -10,149 +10,23 @@ This guide covers deployment strategies for all components in the ad-blocking re
 
 ### 1. Docker Deployment
 
-#### Pre-built Development Image
-
-Use the pre-configured Docker image with all dependencies:
-
-```bash
-# Pull the image
-docker pull jaysonknight/warp-env:ad-blocking
-
-# Run container
-docker run -it -v $(pwd):/workspace jaysonknight/warp-env:ad-blocking
-```
-
-#### Custom Production Image
-
-Build a minimal production image:
-
-```dockerfile
-# Dockerfile.production
-FROM mcr.microsoft.com/dotnet/sdk:10.0-alpine AS build
-
-# Copy and build only what you need
-WORKDIR /app
-COPY src/ ./src/
-# Mount or copy your compiler config at runtime (e.g. from a checkout of
-# BloqrAI/bloqr-blocklists) — it's no longer bundled in this repo's src/ tree.
-
-# Build specific component
-RUN cd src/compilers/dotnet && dotnet publish -c Release -o /app/out
-
-FROM mcr.microsoft.com/dotnet/runtime:10.0-alpine
-WORKDIR /app
-COPY --from=build /app/out .
-
-ENTRYPOINT ["dotnet", "Bloqr.Compiler.Dotnet.Console.dll"]
-```
-
-Build and run:
+This repository's Docker artifacts support local development and testing only.
+The development image is not a production runtime, and this repository does
+not include `Dockerfile.production`, a cron image, or a deployable service.
+Use the development container from the repository root:
 
 ```bash
-docker build -f Dockerfile.production -t ad-blocking-compiler:latest .
-docker run -v $(pwd)/rules:/app/rules ad-blocking-compiler:latest
+docker compose up -d dev
+docker compose exec dev bash
+docker compose --profile test run --rm test
 ```
 
-#### Multi-stage Builds for Each Component
+See the [Docker guide](/docs/docker-guide/) for toolchain details and compiler
+commands. Swift is tested separately on macOS. This repository's service
+deployment target is Cloudflare Workers in projects that contain deployable
+services.
 
-**TypeScript/Deno:**
-```dockerfile
-FROM denoland/deno:2.0.0
-
-WORKDIR /app
-COPY src/compilers/typescript/ .
-
-RUN deno cache src/mod.ts
-
-CMD ["deno", "task", "compile"]
-```
-
-**.NET:**
-```dockerfile
-FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
-WORKDIR /src
-COPY src/compilers/dotnet/ .
-RUN dotnet publish -c Release -o /app
-
-FROM mcr.microsoft.com/dotnet/runtime:10.0
-WORKDIR /app
-COPY --from=build /app .
-ENTRYPOINT ["dotnet", "Bloqr.Compiler.Dotnet.Console.dll"]
-```
-
-**Python:**
-```dockerfile
-FROM python:3.12-slim
-
-WORKDIR /app
-COPY src/compilers/python/ .
-
-RUN pip install --no-cache-dir -e .
-
-CMD ["bloqr-compiler"]
-```
-
-**Rust:**
-```dockerfile
-FROM rust:1.86 AS builder
-WORKDIR /app
-# bloqr-compiler-core (src/compilers/rust/core) depends on bloqr-validator-core
-# (src/validation/core) via a workspace path dependency, so the whole
-# workspace - not just src/compilers/rust/ - needs to be in the build context.
-COPY Cargo.toml Cargo.lock ./
-COPY src/compilers/rust/ src/compilers/rust/
-COPY src/validation/ src/validation/
-RUN cargo build --release -p bloqr-compiler
-
-FROM debian:bookworm-slim
-COPY --from=builder /app/target/release/bloqr-compiler /usr/local/bin/
-CMD ["bloqr-compiler"]
-```
-
-### 2. Docker Compose Deployment
-
-Create a `docker-compose.yml` for orchestration:
-
-```yaml
-version: '3.8'
-
-services:
-  # Rules compilation service
-  rules-compiler:
-    build:
-      context: .
-      dockerfile: Dockerfile.production
-    volumes:
-      - ./rules:/app/rules
-      - ./Config:/app/Config
-    environment:
-      - CONFIG_PATH=/app/Config/compiler-config.json
-    restart: unless-stopped
-
-  # For a deployable AdGuard DNS API service, see the API client Dockerfiles
-  # in BloqrAI/bloqr-apiclients — they're no longer part of this repo.
-
-  # Scheduled compilation
-  compiler-cron:
-    build:
-      context: .
-      dockerfile: Dockerfile.cron
-    volumes:
-      - ./rules:/app/rules
-      - ./Config:/app/Config
-    environment:
-      - CRON_SCHEDULE=0 */6 * * *  # Every 6 hours
-    restart: unless-stopped
-```
-
-Run with:
-
-```bash
-docker-compose up -d
-docker-compose logs -f
-```
-
-### 3. Kubernetes Deployment
+### 2. Kubernetes Deployment
 
 #### ConfigMap for Configuration
 
@@ -287,99 +161,10 @@ kubectl apply -f cronjob.yaml
 
 ### GitHub Actions
 
-#### Complete Workflow
-
-```yaml
-# .github/workflows/deploy.yml
-name: Build and Deploy
-
-on:
-  push:
-    branches: [ main ]
-    tags: [ 'v*' ]
-  pull_request:
-    branches: [ main ]
-
-env:
-  REGISTRY: ghcr.io
-  IMAGE_NAME: ${{ github.repository }}
-
-jobs:
-  test:
-    runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        component: [typescript, dotnet, python, rust]
-    steps:
-      - uses: actions/checkout@v4
-      
-      - name: Test TypeScript
-        if: matrix.component == 'typescript'
-        run: |
-          cd src/compilers/typescript
-          deno cache src/mod.ts
-          deno task test
-      
-      - name: Test .NET
-        if: matrix.component == 'dotnet'
-        run: |
-          cd src/compilers/dotnet
-          dotnet test CompilerDotnet.slnx
-      
-      - name: Test Python
-        if: matrix.component == 'python'
-        run: |
-          cd src/compilers/python
-          pip install -e ".[dev]"
-          pytest
-      
-      - name: Test Rust
-        if: matrix.component == 'rust'
-        run: cargo test -p bloqr-compiler-core -p bloqr-compiler
-
-  build:
-    needs: test
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      packages: write
-    steps:
-      - uses: actions/checkout@v4
-      
-      - name: Log in to Container Registry
-        uses: docker/login-action@v3
-        with:
-          registry: ${{ env.REGISTRY }}
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-      
-      - name: Extract metadata
-        id: meta
-        uses: docker/metadata-action@v5
-        with:
-          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
-      
-      - name: Build and push Docker image
-        uses: docker/build-push-action@v5
-        with:
-          context: .
-          file: Dockerfile.production
-          push: ${{ github.event_name != 'pull_request' }}
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
-
-  deploy:
-    needs: build
-    runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main'
-    steps:
-      - uses: actions/checkout@v4
-      
-      - name: Deploy to production
-        run: |
-          # Add your deployment commands here
-          echo "Deploying to production..."
-```
+The repository's
+[`docker-image.yml`](../../.github/workflows/docker-image.yml) validates
+Compose configuration and builds the development image when Docker artifacts
+change. It does not publish or deploy a production image.
 
 #### Compile and Release Workflow
 
@@ -463,23 +248,13 @@ test:rust:
   script:
     - cargo test -p bloqr-compiler-core -p bloqr-compiler
 
-build:
+build:development-image:
   stage: build
   image: docker:latest
   services:
     - docker:dind
   script:
-    - docker build -f Dockerfile.production -t $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA .
-    - docker push $CI_REGISTRY_IMAGE:$CI_COMMIT_SHA
-
-deploy:production:
-  stage: deploy
-  image: alpine:latest
-  only:
-    - main
-  script:
-    - apk add --no-cache curl
-    - curl -X POST $ADGUARD_WEBHOOK_URL
+    - docker build -f Dockerfile.warp -t bloqr-core-dev:$CI_COMMIT_SHA .
 ```
 
 ### Jenkins Pipeline
@@ -528,21 +303,9 @@ pipeline {
             }
         }
         
-        stage('Build') {
+        stage('Build development image') {
             steps {
-                sh 'docker build -f Dockerfile.production -t ad-blocking:${BUILD_NUMBER} .'
-            }
-        }
-        
-        stage('Deploy') {
-            when {
-                branch 'main'
-            }
-            steps {
-                sh '''
-                    docker tag ad-blocking:${BUILD_NUMBER} ad-blocking:latest
-                    docker push ad-blocking:latest
-                '''
+                sh 'docker build -f Dockerfile.warp -t bloqr-core-dev:${BUILD_NUMBER} .'
             }
         }
     }
@@ -608,70 +371,32 @@ exclusions_sources:
   - config/whitelist.txt
 ```
 
-#### Environment-Specific Configurations
+#### Development Container Environment
 
 ```bash
-# config/.env.production
-ADGUARD_AdGuard__ApiKey=prod_api_key_here
-CONFIG_PATH=/app/config/production.yaml
-RULES_DIR=/app/rules
-DEBUG=false
-
-# config/.env.staging
-ADGUARD_AdGuard__ApiKey=staging_api_key_here
-CONFIG_PATH=/app/config/staging.yaml
-RULES_DIR=/app/rules
+# Optional .env file in the repository root
 DEBUG=true
 ```
 
-Load with:
+Start the development container with:
 
 ```bash
-docker run --env-file config/.env.production ad-blocking:latest
+docker compose up -d dev
 ```
 
 ## Production Best Practices
 
 ### 1. Security
 
-**Secrets Management:**
-
-```bash
-# Use Docker secrets
-echo "your-api-key" | docker secret create adguard_api_key -
-
-# Reference in docker-compose.yml
-services:
-  api-service:
-    secrets:
-      - adguard_api_key
-    environment:
-      - ADGUARD_AdGuard__ApiKey_FILE=/run/secrets/adguard_api_key
-
-secrets:
-  adguard_api_key:
-    external: true
-```
-
-**Use HashiCorp Vault:**
-
-```bash
-# Store secret
-vault kv put secret/adguard api_key=your-api-key
-
-# Retrieve in application
-export ADGUARD_AdGuard__ApiKey=$(vault kv get -field=api_key secret/adguard)
-```
+The development image has no service credentials. Avoid passing secrets to
+the container; deployable services should use the secret-management mechanism
+of their target platform.
 
 ### 2. Monitoring
 
-**Health Checks:**
-
-```dockerfile
-# Add health check to Dockerfile
-HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-  CMD curl -f http://localhost:5000/health || exit 1
-```
+The development container does not host a network service and therefore has
+no Docker health check. Its validation is performed by the repository's
+tests and Docker image workflow.
 
 **Logging:**
 

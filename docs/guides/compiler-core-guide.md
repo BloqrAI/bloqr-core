@@ -567,41 +567,9 @@ if (Test-Path $OutputFile) {
 
 ### Docker Integration
 
-```dockerfile
-# Dockerfile for filter compilation service
-FROM denoland/deno:latest
-
-WORKDIR /app
-
-# Copy configuration and source files
-COPY compiler-config.json .
-COPY data/ data/
-
-# Install dependencies (cached layer)
-RUN deno cache jsr:@bloqr/compiler-core/cli
-
-# Compile filters on container start
-CMD ["deno", "run", \
-     "--allow-read", "--allow-write", "--allow-env", "--allow-net", \
-     "jsr:@bloqr/compiler-core/cli", \
-     "--config", "compiler-config.json", \
-     "--output", "../bloqr-blocklists/output/filters.txt"]
-```
-
-**docker-compose.yml:**
-```yaml
-version: '3.8'
-
-services:
-  filter-compiler:
-    build: .
-    volumes:
-      - ./../bloqr-blocklists/input:/app/../bloqr-blocklists/input:ro
-      - ./../bloqr-blocklists/output:/app/../bloqr-blocklists/output:rw
-      - ./compiler-config.json:/app/compiler-config.json:ro
-    environment:
-      - DEBUG=true
-```
+The repository's Docker image is for development and testing, not production
+filter compilation. See the [Docker guide](/docs/docker-guide/) for supported
+commands and the [deployment guide](/docs/guides/deployment-guide/) for deployment scope.
 
 ## Architecture and Design
 
