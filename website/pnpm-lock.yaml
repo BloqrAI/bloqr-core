@@ -2463,8 +2463,8 @@ packages:
     resolution: {integrity: sha512-1rXeuUUiGGrykh+CeBdu5Ie7OJwinCgQY0bc7GCRxy5xVHy+moaqkpL/jqQq0MtQOeYcrqEz4abc5f0KtU7W4A==}
     engines: {node: '>=12.5.0'}
 
-  colord@2.9.3:
-    resolution: {integrity: sha512-jeC1axXpnb0/2nn/Y1LPuLdgXBLH7aDcHu4KEKfqw3CUhX7ZpfBSlPKyqXE6btIgEzfWtrX3/tyBCaCvXvMkOw==}
+  colord@2.12.0:
+    resolution: {integrity: sha512-SpiONmQPZDqe50ivOTgkVikYsnp6l1HTFYqPRLNBCJJdA2Qympw2yYUzX99XlSbbKZswjiG6r+xsUpPPOHqY+Q==}
 
   colorette@2.0.20:
     resolution: {integrity: sha512-IfEDxwoWIjkeXL1eXcDiow4UbKjhLdq6/EuSVR9GMN7KVH3r9gQ83e73hsz1Nd1T3ijd5xv1wcWRYO+D6kCI2w==}
@@ -9479,7 +9479,7 @@ snapshots:
       color-convert: 2.0.1
       color-string: 1.9.1
 
-  colord@2.9.3: {}
+  colord@2.12.0: {}
 
   colorette@2.0.20: {}
 
@@ -12892,7 +12892,7 @@ snapshots:
     dependencies:
       browserslist: 4.28.7
       caniuse-api: 3.0.0
-      colord: 2.9.3
+      colord: 2.12.0
       postcss: 8.5.25
       postcss-value-parser: 4.2.0
 
@@ -12951,7 +12951,7 @@ snapshots:
 
   postcss-minify-gradients@5.1.1(postcss@8.5.25):
     dependencies:
-      colord: 2.9.3
+      colord: 2.12.0
       cssnano-utils: 3.1.0(postcss@8.5.25)
       postcss: 8.5.25
       postcss-value-parser: 4.2.0
