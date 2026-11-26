@@ -9,7 +9,7 @@ This section is the owner's standing authorization and process for every BloqrAI
 ### When it applies
 
 - Autonomous backlog work starts only when the owner asks (for example "go work on small backlog issues that don't need back and forth", or "autonomous backlog mode"). Never start it unprompted. When asked, keep working eligible issues until none remain or the owner says stop.
-- Work strictly serially: one issue actively in work at a time, from In Progress through Merged, before starting the next. An issue waiting in Merged for the CI run on `main` is not active: start the next while it waits, and move it to Done when its run is green. Never work issues in parallel and never spawn background agents or parallel branches for backlog work (it was tried once and the cleanup cost more than working serially).
+- Work strictly serially: one issue actively in work at a time, from In Progress through Merged, before starting the next. An issue waiting in Merged (or, for a team without that status, In Review after its PR has merged) for the CI run on `main` is not active: start the next while it waits, and move it to Done when its run is green. Never work issues in parallel and never spawn background agents or parallel branches for backlog work (it was tried once and the cleanup cost more than working serially).
 - Ignore PRs that neither you nor the owner created (Dependabot and other automation). Do not review, comment on, update or merge them.
 
 ### Eligibility
